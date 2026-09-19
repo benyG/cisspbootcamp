@@ -24,32 +24,45 @@ import {
  */
 
 // --- Estimation de délai ------------------------------------------------
+//
+// Calibrated on what Ben observed over two cohorts, *with* coaching:
+//   senior (5+ years, most domains, fluent reader)   -> 1 to 2 months
+//   median (3-4 years, half the domains, English 3)  -> 3 to 4 months
+//   too early (1-2 years, one domain, English 2)     -> 5 to 6 months
+// tests/analysis.test.ts pins these three profiles.
 
-/** Preparation for an eligible, comfortable profile. */
-export const BASE_PREPARATION_WEEKS = 16;
+/** Coached preparation for an eligible, comfortable profile. */
+export const BASE_PREPARATION_WEEKS = 9;
 
 /** Domains beyond this many uncovered start adding time. */
 export const FREE_UNCOVERED_DOMAINS = 3;
-export const WEEKS_PER_UNCOVERED_DOMAIN = 2;
+export const WEEKS_PER_UNCOVERED_DOMAIN = 1;
 /**
  * Caps the domain penalty. Kept below the arithmetic maximum (5 billable
- * domains x 2 weeks) so it actually binds: a profile covering nothing and one
+ * domains x 1 week) so it actually binds: a profile covering nothing and one
  * covering a single domain face the same ceiling.
  */
-export const MAX_DOMAIN_WEEKS = 8;
+export const MAX_DOMAIN_WEEKS = 4;
 
 /** The exam is in English; reading speed is a real predictor. */
-export const WEEKS_LOW_ENGLISH = 6;
-export const WEEKS_MEDIUM_ENGLISH = 2;
+export const WEEKS_LOW_ENGLISH = 4;
+export const WEEKS_MEDIUM_ENGLISH = 3;
 
 /** A failed attempt means the format holds no surprises. */
-export const WEEKS_PREVIOUS_ATTEMPT = -3;
-export const WEEKS_SENIOR_EXPERIENCE = -2;
-export const WEEKS_JUNIOR_EXPERIENCE = 8;
+export const WEEKS_PREVIOUS_ATTEMPT = -2;
+export const WEEKS_SENIOR_EXPERIENCE = -4;
+export const WEEKS_JUNIOR_EXPERIENCE = 5;
 
 /** Never quote a single number: the estimate is always a range. */
-export const ESTIMATE_SPREAD_WEEKS = 6;
-export const MINIMUM_PREPARATION_WEEKS = 8;
+export const ESTIMATE_SPREAD_WEEKS = 4;
+export const MINIMUM_PREPARATION_WEEKS = 4;
+
+/**
+ * What the same preparation costs without a coach, as a multiple. Ben's
+ * observation, stated as his in the message: what candidates lack is not
+ * material but someone to hold the pace. The result shows both figures.
+ */
+export const SOLO_MULTIPLIER = 2;
 
 const WEEKS_PER_MONTH = 4.345;
 
@@ -58,9 +71,20 @@ export type TimelineEstimate = {
   maxWeeks: number;
   minMonths: number;
   maxMonths: number;
-  /** "4 à 6 mois", ready to drop into a sentence. */
+  /** "3 à 4 mois", ready to drop into a sentence. */
   label: string;
+  /** The same range without coaching, e.g. "6 à 8 mois". */
+  soloLabel: string;
 };
+
+function monthsRange(minWeeks: number, maxWeeks: number) {
+  const minMonths = Math.max(1, Math.round(minWeeks / WEEKS_PER_MONTH));
+  const maxMonths = Math.max(
+    minMonths + 1,
+    Math.round(maxWeeks / WEEKS_PER_MONTH),
+  );
+  return { minMonths, maxMonths, label: `${minMonths} à ${maxMonths} mois` };
+}
 
 export function estimateTimeline(answers: ScannerAnswers): TimelineEstimate {
   let weeks = BASE_PREPARATION_WEEKS;
@@ -84,15 +108,17 @@ export function estimateTimeline(answers: ScannerAnswers): TimelineEstimate {
 
   const minWeeks = Math.max(MINIMUM_PREPARATION_WEEKS, weeks);
   const maxWeeks = minWeeks + ESTIMATE_SPREAD_WEEKS;
-  const minMonths = Math.max(2, Math.round(minWeeks / WEEKS_PER_MONTH));
-  const maxMonths = Math.max(minMonths + 1, Math.round(maxWeeks / WEEKS_PER_MONTH));
+  const coached = monthsRange(minWeeks, maxWeeks);
+  const solo = monthsRange(
+    minWeeks * SOLO_MULTIPLIER,
+    maxWeeks * SOLO_MULTIPLIER,
+  );
 
   return {
     minWeeks,
     maxWeeks,
-    minMonths,
-    maxMonths,
-    label: `${minMonths} à ${maxMonths} mois`,
+    ...coached,
+    soloLabel: solo.label,
   };
 }
 
@@ -108,6 +134,8 @@ export function isGoalTight(
 
 // --- Axes ---------------------------------------------------------------
 
+export type AxisAudience = "prospect" | "coach";
+
 export type AnalysisAxis = {
   key: string;
   label: string;
@@ -115,6 +143,12 @@ export type AnalysisAxis = {
   score: number;
   /** The raw figure behind the bar, e.g. "6 domaines sur 8". */
   detail: string;
+  /**
+   * Who sees the bar. An axis a first-time candidate scores zero on is kept
+   * for the coach's call prep, never shown to the prospect: an empty bar on a
+   * page meant to motivate says the opposite of what it should.
+   */
+  audience: AxisAudience;
 };
 
 const EXPERIENCE_YEARS: Record<ScannerAnswers["experience"], number> = {
@@ -139,26 +173,34 @@ export function buildAxes(answers: ScannerAnswers): AnalysisAxis[] {
       detail: grantsWaiver(answers)
         ? `${years} an${years > 1 ? "s" : ""} d'expérience + 1 an de dérogation, sur 5 requis`
         : `${years} an${years > 1 ? "s" : ""} d'expérience sur 5 requis`,
+      audience: "prospect",
     },
     {
       key: "domain_coverage",
       label: "Couverture des 8 domaines",
       score: Math.round((covered / CISSP_DOMAINS.length) * 100),
       detail: `${covered} domaine${covered > 1 ? "s" : ""} sur ${CISSP_DOMAINS.length}`,
+      audience: "prospect",
     },
     {
       key: "english_reading",
       label: "Anglais en lecture",
       score: Math.round(((answers.englishReading - 1) / 4) * 100),
       detail: `${answers.englishReading} sur 5`,
+      audience: "prospect",
     },
     {
       key: "exam_maturity",
       label: "Maturité certification",
       score: examMaturityScore(answers),
       detail: describeExamMaturity(answers),
+      audience: "coach",
     },
   ];
+}
+
+export function prospectAxes(axes: readonly AnalysisAxis[]): AnalysisAxis[] {
+  return axes.filter((axis) => axis.audience === "prospect");
 }
 
 function examMaturityScore(answers: ScannerAnswers): number {
@@ -183,7 +225,7 @@ function describeExamMaturity(answers: ScannerAnswers): string {
   }
   return count > 0
     ? `${count} certification${count > 1 ? "s" : ""} obtenue${count > 1 ? "s" : ""}`
-    : "Première certification";
+    : "Première certification — le CISSP comme point d'entrée, c'est possible";
 }
 
 // --- Recommandation -----------------------------------------------------

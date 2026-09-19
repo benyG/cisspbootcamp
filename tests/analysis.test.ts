@@ -9,6 +9,7 @@ import {
   analyseProfile,
   buildAxes,
   estimateTimeline,
+  prospectAxes,
   isGoalTight,
   recommend,
 } from "@/lib/analysis";
@@ -94,11 +95,62 @@ describe("estimateTimeline", () => {
     expect(timeline.maxMonths).toBeGreaterThan(timeline.minMonths);
     expect(timeline.label).toMatch(/^\d+ à \d+ mois$/);
   });
+
+  it("montre ce que coûte la même préparation sans coach", () => {
+    const timeline = estimateTimeline(BASE);
+
+    expect(timeline.soloLabel).toMatch(/^\d+ à \d+ mois$/);
+    expect(timeline.soloLabel).not.toBe(timeline.label);
+  });
+});
+
+/**
+ * Ben's own figures, observed over two cohorts. If a constant is retuned and
+ * one of these moves, that is a decision to take with him, not a side effect.
+ */
+describe("estimateTimeline — calibration sur les cohortes passées", () => {
+  it("senior : 1 à 2 mois", () => {
+    const senior = answers({
+      experience: "five_plus",
+      domains: CISSP_DOMAINS.slice(0, 7),
+      englishReading: 4,
+      certifications: ["cisa"],
+    });
+
+    expect(estimateTimeline(senior).label).toBe("1 à 2 mois");
+  });
+
+  it("profil médian : 3 à 4 mois", () => {
+    const median = answers({
+      experience: "three_four",
+      domains: CISSP_DOMAINS.slice(0, 4),
+      englishReading: 3,
+      hasFourYearDegree: true,
+    });
+
+    expect(estimateTimeline(median).label).toBe("3 à 4 mois");
+  });
+
+  it("trop tôt : 5 à 6 mois", () => {
+    const tooEarly = answers({
+      professionalStatus: "career_change",
+      experience: "one_two",
+      domains: CISSP_DOMAINS.slice(0, 1),
+      englishReading: 2,
+      hasFourYearDegree: false,
+    });
+
+    expect(estimateTimeline(tooEarly).label).toBe("5 à 6 mois");
+  });
 });
 
 describe("isGoalTight", () => {
   it("signale un objectif de 3 mois hors d'atteinte", () => {
-    const tendu = answers({ examGoal: "under_three_months", englishReading: 1 });
+    const tendu = answers({
+      examGoal: "under_three_months",
+      englishReading: 1,
+      domains: [],
+    });
     expect(isGoalTight(tendu, estimateTimeline(tendu))).toBe(true);
   });
 
@@ -132,6 +184,28 @@ describe("buildAxes", () => {
     )[0];
 
     expect(axe.score).toBe(100);
+  });
+
+  it("réserve la maturité certification au coach", () => {
+    const axes = buildAxes(BASE);
+    const visible = prospectAxes(axes);
+
+    expect(visible).toHaveLength(3);
+    expect(visible.map((axis) => axis.key)).not.toContain("exam_maturity");
+    expect(axes.find((axis) => axis.key === "exam_maturity")?.audience).toBe(
+      "coach",
+    );
+  });
+
+  it("formule positivement une première certification", () => {
+    const maturity = buildAxes(answers({ certifications: [] })).find(
+      (axis) => axis.key === "exam_maturity",
+    );
+
+    expect(maturity?.score).toBe(0);
+    expect(maturity?.detail).toBe(
+      "Première certification — le CISSP comme point d'entrée, c'est possible",
+    );
   });
 
   it("chiffre la couverture des domaines", () => {
