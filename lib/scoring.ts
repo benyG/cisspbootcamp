@@ -28,8 +28,30 @@ export const HEAT_POINTS = {
 /** A lead at or above this score jumps into the coach's hot queue (SPECS A6). */
 export const HOT_LEAD_THRESHOLD = 60;
 
+/** At or below this level on the 1-to-5 scale, English lengthens preparation. */
+export const LOW_ENGLISH_MAX_LEVEL = 2;
+
 /** Domains covered below this count make the "domaines faibles" advice fire. */
 export const WEAK_COVERAGE_MAX_DOMAINS = 3;
+
+/**
+ * Certifications we accept as granting the ISC² one-year experience waiver.
+ *
+ * Deliberately a short, verifiable list rather than an attempt to mirror the
+ * full ISC² catalogue: Ben extends it here, in one place. Anything declared as
+ * `other` is not counted automatically — the result tells the prospect to have
+ * it checked rather than promising a waiver we cannot confirm.
+ */
+export const WAIVER_CERTIFICATIONS = [
+  "security_plus",
+  "sscp",
+  "cisa",
+  "cism",
+  "ccsp",
+  "ceh",
+  "gsec",
+  "ccna_security",
+] as const;
 
 // --- Questionnaire ------------------------------------------------------
 
@@ -45,15 +67,24 @@ export const CISSP_DOMAINS = [
   "software_security",
 ] as const;
 
+/** Offered as checkboxes on the certifications screen. */
+export const CERTIFICATIONS = [
+  ...WAIVER_CERTIFICATIONS,
+  "other",
+] as const;
+
 export const answersSchema = z.object({
   /** ISO 3166-1 alpha-2, drives the pricing tier. */
   country: z.string().length(2),
   professionalStatus: z.enum(["employed", "student", "career_change", "freelance"]),
   experience: z.enum(["none", "one_two", "three_four", "five_plus"]),
   domains: z.array(z.enum(CISSP_DOMAINS)).max(CISSP_DOMAINS.length),
-  /** Degree or certification granting the one-year ISC² waiver. */
-  waiver: z.enum(["yes", "no", "unknown"]),
-  technicalEnglish: z.enum(["basic", "intermediate", "fluent"]),
+  /** Four-year academic degree (a Master, for instance). */
+  hasFourYearDegree: z.boolean(),
+  /** Certifications already held; empty means none. */
+  certifications: z.array(z.enum(CERTIFICATIONS)),
+  /** Reading and comprehension only, on Ben's 1-to-5 scale. */
+  englishReading: z.number().int().min(1).max(5),
   examAttempt: z.enum(["none", "failed", "passed"]),
   examGoal: z.enum(["under_three_months", "three_to_six", "six_to_twelve", "undefined"]),
   budget: z.enum(["yes", "employer", "no", "to_discuss"]),
@@ -63,6 +94,23 @@ export const answersSchema = z.object({
 export type ScannerAnswers = z.infer<typeof answersSchema>;
 
 export type Readiness = "ready" | "conditional" | "not_yet";
+
+/**
+ * The ISC² one-year waiver: a four-year degree, or an approved certification.
+ * Derived rather than asked, so the prospect never has to know the rule.
+ */
+export function grantsWaiver(answers: ScannerAnswers): boolean {
+  if (answers.hasFourYearDegree) return true;
+
+  return answers.certifications.some((certification) =>
+    (WAIVER_CERTIFICATIONS as readonly string[]).includes(certification),
+  );
+}
+
+/** A declared certification we cannot verify, so it never grants the waiver. */
+export function hasUnverifiedCertification(answers: ScannerAnswers): boolean {
+  return answers.certifications.includes("other");
+}
 
 export type ScannerScore = {
   readiness: Readiness;
@@ -79,10 +127,6 @@ export type ScannerScore = {
  *   5+ years, or 3–4 years with the one-year waiver  -> ready
  *   3–4 years without the waiver                     -> conditional (Associate)
  *   under 3 years, or still a student                -> not yet
- *
- * An unknown waiver counts as absent: the verdict stays conservative and the
- * explanation tells the prospect to check, rather than promising eligibility
- * we cannot confirm.
  */
 export function assessReadiness(answers: ScannerAnswers): Readiness {
   if (answers.professionalStatus === "student") return "not_yet";
@@ -91,7 +135,7 @@ export function assessReadiness(answers: ScannerAnswers): Readiness {
     case "five_plus":
       return "ready";
     case "three_four":
-      return answers.waiver === "yes" ? "ready" : "conditional";
+      return grantsWaiver(answers) ? "ready" : "conditional";
     default:
       return "not_yet";
   }
@@ -153,14 +197,14 @@ export function buildReasons(
     );
   } else if (readiness === "conditional") {
     reasons.push(
-      answers.waiver === "unknown"
-        ? "Avec 3 à 4 ans d'expérience, tout dépend de votre dérogation d'un an. " +
-            "Si votre diplôme ou certification la donne, vous êtes éligible ; " +
-            "sinon vous passez l'examen puis devenez Associate of ISC² en " +
-            "attendant l'année manquante."
-        : "Avec 3 à 4 ans d'expérience et sans dérogation, vous pouvez passer " +
-            "l'examen et devenir Associate of ISC² le temps de compléter la " +
-            "cinquième année.",
+      hasUnverifiedCertification(answers)
+        ? "Avec 3 à 4 ans d'expérience, tout se joue sur la dérogation d'un an. " +
+            "La certification que vous avez indiquée peut vous la donner : elle " +
+            "vaut d'être vérifiée. Sinon, vous passez l'examen et devenez " +
+            "Associate of ISC² le temps de compléter la cinquième année."
+        : "Avec 3 à 4 ans d'expérience, vous pouvez passer l'examen dès " +
+            "maintenant et devenir Associate of ISC² le temps de compléter la " +
+            "cinquième année. Le titre vous attend, l'examen est derrière vous.",
     );
   } else if (answers.professionalStatus === "student") {
     reasons.push(
@@ -192,7 +236,7 @@ export function buildReasons(
   }
 
   // 3. Délai réaliste.
-  if (answers.technicalEnglish === "basic") {
+  if (answers.englishReading <= LOW_ENGLISH_MAX_LEVEL) {
     reasons.push(
       "L'examen se passe en anglais. Avec un anglais technique encore " +
         "basique, prévoyez du temps de lecture en plus.",

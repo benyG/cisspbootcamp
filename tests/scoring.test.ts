@@ -18,8 +18,9 @@ const BASE: ScannerAnswers = {
   professionalStatus: "career_change",
   experience: "none",
   domains: [],
-  waiver: "no",
-  technicalEnglish: "intermediate",
+  hasFourYearDegree: false,
+  certifications: [],
+  englishReading: 3,
   examAttempt: "none",
   examGoal: "undefined",
   budget: "no",
@@ -36,31 +37,45 @@ describe("assessReadiness — éligibilité ISC²", () => {
     expect(assessReadiness(answers({ experience: "five_plus" }))).toBe("ready");
   });
 
-  it("3–4 ans avec dérogation : éligible", () => {
+  it("3–4 ans avec un diplôme de quatre ans : éligible", () => {
     expect(
-      assessReadiness(answers({ experience: "three_four", waiver: "yes" })),
+      assessReadiness(
+        answers({ experience: "three_four", hasFourYearDegree: true }),
+      ),
     ).toBe("ready");
   });
 
-  it("3–4 ans sans dérogation : sous conditions", () => {
+  it("3–4 ans avec une certification qualifiante : éligible", () => {
     expect(
-      assessReadiness(answers({ experience: "three_four", waiver: "no" })),
+      assessReadiness(
+        answers({ experience: "three_four", certifications: ["cisa"] }),
+      ),
+    ).toBe("ready");
+  });
+
+  it("3–4 ans sans diplôme ni certification : sous conditions", () => {
+    expect(
+      assessReadiness(answers({ experience: "three_four" })),
     ).toBe("conditional");
   });
 
-  it("3–4 ans avec dérogation incertaine : sous conditions, pas éligible", () => {
+  it("une certification non vérifiable ne donne pas la dérogation", () => {
     expect(
-      assessReadiness(answers({ experience: "three_four", waiver: "unknown" })),
+      assessReadiness(
+        answers({ experience: "three_four", certifications: ["other"] }),
+      ),
     ).toBe("conditional");
   });
 
   it("moins de 3 ans : pas encore, même avec dérogation", () => {
     expect(
-      assessReadiness(answers({ experience: "one_two", waiver: "yes" })),
+      assessReadiness(
+        answers({ experience: "one_two", hasFourYearDegree: true }),
+      ),
     ).toBe("not_yet");
-    expect(assessReadiness(answers({ experience: "none", waiver: "yes" }))).toBe(
-      "not_yet",
-    );
+    expect(
+      assessReadiness(answers({ experience: "none", hasFourYearDegree: true })),
+    ).toBe("not_yet");
   });
 
   it("étudiant : pas encore, quelle que soit l'expérience déclarée", () => {
@@ -69,7 +84,7 @@ describe("assessReadiness — éligibilité ISC²", () => {
         answers({
           professionalStatus: "student",
           experience: "five_plus",
-          waiver: "yes",
+          hasFourYearDegree: true,
         }),
       ),
     ).toBe("not_yet");
@@ -163,9 +178,9 @@ describe("scoreScanner", () => {
     expect(result.reasons[0]).toContain("ISC²");
   });
 
-  it("signale la dérogation incertaine dans l'explication", () => {
+  it("signale la certification à faire vérifier dans l'explication", () => {
     const result = scoreScanner(
-      answers({ experience: "three_four", waiver: "unknown" }),
+      answers({ experience: "three_four", certifications: ["other"] }),
     );
 
     expect(result.readiness).toBe("conditional");
@@ -187,7 +202,7 @@ describe("scoreScanner", () => {
   });
 
   it("prévient qu'un anglais basique allonge la préparation", () => {
-    const result = scoreScanner(answers({ technicalEnglish: "basic" }));
+    const result = scoreScanner(answers({ englishReading: 1 }));
 
     expect(result.reasons.join(" ")).toContain("anglais");
   });
@@ -218,6 +233,12 @@ describe("answersSchema", () => {
     ).toBe(false);
     expect(
       answersSchema.safeParse({ ...BASE, domains: ["cryptographie"] }).success,
+    ).toBe(false);
+    expect(
+      answersSchema.safeParse({ ...BASE, englishReading: 6 }).success,
+    ).toBe(false);
+    expect(
+      answersSchema.safeParse({ ...BASE, englishReading: 2.5 }).success,
     ).toBe(false);
   });
 
