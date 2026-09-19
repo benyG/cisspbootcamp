@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
@@ -259,9 +261,9 @@ export function ScannerWizard({ context, utm, initialCountry }: Props) {
               J&apos;accepte que Ben utilise ces informations pour m&apos;envoyer mon
               analyse et me recontacter au sujet du bootcamp. Désinscription en un
               clic dans chaque message.{" "}
-              <a href="/confidentialite" className="underline" target="_blank">
+              <Link href="/confidentialite" className="underline" target="_blank">
                 Politique de confidentialité
-              </a>
+              </Link>
             </span>
           </label>
           {errors["contact.consent"] && (

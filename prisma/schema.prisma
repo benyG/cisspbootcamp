@@ -291,3 +291,33 @@ model ActionLog {
   @@index([leadId, createdAt])
   @@map("actions_log")
 }
+
+/// The single Google account whose calendar takes discovery calls. One row.
+model GoogleCredential {
+  id                 Int    @id @default(1)
+  /// Account that completed the OAuth consent — may differ from ADMIN_EMAIL.
+  accountEmail       String @map("account_email") @db.VarChar(180)
+  /// Refresh token, AES-256-GCM (lib/crypto.ts). Never stored in clear.
+  refreshTokenSealed String @map("refresh_token_sealed") @db.VarChar(512)
+  calendarId         String @default("primary") @map("calendar_id") @db.VarChar(255)
+  /// Zone the availability rules are written in.
+  timeZone           String @default("Africa/Douala") @map("time_zone") @db.VarChar(64)
+
+  connectedAt DateTime @default(now()) @map("connected_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("google_credentials")
+}
+
+/// Weekly availability for discovery calls, in the coach's zone (SPECS A3).
+model AvailabilityRule {
+  id      Int    @id @default(autoincrement())
+  /// 0 = dimanche … 6 = samedi
+  weekday Int
+  /// "HH:MM"
+  start   String @db.VarChar(5)
+  end     String @db.VarChar(5)
+
+  @@index([weekday])
+  @@map("availability_rules")
+}

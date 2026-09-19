@@ -14,6 +14,9 @@ const schema = z.object({
   AUTH_GOOGLE_ID: z.string().default(""),
   AUTH_GOOGLE_SECRET: z.string().default(""),
   NEXT_PUBLIC_APP_URL: z.string().url(),
+  /** 32 bytes, base64. Required once Google Calendar is connected. */
+  GOOGLE_TOKEN_ENCRYPTION_KEY: z.string().default(""),
+  CRON_SECRET: z.string().default(""),
 });
 
 export type Env = z.infer<typeof schema>;

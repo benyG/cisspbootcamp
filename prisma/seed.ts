@@ -186,6 +186,16 @@ async function main() {
     console.log(`Cohorte déjà présente : ${cohortName}`);
   }
 
+  // Default availability (SPECS A3 example): weekday evenings, four slots.
+  // Ben adjusts it from /admin/parametres; seed only if nothing is set.
+  const rules = await prisma.availabilityRule.count();
+  if (rules === 0) {
+    await prisma.availabilityRule.createMany({
+      data: [1, 2, 3, 4, 5].map((weekday) => ({ weekday, start: "18:00", end: "19:00" })),
+    });
+    console.log("Disponibilités par défaut : lundi–vendredi 18:00–19:00");
+  }
+
   // No admin row to seed: the single admin is ADMIN_EMAIL, checked at sign-in.
   // No testimonial either — the landing hides the section while there is none.
 }

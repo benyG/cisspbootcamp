@@ -24,6 +24,14 @@ export default async function AdminHomePage() {
             Diagnostics à valider →
           </Link>
         </li>
+        <li>
+          <Link
+            href="/admin/parametres/google"
+            className="block rounded-xl border border-slate-200 bg-white px-4 py-3.5 font-semibold"
+          >
+            Agenda et disponibilités →
+          </Link>
+        </li>
       </ul>
       <p className="mt-6 text-sm text-[var(--color-muted)]">
         La file d&apos;actions complète arrive à l&apos;étape 6.

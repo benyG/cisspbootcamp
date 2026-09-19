@@ -41,8 +41,8 @@ des jetons signés.
 ## État d'avancement
 
 - [x] Étape 1 — socle : Next.js, Prisma, schéma Partie C, auth admin, tests
-- [ ] Étape 2 — scanner de profil
-- [ ] Étape 3 — booking Google Calendar
+- [x] Étape 2 — scanner de profil, validation par le coach
+- [x] Étape 3 — booking Google Calendar
 - [ ] Étape 4 — paiement Stripe et Netticket
 - [ ] Étape 5 — cohortes
 - [ ] Étape 6 — file d'actions admin

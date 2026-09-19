@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { ProfileAnalysis } from "@/lib/analysis";
@@ -68,12 +69,12 @@ export default async function ScannerResultPage({
       </article>
 
       {analysis.recommendation !== "build_first" && (
-        <a
+        <Link
           href={`/rdv?t=${token}`}
           className="mt-8 block rounded-lg bg-[var(--color-accent)] px-5 py-4 text-center text-lg font-semibold text-white"
         >
           Réserver 15 minutes avec Ben
-        </a>
+        </Link>
       )}
     </main>
   );
