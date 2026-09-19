@@ -196,6 +196,23 @@ async function main() {
     console.log("Disponibilités par défaut : lundi–vendredi 18:00–19:00");
   }
 
+  // Starting exchange rates so local prices show before the first cron run.
+  // Refreshed daily by /api/cron/rates; XAF/XOF follow the EUR peg.
+  const eurPerUsd = 0.92;
+  const seedRates: Record<string, number> = {
+    EUR: eurPerUsd,
+    XAF: eurPerUsd * 655.957,
+    XOF: eurPerUsd * 655.957,
+    CAD: 1.36,
+    CHF: 0.88,
+    MAD: 9.9,
+    TND: 3.1,
+  };
+  for (const [currency, perUsd] of Object.entries(seedRates)) {
+    await prisma.exchangeRate.upsert({ where: { currency }, create: { currency, perUsd }, update: {} });
+  }
+  console.log(`Taux de change initiaux : ${Object.keys(seedRates).length}`);
+
   // No admin row to seed: the single admin is ADMIN_EMAIL, checked at sign-in.
   // No testimonial either — the landing hides the section while there is none.
 }

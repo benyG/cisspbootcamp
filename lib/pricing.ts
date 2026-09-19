@@ -57,3 +57,94 @@ export function formatUsdCents(amountCents: number): string {
 export function isQuoteOnly(tierCode: string): boolean {
   return tierCode === QUOTE_ONLY_TIER_CODE;
 }
+
+// --- Équivalent local indicatif (SPECS A4) -------------------------------
+
+/** Currency shown next to the USD price, by country. Anything else: USD. */
+export const LOCAL_CURRENCY_BY_COUNTRY: Record<string, string> = {
+  // Zone CEMAC — XAF
+  CM: "XAF", CF: "XAF", TD: "XAF", CG: "XAF", GA: "XAF", GQ: "XAF",
+  // Zone UEMOA — XOF
+  BJ: "XOF", BF: "XOF", CI: "XOF", ML: "XOF", NE: "XOF", SN: "XOF", TG: "XOF", GW: "XOF",
+  // Euro
+  FR: "EUR", BE: "EUR", LU: "EUR", DE: "EUR", ES: "EUR", IT: "EUR", NL: "EUR", PT: "EUR", AT: "EUR", IE: "EUR", FI: "EUR",
+  CA: "CAD",
+  CH: "CHF",
+  MA: "MAD",
+  TN: "TND",
+  DZ: "DZD",
+  GN: "GNF",
+  CD: "CDF",
+  RW: "RWF",
+  MG: "MGA",
+  MU: "MUR",
+  HT: "HTG",
+};
+
+/**
+ * XAF and XOF are pegged to the euro by treaty: 1 EUR = 655.957. Kept as a
+ * constant so an exchange-rate feed that goes down never breaks the price
+ * shown to the largest part of the market.
+ */
+export const CFA_PER_EUR = 655.957;
+
+/** Units per 1 USD. Rates are fetched daily; these are the fallbacks. */
+export type RateTable = Record<string, number>;
+
+export function localCurrencyFor(country: string | null | undefined): string {
+  if (!country) return "USD";
+  return LOCAL_CURRENCY_BY_COUNTRY[country.trim().toUpperCase()] ?? "USD";
+}
+
+/**
+ * Indicative local amount, in the currency's minor unit (cents, or the unit
+ * itself for zero-decimal currencies like XAF/XOF). Returns null when no rate
+ * is known — the UI then shows USD only rather than a wrong number.
+ */
+export function convertUsdCents(
+  amountUsdCents: number,
+  currency: string,
+  rates: RateTable,
+): number | null {
+  if (currency === "USD") return amountUsdCents;
+
+  let perUsd = rates[currency];
+  if (perUsd === undefined && (currency === "XAF" || currency === "XOF") && rates.EUR) {
+    perUsd = rates.EUR * CFA_PER_EUR;
+  }
+  if (!perUsd || perUsd <= 0) return null;
+
+  const usd = amountUsdCents / 100;
+  const local = usd * perUsd;
+  return isZeroDecimal(currency) ? Math.round(local) : Math.round(local * 100);
+}
+
+/** Currencies with no minor unit, as Stripe and ISO 4217 treat them. */
+export const ZERO_DECIMAL_CURRENCIES = new Set(["XAF", "XOF", "GNF", "RWF", "MGA", "JPY", "KRW"]);
+
+export function isZeroDecimal(currency: string): boolean {
+  return ZERO_DECIMAL_CURRENCIES.has(currency);
+}
+
+/** "350 000 FCFA", "1 090 €", "1 620 $CA" — rounded for display, never for charging. */
+export function formatLocal(amountMinor: number, currency: string): string {
+  const amount = isZeroDecimal(currency) ? amountMinor : amountMinor / 100;
+  // Round indicative amounts to something a human quotes: nearest 1 000 FCFA, nearest 10 otherwise.
+  const step = currency === "XAF" || currency === "XOF" ? 1000 : 10;
+  const rounded = Math.round(amount / step) * step;
+  const number = rounded.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
+
+  switch (currency) {
+    case "XAF":
+    case "XOF":
+      return `${number} FCFA`;
+    case "EUR":
+      return `${number} €`;
+    case "CAD":
+      return `${number} $CA`;
+    case "CHF":
+      return `${number} CHF`;
+    default:
+      return `${number} ${currency}`;
+  }
+}

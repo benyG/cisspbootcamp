@@ -321,3 +321,12 @@ model AvailabilityRule {
   @@index([weekday])
   @@map("availability_rules")
 }
+
+/// Units of `currency` per 1 USD, refreshed daily by /api/cron/rates.
+model ExchangeRate {
+  currency  String   @id @db.VarChar(3)
+  perUsd    Float    @map("per_usd")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("exchange_rates")
+}
