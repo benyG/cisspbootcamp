@@ -1,0 +1,270 @@
+// Schema V1 — see docs/SPECS.md, Partie C.
+// Money is stored in cents; USD is the reference currency.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  new
+  contacted
+  booked
+  called
+  registered
+  nurture
+  lost
+}
+
+enum Readiness {
+  ready
+  conditional
+  not_yet
+}
+
+enum BookingStatus {
+  scheduled
+  done
+  no_show
+  cancelled
+}
+
+/// Outcome the coach records after the discovery call (SPECS A3).
+enum BookingOutcome {
+  registered
+  to_follow_up
+  not_now
+  not_qualified
+  no_show
+}
+
+enum CohortStatus {
+  planned
+  open
+  full
+  running
+  done
+}
+
+enum PaymentMethod {
+  stripe
+  netticket
+}
+
+enum RegistrationStatus {
+  pending
+  pending_manual
+  paid
+  refunded
+}
+
+enum MessageChannel {
+  email
+  whatsapp
+}
+
+model Lead {
+  id        Int     @id @default(autoincrement())
+  firstName String  @map("first_name") @db.VarChar(80)
+  lastName  String  @map("last_name") @db.VarChar(80)
+  email     String  @unique @db.VarChar(180)
+  whatsapp  String? @db.VarChar(32)
+  country   String  @db.VarChar(2)
+
+  /// Pricing tier code resolved from `country` (see PricingTier).
+  tier      String     @db.VarChar(32)
+  status    LeadStatus @default(new)
+  heatScore Int        @default(0) @map("heat_score")
+  readiness Readiness?
+
+  /// Explicit, timestamped RGPD consent. Null means never consented.
+  consentAt DateTime? @map("consent_at")
+  source    String?   @db.VarChar(80)
+
+  utmSource   String? @map("utm_source") @db.VarChar(120)
+  utmMedium   String? @map("utm_medium") @db.VarChar(120)
+  utmCampaign String? @map("utm_campaign") @db.VarChar(120)
+  utmContent  String? @map("utm_content") @db.VarChar(120)
+  utmTerm     String? @map("utm_term") @db.VarChar(120)
+
+  nextFollowupAt DateTime? @map("next_followup_at")
+
+  /// One-click unsubscribe (SPECS A10, Partie D).
+  unsubscribeToken String    @unique @map("unsubscribe_token") @db.VarChar(64)
+  unsubscribedAt   DateTime? @map("unsubscribed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  scannerResponses ScannerResponse[]
+  bookings         Booking[]
+  registrations    Registration[]
+  actions          ActionLog[]
+  pricingTier      PricingTier       @relation(fields: [tier], references: [code])
+
+  @@index([status, heatScore])
+  @@index([nextFollowupAt])
+  @@index([tier])
+  @@map("leads")
+}
+
+model ScannerResponse {
+  id     Int  @id @default(autoincrement())
+  leadId Int  @map("lead_id")
+  lead   Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  /// Raw questionnaire answers, kept verbatim so scoring can be replayed.
+  answers   Json
+  readiness Readiness
+  heatScore Int       @map("heat_score")
+
+  /// Signed token addressing /scanner/resultat/[token].
+  resultToken String @unique @map("result_token") @db.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([leadId])
+  @@map("scanner_responses")
+}
+
+model Booking {
+  id     Int  @id @default(autoincrement())
+  leadId Int  @map("lead_id")
+  lead   Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  googleEventId String? @unique @map("google_event_id") @db.VarChar(180)
+  meetUrl       String? @map("meet_url") @db.VarChar(255)
+
+  startsAt DateTime @map("starts_at")
+  endsAt   DateTime @map("ends_at")
+
+  /// IANA timezone the prospect booked in, shown back on every reminder.
+  timezone String @db.VarChar(64)
+
+  status  BookingStatus   @default(scheduled)
+  outcome BookingOutcome?
+  notes   String?         @db.Text
+
+  rescheduleToken String @unique @map("reschedule_token") @db.VarChar(64)
+
+  remindedAt24h DateTime? @map("reminded_at_24h")
+  remindedAt1h  DateTime? @map("reminded_at_1h")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([startsAt])
+  @@index([leadId])
+  @@map("bookings")
+}
+
+model Cohort {
+  id       Int          @id @default(autoincrement())
+  name     String       @db.VarChar(120)
+  startsAt DateTime     @map("starts_at")
+  endsAt   DateTime     @map("ends_at")
+  capacity Int          @default(10)
+  status   CohortStatus @default(planned)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  registrations Registration[]
+
+  @@index([status, startsAt])
+  @@map("cohorts")
+}
+
+model Registration {
+  id       Int    @id @default(autoincrement())
+  leadId   Int    @map("lead_id")
+  lead     Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  cohortId Int    @map("cohort_id")
+  cohort   Cohort @relation(fields: [cohortId], references: [id])
+
+  tier String @db.VarChar(32)
+
+  /// Reference amount, in USD cents.
+  amountUsd Int @map("amount_usd")
+
+  /// Indicative local amount shown at checkout, in minor units.
+  currencyLocal String? @map("currency_local") @db.VarChar(3)
+  amountLocal   Int?    @map("amount_local")
+
+  method PaymentMethod
+  status RegistrationStatus @default(pending)
+
+  stripeSessionId        String? @unique @map("stripe_session_id") @db.VarChar(255)
+  netticketTransactionId String? @unique @map("netticket_transaction_id") @db.VarChar(255)
+
+  /// Our own unique reference, carried through both payment flows.
+  reference String @unique @db.VarChar(40)
+
+  paidAt DateTime? @map("paid_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([cohortId, status])
+  @@index([leadId])
+  @@map("registrations")
+}
+
+model PricingTier {
+  code      String @id @db.VarChar(32)
+  /// Price in USD cents; 0 means "on request" (enterprise).
+  amountUsd Int    @map("amount_usd")
+  /// ISO 3166-1 alpha-2 country codes mapped to this tier.
+  countries Json
+  label     String @db.VarChar(120)
+
+  leads Lead[]
+
+  @@map("pricing_tiers")
+}
+
+model Testimonial {
+  id        Int     @id @default(autoincrement())
+  name      String  @db.VarChar(120)
+  role      String? @db.VarChar(120)
+  country   String? @db.VarChar(2)
+  text      String  @db.Text
+  videoUrl  String? @map("video_url") @db.VarChar(255)
+  published Boolean @default(false)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([published])
+  @@map("testimonials")
+}
+
+model MessageTemplate {
+  key     String         @id @db.VarChar(64)
+  channel MessageChannel
+  subject String?        @db.VarChar(255)
+  body    String         @db.Text
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("message_templates")
+}
+
+model ActionLog {
+  id     Int   @id @default(autoincrement())
+  leadId Int?  @map("lead_id")
+  lead   Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  type    String          @db.VarChar(64)
+  channel MessageChannel?
+  payload Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([leadId, createdAt])
+  @@map("actions_log")
+}

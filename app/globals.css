@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/*
+ * No web font is loaded on purpose: the audience is mostly on mobile over 3G
+ * (CADRAGE §3), and a system stack costs zero requests.
+ */
+@theme {
+  --color-ink: #0f172a;
+  --color-muted: #475569;
+  --color-accent: #0f766e;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
