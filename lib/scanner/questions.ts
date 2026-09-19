@@ -196,5 +196,5 @@ export const COUNTRIES: Option[] = [
   { value: "FR", label: "France" },
   { value: "LU", label: "Luxembourg" },
   { value: "CH", label: "Suisse" },
-  { value: "OTHER", label: "Autre pays" },
+  { value: "ZZ", label: "Autre pays" },
 ];

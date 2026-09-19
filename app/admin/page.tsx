@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { auth } from "@/auth";
 
 /**
@@ -13,8 +15,18 @@ export default async function AdminHomePage() {
       <p className="mt-2 text-[var(--color-muted)]">
         Connecté en tant que {session?.user?.email}.
       </p>
-      <p className="mt-6 text-[var(--color-muted)]">
-        La file d&apos;actions quotidienne arrive à l&apos;étape 6.
+      <ul className="mt-6 flex flex-col gap-2">
+        <li>
+          <Link
+            href="/admin/diagnostics"
+            className="block rounded-xl border border-slate-200 bg-white px-4 py-3.5 font-semibold"
+          >
+            Diagnostics à valider →
+          </Link>
+        </li>
+      </ul>
+      <p className="mt-6 text-sm text-[var(--color-muted)]">
+        La file d&apos;actions complète arrive à l&apos;étape 6.
       </p>
     </main>
   );

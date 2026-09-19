@@ -43,16 +43,25 @@ Contraintes : mobile-first (majorité du trafic africain sur mobile), chargement
 
 **Étape 2 — Capture** : prénom, nom, e-mail, WhatsApp (indicatif + numéro), consentement RGPD explicite (case non pré-cochée), lien vers politique de confidentialité.
 
-**Étape 3 — Résultat** : page personnalisée `/scanner/resultat/[token]` avec :
+**Étape 3 — Validation par le coach** *(décision de Ben, 19/09/2026 — remplace l'envoi automatique)* :
+- À la soumission, l'analyse est calculée et **enregistrée** (`scanner_responses.analysis`, statut `pending_review`), un message est rédigé automatiquement dans la voix de Ben, et le prospect reçoit seulement un accusé : « Ben regarde votre profil, réponse sous 24 h ».
+- Ben ouvre `/admin/diagnostics/[id]` : nom, pays, palier, chaleur, les axes en barres, le délai estimé, ses objectifs, et le message **dans un champ éditable**. Deux boutons : **Valider et envoyer** / **Mettre de côté**.
+- Rien ne part sans ce clic. Les diagnostics en attente depuis plus de 24 h sont signalés en rouge : le délai est une promesse faite au prospect.
+
+**Étape 4 — Résultat** : page personnalisée `/scanner/resultat/[token]`, **inaccessible (404) tant que le diagnostic n'est pas validé**, avec :
 - Verdict sur 3 niveaux : **Prêt** / **Prêt sous conditions** / **Pas encore**
-- Explication : éligibilité ISC² (expérience, dérogation), domaines forts/faibles, délai réaliste
+- Trois axes montrés au prospect : prérequis ISC², couverture des 8 domaines, anglais en lecture. Un quatrième (maturité certification) est réservé au coach.
+- Délai réaliste jusqu'à l'examen, **avec accompagnement et seul** — l'argument central : ce qui manque aux candidats, c'est quelqu'un qui tient le rythme.
+- Le message validé par Ben.
 - Appel à l'action adapté au verdict :
   - Prêt / sous conditions → « Réserver 15 min avec le coach » (→ A3)
   - Pas encore → ressources, « Je vous recontacte dans 6 mois » (lead conservé, tag `nurture`)
-- Envoi du résultat par e-mail (et WhatsApp si consenti)
+- Envoi par e-mail au moment de la validation (et WhatsApp si consenti, V1 = lien `wa.me` depuis l'admin)
 
 **Scoring** (règles, pas d'IA en V1) :
-- Éligibilité : 5+ ans, ou 4 ans + dérogation → éligible ; 3–4 sans dérogation → sous conditions (Associate of ISC²) ; < 3 ou étudiant → pas encore.
+- Éligibilité : 5+ ans, ou 3–4 ans + dérogation → éligible ; 3–4 sans dérogation → sous conditions (Associate of ISC²) ; < 3 ou étudiant → pas encore.
+- Dérogation d'un an : **déduite** d'un diplôme de 4 ans ou d'une certification de la liste (`lib/scoring.ts`, `WAIVER_CERTIFICATIONS`), jamais demandée au prospect. Une certification « autre » ne la donne pas automatiquement.
+- Délai jusqu'à l'examen (`lib/analysis.ts`) : calibré sur les cohortes passées, avec coach — senior 1 à 2 mois, médian 3 à 4, trop tôt 5 à 6. Toujours une fourchette. Le délai seul est un multiple (`SOLO_MULTIPLIER`).
 - Chaleur commerciale (interne, 0–100) : budget oui +30, employeur +20, cohorte prochaine +20, objectif < 6 mois +15, en poste +10, déjà échoué +5. Détermine la priorité dans la file du coach.
 
 ### A3. Booking d'appel de découverte `/rdv`
@@ -93,6 +102,7 @@ Contraintes : mobile-first (majorité du trafic africain sur mobile), chargement
 **Objectif** : Ben ouvre, voit 3 actions, exécute, ferme. Tenu en 1 h/jour.
 
 Page d'accueil admin = liste ordonnée par priorité, chaque ligne avec un bouton d'action directe :
+0. **Diagnostics à valider** (voir A2, étape 3) : en tête, car le prospect attend une réponse sous 24 h.
 1. **Appels du jour** : nom, heure, résumé du scanner (verdict, chaleur, points clés), lien Meet, bouton « Marquer l'issue ».
 2. **Relances dues** : leads `à relancer` dont la date de relance est atteinte → message WhatsApp/e-mail pré-rédigé, bouton « Envoyé », « Reporter ».
 3. **Paiements à confirmer** : Netticket en `pending_manual` (mode de secours).
@@ -160,13 +170,15 @@ Vue 10 mois : cohortes, inscrits/objectif, CA, taux de conversion par étape, so
 
 ```
 leads
-  id, first_name, last_name, email, whatsapp, country, tier,
+  id, first_name, last_name, email, whatsapp, country, tier, job_title, goals,
   status (new|contacted|booked|called|registered|nurture|lost),
   heat_score, readiness (ready|conditional|not_yet),
   consent_at, source, utm_*, next_followup_at, created_at
 
 scanner_responses
-  id, lead_id, answers (JSON), readiness, heat_score, result_token, created_at
+  id, lead_id, answers (JSON), readiness, heat_score, analysis (JSON),
+  coach_message, status (pending_review|approved|sent|set_aside),
+  reviewed_at, sent_at, result_token, created_at
 
 bookings
   id, lead_id, google_event_id, meet_url, starts_at, ends_at, timezone,
