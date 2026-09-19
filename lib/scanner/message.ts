@@ -1,0 +1,91 @@
+import type { ProfileAnalysis } from "@/lib/analysis";
+import type { CohortCandidate } from "@/lib/cohorts";
+import { formatCohortMonth } from "@/lib/cohorts";
+import { buildReasons, type ScannerAnswers } from "@/lib/scoring";
+
+/**
+ * The message Ben reads, edits and approves before it reaches the prospect.
+ *
+ * Written in his voice, first person, short sentences. Structure follows the
+ * tone rules in lib/analysis.ts: what you have, the gap in numbers, the path,
+ * and the cohort. The coach is the argument — what candidates lack is not
+ * material but someone to hold the pace.
+ */
+export function draftCoachMessage(input: {
+  firstName: string;
+  answers: ScannerAnswers;
+  analysis: ProfileAnalysis;
+  cohort: CohortCandidate | null;
+}): string {
+  const { firstName, answers, analysis, cohort } = input;
+  const paragraphs: string[] = [];
+
+  paragraphs.push(`Bonjour ${firstName},`);
+  paragraphs.push("J'ai regardé votre profil. Voici ce que j'en retiens.");
+
+  // 1. Le verdict, puis les raisons dans l'ordre : prérequis, domaines, délai.
+  paragraphs.push(analysis.headline);
+  paragraphs.push(buildReasons(answers, analysis.readiness).join(" "));
+
+  // 2. Le délai, avec et sans coach — l'argument central.
+  paragraphs.push(timelineParagraph(analysis, cohort));
+
+  // 3. La suite.
+  paragraphs.push(nextStepParagraph(analysis));
+
+  paragraphs.push("Ben\nCoach CISSP");
+
+  return paragraphs.join("\n\n");
+}
+
+function timelineParagraph(
+  analysis: ProfileAnalysis,
+  cohort: CohortCandidate | null,
+): string {
+  const { timeline, goalIsTight } = analysis;
+  const sentences: string[] = [];
+
+  sentences.push(
+    `Seul, avec du bon matériel, je vous vois prêt pour l'examen en ${timeline.soloLabel}.`,
+  );
+  sentences.push(
+    `Accompagné, en ${timeline.label}. La différence ne vient pas des supports : ` +
+      "elle vient de quelqu'un qui tient le rythme avec vous, semaine après semaine. " +
+      "C'est ce qui manque à la plupart des candidats au CISSP, et c'est ce que je fais.",
+  );
+
+  if (goalIsTight) {
+    sentences.push(
+      "Votre objectif de date est plus serré que cette estimation. Il reste " +
+        "jouable, à condition d'attaquer les domaines non couverts dès la première semaine.",
+    );
+  }
+
+  if (cohort && analysis.recommendation !== "build_first") {
+    sentences.push(
+      `La cohorte de ${formatCohortMonth(cohort.startsAt)} vous y amène dans ce délai.`,
+    );
+  }
+
+  return sentences.join(" ");
+}
+
+function nextStepParagraph(analysis: ProfileAnalysis): string {
+  switch (analysis.recommendation) {
+    case "now":
+      return (
+        "Prochaine étape : 15 minutes ensemble, pour vérifier que le format " +
+        "vous convient et fixer votre date d'examen. Le lien pour réserver est ci-dessous."
+      );
+    case "with_condition":
+      return (
+        "Prochaine étape : 15 minutes ensemble, pour lever la condition dont je " +
+        "parle plus haut et fixer votre date d'examen. Le lien pour réserver est ci-dessous."
+      );
+    case "build_first":
+      return (
+        "Je vous envoie de quoi avancer dès maintenant, et je reviens vers vous " +
+        "dans six mois pour refaire le point. Si votre situation change avant, écrivez-moi."
+      );
+  }
+}

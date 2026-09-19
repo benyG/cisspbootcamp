@@ -67,6 +67,14 @@ enum MessageChannel {
   whatsapp
 }
 
+/// A diagnosis reaches the prospect only once the coach has approved it.
+enum DiagnosisStatus {
+  pending_review
+  approved
+  sent
+  set_aside
+}
+
 model Lead {
   id        Int     @id @default(autoincrement())
   firstName String  @map("first_name") @db.VarChar(80)
@@ -80,6 +88,10 @@ model Lead {
   status    LeadStatus @default(new)
   heatScore Int        @default(0) @map("heat_score")
   readiness Readiness?
+
+  /// Free text from the capture step: context for the call, never scored.
+  jobTitle String? @map("job_title") @db.VarChar(120)
+  goals    String? @db.Text
 
   /// Explicit, timestamped RGPD consent. Null means never consented.
   consentAt DateTime? @map("consent_at")
@@ -122,12 +134,23 @@ model ScannerResponse {
   readiness Readiness
   heatScore Int       @map("heat_score")
 
-  /// Signed token addressing /scanner/resultat/[token].
+  /// Frozen output of lib/analysis.ts at submission time (axes, timeline).
+  analysis Json
+
+  /// Generated message, then whatever the coach rewrote before approving.
+  coachMessage String @map("coach_message") @db.Text
+
+  status     DiagnosisStatus @default(pending_review)
+  reviewedAt DateTime?       @map("reviewed_at")
+  sentAt     DateTime?       @map("sent_at")
+
+  /// Opaque token addressing /scanner/resultat/[token]; inert until approved.
   resultToken String @unique @map("result_token") @db.VarChar(64)
 
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([leadId])
+  @@index([status, createdAt])
   @@map("scanner_responses")
 }
 
