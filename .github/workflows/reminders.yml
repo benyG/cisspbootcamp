@@ -1,0 +1,38 @@
+# Booking reminders, every 15 minutes.
+#
+# Vercel's Hobby plan only allows daily crons, and the 24 h / 1 h reminders
+# need a finer tick. GitHub Actions calls the same endpoint instead, with the
+# secret held in the repository's settings. On Vercel Pro, move this schedule
+# back into vercel.json and delete this file.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   CRON_SECRET   the same value as the CRON_SECRET environment variable on Vercel
+#   APP_URL       https://cisspbootcamp.online
+#
+# GitHub pauses scheduled workflows after 60 days without a push; a commit
+# re-enables them.
+
+name: reminders
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Call /api/cron/reminders
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "APP_URL ou CRON_SECRET manquant dans les secrets du dépôt" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error --max-time 60 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/reminders"
