@@ -32,6 +32,11 @@ Le mot de passe MySQL doit être **encodé dans l'URL** : `@` devient `%40`,
 | `pnpm db:seed` | jeu de données de départ |
 | `pnpm db:studio` | explorateur de base |
 
+## Configuration des services
+
+- Google (connexion admin + agenda) : `docs/SETUP-GOOGLE.md`, pas à pas.
+- Netticket : `docs/NETTICKET.md`.
+
 ## Accès admin
 
 `/admin` est réservé à un seul compte Google, celui de `ADMIN_EMAIL`.
