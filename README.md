@@ -32,6 +32,27 @@ Le mot de passe MySQL doit être **encodé dans l'URL** : `@` devient `%40`,
 | `pnpm db:seed` | jeu de données de départ |
 | `pnpm db:studio` | explorateur de base |
 
+## Configuration des services
+
+- Google (connexion admin + agenda) : `docs/SETUP-GOOGLE.md`, pas à pas.
+- Netticket : `docs/NETTICKET.md`.
+
+## Tâches planifiées
+
+| Tâche | Où | Fréquence |
+|---|---|---|
+| Taux de change | Vercel Cron (`vercel.json`) | 1×/jour |
+| Rappels d'appel 24 h / 1 h | GitHub Actions (`.github/workflows/reminders.yml`) | toutes les 15 min |
+
+Le plan Vercel Hobby n'autorise qu'un déclenchement par jour, d'où GitHub
+Actions pour les rappels. Sur Vercel Pro, remettre la ligne
+`{ "path": "/api/cron/reminders", "schedule": "*/15 * * * *" }` dans
+`vercel.json` et supprimer le workflow. Les deux appellent le même endpoint,
+protégé par `CRON_SECRET`.
+
+Secrets GitHub à créer (Settings → Secrets and variables → Actions) :
+`APP_URL` = `https://cisspbootcamp.online`, `CRON_SECRET` = la même valeur que sur Vercel.
+
 ## Accès admin
 
 `/admin` est réservé à un seul compte Google, celui de `ADMIN_EMAIL`.
