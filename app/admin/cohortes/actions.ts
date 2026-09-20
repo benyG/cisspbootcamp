@@ -1,0 +1,59 @@
+"use server";
+
+import { revalidatePath, revalidateTag } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+
+import { auth } from "@/auth";
+import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
+import { prisma } from "@/lib/db";
+
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user?.email) throw new Error("Non autorisé");
+}
+
+const cohortSchema = z
+  .object({
+    name: z.string().trim().min(1, "Nom requis").max(120),
+    startsAt: z.coerce.date(),
+    endsAt: z.coerce.date(),
+    capacity: z.coerce.number().int().min(1).max(100),
+    status: z.enum(["planned", "open", "full", "running", "done"]),
+  })
+  .refine((c) => c.endsAt > c.startsAt, { message: "La fin doit suivre le début", path: ["endsAt"] });
+
+function parse(formData: FormData) {
+  return cohortSchema.safeParse({
+    name: formData.get("name"),
+    startsAt: formData.get("startsAt"),
+    endsAt: formData.get("endsAt"),
+    capacity: formData.get("capacity"),
+    status: formData.get("status"),
+  });
+}
+
+export async function createCohort(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const parsed = parse(formData);
+  if (!parsed.success) redirect(`/admin/cohortes?erreur=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`);
+
+  const cohort = await prisma.cohort.create({ data: parsed.data });
+  revalidatePath("/admin/cohortes");
+  revalidateTag(COHORTS_CACHE_TAG);
+  redirect(`/admin/cohortes/${cohort.id}`);
+}
+
+export async function updateCohort(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = z.coerce.number().int().positive().safeParse(formData.get("id"));
+  const parsed = parse(formData);
+  if (!id.success) redirect("/admin/cohortes");
+  if (!parsed.success) redirect(`/admin/cohortes/${id.data}?erreur=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`);
+
+  await prisma.cohort.update({ where: { id: id.data }, data: parsed.data });
+  revalidatePath("/admin/cohortes");
+  revalidatePath(`/admin/cohortes/${id.data}`);
+  revalidateTag(COHORTS_CACHE_TAG);
+  redirect(`/admin/cohortes/${id.data}?ok=1`);
+}

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   type CohortCandidate,
   availabilityQuestionLabel,
+  buildGauge,
   formatCohortMonth,
   remainingSeats,
   selectRegistrationCohort,
@@ -93,5 +94,35 @@ describe("availabilityQuestionLabel", () => {
 
     expect(label).toContain("annoncée");
     expect(label.length).toBeGreaterThan(0);
+  });
+});
+
+describe("buildGauge", () => {
+  it("compte les places restantes", () => {
+    const gauge = buildGauge({ capacity: 10, confirmed: 3, preEngaged: 0 });
+
+    expect(gauge.remaining).toBe(7);
+    expect(gauge.confirmedPercent).toBe(30);
+    expect(gauge.label).toBe("7 places restantes sur 10");
+  });
+
+  it("projette les pré-engagements sans dépasser la capacité", () => {
+    const gauge = buildGauge({ capacity: 10, confirmed: 6, preEngaged: 9 });
+
+    expect(gauge.projectedPercent).toBe(100);
+    expect(gauge.remaining).toBe(4);
+  });
+
+  it("dit « Complet » quand tout est payé", () => {
+    expect(buildGauge({ capacity: 10, confirmed: 10, preEngaged: 2 }).label).toBe("Complet");
+  });
+
+  it("accorde le singulier", () => {
+    expect(buildGauge({ capacity: 10, confirmed: 9, preEngaged: 0 }).label).toBe("1 place restante sur 10");
+  });
+
+  it("ne casse pas sur une capacité nulle ou un surbooking", () => {
+    expect(buildGauge({ capacity: 0, confirmed: 0, preEngaged: 0 }).confirmedPercent).toBe(0);
+    expect(buildGauge({ capacity: 10, confirmed: 12, preEngaged: 0 }).remaining).toBe(0);
   });
 });

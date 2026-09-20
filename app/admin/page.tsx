@@ -26,6 +26,14 @@ export default async function AdminHomePage() {
         </li>
         <li>
           <Link
+            href="/admin/cohortes"
+            className="block rounded-xl border border-slate-200 bg-white px-4 py-3.5 font-semibold"
+          >
+            Cohortes →
+          </Link>
+        </li>
+        <li>
+          <Link
             href="/admin/parametres/google"
             className="block rounded-xl border border-slate-200 bg-white px-4 py-3.5 font-semibold"
           >

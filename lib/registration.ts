@@ -1,6 +1,9 @@
 import { randomBytes } from "node:crypto";
 
+import { revalidateTag } from "next/cache";
+
 import { type CohortCandidate, formatCohortMonth, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
+import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
@@ -194,6 +197,9 @@ export async function markRegistrationPaid(input: {
       await tx.cohort.update({ where: { id: cohortId }, data: { status: "full" } });
     }
   });
+
+  // The public gauge must reflect this seat now, not in 60 s.
+  revalidateTag(COHORTS_CACHE_TAG);
 
   const cohortName = target?.name ?? registration.cohort.name;
   const cohortMonth = formatCohortMonth(target?.startsAt ?? registration.cohort.startsAt);

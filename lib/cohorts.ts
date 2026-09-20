@@ -70,3 +70,51 @@ export function availabilityQuestionLabel(
 
   return `Seriez-vous disponible pour la cohorte de ${formatCohortMonth(cohort.startsAt)} ?`;
 }
+
+// --- Jauge (SPECS A5) ---------------------------------------------------
+
+export type Gauge = {
+  capacity: number;
+  /** Paid registrations. */
+  confirmed: number;
+  /** Prospects who said "yes" to this cohort in the scanner but have not paid. */
+  preEngaged: number;
+  remaining: number;
+  /** 0–100, confirmed seats. */
+  confirmedPercent: number;
+  /** 0–100, confirmed + pre-engaged, capped at capacity — the dotted part. */
+  projectedPercent: number;
+  /** "3 places restantes sur 10" — the public wording. */
+  label: string;
+};
+
+export function buildGauge(input: { capacity: number; confirmed: number; preEngaged: number }): Gauge {
+  const capacity = Math.max(0, input.capacity);
+  const confirmed = Math.max(0, Math.min(capacity, input.confirmed));
+  const preEngaged = Math.max(0, input.preEngaged);
+  const remaining = capacity - confirmed;
+  const projected = Math.min(capacity, confirmed + preEngaged);
+  const percent = (value: number) => (capacity === 0 ? 0 : Math.round((value / capacity) * 100));
+
+  return {
+    capacity,
+    confirmed,
+    preEngaged,
+    remaining,
+    confirmedPercent: percent(confirmed),
+    projectedPercent: percent(projected),
+    label:
+      remaining === 0
+        ? "Complet"
+        : `${remaining} place${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} sur ${capacity}`,
+  };
+}
+
+/** Admin wording for CohortStatus. */
+export const COHORT_STATUS_LABEL: Record<string, string> = {
+  planned: "Planifiée",
+  open: "Inscriptions ouvertes",
+  full: "Complète",
+  running: "En cours",
+  done: "Terminée",
+};
