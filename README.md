@@ -6,7 +6,16 @@ Stratégie : `docs/CADRAGE.md` — fonctionnel et modèle de données : `docs/SP
 > Le guide d'exploitation complet (déployer, configurer Google/Stripe, ajouter un
 > témoignage) arrive à l'étape 8. Ci-dessous, le strict nécessaire pour démarrer.
 
-## Démarrer
+## Déployer
+
+Rien à taper. Chaque déploiement Vercel (`vercel.json`, `buildCommand`)
+applique les migrations en attente, puis le jeu de données de départ
+(idempotent : paliers, gabarits, cohorte, disponibilités, taux), puis construit
+le site. Si la base est injoignable, le déploiement échoue et le log le dit —
+vérifier alors que l'accès distant MySQL chez Hostinger autorise toute
+adresse (`%`).
+
+## Démarrer en local (facultatif)
 
 ```bash
 pnpm install

@@ -1,5 +1,6 @@
 {
   "framework": "nextjs",
+  "buildCommand": "pnpm db:deploy && pnpm db:seed && pnpm build",
   "crons": [
     { "path": "/api/cron/rates", "schedule": "0 5 * * *" }
   ]
