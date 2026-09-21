@@ -22,6 +22,7 @@ export default function PrivacyPage() {
         <li>La date de votre consentement ;</li>
         <li>Si vous réservez un appel : le créneau choisi et votre fuseau horaire ;</li>
         <li>Si vous vous inscrivez : le montant, le moyen de paiement et la référence de transaction. Aucun numéro de carte ne transite par ce site.</li>
+        <li>Des statistiques de fréquentation anonymes (pages vues, pays, type d&apos;appareil) via Vercel Analytics, sans cookie ni identifiant personnel.</li>
       </ul>
       <h2>Pourquoi</h2>
       <p>
