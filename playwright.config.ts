@@ -15,7 +15,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? "github" : "list",
+  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
+  // The journey walks four pages with server actions in between: 30 s per
+  // test is too tight on a cold CI runner.
+  timeout: 90_000,
   use: { baseURL, trace: "on-first-retry" },
   projects: [
     {
@@ -27,9 +30,15 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm build && pnpm start",
+    // CI builds in its own step (see .github/workflows/ci.yml) so a build
+    // failure is reported as such, not as a Playwright timeout.
+    command: process.env.CI ? "pnpm start" : "pnpm build && pnpm start",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
+    // Server-side errors (a failing server action, a missing variable) are
+    // the first thing to read when a journey step stalls.
+    stdout: "pipe",
+    stderr: "pipe",
     timeout: 180_000,
   },
 });

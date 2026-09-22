@@ -62,7 +62,14 @@ export function ScannerWizard({ context, utm, initialCountry, title = "Analyse d
   const submit = () => {
     setErrors({});
     startTransition(async () => {
-      const result = await submitScanner({ answers: toSubmission(answers), contact: { ...contact, consent: contact.consent as true }, utm });
+      let result;
+      try {
+        result = await submitScanner({ answers: toSubmission(answers), contact: { ...contact, consent: contact.consent as true }, utm });
+      } catch {
+        // Network cut or server failure: say so rather than leaving the button silent.
+        setErrors({ submit: "L'envoi a échoué. Vérifiez votre connexion et réessayez." });
+        return;
+      }
       if (result.ok) router.push(`/scanner/resultat/${result.resultToken}`);
       else setErrors(result.errors);
     });
@@ -187,6 +194,7 @@ export function ScannerWizard({ context, utm, initialCountry, title = "Analyse d
               </span>
             </label>
             {errors["contact.consent"] && <p className="text-sm text-red-700">{errors["contact.consent"]}</p>}
+            {errors.submit && <p className="text-sm text-red-700">{errors.submit}</p>}
             {Object.keys(errors).some((k) => k.startsWith("answers")) && <p className="text-sm text-red-700">Une réponse manque ou est invalide. Revenez en arrière pour vérifier.</p>}
 
             <div className="mt-2 flex items-center justify-between gap-3">
