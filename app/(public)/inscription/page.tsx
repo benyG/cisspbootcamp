@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { PromoPrice } from "@/components/offer/PromoPrice";
 import { formatCohortMonth } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 import { buildOffer } from "@/lib/registration";
+import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
 import { mobileMoneyAvailable } from "@/lib/payments/netticket";
 
@@ -31,9 +33,10 @@ export default async function RegistrationPage({
     );
   }
 
-  const [lead, result] = await Promise.all([
+  const [lead, result, settings] = await Promise.all([
     prisma.lead.findUniqueOrThrow({ where: { id: leadId }, select: { firstName: true } }),
     buildOffer(leadId),
+    loadSiteSettings().catch(() => SITE_DEFAULTS),
   ]);
 
   if (!result.offer) {
@@ -64,10 +67,9 @@ export default async function RegistrationPage({
         <p className="mt-1 text-[var(--color-muted)]">
           Démarre en {formatCohortMonth(offer.cohort.startsAt)} · 40 h sur 15 jours · en français
         </p>
-        <p className="mt-4 text-4xl font-black">{offer.usdLabel}</p>
-        {offer.localLabel && (
-          <p className="text-[var(--color-muted)]">≈ {offer.localLabel}, à titre indicatif</p>
-        )}
+        <div className="mt-4">
+          <PromoPrice amountUsdCents={offer.amountUsdCents} localLabel={offer.localLabel} offer={settings.offer} cohort={{ startsAt: offer.cohort.startsAt }} />
+        </div>
         <p className="mt-3 text-sm text-[var(--color-muted)]">
           Formation et préparation. Les frais d&apos;examen ISC² (~750 USD) se règlent séparément auprès d&apos;ISC².
         </p>

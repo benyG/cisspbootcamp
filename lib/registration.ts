@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 
 import { revalidateTag } from "next/cache";
 
-import { type CohortCandidate, formatCohortMonth, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
+import { type CohortCandidate, formatCohortMonth, isAdmissionOpen, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -44,7 +44,7 @@ export async function loadOpenCohorts(now = new Date()): Promise<CohortCandidate
       status: cohort.status,
       confirmedCount: cohort._count.registrations,
     }))
-    .filter((cohort) => cohort.startsAt > now);
+    .filter((cohort) => isAdmissionOpen(cohort.startsAt, now));
 }
 
 export type Offer = {

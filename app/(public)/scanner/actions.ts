@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { nextFollowupAt } from "@/lib/followups";
 import { sendEmail } from "@/lib/messaging/email";
+import { formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
 import { resolveTierCode } from "@/lib/pricing";
 import { draftSalesMessage } from "@/lib/scanner/ai-message";
 import { loadScannerContext, priceLabelFor } from "@/lib/scanner/context";
@@ -157,6 +158,9 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
       axes.map((a) => `• ${a.label} : ${a.detail}`).join("\n") +
       `\n\nDélai réaliste jusqu'à l'examen : ${analysis.timeline.label} accompagné, ${analysis.timeline.soloLabel} seul.\n\n` +
       `Votre analyse complète : ${resultUrl}\n\n` +
+      (context.cohort && analysis.readiness !== "not_yet"
+        ? `Prix promotionnel de lancement : ${priceLabelFor(answers.country, context.tiers)}, garanti jusqu'au ${formatAdmissionDeadline(context.cohort.startsAt)} (fin des admissions de la cohorte de ${formatCohortMonth(context.cohort.startsAt)}).\n\n`
+        : "") +
       `Je reviens vers vous personnellement sous 24 h.\n\nBen\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${lead.unsubscribeToken}`,
   });
 

@@ -2,9 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { btnPrimary, eyebrow, shell } from "@/components/landing/sections";
+import { PromoPrice } from "@/components/offer/PromoPrice";
 import type { ProfileAnalysis } from "@/lib/analysis";
 import { prospectAxes } from "@/lib/analysis";
+import { publicCohortSummary } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
+import { convertUsdCents, formatLocal, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
+import { loadRates } from "@/lib/registration";
+import { loadScannerContext } from "@/lib/scanner/context";
+import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
 import { RevealBars } from "./reveal";
 
@@ -25,9 +31,24 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const { token } = await params;
   const response = await prisma.scannerResponse.findUnique({
     where: { resultToken: token },
-    include: { lead: { select: { firstName: true } } },
+    include: { lead: { select: { firstName: true, country: true } } },
   });
   if (!response) notFound();
+
+  // The offer, priced for the prospect's country: this page is the hottest
+  // moment of the funnel (docs/CONVERSION.md §2.6), so the promotional price
+  // and the admission deadline are shown here, not only on the landing.
+  const [settings, cohort, context, rates] = await Promise.all([
+    loadSiteSettings().catch(() => SITE_DEFAULTS),
+    publicCohortSummary().catch(() => null),
+    loadScannerContext().catch(() => null),
+    loadRates().catch(() => ({})),
+  ]);
+  const tierCode = context ? resolveTierCode(response.lead.country, context.tiers) : null;
+  const tier = context && tierCode && !isQuoteOnly(tierCode) ? context.tiers.find((t) => t.code === tierCode) : null;
+  const currency = localCurrencyFor(response.lead.country);
+  const localCents = tier && currency !== "USD" ? convertUsdCents(tier.amountUsd, currency, rates) : null;
+  const localLabel = localCents !== null ? formatLocal(localCents, currency) : null;
 
   const analysis = response.analysis as unknown as ProfileAnalysis;
   const axes = prospectAxes(analysis.axes);
@@ -76,6 +97,12 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
               ? "Un appel vidéo, sans engagement, pour vérifier que le format vous convient et fixer votre date d’examen."
               : "Ben vous envoie de quoi avancer dès maintenant et revient vers vous dans six mois. Si votre situation change avant, écrivez-lui."}
           </p>
+          {canBook && tier && (
+            <div className="mt-5 rounded-[18px] border border-line bg-[#fbfffd] p-4">
+              <PromoPrice amountUsdCents={tier.amountUsd} localLabel={localLabel} offer={settings.offer} cohort={cohort ? { startsAt: cohort.startsAt } : null} />
+              {cohort && <p className="mt-2 text-[.86rem] text-muted">{cohort.gauge.label}, cohorte de {cohort.name.replace(/^Cohorte /, "")}.</p>}
+            </div>
+          )}
           {canBook ? (
             <Link href={`/rdv?t=${token}`} className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</Link>
           ) : (

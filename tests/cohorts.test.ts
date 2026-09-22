@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ADMISSION_CLOSE_DAYS,
   type CohortCandidate,
+  admissionClosesAt,
   availabilityQuestionLabel,
+  formatAdmissionDeadline,
+  isAdmissionOpen,
   buildGauge,
   formatCohortMonth,
   remainingSeats,
@@ -67,6 +71,32 @@ describe("selectRegistrationCohort", () => {
 
   it("renvoie null quand rien n'est en vente, sans lever d'erreur", () => {
     expect(selectRegistrationCohort([], NOW)).toBeNull();
+  });
+
+  it("ferme les admissions 7 jours avant le démarrage et bascule sur la suivante", () => {
+    const janvier = cohort({ id: 1 });
+    const mars = cohort({ id: 2, startsAt: new Date("2027-03-08T18:00:00.000Z") });
+    const sixJoursAvant = new Date("2027-01-05T18:00:00.000Z");
+
+    expect(selectRegistrationCohort([janvier, mars], sixJoursAvant)?.id).toBe(2);
+  });
+});
+
+describe("fenêtre d'admission", () => {
+  const startsAt = new Date("2027-01-11T18:00:00.000Z");
+
+  it("se ferme un nombre fixe de jours avant le démarrage", () => {
+    expect(ADMISSION_CLOSE_DAYS).toBe(7);
+    expect(admissionClosesAt(startsAt).toISOString()).toBe("2027-01-04T18:00:00.000Z");
+  });
+
+  it("est ouverte avant la date limite, fermée à partir d'elle", () => {
+    expect(isAdmissionOpen(startsAt, new Date("2027-01-04T17:59:59.000Z"))).toBe(true);
+    expect(isAdmissionOpen(startsAt, new Date("2027-01-04T18:00:00.000Z"))).toBe(false);
+  });
+
+  it("nomme le jour limite en français", () => {
+    expect(formatAdmissionDeadline(startsAt)).toBe("4 janvier");
   });
 });
 

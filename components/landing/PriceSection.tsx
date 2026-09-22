@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { btnPrimary, eyebrow, shell } from "@/components/landing/sections";
+import { PromoPrice } from "@/components/offer/PromoPrice";
 import { formatCohortMonth } from "@/lib/cohorts";
 import { type RateTable, convertUsdCents, formatLocal, formatUsdCents, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { COUNTRIES } from "@/lib/scanner/questions";
@@ -43,10 +44,10 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
     const known = tiers.length ? tiers : DEFAULT_TIERS;
     const code = resolveTierCode(country, known);
     const tier = known.find((t) => t.code === code);
-    if (!tier) return { usd: "sur devis", local: null as string | null };
+    if (!tier) return { usd: "sur devis", cents: null as number | null, local: null as string | null };
     const cur = localCurrencyFor(country);
     const local = cur === "USD" ? null : convertUsdCents(tier.amountUsd, cur, rates);
-    return { usd: formatUsdCents(tier.amountUsd), local: local === null ? null : formatLocal(local, cur) };
+    return { usd: formatUsdCents(tier.amountUsd), cents: tier.amountUsd, local: local === null ? null : formatLocal(local, cur) };
   }, [country, tiers, rates]);
 
   const { offer } = settings;
@@ -71,8 +72,13 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
           <select id="price-country" value={country} onChange={(e) => setCountry(e.target.value)} className="mt-1.5 w-full rounded-xl border border-line bg-white px-3.5 py-3 text-base">
             {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
-          <div className="display mt-4 text-[2.4rem] leading-none font-black tracking-[-.04em]">{price.usd}</div>
-          <div className="mt-1.5 mb-3.5 text-muted">{price.local ? `soit environ ${price.local}, à titre indicatif` : "Prix en dollars américains"}</div>
+          <div className="mt-4 mb-4">
+            {price.cents !== null ? (
+              <PromoPrice amountUsdCents={price.cents} localLabel={price.local} offer={offer} cohort={cohort ? { startsAt: new Date(cohort.startsAt) } : null} />
+            ) : (
+              <div className="display text-[2.4rem] leading-none font-black tracking-[-.04em]">{price.usd}</div>
+            )}
+          </div>
           <a href={`#evaluation`} className={btnPrimary + " w-full"}>Analyser mon profil, puis réserver →</a>
           <div className="mt-3 flex flex-wrap gap-2">
             {["Carte bancaire", "Orange Money", "MTN MoMo"].map((m) => <span key={m} className="rounded-full border border-line px-2.5 py-1 text-[.78rem] font-bold text-ink-2">{m}</span>)}

@@ -31,3 +31,17 @@ describe("splitHighlight", () => {
     expect(splitHighlight("Titre simple")).toEqual({ before: "Titre simple", highlight: "", after: "" });
   });
 });
+
+describe("prix de référence (docs/CONVERSION.md)", () => {
+  it("une section « offre » enregistrée avant l'ajout du prix de référence reste valide", () => {
+    const stored = { title: "T", text: "x", included: ["a"], soonEnabled: false, soonText: "" };
+    const parsed = siteSettingsSchema.shape.offer.parse(stored);
+    expect(parsed.referencePriceUsd).toBe(2800);
+    expect(parsed.promoLabel).toBe("Prix promotionnel de lancement");
+  });
+
+  it("accepte le prix saisi comme texte dans le formulaire admin", () => {
+    const parsed = siteSettingsSchema.shape.offer.parse({ ...SITE_DEFAULTS.offer, referencePriceUsd: "3000" });
+    expect(parsed.referencePriceUsd).toBe(3000);
+  });
+});

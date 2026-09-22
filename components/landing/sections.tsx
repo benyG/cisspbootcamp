@@ -1,9 +1,11 @@
 import Image from "next/image";
+
+import { AdmissionCountdown } from "@/components/offer/AdmissionCountdown";
 import Link from "next/link";
 
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
 import type { Gauge } from "@/lib/cohorts";
-import { formatCohortMonth } from "@/lib/cohorts";
+import { admissionClosesAt, formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
 import type { SiteSettings } from "@/lib/site-settings";
 import { splitHighlight } from "@/lib/site-settings";
 
@@ -76,6 +78,12 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: { n
                 <div className="display text-[1.6rem] leading-none font-black">{cohort.gauge.remaining} <small className="text-sm font-semibold tracking-normal text-[#cbd5df]">sur {cohort.gauge.capacity}</small></div>
               </div>
               <div className="flex-1"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>
+            </div>
+          )}
+          {cohort && (
+            <div className="rounded-2xl bg-ink px-4 py-3 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)]">
+              <div className="text-[.7rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase">{settings.offer.promoLabel} · jusqu’au {formatAdmissionDeadline(cohort.startsAt)}</div>
+              <div className="mt-1"><AdmissionCountdown closesAt={admissionClosesAt(cohort.startsAt).toISOString()} dark compact /></div>
             </div>
           )}
           <div className="rounded-[18px] border border-line bg-white p-4 shadow-[0_20px_50px_rgba(7,26,51,.14)]">
