@@ -26,13 +26,22 @@ let resultToken = "";
 test("scanner : 11 questions, consentement, résultat immédiat", async ({ page }) => {
   await page.goto("/scanner");
 
+  // The wizard shows the chosen option for a beat (160 ms) before moving on, so
+  // each answer waits for its question to be on screen: two consecutive
+  // questions answered "Oui" would otherwise receive the same click twice.
+  const answer = async (question: RegExp, option: string | RegExp) => {
+    await expect(page.getByRole("heading", { name: question })).toBeVisible();
+    await page.getByRole("button", { name: option, exact: typeof option === "string" }).click();
+  };
+
   // 1. Experience first — the hook question (Ben, 21/09/2026).
-  await page.getByRole("button", { name: "5 ans ou plus" }).click();
-  await page.getByRole("button", { name: "En poste" }).click();
-  await page.getByRole("button", { name: "Oui", exact: true }).click();
+  await answer(/années d'expérience/i, "5 ans ou plus");
+  await answer(/situation professionnelle/i, "En poste");
+  await answer(/diplôme académique/i, "Oui");
   // Certifications: none.
-  await page.getByRole("button", { name: /aucune, continuer/i }).click();
+  await answer(/certifications possédez-vous/i, /aucune, continuer/i);
   // Domains: five of the eight.
+  await expect(page.getByRole("heading", { name: /domaines du CISSP/i })).toBeVisible();
   for (const label of [
     "Sécurité et gestion des risques",
     "Sécurité des actifs",
@@ -43,12 +52,13 @@ test("scanner : 11 questions, consentement, résultat immédiat", async ({ page 
     await page.getByLabel(label).check();
   }
   await page.getByRole("button", { name: /^continuer/i }).click();
-  await page.getByRole("button", { name: "4", exact: true }).click();
-  await page.getByRole("button", { name: "Non, jamais" }).click();
-  await page.getByRole("button", { name: "Dans 3 à 6 mois" }).click();
-  await page.getByRole("button", { name: "Oui", exact: true }).click();
-  await page.getByRole("button", { name: "Oui", exact: true }).click();
+  await answer(/niveau en anglais/i, "4");
+  await answer(/déjà passé l'examen/i, "Non, jamais");
+  await answer(/quand souhaitez-vous passer/i, "Dans 3 à 6 mois");
+  await answer(/inscription à .* envisageable/i, "Oui");
+  await answer(/disponible pour la cohorte/i, "Oui");
   // Country last (Ben's decision): Cameroon → Africa tier, 625 USD.
+  await expect(page.getByRole("heading", { name: /dans quel pays résidez-vous/i })).toBeVisible();
   await page.locator("#scanner-country").selectOption("CM");
 
   // Capture with an explicit, unchecked-by-default consent.
