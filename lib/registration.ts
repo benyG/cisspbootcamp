@@ -6,6 +6,7 @@ import { type CohortCandidate, formatCohortMonth, remainingSeats, selectRegistra
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { nextFollowupAt } from "@/lib/followups";
 import { sendEmail } from "@/lib/messaging/email";
 import { type RateTable, convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 
@@ -120,9 +121,16 @@ export async function startRegistration(input: { leadId: number; method: "stripe
     },
   });
 
-  await prisma.actionLog.create({
-    data: { leadId: input.leadId, type: "registration_started", payload: { registrationId: registration.id, method: input.method } },
-  });
+  await prisma.$transaction([
+    prisma.actionLog.create({
+      data: { leadId: input.leadId, type: "registration_started", payload: { registrationId: registration.id, method: input.method } },
+    }),
+    // Seat reserved, not paid → J+1 then J+3 (SPECS A6).
+    prisma.lead.update({
+      where: { id: input.leadId },
+      data: { nextFollowupAt: nextFollowupAt("unpaid", 0, new Date()), followupCount: 0 },
+    }),
+  ]);
 
   return { registration, offer } as const;
 }

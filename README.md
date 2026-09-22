@@ -75,6 +75,6 @@ des jetons signés.
 - [x] Étape 3 — booking Google Calendar
 - [~] Étape 4 — paiement : Stripe fait, Netticket en attente de l'événement et des réponses XOF/Wave
 - [x] Étape 5 — cohortes
-- [ ] Étape 6 — file d'actions admin
+- [x] Étape 6 — file d'actions admin, fiche lead, paramètres
 - [x] Étape 7 — landing page (prototype validé le 21/09)
 - [ ] Étape 8 — parcours Playwright complet et guide d'exploitation

@@ -104,6 +104,12 @@ model Lead {
   utmTerm     String? @map("utm_term") @db.VarChar(120)
 
   nextFollowupAt DateTime? @map("next_followup_at")
+  /// How many follow-ups have gone out since the last stage change (J+2, then J+7).
+  followupCount  Int       @default(0) @map("followup_count")
+
+  /// Coach's free notes and tags (SPECS A7).
+  notes String? @db.Text
+  tags  Json?
 
   /// One-click unsubscribe (SPECS A10, Partie D).
   unsubscribeToken String    @unique @map("unsubscribe_token") @db.VarChar(64)

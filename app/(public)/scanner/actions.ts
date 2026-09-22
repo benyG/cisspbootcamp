@@ -5,6 +5,7 @@ import { z } from "zod";
 import { analyseProfile, prospectAxes } from "@/lib/analysis";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { nextFollowupAt } from "@/lib/followups";
 import { sendEmail } from "@/lib/messaging/email";
 import { resolveTierCode } from "@/lib/pricing";
 import { draftSalesMessage } from "@/lib/scanner/ai-message";
@@ -75,6 +76,8 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
   const analysis = analyseProfile(answers);
   const consentAt = new Date();
   const resultToken = createToken();
+  // Scanner without a call → J+2 (SPECS A6). A "pas encore" lead is parked in nurture instead.
+  const followup = analysis.readiness === "not_yet" ? null : nextFollowupAt("scanner", 0, consentAt);
 
   // A placeholder until the AI draft lands; the admin shows it as "en cours".
   const placeholder = "Rédaction du message en cours…";
@@ -102,6 +105,8 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
         utmTerm: utm?.term,
         unsubscribeToken: createToken(),
         status: analysis.readiness === "not_yet" ? "nurture" : "new",
+        nextFollowupAt: followup,
+        followupCount: 0,
       },
       update: {
         firstName: contact.firstName,
@@ -115,6 +120,8 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
         goals: contact.goals || null,
         consentAt,
         unsubscribedAt: null,
+        nextFollowupAt: followup,
+        followupCount: 0,
       },
     });
 
