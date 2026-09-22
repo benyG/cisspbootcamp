@@ -22,10 +22,11 @@ export type CohortWithGauge = {
 };
 
 export async function listCohortsWithGauge(): Promise<CohortWithGauge[]> {
+  const now = new Date();
   const [cohorts, preEngaged] = await Promise.all([
     prisma.cohort.findMany({
       orderBy: { startsAt: "asc" },
-      include: { _count: { select: { registrations: { where: { status: "paid" } } } } },
+      include: { _count: { select: { registrations: { where: { status: "paid" } }, seatHolds: { where: { releasedAt: null, expiresAt: { gt: now } } } } } },
     }),
     prisma.scannerResponse.count({
       where: {
@@ -35,7 +36,6 @@ export async function listCohortsWithGauge(): Promise<CohortWithGauge[]> {
     }),
   ]);
 
-  const now = new Date();
   const nextOpen = cohorts.find((c) => c.status === "open" && isAdmissionOpen(c.startsAt, now));
 
   return cohorts.map((cohort) => ({
@@ -48,6 +48,7 @@ export async function listCohortsWithGauge(): Promise<CohortWithGauge[]> {
     gauge: buildGauge({
       capacity: cohort.capacity,
       confirmed: cohort._count.registrations,
+      held: cohort._count.seatHolds,
       preEngaged: nextOpen?.id === cohort.id ? preEngaged : 0,
     }),
   }));

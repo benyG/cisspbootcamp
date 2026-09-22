@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { sendDueReminders } from "@/lib/booking";
 import { env } from "@/lib/env";
+import { processSeatHolds } from "@/lib/seat-holds";
 import { safeEquals } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const result = await sendDueReminders();
-  return NextResponse.json(result);
+  const [reminders, holds] = await Promise.all([sendDueReminders(), processSeatHolds()]);
+  return NextResponse.json({ ...reminders, holds });
 }

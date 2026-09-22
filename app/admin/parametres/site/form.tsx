@@ -53,6 +53,7 @@ export function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
         { name: "referencePriceUsd", label: "Prix de référence du marché, en USD entiers (0 pour masquer la comparaison)" },
         { name: "referenceSource", label: "Source du prix de référence, affichée telle quelle" },
         { name: "referenceCheckedOn", label: "Date de vérification de ce prix (ex. septembre 2026)" },
+        { name: "directRegistrationForReady", label: "Laisser un profil « prêt » s'inscrire avant la validation du message de relance", checkbox: true },
       ]} />
       <Section title="FAQ" section="faq" initial={initial.faq} fields={[
         { name: "", label: "Une question par bloc : question | réponse", rows: 12, list: ["q", "a"], root: true },

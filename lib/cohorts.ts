@@ -14,6 +14,8 @@ export type CohortCandidate = {
   status: string;
   /** Paid registrations already confirmed on this cohort. */
   confirmedCount: number;
+  /** Seats kept for prospects after their call (SeatHold), not yet paid. */
+  heldCount?: number;
 };
 
 /** Only cohorts in this state can take a registration. */
@@ -43,7 +45,7 @@ export function formatAdmissionDeadline(startsAt: Date): string {
 }
 
 export function remainingSeats(cohort: CohortCandidate): number {
-  return Math.max(0, cohort.capacity - cohort.confirmedCount);
+  return Math.max(0, cohort.capacity - cohort.confirmedCount - (cohort.heldCount ?? 0));
 }
 
 export function hasSeats(cohort: CohortCandidate): boolean {
@@ -100,31 +102,38 @@ export type Gauge = {
   capacity: number;
   /** Paid registrations. */
   confirmed: number;
+  /** Seats held for a prospect after the call, counted as taken until they expire. */
+  held: number;
   /** Prospects who said "yes" to this cohort in the scanner but have not paid. */
   preEngaged: number;
   remaining: number;
   /** 0–100, confirmed seats. */
   confirmedPercent: number;
+  /** 0–100, confirmed + held seats. */
+  takenPercent: number;
   /** 0–100, confirmed + pre-engaged, capped at capacity — the dotted part. */
   projectedPercent: number;
   /** "3 places restantes sur 10" — the public wording. */
   label: string;
 };
 
-export function buildGauge(input: { capacity: number; confirmed: number; preEngaged: number }): Gauge {
+export function buildGauge(input: { capacity: number; confirmed: number; preEngaged: number; held?: number }): Gauge {
   const capacity = Math.max(0, input.capacity);
   const confirmed = Math.max(0, Math.min(capacity, input.confirmed));
+  const held = Math.max(0, Math.min(capacity - confirmed, input.held ?? 0));
   const preEngaged = Math.max(0, input.preEngaged);
-  const remaining = capacity - confirmed;
-  const projected = Math.min(capacity, confirmed + preEngaged);
+  const remaining = capacity - confirmed - held;
+  const projected = Math.min(capacity, confirmed + held + preEngaged);
   const percent = (value: number) => (capacity === 0 ? 0 : Math.round((value / capacity) * 100));
 
   return {
     capacity,
     confirmed,
+    held,
     preEngaged,
     remaining,
     confirmedPercent: percent(confirmed),
+    takenPercent: percent(confirmed + held),
     projectedPercent: percent(projected),
     label:
       remaining === 0

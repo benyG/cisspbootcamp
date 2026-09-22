@@ -6,6 +6,10 @@ import { prisma } from "@/lib/db";
 import { formatUsdCents } from "@/lib/pricing";
 import { waMeLink } from "@/lib/messaging/templates";
 
+import { HOLD_HOURS, activeHoldFor, formatDeadline } from "@/lib/seat-holds";
+
+import { holdSeatAction, releaseHoldAction } from "@/app/admin/actions";
+
 import { deleteLead, markLost, registerManually, scheduleFollowup, updateLead } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +40,8 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   if (!lead) notFound();
 
   const response = lead.scannerResponses[0];
+  const hold = await activeHoldFor(lead.id);
+  const holdRefusal = lead.status !== "registered" ? await prisma.actionLog.findFirst({ where: { leadId: lead.id, type: "seat_hold_refused", createdAt: { gt: new Date(Date.now() - 60_000) } }, orderBy: { createdAt: "desc" } }) : null;
   const analysis = response?.analysis as ProfileAnalysis | undefined;
   const tags = Array.isArray(lead.tags) ? (lead.tags as string[]) : [];
   const toLocal = (d: Date | null) => (d ? new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16) : "");
@@ -70,7 +76,15 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         <form action={scheduleFollowup}><input type="hidden" name="leadId" value={lead.id} /><button className={ghost}>Relancer dans 3 j</button></form>
         {!lead.registrations.some((r) => r.status === "paid") && <form action={registerManually}><input type="hidden" name="leadId" value={lead.id} /><button className={ghost}>Inscrire manuellement</button></form>}
         {lead.status !== "lost" && <form action={markLost}><input type="hidden" name="leadId" value={lead.id} /><button className={ghost}>Marquer perdu</button></form>}
+        {!hold && lead.status !== "registered" && lead.status !== "lost" && <form action={holdSeatAction}><input type="hidden" name="leadId" value={lead.id} /><button className={ghost}>Tenir la place {HOLD_HOURS} h</button></form>}
       </div>
+      {hold && (
+        <p className="mt-3 rounded-lg border border-accent/20 bg-accent-soft px-3 py-2 text-sm">
+          Place tenue dans la {hold.cohort.name} jusqu&apos;au {formatDeadline(hold.expiresAt)}{hold.reminderSentAt ? " · rappel envoyé" : ""}.
+          <form action={releaseHoldAction} className="mt-1 inline"><input type="hidden" name="holdId" value={hold.id} /><input type="hidden" name="leadId" value={lead.id} /><button className="ml-2 underline">Libérer la place</button></form>
+        </p>
+      )}
+      {holdRefusal && !hold && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Place non tenue : {String((holdRefusal.payload as { error?: string })?.error ?? "")}</p>}
 
       <form action={updateLead} className="mt-5 grid gap-3 rounded-xl border border-line bg-white p-4">
         <input type="hidden" name="leadId" value={lead.id} />

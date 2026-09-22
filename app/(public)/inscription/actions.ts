@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { StripeNotConfiguredError, createCheckoutSession } from "@/lib/payments/stripe";
 import { startRegistration } from "@/lib/registration";
+import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 import { recordServerEvent } from "@/lib/tracking/server";
 
 /** Lead behind a scanner result token — the only way into /inscription in V1. */
@@ -14,9 +15,14 @@ export async function leadIdFromToken(token: string | undefined): Promise<number
   if (!token || token.length < 10) return null;
   const response = await prisma.scannerResponse.findUnique({
     where: { resultToken: token },
-    select: { leadId: true, status: true },
+    select: { leadId: true, status: true, readiness: true },
   });
-  if (!response || response.status === "pending_review" || response.status === "set_aside") return null;
+  if (!response || response.status === "set_aside") return null;
+  if (response.status === "pending_review") {
+    // A "ready" profile may skip the wait when Ben allows it (site settings, offer).
+    const settings = await loadSiteSettings().catch(() => SITE_DEFAULTS);
+    if (!(response.readiness === "ready" && settings.offer.directRegistrationForReady)) return null;
+  }
   return response.leadId;
 }
 

@@ -31,10 +31,22 @@ export async function loadRates(): Promise<RateTable> {
   return Object.fromEntries(rows.map((row) => [row.currency, row.perUsd]));
 }
 
-export async function loadOpenCohorts(now = new Date()): Promise<CohortCandidate[]> {
+/**
+ * Open cohorts with their taken seats. Seats held for other prospects count
+ * as taken; the lead's own hold (if any) does not, so the seat kept for them
+ * is theirs to buy.
+ */
+export async function loadOpenCohorts(now = new Date(), forLeadId?: number): Promise<CohortCandidate[]> {
   const cohorts = await prisma.cohort.findMany({
     where: { status: "open" },
-    include: { _count: { select: { registrations: { where: { status: "paid" } } } } },
+    include: {
+      _count: {
+        select: {
+          registrations: { where: { status: "paid" } },
+          seatHolds: { where: { releasedAt: null, expiresAt: { gt: now }, ...(forLeadId ? { leadId: { not: forLeadId } } : {}) } },
+        },
+      },
+    },
   });
   return cohorts
     .map((cohort) => ({
@@ -44,6 +56,7 @@ export async function loadOpenCohorts(now = new Date()): Promise<CohortCandidate
       capacity: cohort.capacity,
       status: cohort.status,
       confirmedCount: cohort._count.registrations,
+      heldCount: cohort._count.seatHolds,
     }))
     .filter((cohort) => isAdmissionOpen(cohort.startsAt, now));
 }
@@ -76,7 +89,7 @@ export async function buildOffer(leadId: number, now = new Date()): Promise<{ of
   const tier = tiers.find((t) => t.code === tierCode);
   if (!tier) return { offer: null, reason: "quote_only" };
 
-  const cohort = selectRegistrationCohort(await loadOpenCohorts(now), now);
+  const cohort = selectRegistrationCohort(await loadOpenCohorts(now, leadId), now);
   if (!cohort) return { offer: null, reason: "no_cohort" };
 
   const currencyLocal = localCurrencyFor(lead.country);
@@ -194,6 +207,11 @@ export async function markRegistrationPaid(input: {
       },
     });
     await tx.lead.update({ where: { id: registration.leadId }, data: { status: "registered", nextFollowupAt: null } });
+    // The seat that was held for them is now theirs for good.
+    await tx.seatHold.updateMany({
+      where: { leadId: registration.leadId, releasedAt: null },
+      data: { releasedAt: new Date(), releaseReason: "paid" },
+    });
     await tx.actionLog.create({
       data: {
         leadId: registration.leadId,

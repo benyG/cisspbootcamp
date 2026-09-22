@@ -156,3 +156,22 @@ describe("buildGauge", () => {
     expect(buildGauge({ capacity: 10, confirmed: 12, preEngaged: 0 }).remaining).toBe(0);
   });
 });
+
+describe("places tenues (docs/CONVERSION.md §2.4)", () => {
+  it("une place tenue compte comme prise dans la jauge et dans les places restantes", () => {
+    const gauge = buildGauge({ capacity: 10, confirmed: 3, held: 2, preEngaged: 1 });
+    expect(gauge.remaining).toBe(5);
+    expect(gauge.label).toBe("5 places restantes sur 10");
+    expect(gauge.confirmedPercent).toBe(30);
+    expect(gauge.takenPercent).toBe(50);
+    expect(gauge.projectedPercent).toBe(60);
+  });
+
+  it("les places tenues ne dépassent jamais la capacité", () => {
+    expect(buildGauge({ capacity: 10, confirmed: 9, held: 5, preEngaged: 0 }).remaining).toBe(0);
+  });
+
+  it("remainingSeats retire les places tenues d'une cohorte candidate", () => {
+    expect(remainingSeats(cohort({ confirmedCount: 4, heldCount: 3 }))).toBe(3);
+  });
+});

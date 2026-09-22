@@ -23,7 +23,7 @@ export async function loadScannerContext(now = new Date()): Promise<ScannerConte
     prisma.cohort.findMany({
       where: { status: "open" },
       include: {
-        _count: { select: { registrations: { where: { status: "paid" } } } },
+        _count: { select: { registrations: { where: { status: "paid" } }, seatHolds: { where: { releasedAt: null, expiresAt: { gt: now } } } } },
       },
     }),
   ]);
@@ -35,6 +35,7 @@ export async function loadScannerContext(now = new Date()): Promise<ScannerConte
     capacity: cohort.capacity,
     status: cohort.status,
     confirmedCount: cohort._count.registrations,
+    heldCount: cohort._count.seatHolds,
   }));
 
   const cohort = selectRegistrationCohort(candidates, now);

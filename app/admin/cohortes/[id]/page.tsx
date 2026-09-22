@@ -34,7 +34,8 @@ export default async function CohortPage({
 
   const paid = cohort.registrations.filter((r) => r.status === "paid");
   const pending = cohort.registrations.filter((r) => r.status !== "paid" && r.status !== "refunded");
-  const gauge = buildGauge({ capacity: cohort.capacity, confirmed: paid.length, preEngaged: 0 });
+  const held = await prisma.seatHold.count({ where: { cohortId: cohort.id, releasedAt: null, expiresAt: { gt: new Date() } } });
+  const gauge = buildGauge({ capacity: cohort.capacity, confirmed: paid.length, preEngaged: 0, held });
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">

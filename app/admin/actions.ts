@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { nextFollowupAt, postponedAt } from "@/lib/followups";
 import { markRegistrationPaid } from "@/lib/registration";
+import { holdSeat, releaseHold } from "@/lib/seat-holds";
 
 async function requireAdmin() {
   const session = await auth();
@@ -101,5 +102,26 @@ export async function inviteToBook(formData: FormData): Promise<void> {
     prisma.lead.update({ where: { id: leadId.data }, data: { status: "contacted", nextFollowupAt: nextFollowupAt("scanner", 0, new Date()), followupCount: 0 } }),
     prisma.actionLog.create({ data: { leadId: leadId.data, type: "invited_to_book", channel: "whatsapp" } }),
   ]);
+  revalidatePath("/admin");
+}
+
+/** "Tenir la place 48 h" from the lead sheet (docs/CONVERSION.md §2.4). */
+export async function holdSeatAction(formData: FormData): Promise<void> {
+  await auth();
+  const leadId = id.parse(formData.get("leadId"));
+  const result = await holdSeat(leadId);
+  if (!result.ok) {
+    await prisma.actionLog.create({ data: { leadId, type: "seat_hold_refused", payload: { error: result.error } } });
+  }
+  revalidatePath(`/admin/leads/${leadId}`);
+  revalidatePath("/admin");
+}
+
+export async function releaseHoldAction(formData: FormData): Promise<void> {
+  await auth();
+  const holdId = id.parse(formData.get("holdId"));
+  const leadId = id.parse(formData.get("leadId"));
+  await releaseHold(holdId, "manual");
+  revalidatePath(`/admin/leads/${leadId}`);
   revalidatePath("/admin");
 }

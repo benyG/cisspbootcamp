@@ -28,6 +28,7 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
               </div>
               <p className="text-sm text-[var(--color-muted)]">
                 {formatCohortMonth(cohort.startsAt)} · admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)} · {cohort.gauge.confirmed} payée{cohort.gauge.confirmed > 1 ? "s" : ""}
+                {cohort.gauge.held > 0 && ` · ${cohort.gauge.held} tenue${cohort.gauge.held > 1 ? "s" : ""}`}
                 {cohort.gauge.preEngaged > 0 && ` · ${cohort.gauge.preEngaged} pré-engagé${cohort.gauge.preEngaged > 1 ? "s" : ""}`}
               </p>
               <div className="mt-3"><CohortGauge gauge={cohort.gauge} /></div>
