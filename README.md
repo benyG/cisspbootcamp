@@ -73,7 +73,7 @@ des jetons signés.
 - [x] Étape 1 — socle : Next.js, Prisma, schéma Partie C, auth admin, tests
 - [x] Étape 2 — scanner de profil, validation par le coach
 - [x] Étape 3 — booking Google Calendar
-- [~] Étape 4 — paiement : Stripe fait, Netticket en attente de l'événement et des réponses XOF/Wave
+- [x] Étape 4 — paiement : Stripe et Netticket (mobile money, zone XAF)
 - [x] Étape 5 — cohortes
 - [x] Étape 6 — file d'actions admin, fiche lead, paramètres
 - [x] Étape 7 — landing page (prototype validé le 21/09)

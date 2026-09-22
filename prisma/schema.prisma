@@ -244,12 +244,14 @@ model Registration {
 }
 
 model PricingTier {
-  code      String @id @db.VarChar(32)
+  code                String  @id @db.VarChar(32)
   /// Price in USD cents; 0 means "on request" (enterprise).
-  amountUsd Int    @map("amount_usd")
+  amountUsd           Int     @map("amount_usd")
   /// ISO 3166-1 alpha-2 country codes mapped to this tier.
-  countries Json
-  label     String @db.VarChar(120)
+  countries           Json
+  label               String  @db.VarChar(120)
+  /// Netticket ticket code selling this tier (docs/NETTICKET.md); null = no mobile money.
+  netticketTicketCode String? @map("netticket_ticket_code") @db.VarChar(64)
 
   leads Lead[]
 

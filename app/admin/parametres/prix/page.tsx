@@ -22,6 +22,7 @@ export default async function PricingPage() {
               <label className="flex flex-col gap-1 text-sm"><span className="font-medium">USD</span><input name="amountUsd" type="number" min={0} step={1} defaultValue={t.amountUsd / 100} className={input} /></label>
             </div>
             <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Pays (codes à deux lettres)</span><textarea name="countries" rows={2} defaultValue={(Array.isArray(t.countries) ? (t.countries as string[]) : []).join(", ")} className={input} /></label>
+            <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Code de ticket Netticket <span className="text-muted">(mobile money ; vide = désactivé pour ce palier)</span></span><input name="netticketTicketCode" defaultValue={t.netticketTicketCode ?? ""} placeholder="ex. CISSP-AFR" className={input} /></label>
             <div className="flex justify-end"><button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Enregistrer</button></div>
           </form>
         ))}

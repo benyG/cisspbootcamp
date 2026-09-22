@@ -16,13 +16,15 @@ export async function updateTier(formData: FormData): Promise<void> {
     label: z.string().trim().min(1).max(120),
     amountUsd: z.coerce.number().min(0).max(100_000),
     countries: z.string().max(2000),
-  }).safeParse({ code: formData.get("code"), label: formData.get("label"), amountUsd: formData.get("amountUsd"), countries: formData.get("countries") });
+    netticketTicketCode: z.string().trim().max(64).optional().or(z.literal("")),
+  }).safeParse({ code: formData.get("code"), label: formData.get("label"), amountUsd: formData.get("amountUsd"), countries: formData.get("countries"), netticketTicketCode: formData.get("netticketTicketCode") });
   if (!parsed.success) return;
-  const { code, label, amountUsd, countries } = parsed.data;
+  const { code, label, amountUsd, countries, netticketTicketCode } = parsed.data;
   await prisma.pricingTier.update({
     where: { code },
     data: {
       label,
+      netticketTicketCode: netticketTicketCode || null,
       amountUsd: Math.round(amountUsd * 100),
       countries: countries.split(/[\s,]+/).map((c) => c.trim().toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)),
     },

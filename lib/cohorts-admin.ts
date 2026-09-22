@@ -56,18 +56,30 @@ export async function listCohortsWithGauge(): Promise<CohortWithGauge[]> {
 /** Cache tag for anything that changes the public gauge: payments, cohort edits. */
 export const COHORTS_CACHE_TAG = "cohorts";
 
+export type PublicCohort = { name: string; startsAt: Date; gauge: Gauge };
+
+/**
+ * unstable_cache serialises its result to JSON, so a Date comes back as a
+ * string. The cached layer therefore carries an ISO string, and the public
+ * function rebuilds the Date — the bug that took the landing down on 22/09.
+ */
+const cachedPublicCohort = unstable_cache(
+  async (): Promise<{ name: string; startsAt: string; gauge: Gauge } | null> => {
+    const cohorts = await listCohortsWithGauge();
+    const now = Date.now();
+    const next = cohorts.find((c) => c.status === "open" && c.startsAt.getTime() > now);
+    return next ? { name: next.name, startsAt: next.startsAt.toISOString(), gauge: next.gauge } : null;
+  },
+  ["public-cohort-summary-v2"],
+  { revalidate: 60, tags: [COHORTS_CACHE_TAG] },
+);
+
 /**
  * What the landing shows: the next open cohort and its public gauge, or null.
  * Cached 60 s (CLAUDE.md: public reads must not hit MySQL on every visit) and
  * invalidated by tag the moment a seat is paid, so the gauge stays honest.
  */
-export const publicCohortSummary = unstable_cache(
-  async (): Promise<{ name: string; startsAt: Date; gauge: Gauge } | null> => {
-    const cohorts = await listCohortsWithGauge();
-    const now = Date.now();
-    const next = cohorts.find((c) => c.status === "open" && c.startsAt.getTime() > now);
-    return next ? { name: next.name, startsAt: next.startsAt, gauge: next.gauge } : null;
-  },
-  ["public-cohort-summary"],
-  { revalidate: 60, tags: [COHORTS_CACHE_TAG] },
-);
+export async function publicCohortSummary(): Promise<PublicCohort | null> {
+  const cached = await cachedPublicCohort();
+  return cached ? { ...cached, startsAt: new Date(cached.startsAt) } : null;
+}

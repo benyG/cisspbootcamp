@@ -50,6 +50,8 @@ export async function loadOpenCohorts(now = new Date()): Promise<CohortCandidate
 export type Offer = {
   cohort: CohortCandidate;
   tierCode: string;
+  country: string;
+  netticketTicketCode: string | null;
   amountUsdCents: number;
   usdLabel: string;
   currencyLocal: string;
@@ -83,6 +85,8 @@ export async function buildOffer(leadId: number, now = new Date()): Promise<{ of
     offer: {
       cohort,
       tierCode,
+      country: lead.country,
+      netticketTicketCode: tier.netticketTicketCode,
       amountUsdCents: tier.amountUsd,
       usdLabel: formatUsdCents(tier.amountUsd),
       currencyLocal,
