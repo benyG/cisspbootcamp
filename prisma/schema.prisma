@@ -119,6 +119,7 @@ model Lead {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   scannerResponses ScannerResponse[]
+  funnelEvents     FunnelEvent[]
   bookings         Booking[]
   registrations    Registration[]
   actions          ActionLog[]
@@ -348,4 +349,34 @@ model SiteSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("site_settings")
+}
+
+/// One funnel event (docs/CONVERSION.md §3): first-party, no third party, no
+/// personal data beyond the optional lead link. Visitors are a random cookie.
+model FunnelEvent {
+  id        Int     @id @default(autoincrement())
+  /// Random first-party cookie, 90 days. Null for server-side events without a browser (webhooks).
+  visitorId String? @map("visitor_id") @db.VarChar(48)
+  leadId    Int?    @map("lead_id")
+  lead      Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  /// landing_view, cta_click, scanner_start, scanner_step, scanner_submit, …
+  name  String  @db.VarChar(40)
+  /// Scanner question number for scanner_step; null otherwise.
+  step  Int?
+  /// The main dimension of the event: CTA position, question id, FAQ question, payment method, verdict.
+  label String? @db.VarChar(160)
+  /// ISO country, when known (scanner_submit, paid).
+  country String? @db.VarChar(2)
+
+  utmSource   String? @map("utm_source") @db.VarChar(120)
+  utmMedium   String? @map("utm_medium") @db.VarChar(120)
+  utmCampaign String? @map("utm_campaign") @db.VarChar(120)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([name, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([leadId])
+  @@map("funnel_events")
 }

@@ -1,6 +1,7 @@
 import { PriceSection } from "@/components/landing/PriceSection";
 import { Coach, Faq, Footer, Hero, Method, Proof, Testimonials, Topbar, Video, eyebrow, shell } from "@/components/landing/sections";
 import { ScannerWizard } from "@/components/scanner/ScannerWizard";
+import { TrackView } from "@/components/tracking/TrackView";
 import { publicCohortSummary } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { loadRates } from "@/lib/registration";
@@ -27,6 +28,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <TrackView name="landing_view" />
       <Topbar />
       <main>
         <Hero settings={settings} cohort={cohort} />

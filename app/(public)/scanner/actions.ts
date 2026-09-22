@@ -13,6 +13,7 @@ import { draftSalesMessage } from "@/lib/scanner/ai-message";
 import { loadScannerContext, priceLabelFor } from "@/lib/scanner/context";
 import { answersSchema } from "@/lib/scoring";
 import { createToken } from "@/lib/tokens";
+import { recordServerEvent } from "@/lib/tracking/server";
 
 const contactSchema = z.object({
   firstName: z.string().trim().min(1, "Prénom requis").max(80),
@@ -143,6 +144,14 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
     });
 
     return { lead, response };
+  });
+
+  await recordServerEvent({
+    name: "scanner_submit",
+    leadId: lead.id,
+    label: analysis.readiness,
+    country: answers.country,
+    utm: utm ? { source: utm.source, medium: utm.medium, campaign: utm.campaign } : null,
   });
 
   const resultUrl = `${env.NEXT_PUBLIC_APP_URL}/scanner/resultat/${resultToken}`;

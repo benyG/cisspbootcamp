@@ -86,6 +86,11 @@ test("scanner : 11 questions, consentement, résultat immédiat", async ({ page 
 
   const lead = await prisma.lead.findUniqueOrThrow({ where: { email: prospect.email } });
   expect(lead.consentAt).not.toBeNull();
+
+  // The tunnel is measured: the questionnaire and its result left events behind.
+  await expect.poll(async () => prisma.funnelEvent.count({ where: { leadId: lead.id, name: "scanner_submit" } })).toBe(1);
+  await expect.poll(async () => prisma.funnelEvent.count({ where: { name: "scanner_step", step: 11 } })).toBeGreaterThan(0);
+  await expect.poll(async () => prisma.funnelEvent.count({ where: { name: "result_view" } })).toBeGreaterThan(0);
   expect(lead.country).toBe("CM");
   expect(lead.tier).toBe("africa");
   expect(lead.readiness).toBe("ready");
@@ -189,6 +194,7 @@ test("paiement : seul le webhook Stripe signé rend la place payée", async ({ p
 
   const paid = await prisma.registration.findUniqueOrThrow({ where: { id: registration.id } });
   expect(paid.status).toBe("paid");
+  expect(await prisma.funnelEvent.count({ where: { leadId: lead.id, name: "paid" } })).toBe(1);
   expect(paid.paidAt).not.toBeNull();
   expect(paid.stripeSessionId).toBe(`cs_e2e_${stamp}`);
   expect((await prisma.lead.findUniqueOrThrow({ where: { id: lead.id } })).status).toBe("registered");

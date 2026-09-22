@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { btnPrimary, eyebrow, shell } from "@/components/landing/sections";
 import { PromoPrice } from "@/components/offer/PromoPrice";
+import { TrackLink } from "@/components/tracking/TrackLink";
+import { track } from "@/lib/tracking/client";
 import { formatCohortMonth } from "@/lib/cohorts";
 import { type RateTable, convertUsdCents, formatLocal, formatUsdCents, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { COUNTRIES } from "@/lib/scanner/questions";
@@ -69,7 +71,7 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
         </div>
         <div className="border-t border-line pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
           <label htmlFor="price-country" className="text-[.78rem] font-extrabold tracking-[.06em] text-muted uppercase">Votre pays</label>
-          <select id="price-country" value={country} onChange={(e) => setCountry(e.target.value)} className="mt-1.5 w-full rounded-xl border border-line bg-white px-3.5 py-3 text-base">
+          <select id="price-country" value={country} onChange={(e) => { setCountry(e.target.value); track("price_country_change", { label: e.target.value }); }} className="mt-1.5 w-full rounded-xl border border-line bg-white px-3.5 py-3 text-base">
             {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
           <div className="mt-4 mb-4">
@@ -79,7 +81,7 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
               <div className="display text-[2.4rem] leading-none font-black tracking-[-.04em]">{price.usd}</div>
             )}
           </div>
-          <a href={`#evaluation`} className={btnPrimary + " w-full"}>Analyser mon profil, puis réserver →</a>
+          <TrackLink href="#evaluation" label="prix" className={btnPrimary + " w-full"}>Analyser mon profil, puis réserver →</TrackLink>
           <div className="mt-3 flex flex-wrap gap-2">
             {["Carte bancaire", "Orange Money", "MTN MoMo"].map((m) => <span key={m} className="rounded-full border border-line px-2.5 py-1 text-[.78rem] font-bold text-ink-2">{m}</span>)}
           </div>
