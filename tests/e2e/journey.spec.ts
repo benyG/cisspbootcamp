@@ -97,7 +97,8 @@ test("réservation : un créneau réel, confirmé, enregistré", async ({ page }
   await expect(page.getByRole("heading", { level: 1 })).toContainText(`${prospect.firstName}, choisissez votre créneau.`);
   await expect(page.getByText(/heures affichées dans votre fuseau/i)).toBeVisible();
 
-  const slot = page.getByRole("button", { pressed: false }).filter({ hasText: /^\d{1,2}:\d{2}$/ }).first();
+  // Slots are the buttons labelled with a time; the first one is chosen.
+  const slot = page.getByRole("button").filter({ hasText: /^\d{1,2}:\d{2}$/ }).first();
   await slot.click();
   await expect(slot).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: /confirmer ce créneau/i }).click();
