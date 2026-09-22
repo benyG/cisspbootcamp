@@ -1,19 +1,49 @@
 @import "tailwindcss";
 
 /*
- * No web font is loaded on purpose: the audience is mostly on mobile over 3G
- * (CADRAGE §3), and a system stack costs zero requests.
+ * Design tokens — from the validated landing prototype (docs/DESIGN.md).
+ * Paper ground, night-blue ink, one green accent. Fonts are self-hosted by
+ * next/font (see app/layout.tsx): no runtime request leaves the site.
+ *
+ * The legacy names (--color-ink, --color-muted, --color-accent) are kept so
+ * every screen built before the redesign picks the new palette up unchanged.
  */
 @theme {
-  --color-ink: #0f172a;
-  --color-muted: #475569;
-  --color-accent: #0f766e;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  --color-ink: #071a33;
+  --color-ink-2: #14324f;
+  --color-muted: #607085;
+  --color-paper: #f7f8f6;
+  --color-accent: #0f8e73;
+  --color-accent-bright: #17b890;
+  --color-accent-soft: #dff8f0;
+  --color-accent-ink: #0d6d5b;
+  --color-line: #dfe5e8;
+  --color-warning: #f6b73c;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --shadow-card: 0 10px 24px rgba(7, 26, 51, 0.05);
+  --shadow-panel: 0 24px 70px rgba(7, 26, 51, 0.12);
+  --radius-panel: 22px;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: #ffffff;
+  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  line-height: 1.55;
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
 }
