@@ -16,7 +16,8 @@ export type QueueItem =
   | { kind: "call"; bookingId: number; leadId: number; name: string; when: string; meetUrl: string | null; readiness: string | null; heat: number; goals: string | null; timeline: string | null }
   | { kind: "followup"; leadId: number; name: string; heat: number; stage: string; waLink: string | null; emailSubject: string; emailBody: string; email: string; overdueDays: number }
   | { kind: "payment"; registrationId: number; leadId: number; name: string; reference: string; amountUsd: number; cohortName: string; ageHours: number }
-  | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string };
+  | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
+  | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean };
 
 export type Kpis = { leadsThisWeek: number; callsThisWeek: number; confirmed: number; capacity: number; cohortName: string | null };
 
@@ -103,6 +104,15 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
     const vars = leadVars({ firstName: l.firstName, lastName: l.lastName, appUrl: env.NEXT_PUBLIC_APP_URL, resultToken: l.scannerResponses[0]?.resultToken, ...cohortVars });
     const body = renderTemplate(tpl.invite_to_book?.body ?? "Bonjour {{prenom}}, 15 minutes pour en parler ? {{lien_rdv}}", vars);
     items.push({ kind: "hot", leadId: l.id, name: `${l.firstName} ${l.lastName}`, heat: l.heatScore, readiness: l.readiness, waLink: l.whatsapp ? waMeLink(l.whatsapp, body) : null, email: l.email, inviteBody: body });
+  }
+
+  const holds = await prisma.seatHold.findMany({
+    where: { releasedAt: null, expiresAt: { gt: now } },
+    orderBy: { expiresAt: "asc" },
+    include: { lead: { select: { id: true, firstName: true, lastName: true } }, cohort: { select: { name: true } } },
+  });
+  for (const h of holds) {
+    items.push({ kind: "hold", holdId: h.id, leadId: h.lead.id, name: `${h.lead.firstName} ${h.lead.lastName}`, cohortName: h.cohort.name, hoursLeft: Math.max(0, Math.round((h.expiresAt.getTime() - now.getTime()) / 3_600_000)), reminded: h.reminderSentAt !== null });
   }
 
   return {

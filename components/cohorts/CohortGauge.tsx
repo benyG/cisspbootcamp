@@ -25,6 +25,13 @@ export function CohortGauge({ gauge, showLabel = true, dark = false }: { gauge: 
             }}
           />
         )}
+        {gauge.takenPercent > gauge.confirmedPercent && (
+          <div
+            className={"absolute inset-y-0 left-0 rounded-full " + (dark ? "bg-accent-bright" : "bg-[var(--color-accent)]")}
+            style={{ width: `${gauge.takenPercent}%`, opacity: 0.55 }}
+            title="Places tenues après un appel"
+          />
+        )}
         <div
           className={"absolute inset-y-0 left-0 rounded-full " + (dark ? "bg-accent-bright" : "bg-[var(--color-accent)]")}
           style={{ width: `${gauge.confirmedPercent}%` }}

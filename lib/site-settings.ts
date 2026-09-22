@@ -58,6 +58,8 @@ export const siteSettingsSchema = z.object({
     referenceSource: short(140).default("Formation officielle ISC² (Official Training)"),
     referenceCheckedOn: short(40).default("septembre 2026"),
     promoLabel: short(80).default("Prix promotionnel de lancement"),
+    /** Let a "ready" profile open the registration page before Ben validates the sales message. */
+    directRegistrationForReady: z.boolean().default(false),
   }),
   faq: z.array(z.object({ q: short(160), a: line(700) })).max(12),
   contact: z.object({
@@ -143,6 +145,7 @@ export const SITE_DEFAULTS: SiteSettings = {
     referenceSource: "Formation officielle ISC² (Official Training)",
     referenceCheckedOn: "septembre 2026",
     promoLabel: "Prix promotionnel de lancement",
+    directRegistrationForReady: false,
   },
   faq: [
     { q: "Faut-il vraiment 5 ans d’expérience ?", a: "ISC² exige 5 ans d’expérience dans au moins 2 des 8 domaines. Un diplôme de 4 ans ou une certification reconnue en compte pour 1. Avec 3 à 4 ans, vous pouvez passer l’examen et devenir Associate of ISC² le temps de compléter. L’analyse de profil vous le dit précisément." },

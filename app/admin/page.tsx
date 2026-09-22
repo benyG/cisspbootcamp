@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { loadQueue } from "@/lib/action-queue";
 import { formatUsdCents } from "@/lib/pricing";
 
-import { confirmManualPayment, followupPostpone, followupSent, inviteToBook, markCallOutcome } from "./actions";
+import { confirmManualPayment, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,7 @@ export default async function AdminHomePage() {
     followup: items.filter((i) => i.kind === "followup"),
     payment: items.filter((i) => i.kind === "payment"),
     hot: items.filter((i) => i.kind === "hot"),
+    hold: items.filter((i) => i.kind === "hold"),
   };
 
   return (
@@ -81,6 +82,14 @@ export default async function AdminHomePage() {
               <input name="transactionId" placeholder="N° transaction" className="w-32 rounded-lg border border-line px-2 py-1.5 text-sm" />
               <button className={primary}>Confirmer</button>
             </form>
+          </Row>
+        ))}
+      </Group>
+
+      <Group title="Places tenues" count={groups.hold.length}>
+        {groups.hold.map((i) => i.kind === "hold" && (
+          <Row key={`h${i.holdId}`} name={i.name} meta={`${i.cohortName} · libérée dans ${i.hoursLeft} h${i.reminded ? " · rappel envoyé" : ""}`} leadId={i.leadId}>
+            <form action={releaseHoldAction}><input type="hidden" name="holdId" value={i.holdId} /><input type="hidden" name="leadId" value={i.leadId} /><button className={ghost}>Libérer</button></form>
           </Row>
         ))}
       </Group>

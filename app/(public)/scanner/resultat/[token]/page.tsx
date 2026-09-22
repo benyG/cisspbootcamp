@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db";
 import { convertUsdCents, formatLocal, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { loadRates } from "@/lib/registration";
 import { loadScannerContext } from "@/lib/scanner/context";
+import { QUESTIONS } from "@/lib/scanner/questions";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
 import { RevealBars } from "./reveal";
@@ -52,10 +53,15 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const localCents = tier && currency !== "USD" ? convertUsdCents(tier.amountUsd, currency, rates) : null;
   const localLabel = localCents !== null ? formatLocal(localCents, currency) : null;
 
+  const answers = response.answers as { examGoal?: string };
+  const goalQuestion = QUESTIONS.find((q) => q.id === "examGoal");
+  const goalLabel = goalQuestion && "options" in goalQuestion ? goalQuestion.options.find((o) => o.value === answers.examGoal)?.label ?? null : null;
+
   const analysis = response.analysis as unknown as ProfileAnalysis;
   const axes = prospectAxes(analysis.axes);
   const verdict = VERDICT[analysis.readiness];
   const canBook = analysis.recommendation !== "build_first";
+  const canRegisterNow = response.status === "approved" || response.status === "sent" || (analysis.readiness === "ready" && settings.offer.directRegistrationForReady);
 
   return (
     <main className={shell + " py-8 sm:py-12"}>
@@ -80,6 +86,11 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
             <p className="mt-2 text-[.9rem] text-muted">d’après ce que Ben observe chez les candidats qui préparent sans cadre.</p>
           </div>
         </section>
+        {goalLabel && (
+          <p className="mt-3 text-[.95rem] text-ink-2">
+            <b>Votre objectif :</b> {goalLabel.charAt(0).toLowerCase() + goalLabel.slice(1)}. Seul, comptez {analysis.timeline.soloLabel} ; accompagné, {analysis.timeline.label}.
+          </p>
+        )}
         {analysis.goalIsTight && (
           <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-[.92rem] text-amber-900">Votre objectif de date est plus serré que cette estimation. Il reste jouable, à condition d’attaquer les domaines non couverts dès la première semaine.</p>
         )}
@@ -93,11 +104,25 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
           </ul>
         </section>
 
+        {canBook && (
+          <section className="mt-8 rounded-[18px] bg-ink p-5 text-white">
+            <div className="text-[.72rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase">Ce que coûte un essai raté</div>
+            <ul className="mt-3 grid gap-2 text-[.95rem] text-[#e6ebf1] sm:grid-cols-3">
+              <li><b className="display block text-[1.5rem] text-white">~750 USD</b>de frais d’examen ISC², à repayer intégralement.</li>
+              <li><b className="display block text-[1.5rem] text-white">30 jours</b>d’attente minimum avant de pouvoir repasser.</li>
+              <li><b className="display block text-[1.5rem] text-white">Des semaines</b>de révision à refaire, et la promotion qui attend.</li>
+            </ul>
+            {tier && <p className="mt-3 text-[.86rem] text-[#cbd5df]">Le bootcamp coûte moins qu’un seul échec, et il est conçu pour qu’il n’y en ait pas.</p>}
+          </section>
+        )}
+
         <section className="mt-10 rounded-[22px] border border-line bg-white p-6 shadow-[var(--shadow-panel)]">
           <h2 className="display text-[1.6rem] leading-tight font-black">{canBook ? "Prochaine étape : 15 minutes avec Ben." : "Prochaine étape : construire votre éligibilité."}</h2>
           <p className="mt-2 text-ink-2">
             {canBook
-              ? "Un appel vidéo, sans engagement, pour vérifier que le format vous convient et fixer votre date d’examen."
+              ? analysis.readiness === "conditional"
+                ? "Un appel vidéo, sans engagement : Ben confirme votre éligibilité ISC² avec vous, puis vous fixez ensemble votre date d’examen et le plan pour combler les domaines encore faibles."
+                : "Un appel vidéo, sans engagement, pour vérifier que le format vous convient et fixer votre date d’examen."
               : "Ben vous envoie de quoi avancer dès maintenant et revient vers vous dans six mois. Si votre situation change avant, écrivez-lui."}
           </p>
           {canBook && tier && (
@@ -107,7 +132,14 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
             </div>
           )}
           {canBook ? (
-            <TrackLink href={`/rdv?t=${token}`} event="book_click" label="resultat" className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</TrackLink>
+            <>
+              <TrackLink href={`/rdv?t=${token}`} event="book_click" label="resultat" className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</TrackLink>
+              {canRegisterNow && tier && (
+                <TrackLink href={`/inscription?t=${token}`} event="cta_click" label="resultat-inscription" className="mt-3 inline-flex w-full items-center justify-center rounded-[14px] border border-line bg-white px-5 py-3.5 font-extrabold">
+                  Je connais déjà mon choix : m’inscrire →
+                </TrackLink>
+              )}
+            </>
           ) : (
             <Link href="/" className={btnPrimary + " mt-5 w-full"}>Retour à l’accueil</Link>
           )}
