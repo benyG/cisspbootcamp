@@ -217,7 +217,29 @@ async function main() {
   // No testimonial either — the landing hides the section while there is none.
 }
 
-main()
+/**
+ * The seed runs inside the Vercel build, right after the migrations. A one-
+ * second network blip towards the database (seen on 22/09) must not fail a
+ * whole deployment: retry a few times before giving up.
+ */
+async function withRetries<T>(task: () => Promise<T>, attempts = 4): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/Can't reach database server|ECONNRESET|ETIMEDOUT|Server has closed the connection/i.test(message) || attempt === attempts) throw error;
+      const wait = attempt * 5_000;
+      console.warn(`Base injoignable (tentative ${attempt}/${attempts}), nouvel essai dans ${wait / 1000} s`);
+      await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+  }
+  throw lastError;
+}
+
+withRetries(main)
   .then(() => prisma.$disconnect())
   .catch(async (error) => {
     console.error(error);
