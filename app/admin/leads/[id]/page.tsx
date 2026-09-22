@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { formatUsdCents } from "@/lib/pricing";
 import { waMeLink } from "@/lib/messaging/templates";
 
+import { syncLeadTests } from "@/lib/examboot/service";
 import { HOLD_HOURS, activeHoldFor, formatDeadline } from "@/lib/seat-holds";
 
 import { holdSeatAction, releaseHoldAction } from "@/app/admin/actions";
@@ -27,6 +28,8 @@ const LOG: Record<string, string> = {
 /** Lead sheet (SPECS A7): timeline, scanner, notes, status, tags, actions. */
 export default async function LeadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  // Scores revealed since the last visit are pulled now, so the sheet is current.
+  await syncLeadTests(Number(id));
   const lead = await prisma.lead.findUnique({
     where: { id: Number(id) },
     include: {
