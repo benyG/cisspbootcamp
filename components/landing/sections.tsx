@@ -60,21 +60,27 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: { n
         <p className="mt-3 text-[.88rem] text-muted">{hero.microcopy}</p>
       </div>
 
-      <div className="relative min-h-[420px] sm:min-h-[560px]">
-        {cohort && (
-          <div className="absolute inset-x-4 top-3 z-10 flex items-center gap-3 rounded-2xl bg-ink px-4 py-3 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)] sm:inset-x-auto sm:top-6 sm:right-0 sm:block sm:w-[220px]">
-            <div className="text-[.72rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase">Places restantes</div>
-            <div className="display text-[1.4rem] leading-[1.05] font-black sm:mt-1 sm:text-[2rem]">{cohort.gauge.remaining} <small className="text-base font-semibold tracking-normal text-[#cbd5df]">sur {cohort.gauge.capacity}</small></div>
-            <div className="flex-1 sm:mt-2.5"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>
-          </div>
-        )}
+      <div className="relative min-h-[460px] sm:min-h-[600px]">
+        {/* The portrait fills the block, head at the top: nothing may sit on the face. */}
         <div className="absolute inset-0 flex items-end justify-center sm:left-14">
           <div className="absolute inset-x-0 bottom-0 h-[78%] rounded-[36px] bg-gradient-to-b from-accent-bright/10 to-accent-bright/[.02]" />
           <Image src="/images/coach-hero.webp" alt={`${coach.name}, coach CISSP`} width={900} height={1006} priority unoptimized className="relative h-full w-full object-contain object-bottom drop-shadow-[0_30px_40px_rgba(7,26,51,.18)]" />
         </div>
-        <div className="absolute bottom-6 left-4 w-[calc(100%-2rem)] rounded-[18px] border border-line bg-white p-4 shadow-[0_20px_50px_rgba(7,26,51,.14)] sm:left-0 sm:w-[280px]">
-          <strong className="display block text-base">{coach.name}</strong>
-          <span className="mt-1 block text-[.86rem] text-muted">{coach.tagline}</span>
+        {/* Both cards stack over the jacket, bottom-left, on every screen size. */}
+        <div className="absolute inset-x-4 bottom-6 flex flex-col gap-3 sm:inset-x-auto sm:left-0 sm:w-[280px]">
+          {cohort && (
+            <div className="flex items-center gap-4 rounded-2xl bg-ink px-4 py-3 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)]">
+              <div>
+                <div className="text-[.7rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase">Places restantes</div>
+                <div className="display text-[1.6rem] leading-none font-black">{cohort.gauge.remaining} <small className="text-sm font-semibold tracking-normal text-[#cbd5df]">sur {cohort.gauge.capacity}</small></div>
+              </div>
+              <div className="flex-1"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>
+            </div>
+          )}
+          <div className="rounded-[18px] border border-line bg-white p-4 shadow-[0_20px_50px_rgba(7,26,51,.14)]">
+            <strong className="display block text-base">{coach.name}</strong>
+            <span className="mt-1 block text-[.86rem] text-muted">{coach.tagline}</span>
+          </div>
         </div>
       </div>
     </section>
