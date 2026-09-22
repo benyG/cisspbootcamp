@@ -34,6 +34,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
       bookings: { orderBy: { startsAt: "desc" }, take: 5 },
       registrations: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { name: true } } } },
       actions: { orderBy: { createdAt: "desc" }, take: 40 },
+      practiceTests: { orderBy: { createdAt: "desc" }, take: 5 },
       pricingTier: true,
     },
   });
@@ -97,6 +98,20 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Notes</span><textarea name="notes" rows={4} defaultValue={lead.notes ?? ""} className={input} /></label>
         <div className="flex justify-end"><button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Enregistrer</button></div>
       </form>
+
+      {lead.practiceTests.length > 0 && (
+        <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
+          <h2 className="text-xs font-extrabold tracking-[.06em] text-muted uppercase">Tests ExamBoot</h2>
+          <ul className="mt-2 grid gap-1">
+            {lead.practiceTests.map((t) => (
+              <li key={t.id}>
+                {t.createdAt.toLocaleDateString("fr-FR")} · {t.placement} · {t.status === "completed" ? <b>{t.percent} % ({t.correct}/{t.questions}{t.nickname ? `, ${t.nickname}` : ""})</b> : <span className="text-muted">pas encore de score</span>}
+                {" "}<a href={t.url} target="_blank" rel="noopener" className="underline">ouvrir</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {(lead.bookings.length > 0 || lead.registrations.length > 0) && (
         <section className="mt-5 grid gap-2 text-sm">

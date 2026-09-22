@@ -12,6 +12,7 @@ import {
 } from "@/lib/calendar/slots";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { examBootEnabled } from "@/lib/examboot/client";
 import { sendEmail } from "@/lib/messaging/email";
 import { createToken } from "@/lib/tokens";
 import { recordServerEvent } from "@/lib/tracking/server";
@@ -289,6 +290,9 @@ function reminderText(
     `Bonjour ${booking.lead.firstName},\n\n` +
     `Petit rappel : nous nous parlons ${when}, ${formatWhen(booking.startsAt, booking.timezone)} (heure de ${booking.timezone}).\n\n` +
     (booking.meetUrl ? `Lien de visio : ${booking.meetUrl}\n\n` : "") +
+    (when === "demain" && examBootEnabled()
+      ? `Avant l'appel, si vous avez dix minutes : cinq vraies questions d'examen, pour que je cale mes conseils sur votre niveau. ${base}/test-cissp?b=${booking.rescheduleToken}&from=rappel-24h\n\n`
+      : "") +
     `Un empêchement ? ${base}/rdv/${booking.rescheduleToken}\n\n` +
     `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${booking.lead.unsubscribeToken}`
   );

@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { PracticeTestBox } from "@/components/examboot/PracticeTestBox";
 import { AdmissionCountdown } from "@/components/offer/AdmissionCountdown";
 import { TrackFaq } from "@/components/tracking/TrackFaq";
 import { TrackLink } from "@/components/tracking/TrackLink";
@@ -8,6 +9,7 @@ import Link from "next/link";
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
 import type { Gauge } from "@/lib/cohorts";
 import { admissionClosesAt, formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
+import { examBootEnabled } from "@/lib/examboot/client";
 import type { SiteSettings } from "@/lib/site-settings";
 import { splitHighlight } from "@/lib/site-settings";
 
@@ -140,6 +142,11 @@ export function Method({ settings }: { settings: SiteSettings }) {
             </div>
           ))}
         </div>
+        {examBootEnabled() && (
+          <div className="mt-3.5">
+            <PracticeTestBox placement="landing-methode" dark title="Voyez par vous-même : 5 vraies questions d’examen" text="Pas une démo. Cinq questions du vrai niveau CISSP, tirées d’une banque d’examen, corrigées à la fin. Sans compte, en dix minutes. Puis revenez ici : l’analyse de profil vous dit quoi en faire." />
+          </div>
+        )}
       </div>
     </section>
   );
@@ -230,6 +237,11 @@ export function Faq({ settings }: { settings: SiteSettings }) {
             </TrackFaq>
           ))}
         </div>
+        {examBootEnabled() && (
+          <div className="mt-6 max-w-[860px]">
+            <PracticeTestBox placement="faq" compact title="Une question que la FAQ ne règle pas : « suis-je au niveau ? ». Cinq vraies questions y répondent." />
+          </div>
+        )}
       </div>
     </section>
   );

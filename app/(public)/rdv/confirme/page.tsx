@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { PracticeTestBox } from "@/components/examboot/PracticeTestBox";
 import { formatWhen } from "@/lib/booking";
+import { examBootEnabled } from "@/lib/examboot/client";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +39,9 @@ export default async function BookingConfirmedPage({
       <p className="text-sm text-[var(--color-muted)]">
         Un empêchement ? <Link href={`/rdv/${t}`} className="underline">Déplacer ou annuler</Link>.
       </p>
+      {examBootEnabled() && (
+        <PracticeTestBox placement="rdv-confirme" bookingToken={t} title="Avant l’appel : 5 questions pour que Ben cale ses conseils" text="Dix minutes, cinq vraies questions d’examen. Ben voit votre score et arrive à l’appel avec des conseils pour vous, pas des généralités." />
+      )}
       {booking.lead.source === "direct_link" && (
         <Link href="/scanner" className="mt-4 rounded-lg border border-[var(--color-accent)] px-5 py-3 text-center font-semibold text-[var(--color-accent)]">
           Avant l&apos;appel : 3 minutes pour analyser votre profil →

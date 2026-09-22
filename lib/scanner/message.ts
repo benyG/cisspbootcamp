@@ -75,12 +75,14 @@ function nextStepParagraph(analysis: ProfileAnalysis): string {
     case "now":
       return (
         "Prochaine étape : 15 minutes ensemble, pour vérifier que le format " +
-        "vous convient et fixer votre date d'examen. Le lien pour réserver est ci-dessous."
+        "vous convient et fixer votre date d'examen. Le lien pour réserver est ci-dessous. " +
+        "D'ici là, si vous voulez vous situer sur cinq vraies questions d'examen, le lien du test est là aussi : dites-moi votre score."
       );
     case "with_condition":
       return (
         "Prochaine étape : 15 minutes ensemble, pour lever la condition dont je " +
-        "parle plus haut et fixer votre date d'examen. Le lien pour réserver est ci-dessous."
+        "parle plus haut et fixer votre date d'examen. Le lien pour réserver est ci-dessous. " +
+        "D'ici là, cinq vraies questions d'examen vous diront où vous en êtes : le lien du test est là aussi."
       );
     case "build_first":
       return (

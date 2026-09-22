@@ -121,6 +121,7 @@ model Lead {
   scannerResponses ScannerResponse[]
   funnelEvents     FunnelEvent[]
   seatHolds        SeatHold[]
+  practiceTests    PracticeTest[]
   bookings         Booking[]
   registrations    Registration[]
   actions          ActionLog[]
@@ -403,4 +404,36 @@ model SeatHold {
   @@index([cohortId, releasedAt, expiresAt])
   @@index([leadId])
   @@map("seat_holds")
+}
+
+/// An ExamBoot practice test created in one click (docs/CONVERSION.md §8).
+/// One row per created test; the score comes back through the results
+/// endpoint and is kept here for the lead sheet and the tunnel.
+model PracticeTest {
+  id        Int     @id @default(autoincrement())
+  /// ExamBoot test code; the public URL is https://examboot.net/shared/<code>.
+  code      String  @unique @db.VarChar(80)
+  url       String  @db.VarChar(255)
+  /// Where the click came from: resultat, email-resultat, relance, rdv-confirme, rappel-24h, landing-methode, faq, daily.
+  placement String  @db.VarChar(40)
+  leadId    Int?    @map("lead_id")
+  lead      Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  visitorId String? @map("visitor_id") @db.VarChar(48)
+
+  /// pending | completed
+  status     String    @default("pending") @db.VarChar(20)
+  questions  Int       @default(5)
+  nickname   String?   @db.VarChar(80)
+  percent    Int?
+  correct    Int?
+  finishedAt DateTime? @map("finished_at")
+  /// Last time the results endpoint was asked; polling stops 30 min after creation.
+  checkedAt  DateTime? @map("checked_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([leadId, createdAt])
+  @@index([status, createdAt])
+  @@index([placement, createdAt])
+  @@map("practice_tests")
 }

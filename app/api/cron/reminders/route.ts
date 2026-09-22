@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { sendDueReminders } from "@/lib/booking";
 import { env } from "@/lib/env";
+import { sweepPendingTests } from "@/lib/examboot/service";
 import { processSeatHolds } from "@/lib/seat-holds";
 import { safeEquals } from "@/lib/tokens";
 
@@ -14,6 +15,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [reminders, holds] = await Promise.all([sendDueReminders(), processSeatHolds()]);
-  return NextResponse.json({ ...reminders, holds });
+  const [reminders, holds, tests] = await Promise.all([sendDueReminders(), processSeatHolds(), sweepPendingTests()]);
+  return NextResponse.json({ ...reminders, holds, tests });
 }

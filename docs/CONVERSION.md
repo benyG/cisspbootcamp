@@ -264,13 +264,26 @@ que comme argument secondaire, jamais à la place de l'analyse de profil.
 5. **FAQ**, réponse à « l'examen est en anglais » : « essayez cinq questions
    en conditions réelles ». Traite l'objection par l'expérience.
 
-### Mise en œuvre prévue
-- Route serveur `POST /api/examboot/test` : crée un test par jour (cache 24 h,
-  invalidable), répond par une redirection 302 vers l'URL ExamBoot ; message
-  de repli si l'API ne répond pas en 15 s. Ouverture dans un nouvel onglet.
-- Variables `EXAMBOOT_API_KEY` et `EXAMBOOT_CISSP_ID` (à fournir par Ben ;
-  l'identifiant se lit dans l'administration ExamBoot).
-- Événement `examboot_click` avec la position, pour mesurer dans `/admin/tunnel`
-  quel emplacement rapporte des appels et des paiements.
-- 5 questions, 10 minutes, correction affichée (`cc: true`).
-- `CLAUDE.md` réserve l'API ExamBoot à la V2 (B6). Ben décide de l'avancer.
+### Mise en œuvre (faite le 22/09/2026, documentation v2 avec retour du score)
+- Un prospect identifié (page résultat, e-mails, page de confirmation
+  d'appel) reçoit **son propre test**, réutilisé 24 h : le score qui revient
+  est le sien. Il est stocké dans `practice_tests`, affiché sur la page, dans
+  la fiche lead et dans `/admin/tunnel`. Un visiteur anonyme (landing, FAQ)
+  joue **le test partagé du jour** : aucun score n'est affiché ni attribué,
+  et le quota ExamBoot est tenu quel que soit le trafic.
+- Routes serveur : `POST /api/examboot/test` (création ou réutilisation,
+  renvoie code et URL), `GET /api/examboot/test/<code>` (relais du score),
+  `GET /test-cissp?t=…|b=…&from=…` (lien des e-mails et des relances :
+  redirection directe vers le test).
+- Page : `components/examboot/PracticeTestBox.tsx` ouvre le test dans un
+  nouvel onglet et interroge le score toutes les 10 s pendant 30 min ; le
+  cron balaie ensuite les tests en attente pendant 48 h pour la fiche lead.
+- Emplacements : 1 page résultat (tous verdicts), 2 e-mail de résultat et
+  gabarits de relance (`{{lien_test}}`, mention dans le message IA et le
+  gabarit sans IA), 3 page de confirmation d'appel et rappel 24 h, 4 landing
+  section « La méthode », 5 FAQ.
+- Événements `examboot_click` (emplacement) et `examboot_done`
+  (emplacement:tranche de score). Tableau « Tests ExamBoot » dans le tunnel.
+- Variables `EXAMBOOT_API_KEY` (à créer sur Vercel), `EXAMBOOT_CISSP_ID`
+  (4). Sans clé, aucun bouton n'apparaît : le site reste tel quel.
+- `CLAUDE.md` réservait l'API ExamBoot à la V2 (B6) ; Ben l'a avancée.

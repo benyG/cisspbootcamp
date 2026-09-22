@@ -5,6 +5,7 @@ import { z } from "zod";
 import { analyseProfile, prospectAxes } from "@/lib/analysis";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { examBootEnabled } from "@/lib/examboot/client";
 import { nextFollowupAt } from "@/lib/followups";
 import { sendEmail } from "@/lib/messaging/email";
 import { formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
@@ -167,6 +168,9 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
       axes.map((a) => `• ${a.label} : ${a.detail}`).join("\n") +
       `\n\nDélai réaliste jusqu'à l'examen : ${analysis.timeline.label} accompagné, ${analysis.timeline.soloLabel} seul.\n\n` +
       `Votre analyse complète : ${resultUrl}\n\n` +
+      (examBootEnabled()
+        ? `Envie de vérifier ? Cinq vraies questions d'examen, corrigées, en dix minutes : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${resultToken}&from=email-resultat\n\n`
+        : "") +
       (context.cohort && analysis.readiness !== "not_yet"
         ? `Prix promotionnel de lancement : ${priceLabelFor(answers.country, context.tiers)}, garanti jusqu'au ${formatAdmissionDeadline(context.cohort.startsAt)} (fin des admissions de la cohorte de ${formatCohortMonth(context.cohort.startsAt)}).\n\n`
         : "") +
