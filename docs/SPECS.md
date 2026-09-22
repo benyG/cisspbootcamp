@@ -23,7 +23,7 @@ Sections, dans l'ordre :
 8. FAQ
 9. Second appel à l'action → scanner
 
-Contraintes : mobile-first (majorité du trafic africain sur mobile), chargement < 2 s sur 3G, FR uniquement.
+Contraintes : mobile-first (majorité du trafic africain sur mobile), chargement < 2 s sur 3G, FR uniquement. Design : `docs/DESIGN.md` et le prototype validé le 21/09/2026. Le questionnaire est **sur la landing**. Les textes viennent de `site_settings` (édités dans `/admin/parametres/site`) ; cohorte, jauge, prix et témoignages viennent de la base.
 
 ### A2. Scanner de profil « CISSP ready » `/scanner`
 
@@ -43,20 +43,15 @@ Contraintes : mobile-first (majorité du trafic africain sur mobile), chargement
 
 **Étape 2 — Capture** : prénom, nom, e-mail, WhatsApp (indicatif + numéro), consentement RGPD explicite (case non pré-cochée), lien vers politique de confidentialité.
 
-**Étape 3 — Validation par le coach** *(décision de Ben, 19/09/2026 — remplace l'envoi automatique)* :
-- À la soumission, l'analyse est calculée et **enregistrée** (`scanner_responses.analysis`, statut `pending_review`), un message est rédigé automatiquement dans la voix de Ben, et le prospect reçoit seulement un accusé : « Ben regarde votre profil, réponse sous 24 h ».
-- Ben ouvre `/admin/diagnostics/[id]` : nom, pays, palier, chaleur, les axes en barres, le délai estimé, ses objectifs, et le message **dans un champ éditable**. Deux boutons : **Valider et envoyer** / **Mettre de côté**.
-- Rien ne part sans ce clic. Les diagnostics en attente depuis plus de 24 h sont signalés en rouge : le délai est une promesse faite au prospect.
+**Étape 3 — Résultat immédiat** *(décision de Ben, 21/09/2026 — remplace la validation préalable du 19/09)* : dès la soumission, le prospect voit son analyse à l'écran sur `/scanner/resultat/[token]` (verdict, trois axes en barres animées, délai accompagné vs seul, prochaine étape) **et** la reçoit par e-mail. Ben reçoit une notification par e-mail avec verdict, chaleur, délai, objectifs du prospect et le lien vers l'admin.
 
-**Étape 4 — Résultat** : page personnalisée `/scanner/resultat/[token]`, **inaccessible (404) tant que le diagnostic n'est pas validé**, avec :
-- Verdict sur 3 niveaux : **Prêt** / **Prêt sous conditions** / **Pas encore**
+**Étape 4 — Message de relance validé par Ben** : à la soumission, un message de relance commerciale est rédigé par l'IA (`lib/scanner/ai-message.ts`, Claude) à partir du diagnostic fourni comme faits — l'IA argumente, elle ne diagnostique jamais. Sans clé API ou en cas d'échec, le gabarit de `lib/scanner/message.ts` est utilisé. Le message attend dans `/admin/diagnostics` (statut `pending_review`) ; Ben le relit, le corrige, puis **Valider et envoyer** l'expédie avec le lien de réservation. Rien ne part sans ce clic. Les messages en attente depuis plus de 24 h sont signalés.
+
 - Trois axes montrés au prospect : prérequis ISC², couverture des 8 domaines, anglais en lecture. Un quatrième (maturité certification) est réservé au coach.
-- Délai réaliste jusqu'à l'examen, **avec accompagnement et seul** — l'argument central : ce qui manque aux candidats, c'est quelqu'un qui tient le rythme.
-- Le message validé par Ben.
+- Ordre du questionnaire : l'expérience ouvre (elle décide de l'éligibilité), le pays ferme (demandé en premier, il est intrusif). Tant que le pays est inconnu, la question de budget nomme les deux paliers.
 - Appel à l'action adapté au verdict :
   - Prêt / sous conditions → « Réserver 15 min avec le coach » (→ A3)
   - Pas encore → ressources, « Je vous recontacte dans 6 mois » (lead conservé, tag `nurture`)
-- Envoi par e-mail au moment de la validation (et WhatsApp si consenti, V1 = lien `wa.me` depuis l'admin)
 
 **Scoring** (règles, pas d'IA en V1) :
 - Éligibilité : 5+ ans, ou 3–4 ans + dérogation → éligible ; 3–4 sans dérogation → sous conditions (Associate of ISC²) ; < 3 ou étudiant → pas encore.
@@ -102,7 +97,7 @@ Contraintes : mobile-first (majorité du trafic africain sur mobile), chargement
 **Objectif** : Ben ouvre, voit 3 actions, exécute, ferme. Tenu en 1 h/jour.
 
 Page d'accueil admin = liste ordonnée par priorité, chaque ligne avec un bouton d'action directe :
-0. **Diagnostics à valider** (voir A2, étape 3) : en tête, car le prospect attend une réponse sous 24 h.
+0. **Messages de relance à valider** (voir A2, étape 4) : en tête, car un lead chaud refroidit vite.
 1. **Appels du jour** : nom, heure, résumé du scanner (verdict, chaleur, points clés), lien Meet, bouton « Marquer l'issue ».
 2. **Relances dues** : leads `à relancer` dont la date de relance est atteinte → message WhatsApp/e-mail pré-rédigé, bouton « Envoyé », « Reporter ».
 3. **Paiements à confirmer** : Netticket en `pending_manual` (mode de secours).
@@ -196,7 +191,10 @@ pricing_tiers
   code, amount_usd, countries (JSON), label
 
 testimonials
-  id, name, role, country, text, video_url, published
+  id, name, role, country, text, video_url, published, sort_order
+
+site_settings
+  key, value (JSON), updated_at    — textes de la landing, vidéo, coach, FAQ, contact
 
 message_templates
   key, channel (email|whatsapp), subject, body
