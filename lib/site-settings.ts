@@ -68,7 +68,7 @@ export type SiteSectionKey = keyof SiteSettings;
 
 export const SITE_DEFAULTS: SiteSettings = {
   hero: {
-    title: "Ne préparez plus le CISSP {{au hasard.}}",
+    title: "CISSP : révéler {{en toute sérénité}} l’expert en cybersécurité que vous êtes.",
     lead:
       "Un bootcamp de 40 heures sur 15 jours, en français, pour structurer votre préparation, " +
       "relier les 8 domaines et apprendre à raisonner comme l’examen l’exige — avec un coach " +

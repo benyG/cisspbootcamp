@@ -41,7 +41,8 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: { n
           <span className="size-1.5 rounded-full bg-accent/30" />
           <span>100 % en français</span>
         </div>
-        <h1 className="display my-5 max-w-[840px] text-[clamp(3rem,6vw,5.9rem)] leading-[.94] font-black tracking-[-.06em]">
+        {/* A long title steps down one size so the hero keeps its rhythm (three to four lines). */}
+        <h1 className={`display my-5 max-w-[840px] font-black tracking-[-.06em] ${hero.title.replace(/[{}]/g, "").length > 44 ? "text-[clamp(2.3rem,4.4vw,4.4rem)] leading-[1]" : "text-[clamp(3rem,6vw,5.9rem)] leading-[.94]"}`}>
           {title.before}{title.highlight && <span className="text-accent">{title.highlight}</span>}{title.after}
         </h1>
         <p className="mb-6 max-w-[760px] text-[clamp(1.08rem,1.4vw,1.3rem)] text-ink-2">{hero.lead}</p>
