@@ -9,6 +9,7 @@ import { env } from "@/lib/env";
 import { nextFollowupAt } from "@/lib/followups";
 import { sendEmail } from "@/lib/messaging/email";
 import { type RateTable, convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
+import { recordEvent } from "@/lib/tracking/server";
 
 /**
  * Registration to a cohort — SPECS A4/A5.
@@ -212,6 +213,7 @@ export async function markRegistrationPaid(input: {
 
   // The public gauge must reflect this seat now, not in 60 s.
   revalidateTag(COHORTS_CACHE_TAG);
+  await recordEvent({ name: "paid", leadId: registration.leadId, label: registration.method });
 
   const cohortName = target?.name ?? registration.cohort.name;
   const cohortMonth = formatCohortMonth(target?.startsAt ?? registration.cohort.startsAt);

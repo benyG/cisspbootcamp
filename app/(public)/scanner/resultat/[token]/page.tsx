@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { btnPrimary, eyebrow, shell } from "@/components/landing/sections";
 import { PromoPrice } from "@/components/offer/PromoPrice";
+import { TrackLink } from "@/components/tracking/TrackLink";
+import { TrackView } from "@/components/tracking/TrackView";
 import type { ProfileAnalysis } from "@/lib/analysis";
 import { prospectAxes } from "@/lib/analysis";
 import { publicCohortSummary } from "@/lib/cohorts-admin";
@@ -57,6 +59,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
 
   return (
     <main className={shell + " py-8 sm:py-12"}>
+      <TrackView name="result_view" label={token.slice(0, 24)} />
       <div className="mx-auto max-w-2xl">
         <span className={`inline-flex rounded-full px-3 py-1.5 text-[.82rem] font-extrabold ${verdict.tone}`}>{verdict.badge}</span>
         <h1 className="display mt-4 text-[clamp(2.2rem,5vw,3.8rem)] leading-[.98] font-black tracking-[-.05em]">
@@ -104,7 +107,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
             </div>
           )}
           {canBook ? (
-            <Link href={`/rdv?t=${token}`} className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</Link>
+            <TrackLink href={`/rdv?t=${token}`} event="book_click" label="resultat" className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</TrackLink>
           ) : (
             <Link href="/" className={btnPrimary + " mt-5 w-full"}>Retour à l’accueil</Link>
           )}

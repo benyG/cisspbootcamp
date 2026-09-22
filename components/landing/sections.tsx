@@ -1,6 +1,8 @@
 import Image from "next/image";
 
 import { AdmissionCountdown } from "@/components/offer/AdmissionCountdown";
+import { TrackFaq } from "@/components/tracking/TrackFaq";
+import { TrackLink } from "@/components/tracking/TrackLink";
 import Link from "next/link";
 
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
@@ -25,7 +27,7 @@ export function Topbar() {
     <header className={shell}>
       <div className="flex items-center justify-between py-5">
         <Link href="/" className="display text-[1.18rem] font-black tracking-[-.04em]">CISSP <span className="text-accent">Bootcamp</span></Link>
-        <a href="#evaluation" className="hidden rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold sm:inline-flex">Évaluer mon profil →</a>
+        <TrackLink href="#evaluation" label="topbar" className="hidden rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold sm:inline-flex">Évaluer mon profil →</TrackLink>
       </div>
     </header>
   );
@@ -57,8 +59,8 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: { n
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <a href="#evaluation" className={btnPrimary + " w-full sm:w-auto"}>Analyser mon profil — 3 min →</a>
-          <a href="#methode" className={btnGhost + " w-full sm:w-auto"}>Voir la méthode</a>
+          <TrackLink href="#evaluation" label="hero" className={btnPrimary + " w-full sm:w-auto"}>Analyser mon profil — 3 min →</TrackLink>
+          <TrackLink href="#methode" label="hero-methode" className={btnGhost + " w-full sm:w-auto"}>Voir la méthode</TrackLink>
         </div>
         <p className="mt-3 text-[.88rem] text-muted">{hero.microcopy}</p>
       </div>
@@ -183,7 +185,7 @@ export function Video({ settings }: { settings: SiteSettings }) {
           <div className={eyebrow}>En {video.duration}</div>
           <h2 className={sectionTitle + " text-[clamp(2rem,3.4vw,3.4rem)]"}>{video.title}</h2>
           <p className="text-ink-2">{video.text}</p>
-          <a href="#evaluation" className={btnGhost + " mt-5"}>Analyser mon profil →</a>
+          <TrackLink href="#evaluation" label="video" className={btnGhost + " mt-5"}>Analyser mon profil →</TrackLink>
         </div>
       </div>
     </section>
@@ -222,10 +224,10 @@ export function Faq({ settings }: { settings: SiteSettings }) {
         <h2 className={sectionTitle + " text-[clamp(2rem,3.4vw,3.4rem)]"}>Ce qu’on nous demande avant de s’inscrire.</h2>
         <div className="grid max-w-[860px] gap-2.5">
           {settings.faq.map((f) => (
-            <details key={f.q} className="group rounded-[14px] border border-line bg-white px-4.5">
+            <TrackFaq key={f.q} question={f.q} className="group rounded-[14px] border border-line bg-white px-4.5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-4 font-bold [&::-webkit-details-marker]:hidden">{f.q}<span className="font-black text-accent group-open:hidden">+</span><span className="hidden font-black text-accent group-open:inline">–</span></summary>
               <p className="pb-4 text-ink-2">{f.a}</p>
-            </details>
+            </TrackFaq>
           ))}
         </div>
       </div>

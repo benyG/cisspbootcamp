@@ -6,6 +6,7 @@ import { formatCohortMonth } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 import { buildOffer } from "@/lib/registration";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
+import { recordServerEvent } from "@/lib/tracking/server";
 
 import { mobileMoneyAvailable } from "@/lib/payments/netticket";
 
@@ -52,6 +53,7 @@ export default async function RegistrationPage({
   }
 
   const { offer } = result;
+  await recordServerEvent({ name: "offer_view", leadId, label: offer.tierCode });
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
   const mobileReady = mobileMoneyAvailable(offer.country, offer.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
 

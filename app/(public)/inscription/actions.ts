@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { StripeNotConfiguredError, createCheckoutSession } from "@/lib/payments/stripe";
 import { startRegistration } from "@/lib/registration";
+import { recordServerEvent } from "@/lib/tracking/server";
 
 /** Lead behind a scanner result token — the only way into /inscription in V1. */
 export async function leadIdFromToken(token: string | undefined): Promise<number | null> {
@@ -29,6 +30,7 @@ export async function payByCard(formData: FormData): Promise<PayResult> {
   const leadId = await leadIdFromToken(token.data);
   if (!leadId) return { ok: false, error: "Repassez par votre analyse pour vous inscrire." };
 
+  await recordServerEvent({ name: "pay_click", leadId, label: "stripe" });
   const started = await startRegistration({ leadId, method: "stripe" });
   if (!started.registration) {
     return {
@@ -90,6 +92,7 @@ export async function payByMobileMoney(formData: FormData): Promise<PayResult> {
   const { createMobilePayment, checkTransaction, fallbackUrl, NetticketNotConfiguredError } = await import("@/lib/payments/netticket");
   const { markRegistrationPaid } = await import("@/lib/registration");
 
+  await recordServerEvent({ name: "pay_click", leadId, label: "netticket" });
   const started = await startRegistration({ leadId, method: "netticket" });
   if (!started.registration) return { ok: false, error: started.reason === "no_cohort" ? "Aucune cohorte n'est ouverte pour le moment." : "Votre tarif se fait sur devis." };
   const { registration, offer } = started;

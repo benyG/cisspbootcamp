@@ -7,6 +7,7 @@ import { submitScanner, type SubmissionInput } from "@/app/(public)/scanner/acti
 import { formatUsdCents } from "@/lib/pricing";
 import { priceLabelFor, type ScannerContext } from "@/lib/scanner/context";
 import { COUNTRIES, QUESTIONS, type Question } from "@/lib/scanner/questions";
+import { track } from "@/lib/tracking/client";
 
 type Answers = Record<string, string | string[] | boolean | number>;
 
@@ -54,6 +55,8 @@ export function ScannerWizard({ context, utm, initialCountry, title = "Analyse d
 
   const advance = () => setStep((s) => s + 1);
   const answerAndAdvance = (id: string, value: Answers[string]) => {
+    if (step === 0) track("scanner_start");
+    track("scanner_step", { step: step + 1, label: id });
     setAnswers((current) => ({ ...current, [id]: value }));
     // A beat so the selected state is seen before the screen changes.
     window.setTimeout(advance, 160);
@@ -71,7 +74,10 @@ export function ScannerWizard({ context, utm, initialCountry, title = "Analyse d
         return;
       }
       if (result.ok) router.push(`/scanner/resultat/${result.resultToken}`);
-      else setErrors(result.errors);
+      else {
+        track("scanner_blocked", { label: Object.keys(result.errors)[0] ?? "inconnu" });
+        setErrors(result.errors);
+      }
     });
   };
 
@@ -163,7 +169,7 @@ export function ScannerWizard({ context, utm, initialCountry, title = "Analyse d
             <div className="mt-2 flex items-center justify-between gap-3">
               <button type="button" onClick={() => setStep(step - 1)} disabled={step === 0} className="px-1 py-2 font-bold text-muted disabled:invisible">← Retour</button>
               {question.kind === "multi" && (
-                <button type="button" onClick={advance} className={primary}>
+                <button type="button" onClick={() => { track("scanner_step", { step: step + 1, label: question.id }); advance(); }} className={primary}>
                   {((answers[question.id] as string[] | undefined) ?? []).length === 0 ? "Aucune, continuer →" : "Continuer →"}
                 </button>
               )}

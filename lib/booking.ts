@@ -14,6 +14,7 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
 import { createToken } from "@/lib/tokens";
+import { recordServerEvent } from "@/lib/tracking/server";
 
 /**
  * Discovery-call booking — SPECS A3. Ties the pure slot maths to Google
@@ -130,6 +131,8 @@ export async function bookCall(input: {
     });
     return created;
   });
+
+  await recordServerEvent({ name: "booking_done", leadId: lead.id, label: lead.source });
 
   await sendEmail({
     to: lead.email,
