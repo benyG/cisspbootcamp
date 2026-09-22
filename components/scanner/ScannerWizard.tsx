@@ -1,298 +1,205 @@
 "use client";
 
-import Link from "next/link";
-
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
 import { submitScanner, type SubmissionInput } from "@/app/(public)/scanner/actions";
+import { formatUsdCents } from "@/lib/pricing";
 import { priceLabelFor, type ScannerContext } from "@/lib/scanner/context";
 import { COUNTRIES, QUESTIONS, type Question } from "@/lib/scanner/questions";
 
 type Answers = Record<string, string | string[] | boolean | number>;
 
-type Contact = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  whatsapp: string;
-  jobTitle: string;
-  goals: string;
-  consent: boolean;
-};
-
-const EMPTY_CONTACT: Contact = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  whatsapp: "",
-  jobTitle: "",
-  goals: "",
-  consent: false,
-};
+type Contact = { firstName: string; lastName: string; email: string; whatsapp: string; jobTitle: string; goals: string; consent: boolean };
+const EMPTY_CONTACT: Contact = { firstName: "", lastName: "", email: "", whatsapp: "", jobTitle: "", goals: "", consent: false };
 
 type Props = {
   context: Pick<ScannerContext, "tiers" | "availabilityLabel">;
   utm?: SubmissionInput["utm"];
-  /** A country picked on the landing page skips the first screen. */
+  /** A country already chosen elsewhere on the page (price selector) pre-fills the last screen. */
   initialCountry?: string;
+  /** Rendered in the card header. */
+  title?: string;
 };
 
 /**
- * One question per screen (SPECS A2). State lives here until the final
- * submit; nothing is written before the prospect has consented.
+ * One question per screen (SPECS A2). Experience opens, country closes — the
+ * prototype's assessment card, in the design tokens of app/globals.css.
+ * Nothing is written before the prospect has consented; on success the
+ * browser goes straight to the result page.
  */
-export function ScannerWizard({ context, utm, initialCountry }: Props) {
+export function ScannerWizard({ context, utm, initialCountry, title = "Analyse de votre profil" }: Props) {
   const router = useRouter();
-  const [answers, setAnswers] = useState<Answers>(
-    initialCountry ? { country: initialCountry } : {},
-  );
-  const [step, setStep] = useState(initialCountry ? 1 : 0);
+  const [answers, setAnswers] = useState<Answers>(initialCountry ? { country: initialCountry } : {});
+  const [step, setStep] = useState(0);
   const [contact, setContact] = useState<Contact>(EMPTY_CONTACT);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
 
-  const total = QUESTIONS.length + 1; // + capture screen
+  const total = QUESTIONS.length + 1;
   const isCapture = step === QUESTIONS.length;
   const question = isCapture ? null : QUESTIONS[step];
 
-  const priceLabel = useMemo(
-    () => priceLabelFor(answers.country as string | undefined, context.tiers),
-    [answers.country, context.tiers],
-  );
+  const priceLabel = useMemo(() => {
+    const country = answers.country as string | undefined;
+    if (country) return priceLabelFor(country, context.tiers);
+    // Country is asked last: until then, name both tiers rather than guess.
+    const africa = context.tiers.find((t) => t.code === "africa");
+    const intl = context.tiers.find((t) => t.code === "international");
+    if (africa && intl) return `${formatUsdCents(africa.amountUsd)} en Afrique francophone, ${formatUsdCents(intl.amountUsd)} ailleurs`;
+    return "625 USD en Afrique francophone, 1 200 USD ailleurs";
+  }, [answers.country, context.tiers]);
 
-  const label = (q: Question) =>
-    q.label
-      .replace("{{price}}", priceLabel)
-      .replace("{{availability}}", context.availabilityLabel);
+  const label = (q: Question) => q.label.replace("{{price}}", priceLabel).replace("{{availability}}", context.availabilityLabel);
 
+  const advance = () => setStep((s) => s + 1);
   const answerAndAdvance = (id: string, value: Answers[string]) => {
     setAnswers((current) => ({ ...current, [id]: value }));
-    setStep((current) => current + 1);
+    // A beat so the selected state is seen before the screen changes.
+    window.setTimeout(advance, 160);
   };
-
-  const canAdvanceMulti =
-    question?.kind === "multi" ? true : Boolean(answers[question?.id ?? ""]);
 
   const submit = () => {
     setErrors({});
     startTransition(async () => {
-      const result = await submitScanner({
-        answers: toSubmission(answers),
-        contact: { ...contact, consent: contact.consent as true },
-        utm,
-      });
-      if (result.ok) {
-        router.push("/scanner/merci");
-      } else {
-        setErrors(result.errors);
-      }
+      const result = await submitScanner({ answers: toSubmission(answers), contact: { ...contact, consent: contact.consent as true }, utm });
+      if (result.ok) router.push(`/scanner/resultat/${result.resultToken}`);
+      else setErrors(result.errors);
     });
   };
 
   return (
-    <div className="flex min-h-[70vh] flex-col">
-      <Progress step={step} total={total} />
+    <div className="overflow-hidden rounded-[22px] border border-line bg-white shadow-[var(--shadow-panel)]">
+      <div className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <strong className="display text-base">{isCapture ? "Où envoyer votre analyse ?" : title}</strong>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 sm:w-48" aria-label={`Étape ${step + 1} sur ${total}`}>
+          <div className="h-full rounded-full bg-accent-bright transition-[width] duration-300" style={{ width: `${Math.round(((step + 1) / total) * 100)}%` }} />
+        </div>
+      </div>
 
-      {question && (
-        <section key={question.id} className="flex flex-1 flex-col gap-5 py-6">
-          <h2 className="text-2xl font-bold leading-tight text-balance">
-            {label(question)}
-          </h2>
-          {question.hint && (
-            <p className="text-[var(--color-muted)]">{question.hint}</p>
-          )}
+      <div className="px-5 py-6 sm:px-6">
+        {question && (
+          <section key={question.id} className="flex flex-col gap-4">
+            <p className="text-xs font-extrabold tracking-[.08em] text-accent uppercase">Question {step + 1} sur {QUESTIONS.length}</p>
+            <h2 className="display text-[1.55rem] leading-[1.18] font-black">{label(question)}</h2>
+            {question.hint && <p className="-mt-1 text-[.95rem] text-muted">{question.hint}</p>}
 
-          {question.kind === "country" && (
-            <CountryPicker
-              value={answers.country as string | undefined}
-              onPick={(value) => answerAndAdvance("country", value)}
-            />
-          )}
-
-          {question.kind === "single" && (
-            <ul className="flex flex-col gap-3">
-              {question.options.map((option) => (
-                <li key={option.value}>
-                  <ChoiceButton
-                    selected={String(answers[question.id]) === option.value}
-                    onClick={() =>
-                      answerAndAdvance(
-                        question.id,
-                        question.id === "hasFourYearDegree"
-                          ? option.value === "true"
-                          : option.value,
-                      )
-                    }
-                  >
-                    {option.label}
-                  </ChoiceButton>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {question.kind === "scale" && (
-            <div className="grid grid-cols-5 gap-2">
-              {question.options.map((option) => (
-                <ChoiceButton
-                  key={option.value}
-                  selected={answers[question.id] === Number(option.value)}
-                  onClick={() =>
-                    answerAndAdvance(question.id, Number(option.value))
-                  }
-                  compact
-                >
-                  {option.label}
-                </ChoiceButton>
-              ))}
-            </div>
-          )}
-
-          {question.kind === "multi" && (
-            <MultiPicker
-              options={question.options}
-              value={(answers[question.id] as string[] | undefined) ?? []}
-              onChange={(value) =>
-                setAnswers((current) => ({ ...current, [question.id]: value }))
-              }
-            />
-          )}
-
-          <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-            <BackButton disabled={step === 0} onClick={() => setStep(step - 1)} />
-            {question.kind === "multi" && (
-              <button
-                type="button"
-                onClick={() => setStep(step + 1)}
-                disabled={!canAdvanceMulti}
-                className="rounded-lg bg-[var(--color-accent)] px-5 py-3 font-semibold text-white"
+            {question.kind === "country" && (
+              <select
+                id="scanner-country"
+                autoFocus
+                value={(answers.country as string | undefined) ?? ""}
+                onChange={(e) => e.target.value && answerAndAdvance("country", e.target.value)}
+                className={input}
               >
-                {((answers[question.id] as string[] | undefined) ?? []).length === 0
-                  ? "Aucune, continuer"
-                  : "Continuer"}
-              </button>
+                <option value="">Choisir un pays…</option>
+                {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
             )}
-          </div>
-        </section>
-      )}
 
-      {isCapture && (
-        <section className="flex flex-1 flex-col gap-5 py-6">
-          <h2 className="text-2xl font-bold leading-tight">
-            Où envoyer votre analyse ?
-          </h2>
-          <p className="text-[var(--color-muted)]">
-            Ben lit chaque profil lui-même. Vous recevez son retour sous 24 heures.
-          </p>
+            {question.kind === "single" && (
+              <ul className="grid gap-2.5">
+                {question.options.map((option) => {
+                  const selected = String(answers[question.id]) === option.value;
+                  return (
+                    <li key={option.value}>
+                      <button
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => answerAndAdvance(question.id, question.id === "hasFourYearDegree" ? option.value === "true" : option.value)}
+                        className={choice(selected)}
+                      >
+                        <span className="font-bold">{option.label}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Prénom" error={errors["contact.firstName"]}>
-              <input
-                autoComplete="given-name"
-                value={contact.firstName}
-                onChange={(e) => setContact({ ...contact, firstName: e.target.value })}
-                className={inputClass}
-              />
-            </Field>
-            <Field label="Nom" error={errors["contact.lastName"]}>
-              <input
-                autoComplete="family-name"
-                value={contact.lastName}
-                onChange={(e) => setContact({ ...contact, lastName: e.target.value })}
-                className={inputClass}
-              />
-            </Field>
-          </div>
-          <Field label="E-mail" error={errors["contact.email"]}>
-            <input
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              value={contact.email}
-              onChange={(e) => setContact({ ...contact, email: e.target.value })}
-              className={inputClass}
-            />
-          </Field>
-          <Field
-            label="WhatsApp (facultatif)"
-            hint="Format international, ex. +221 77 123 45 67"
-            error={errors["contact.whatsapp"]}
-          >
-            <input
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={contact.whatsapp}
-              onChange={(e) =>
-                setContact({ ...contact, whatsapp: e.target.value.replace(/[\s.-]/g, "") })
-              }
-              className={inputClass}
-            />
-          </Field>
-          <Field label="Titre de votre poste actuel (facultatif)">
-            <input
-              autoComplete="organization-title"
-              value={contact.jobTitle}
-              onChange={(e) => setContact({ ...contact, jobTitle: e.target.value })}
-              className={inputClass}
-            />
-          </Field>
-          <Field
-            label="Vos objectifs et vos attentes (facultatif)"
-            hint="Quelques lignes suffisent. Ben les lit avant votre appel."
-          >
-            <textarea
-              rows={3}
-              value={contact.goals}
-              onChange={(e) => setContact({ ...contact, goals: e.target.value })}
-              className={inputClass}
-            />
-          </Field>
+            {question.kind === "scale" && (
+              <div className="grid grid-cols-5 gap-2">
+                {question.options.map((option) => {
+                  const selected = answers[question.id] === Number(option.value);
+                  return (
+                    <button key={option.value} type="button" aria-pressed={selected} onClick={() => answerAndAdvance(question.id, Number(option.value))} className={choice(selected) + " justify-center py-3.5 text-lg font-extrabold"}>
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
-          <label className="flex items-start gap-3 text-sm">
-            <input
-              type="checkbox"
-              checked={contact.consent}
-              onChange={(e) => setContact({ ...contact, consent: e.target.checked })}
-              className="mt-1 size-5 shrink-0 accent-[var(--color-accent)]"
-            />
-            <span>
-              J&apos;accepte que Ben utilise ces informations pour m&apos;envoyer mon
-              analyse et me recontacter au sujet du bootcamp. Désinscription en un
-              clic dans chaque message.{" "}
-              <Link href="/confidentialite" className="underline" target="_blank">
-                Politique de confidentialité
-              </Link>
-            </span>
-          </label>
-          {errors["contact.consent"] && (
-            <p className="text-sm text-red-700">{errors["contact.consent"]}</p>
-          )}
-          {Object.keys(errors).some((key) => key.startsWith("answers")) && (
-            <p className="text-sm text-red-700">
-              Une réponse manque ou est invalide. Revenez en arrière pour vérifier.
-            </p>
-          )}
+            {question.kind === "multi" && (
+              <ul className="grid gap-2">
+                {question.options.map((option) => {
+                  const list = (answers[question.id] as string[] | undefined) ?? [];
+                  const checked = list.includes(option.value);
+                  return (
+                    <li key={option.value}>
+                      <label className={choice(checked) + " cursor-pointer"}>
+                        <input
+                          type="checkbox"
+                          id={`${question.id}-${option.value}`}
+                          checked={checked}
+                          onChange={() => setAnswers((c) => ({ ...c, [question.id]: checked ? list.filter((v) => v !== option.value) : [...list, option.value] }))}
+                          className="size-5 accent-accent"
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
 
-          <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-            <BackButton onClick={() => setStep(step - 1)} />
-            <button
-              type="button"
-              onClick={submit}
-              disabled={pending}
-              className="rounded-lg bg-[var(--color-accent)] px-5 py-3 font-semibold text-white disabled:opacity-60"
-            >
-              {pending ? "Envoi…" : "Recevoir mon analyse"}
-            </button>
-          </div>
-        </section>
-      )}
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <button type="button" onClick={() => setStep(step - 1)} disabled={step === 0} className="px-1 py-2 font-bold text-muted disabled:invisible">← Retour</button>
+              {question.kind === "multi" && (
+                <button type="button" onClick={advance} className={primary}>
+                  {((answers[question.id] as string[] | undefined) ?? []).length === 0 ? "Aucune, continuer →" : "Continuer →"}
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
+        {isCapture && (
+          <section className="flex flex-col gap-3">
+            <p className="text-xs font-extrabold tracking-[.08em] text-accent uppercase">Dernière étape</p>
+            <h2 className="display text-[1.55rem] leading-[1.18] font-black">Votre résultat s&apos;affiche tout de suite.</h2>
+            <p className="-mt-1 text-[.95rem] text-muted">Et vous le recevez par e-mail. Ben le lit aussi, et revient vers vous personnellement.</p>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <Field label="Prénom" id="fn" error={errors["contact.firstName"]}><input id="fn" autoComplete="given-name" value={contact.firstName} onChange={(e) => setContact({ ...contact, firstName: e.target.value })} className={input} /></Field>
+              <Field label="Nom" id="ln" error={errors["contact.lastName"]}><input id="ln" autoComplete="family-name" value={contact.lastName} onChange={(e) => setContact({ ...contact, lastName: e.target.value })} className={input} /></Field>
+            </div>
+            <Field label="E-mail" id="em" error={errors["contact.email"]}><input id="em" type="email" inputMode="email" autoComplete="email" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} className={input} /></Field>
+            <Field label="WhatsApp (facultatif)" id="wa" hint="Format international, ex. +221 77 123 45 67" error={errors["contact.whatsapp"]}><input id="wa" type="tel" inputMode="tel" autoComplete="tel" value={contact.whatsapp} onChange={(e) => setContact({ ...contact, whatsapp: e.target.value.replace(/[\s.-]/g, "") })} className={input} /></Field>
+            <Field label="Titre de votre poste actuel (facultatif)" id="jt"><input id="jt" autoComplete="organization-title" value={contact.jobTitle} onChange={(e) => setContact({ ...contact, jobTitle: e.target.value })} className={input} /></Field>
+            <Field label="Vos objectifs et vos attentes (facultatif)" id="go" hint="Quelques lignes suffisent. Ben les lit avant de vous écrire."><textarea id="go" rows={3} value={contact.goals} onChange={(e) => setContact({ ...contact, goals: e.target.value })} className={input} /></Field>
+
+            <label className="flex items-start gap-3 text-sm text-ink-2">
+              <input id="consent" type="checkbox" checked={contact.consent} onChange={(e) => setContact({ ...contact, consent: e.target.checked })} className="mt-1 size-5 shrink-0 accent-accent" />
+              <span>
+                J&apos;accepte que Ben utilise ces informations pour m&apos;envoyer mon analyse et me recontacter au sujet du bootcamp. Désinscription en un clic dans chaque message.{" "}
+                <a href="/confidentialite" className="underline" target="_blank">Politique de confidentialité</a>
+              </span>
+            </label>
+            {errors["contact.consent"] && <p className="text-sm text-red-700">{errors["contact.consent"]}</p>}
+            {Object.keys(errors).some((k) => k.startsWith("answers")) && <p className="text-sm text-red-700">Une réponse manque ou est invalide. Revenez en arrière pour vérifier.</p>}
+
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <button type="button" onClick={() => setStep(step - 1)} className="px-1 py-2 font-bold text-muted">← Retour</button>
+              <button type="button" onClick={submit} disabled={pending} className={primary + " disabled:opacity-60"}>{pending ? "Analyse en cours…" : "Voir mon résultat →"}</button>
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }
 
-/** Shapes the wizard's loose state into what the server action validates. */
 function toSubmission(answers: Answers): SubmissionInput["answers"] {
   return {
     country: String(answers.country ?? ""),
@@ -309,151 +216,21 @@ function toSubmission(answers: Answers): SubmissionInput["answers"] {
   };
 }
 
-const inputClass =
-  "w-full rounded-lg border border-slate-300 px-3 py-3 text-base outline-none focus:border-[var(--color-accent)] focus:ring-2 focus:ring-[var(--color-accent)]/30";
+const input = "w-full rounded-xl border border-line bg-white px-3.5 py-3 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/25";
+const primary = "ml-auto rounded-xl bg-ink px-4.5 py-3 font-extrabold text-white";
+const choice = (on: boolean) =>
+  [
+    "flex w-full items-start gap-3 rounded-[14px] border px-4 py-3.5 text-left text-base transition-colors",
+    on ? "border-accent bg-accent-soft" : "border-line bg-white hover:border-[#a8dccc] hover:bg-[#fbfffd]",
+  ].join(" ");
 
-function Progress({ step, total }: { step: number; total: number }) {
-  const percent = Math.round(((step + 1) / total) * 100);
+function Field({ label, id, hint, error, children }: { label: string; id: string; hint?: string; error?: string; children: React.ReactNode }) {
   return (
-    <div aria-label={`Étape ${step + 1} sur ${total}`}>
-      <div className="mb-1 flex justify-between text-xs text-[var(--color-muted)]">
-        <span>
-          {step + 1} / {total}
-        </span>
-        <span>{percent}%</span>
-      </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
-        <div
-          className="h-full rounded-full bg-[var(--color-accent)] transition-[width]"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function ChoiceButton({
-  selected,
-  onClick,
-  compact,
-  children,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  compact?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={[
-        "w-full rounded-lg border text-left text-base transition-colors",
-        compact ? "px-0 py-3 text-center font-semibold" : "px-4 py-3.5",
-        selected
-          ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white"
-          : "border-slate-300 bg-white hover:border-[var(--color-accent)]",
-      ].join(" ")}
-    >
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-semibold">{label}</label>
       {children}
-    </button>
-  );
-}
-
-function MultiPicker({
-  options,
-  value,
-  onChange,
-}: {
-  options: { value: string; label: string }[];
-  value: string[];
-  onChange: (value: string[]) => void;
-}) {
-  const toggle = (item: string) =>
-    onChange(value.includes(item) ? value.filter((v) => v !== item) : [...value, item]);
-
-  return (
-    <ul className="flex flex-col gap-2">
-      {options.map((option) => {
-        const checked = value.includes(option.value);
-        return (
-          <li key={option.value}>
-            <label
-              className={[
-                "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3",
-                checked ? "border-[var(--color-accent)] bg-emerald-50" : "border-slate-300",
-              ].join(" ")}
-            >
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggle(option.value)}
-                className="size-5 accent-[var(--color-accent)]"
-              />
-              <span>{option.label}</span>
-            </label>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function CountryPicker({
-  value,
-  onPick,
-}: {
-  value?: string;
-  onPick: (value: string) => void;
-}) {
-  return (
-    <select
-      value={value ?? ""}
-      onChange={(e) => e.target.value && onPick(e.target.value)}
-      className={inputClass}
-      autoFocus
-    >
-      <option value="">Choisir un pays…</option>
-      {COUNTRIES.map((country) => (
-        <option key={country.value} value={country.value}>
-          {country.label}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
-      {children}
-      {hint && !error && <span className="text-xs text-[var(--color-muted)]">{hint}</span>}
+      {hint && !error && <span className="text-xs text-muted">{hint}</span>}
       {error && <span className="text-xs text-red-700">{error}</span>}
-    </label>
-  );
-}
-
-function BackButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="px-2 py-3 text-[var(--color-muted)] disabled:invisible"
-    >
-      ← Retour
-    </button>
+    </div>
   );
 }

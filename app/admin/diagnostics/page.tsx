@@ -23,7 +23,7 @@ export default async function DiagnosticsPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold">Diagnostics à valider</h1>
+        <h1 className="text-2xl font-bold">Messages de relance à valider</h1>
         <span className="text-sm text-[var(--color-muted)]">{pending.length} en attente</span>
       </div>
 

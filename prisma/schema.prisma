@@ -104,6 +104,12 @@ model Lead {
   utmTerm     String? @map("utm_term") @db.VarChar(120)
 
   nextFollowupAt DateTime? @map("next_followup_at")
+  /// How many follow-ups have gone out since the last stage change (J+2, then J+7).
+  followupCount  Int       @default(0) @map("followup_count")
+
+  /// Coach's free notes and tags (SPECS A7).
+  notes String? @db.Text
+  tags  Json?
 
   /// One-click unsubscribe (SPECS A10, Partie D).
   unsubscribeToken String    @unique @map("unsubscribe_token") @db.VarChar(64)
@@ -258,6 +264,7 @@ model Testimonial {
   text      String  @db.Text
   videoUrl  String? @map("video_url") @db.VarChar(255)
   published Boolean @default(false)
+  sortOrder Int     @default(0) @map("sort_order")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -329,4 +336,14 @@ model ExchangeRate {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("exchange_rates")
+}
+
+/// Landing-page copy and settings Ben edits from /admin/parametres/site.
+/// One row per key; the value shape is validated by lib/site-settings.ts.
+model SiteSetting {
+  key       String   @id @db.VarChar(64)
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
 }

@@ -2,12 +2,14 @@
 
 import { z } from "zod";
 
-import { analyseProfile } from "@/lib/analysis";
+import { analyseProfile, prospectAxes } from "@/lib/analysis";
 import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
+import { nextFollowupAt } from "@/lib/followups";
 import { sendEmail } from "@/lib/messaging/email";
 import { resolveTierCode } from "@/lib/pricing";
-import { loadScannerContext } from "@/lib/scanner/context";
-import { draftCoachMessage } from "@/lib/scanner/message";
+import { draftSalesMessage } from "@/lib/scanner/ai-message";
+import { loadScannerContext, priceLabelFor } from "@/lib/scanner/context";
 import { answersSchema } from "@/lib/scoring";
 import { createToken } from "@/lib/tokens";
 
@@ -47,22 +49,24 @@ const submissionSchema = z.object({
 export type SubmissionInput = z.input<typeof submissionSchema>;
 
 export type SubmissionResult =
-  | { ok: true }
+  | { ok: true; resultToken: string }
   | { ok: false; errors: Record<string, string> };
 
 /**
- * Records the questionnaire and queues the diagnosis for Ben's review.
+ * Records the questionnaire and returns the result token: the prospect sees
+ * their analysis right away (Ben's decision, 21/09/2026), receives it by
+ * e-mail, and Ben is notified.
  *
- * Nothing reaches the prospect here beyond an acknowledgement: the analysis
- * is computed and frozen, but its token stays inert until he approves it.
+ * The verdict comes from the rules, never from the model. What the model
+ * drafts is the follow-up sales message Ben validates in the admin — and it
+ * is drafted after the prospect has been answered, so a slow or failing API
+ * never delays the result.
  */
 export async function submitScanner(raw: SubmissionInput): Promise<SubmissionResult> {
   const parsed = submissionSchema.safeParse(raw);
   if (!parsed.success) {
     const errors: Record<string, string> = {};
-    for (const issue of parsed.error.issues) {
-      errors[issue.path.join(".")] = issue.message;
-    }
+    for (const issue of parsed.error.issues) errors[issue.path.join(".")] = issue.message;
     return { ok: false, errors };
   }
 
@@ -71,17 +75,14 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
   const tier = resolveTierCode(answers.country, context.tiers);
   const analysis = analyseProfile(answers);
   const consentAt = new Date();
+  const resultToken = createToken();
+  // Scanner without a call → J+2 (SPECS A6). A "pas encore" lead is parked in nurture instead.
+  const followup = analysis.readiness === "not_yet" ? null : nextFollowupAt("scanner", 0, consentAt);
 
-  const message = draftCoachMessage({
-    firstName: contact.firstName,
-    answers,
-    analysis,
-    cohort: context.cohort,
-  });
+  // A placeholder until the AI draft lands; the admin shows it as "en cours".
+  const placeholder = "Rédaction du message en cours…";
 
-  await prisma.$transaction(async (tx) => {
-    // One lead per e-mail: a returning prospect updates their record rather
-    // than creating a duplicate the coach would have to merge by hand.
+  const { lead, response } = await prisma.$transaction(async (tx) => {
     const lead = await tx.lead.upsert({
       where: { email: contact.email },
       create: {
@@ -104,6 +105,8 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
         utmTerm: utm?.term,
         unsubscribeToken: createToken(),
         status: analysis.readiness === "not_yet" ? "nurture" : "new",
+        nextFollowupAt: followup,
+        followupCount: 0,
       },
       update: {
         firstName: contact.firstName,
@@ -117,39 +120,77 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
         goals: contact.goals || null,
         consentAt,
         unsubscribedAt: null,
+        nextFollowupAt: followup,
+        followupCount: 0,
       },
     });
 
-    await tx.scannerResponse.create({
+    const response = await tx.scannerResponse.create({
       data: {
         leadId: lead.id,
         answers,
         readiness: analysis.readiness,
         heatScore: analysis.heatScore,
         analysis: JSON.parse(JSON.stringify(analysis)),
-        coachMessage: message,
-        resultToken: createToken(),
+        coachMessage: placeholder,
+        resultToken,
       },
     });
 
     await tx.actionLog.create({
-      data: {
-        leadId: lead.id,
-        type: "scanner_submitted",
-        payload: { readiness: analysis.readiness, heatScore: analysis.heatScore },
-      },
+      data: { leadId: lead.id, type: "scanner_submitted", payload: { readiness: analysis.readiness, heatScore: analysis.heatScore } },
     });
+
+    return { lead, response };
   });
 
-  await sendEmail({
-    to: contact.email,
-    subject: "Bien reçu — votre analyse arrive",
+  const resultUrl = `${env.NEXT_PUBLIC_APP_URL}/scanner/resultat/${resultToken}`;
+  const axes = prospectAxes(analysis.axes);
+
+  // 1. The prospect gets the result by e-mail, in parallel with seeing it on screen.
+  const prospectEmail = sendEmail({
+    to: lead.email,
+    subject: `${contact.firstName}, votre analyse CISSP`,
     text:
       `Bonjour ${contact.firstName},\n\n` +
-      "Merci pour vos réponses. Je regarde votre profil personnellement et je vous " +
-      "envoie mon analyse sous 24 heures.\n\n" +
-      "Ben\nCoach CISSP",
+      `${analysis.headline}\n\n` +
+      axes.map((a) => `• ${a.label} : ${a.detail}`).join("\n") +
+      `\n\nDélai réaliste jusqu'à l'examen : ${analysis.timeline.label} accompagné, ${analysis.timeline.soloLabel} seul.\n\n` +
+      `Votre analyse complète : ${resultUrl}\n\n` +
+      `Je reviens vers vous personnellement sous 24 h.\n\nBen\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${lead.unsubscribeToken}`,
   });
 
-  return { ok: true };
+  // 2. Ben is notified: the sales funnel starts here.
+  const coachEmail = sendEmail({
+    to: env.ADMIN_EMAIL,
+    subject: `Nouveau profil : ${contact.firstName} ${contact.lastName} — ${readinessLabel(analysis.readiness)}, chaleur ${analysis.heatScore}`,
+    text:
+      `${contact.firstName} ${contact.lastName} (${answers.country}${contact.jobTitle ? `, ${contact.jobTitle}` : ""}) vient d'analyser son profil.\n\n` +
+      `Verdict : ${readinessLabel(analysis.readiness)}\nChaleur : ${analysis.heatScore}/100\nDélai : ${analysis.timeline.label}\n` +
+      (contact.goals ? `\nSes objectifs : « ${contact.goals} »\n` : "") +
+      `\nValider le message de relance : ${env.NEXT_PUBLIC_APP_URL}/admin/diagnostics/${response.id}`,
+  });
+
+  await Promise.allSettled([prospectEmail, coachEmail]);
+
+  // 3. The sales draft, last: it must never hold the prospect's result.
+  const draft = await draftSalesMessage({
+    firstName: contact.firstName,
+    jobTitle: contact.jobTitle || null,
+    goals: contact.goals || null,
+    answers,
+    analysis,
+    cohort: context.cohort,
+    priceLabel: priceLabelFor(answers.country, context.tiers),
+  });
+  await prisma.scannerResponse.update({ where: { id: response.id }, data: { coachMessage: draft.text } });
+  await prisma.actionLog.create({
+    data: { leadId: lead.id, type: "sales_message_drafted", payload: { source: draft.source } },
+  });
+
+  return { ok: true, resultToken };
+}
+
+function readinessLabel(readiness: "ready" | "conditional" | "not_yet"): string {
+  return readiness === "ready" ? "Prêt" : readiness === "conditional" ? "Prêt sous conditions" : "Pas encore";
 }
