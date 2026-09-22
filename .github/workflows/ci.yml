@@ -1,0 +1,88 @@
+# Quality gate on every push and pull request: lint, types, unit tests, then
+# the full prospect journey in a real browser against a throwaway MySQL 8.
+#
+# Nothing here touches production: the database lives in the runner, Google
+# Calendar is stubbed (E2E_CALENDAR_STUB), Stripe is only exercised through
+# its webhook signature, and e-mails are logged, not sent.
+
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: cisspbootcamp_e2e
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      CI: "1"
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/cisspbootcamp_e2e
+      ADMIN_EMAIL: coach@example.test
+      AUTH_SECRET: ci-only-secret-not-used-anywhere-else
+      AUTH_TRUST_HOST: "true"
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      EMAIL_FROM: "CI <ci@example.test>"
+      E2E_CALENDAR_STUB: "1"
+      # Placeholders: the key is never sent to Stripe, the secret only signs
+      # the test's own webhook payloads.
+      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint and typecheck
+        run: pnpm lint && pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Migrate and seed the test database
+        run: pnpm db:deploy && pnpm db:seed
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser journey
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

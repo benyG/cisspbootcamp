@@ -1,3 +1,4 @@
+import { STUB_CREDENTIAL, calendarStubEnabled, stubEvent } from "@/lib/calendar/stub";
 import { decrypt, encrypt, loadKey } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -90,6 +91,7 @@ export async function saveCredential(input: { refreshToken: string; email: strin
 }
 
 export async function getCredential() {
+  if (calendarStubEnabled()) return STUB_CREDENTIAL;
   return prisma.googleCredential.findUnique({ where: { id: 1 } });
 }
 
@@ -141,6 +143,7 @@ async function call<T>(token: string, path: string, init: RequestInit = {}): Pro
 
 /** Busy intervals in the window, from the connected calendar. */
 export async function fetchBusy(window: { start: Date; end: Date }): Promise<Array<{ start: Date; end: Date }>> {
+  if (calendarStubEnabled()) return [];
   const { token, calendarId } = await accessToken();
   const data = await call<{ calendars: Record<string, { busy: Array<{ start: string; end: string }> }> }>(
     token,
@@ -171,6 +174,7 @@ export async function createCallEvent(input: {
   attendeeName: string;
   requestId: string;
 }): Promise<CreatedEvent> {
+  if (calendarStubEnabled()) return stubEvent(input.requestId);
   const { token, calendarId } = await accessToken();
   const event = await call<{ id: string; hangoutLink?: string; conferenceData?: { entryPoints?: Array<{ entryPointType: string; uri: string }> } }>(
     token,
@@ -200,6 +204,7 @@ export async function createCallEvent(input: {
 }
 
 export async function moveCallEvent(eventId: string, start: Date, end: Date): Promise<void> {
+  if (calendarStubEnabled()) return;
   const { token, calendarId } = await accessToken();
   await call(token, `/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?sendUpdates=all`, {
     method: "PATCH",
@@ -208,6 +213,7 @@ export async function moveCallEvent(eventId: string, start: Date, end: Date): Pr
 }
 
 export async function cancelCallEvent(eventId: string): Promise<void> {
+  if (calendarStubEnabled()) return;
   const { token, calendarId } = await accessToken();
   await call(token, `/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?sendUpdates=all`, {
     method: "DELETE",
