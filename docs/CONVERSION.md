@@ -187,11 +187,34 @@ quelqu'un qui n'a pas rempli le scanner.
 
 Chaque étape se mesure sur deux semaines avant la suivante.
 
-## 6. Décisions attendues de Ben
+## 6. Décisions de Ben (22/09/2026)
 
-1. Garantie : laquelle des trois (ou aucune) ?
-2. Date limite d'inscription : J-7 avant démarrage ?
-3. Tarif de lancement jusqu'à J-30 : oui, et à combien ?
-4. Paiement en 2 fois : oui ?
-5. Numéro WhatsApp public sur la page : oui ?
-6. Place tenue 48 h après l'appel : oui ?
+| Sujet | Décision | Conséquence |
+|---|---|---|
+| Garantie | **En attente** | Recommandation : la n° 1 (séance individuelle offerte jusqu'à l'examen si pas prêt), la moins coûteuse et la plus crédible. Rien n'est affiché tant que Ben n'a pas tranché. |
+| Date limite d'inscription | **Oui, en permanence, à J-7 du démarrage** | Chaque cohorte ouverte a une fenêtre d'admission qui se ferme 7 jours avant son début ; passée cette date, la page bascule sur la cohorte suivante. Aucun réglage manuel. |
+| Prix promotionnel | **Les tarifs actuels (625 / 1 200 USD) sont déjà promotionnels** | On l'affiche partout, avec le prix de référence du marché barré : la formation officielle ISC² (Official Training) est vendue autour de 2 800 USD. Le prix promotionnel n'est garanti que pendant la fenêtre d'admission de la cohorte en cours : chrono réel (jours, heures, minutes) jusqu'à sa fermeture, sur le héros, la section prix, la page résultat et la page inscription. Le chrono ne se remet jamais à zéro artificiellement : c'est celui de la fenêtre. |
+| Paiement en 2 fois | **Non** | — |
+| WhatsApp public | **Non** | À la place : un mini-assistant de prise de rendez-vous sur la landing (bouton flottant « Parler à Ben »), qui pose trois questions (prénom, e-mail, consentement) et propose les créneaux réels de l'agenda que Ben règle dans `/admin/parametres/google`. Il réutilise la réservation directe existante (`bookDirect`). |
+| Place tenue 48 h après l'appel | **Oui** | Bouton « Tenir la place 48 h » sur la fiche lead, comptée dans la jauge, e-mail au prospect, rappel à H-12, libération automatique à l'échéance. |
+
+Sur les techniques écartées au chapitre 2 : Ben précise que chez lui la
+promotion est réelle (prix inférieur au marché, limité à la fenêtre
+d'admission). Elle est donc affichée et chronométrée. Restent écartés,
+parce qu'ils seraient faux : le compteur qui se remet à zéro chaque jour,
+les « 3 personnes regardent cette page » inventés, le prix barré fictif.
+Le prix barré affiché sera celui de la formation officielle ISC², sourcé
+et daté dans les paramètres (modifiable par Ben).
+
+## 7. Plan d'exécution révisé
+
+1. **Fenêtre d'admission et prix promotionnel** : champ calculé J-7 sur la
+   cohorte, chrono réel, prix de référence ISC² dans `/admin/parametres/prix`,
+   mention « prix promotionnel de lancement » sur le héros, la section prix, la
+   page résultat, la page inscription et les e-mails. Titre du héros mis à
+   jour (fait le 22/09).
+2. **Mesure** : `FunnelEvent`, événements, `/admin/tunnel`.
+3. **Page résultat vendeuse, coût de l'échec, place tenue 48 h.**
+4. **Mini-assistant de rendez-vous** sur la landing.
+5. **Automatisations admin** sur les signaux, lettre employeur, tests A/B.
+6. **Garantie**, dès que Ben a choisi.
