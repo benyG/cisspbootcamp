@@ -21,7 +21,23 @@ export default async function AdminHomePage() {
             href="/admin/diagnostics"
             className="block rounded-xl border border-slate-200 bg-white px-4 py-3.5 font-semibold"
           >
-            Diagnostics à valider →
+            Messages de relance à valider →
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/admin/parametres/site"
+            className="block rounded-xl border border-slate-200 bg-white px-4 py-3.5 font-semibold"
+          >
+            Page d&apos;accueil →
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/admin/temoignages"
+            className="block rounded-xl border border-slate-200 bg-white px-4 py-3.5 font-semibold"
+          >
+            Témoignages →
           </Link>
         </li>
         <li>

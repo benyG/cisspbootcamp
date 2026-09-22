@@ -258,6 +258,7 @@ model Testimonial {
   text      String  @db.Text
   videoUrl  String? @map("video_url") @db.VarChar(255)
   published Boolean @default(false)
+  sortOrder Int     @default(0) @map("sort_order")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -329,4 +330,14 @@ model ExchangeRate {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("exchange_rates")
+}
+
+/// Landing-page copy and settings Ben edits from /admin/parametres/site.
+/// One row per key; the value shape is validated by lib/site-settings.ts.
+model SiteSetting {
+  key       String   @id @db.VarChar(64)
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_settings")
 }
