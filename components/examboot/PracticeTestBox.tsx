@@ -31,6 +31,32 @@ export function PracticeTestBox({ placement, token, bookingToken, title = "Véri
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const polls = useRef(0);
 
+  // On arrival, pick up where the visitor left off: a score already revealed
+  // shows at once; a test still open resumes polling.
+  useEffect(() => {
+    let cancelled = false;
+    const params = new URLSearchParams();
+    if (token) params.set("t", token);
+    if (bookingToken) params.set("b", bookingToken);
+    fetch(`/api/examboot/test/mine?${params}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { status: string; code?: string; nickname?: string | null; percent?: number | null; correct?: number | null; questions?: number; expired?: boolean } | null) => {
+        if (cancelled || !data) return;
+        if (data.status === "completed" && typeof data.percent === "number") {
+          setPhase({ kind: "done", nickname: data.nickname ?? null, percent: data.percent, correct: data.correct ?? 0, questions: data.questions ?? 5 });
+        } else if (data.status === "pending" && data.code && !data.expired) {
+          polls.current = 0;
+          setPhase({ kind: "waiting", code: data.code, shared: false });
+        }
+      })
+      .catch(() => {
+        /* the button still works */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, bookingToken]);
+
   useEffect(() => {
     if (phase.kind !== "waiting" || phase.shared) return;
     let cancelled = false;

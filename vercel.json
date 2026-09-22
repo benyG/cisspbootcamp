@@ -2,6 +2,7 @@
   "framework": "nextjs",
   "buildCommand": "pnpm db:deploy && pnpm db:seed && pnpm build",
   "crons": [
-    { "path": "/api/cron/rates", "schedule": "0 5 * * *" }
+    { "path": "/api/cron/rates", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/reminders", "schedule": "30 5 * * *" }
   ]
 }
