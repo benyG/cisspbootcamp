@@ -49,6 +49,10 @@ export function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
         { name: "included", label: "Ce qui est inclus — une ligne par élément", rows: 4, list: true },
         { name: "soonEnabled", label: "Afficher la ligne « bientôt »", checkbox: true },
         { name: "soonText", label: "Texte de la ligne « bientôt »" },
+        { name: "promoLabel", label: "Étiquette du prix promotionnel" },
+        { name: "referencePriceUsd", label: "Prix de référence du marché, en USD entiers (0 pour masquer la comparaison)" },
+        { name: "referenceSource", label: "Source du prix de référence, affichée telle quelle" },
+        { name: "referenceCheckedOn", label: "Date de vérification de ce prix (ex. septembre 2026)" },
       ]} />
       <Section title="FAQ" section="faq" initial={initial.faq} fields={[
         { name: "", label: "Une question par bloc : question | réponse", rows: 12, list: ["q", "a"], root: true },

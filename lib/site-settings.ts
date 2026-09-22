@@ -53,6 +53,11 @@ export const siteSettingsSchema = z.object({
     included: z.array(short(120)).min(1).max(8),
     soonEnabled: z.boolean(),
     soonText: short(160),
+    /** Market reference the promotional price is compared to, in whole USD. 0 hides the comparison. */
+    referencePriceUsd: z.coerce.number().int().min(0).max(100_000).default(2800),
+    referenceSource: short(140).default("Formation officielle ISC² (Official Training)"),
+    referenceCheckedOn: short(40).default("septembre 2026"),
+    promoLabel: short(80).default("Prix promotionnel de lancement"),
   }),
   faq: z.array(z.object({ q: short(160), a: line(700) })).max(12),
   contact: z.object({
@@ -134,6 +139,10 @@ export const SITE_DEFAULTS: SiteSettings = {
     ],
     soonEnabled: true,
     soonText: "Bientôt : modules en ligne entre deux cohortes, avec rendez-vous coach",
+    referencePriceUsd: 2800,
+    referenceSource: "Formation officielle ISC² (Official Training)",
+    referenceCheckedOn: "septembre 2026",
+    promoLabel: "Prix promotionnel de lancement",
   },
   faq: [
     { q: "Faut-il vraiment 5 ans d’expérience ?", a: "ISC² exige 5 ans d’expérience dans au moins 2 des 8 domaines. Un diplôme de 4 ans ou une certification reconnue en compte pour 1. Avec 3 à 4 ans, vous pouvez passer l’examen et devenir Associate of ISC² le temps de compléter. L’analyse de profil vous le dit précisément." },

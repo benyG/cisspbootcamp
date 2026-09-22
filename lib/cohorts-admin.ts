@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 
-import { type Gauge, buildGauge } from "@/lib/cohorts";
+import { type Gauge, admissionClosesAt, buildGauge, isAdmissionOpen } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 
 /**
@@ -35,8 +35,8 @@ export async function listCohortsWithGauge(): Promise<CohortWithGauge[]> {
     }),
   ]);
 
-  const now = Date.now();
-  const nextOpen = cohorts.find((c) => c.status === "open" && c.startsAt.getTime() > now);
+  const now = new Date();
+  const nextOpen = cohorts.find((c) => c.status === "open" && isAdmissionOpen(c.startsAt, now));
 
   return cohorts.map((cohort) => ({
     id: cohort.id,
@@ -56,7 +56,7 @@ export async function listCohortsWithGauge(): Promise<CohortWithGauge[]> {
 /** Cache tag for anything that changes the public gauge: payments, cohort edits. */
 export const COHORTS_CACHE_TAG = "cohorts";
 
-export type PublicCohort = { name: string; startsAt: Date; gauge: Gauge };
+export type PublicCohort = { name: string; startsAt: Date; admissionClosesAt: Date; gauge: Gauge };
 
 /**
  * unstable_cache serialises its result to JSON, so a Date comes back as a
@@ -66,11 +66,11 @@ export type PublicCohort = { name: string; startsAt: Date; gauge: Gauge };
 const cachedPublicCohort = unstable_cache(
   async (): Promise<{ name: string; startsAt: string; gauge: Gauge } | null> => {
     const cohorts = await listCohortsWithGauge();
-    const now = Date.now();
-    const next = cohorts.find((c) => c.status === "open" && c.startsAt.getTime() > now);
+    const now = new Date();
+    const next = cohorts.find((c) => c.status === "open" && isAdmissionOpen(c.startsAt, now));
     return next ? { name: next.name, startsAt: next.startsAt.toISOString(), gauge: next.gauge } : null;
   },
-  ["public-cohort-summary-v2"],
+  ["public-cohort-summary-v3"],
   { revalidate: 60, tags: [COHORTS_CACHE_TAG] },
 );
 
@@ -81,5 +81,7 @@ const cachedPublicCohort = unstable_cache(
  */
 export async function publicCohortSummary(): Promise<PublicCohort | null> {
   const cached = await cachedPublicCohort();
-  return cached ? { ...cached, startsAt: new Date(cached.startsAt) } : null;
+  if (!cached) return null;
+  const startsAt = new Date(cached.startsAt);
+  return { ...cached, startsAt, admissionClosesAt: admissionClosesAt(startsAt) };
 }

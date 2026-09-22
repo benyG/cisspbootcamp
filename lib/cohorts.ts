@@ -19,6 +19,29 @@ export type CohortCandidate = {
 /** Only cohorts in this state can take a registration. */
 const SELLABLE_STATUS = "open";
 
+/**
+ * Admission window (Ben, 22/09/2026): registrations close a fixed number of
+ * days before the cohort starts, always. The promotional price is only
+ * guaranteed inside that window, and the countdown shown on the site is this
+ * exact deadline — never a timer that resets.
+ */
+export const ADMISSION_CLOSE_DAYS = 7;
+
+const DAY_MS = 24 * 60 * 60_000;
+
+export function admissionClosesAt(startsAt: Date): Date {
+  return new Date(startsAt.getTime() - ADMISSION_CLOSE_DAYS * DAY_MS);
+}
+
+export function isAdmissionOpen(startsAt: Date, now: Date): boolean {
+  return admissionClosesAt(startsAt).getTime() > now.getTime();
+}
+
+/** "4 janvier" — the deadline day, read in UTC like the cohort month. */
+export function formatAdmissionDeadline(startsAt: Date): string {
+  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" }).format(admissionClosesAt(startsAt));
+}
+
 export function remainingSeats(cohort: CohortCandidate): number {
   return Math.max(0, cohort.capacity - cohort.confirmedCount);
 }
@@ -28,8 +51,8 @@ export function hasSeats(cohort: CohortCandidate): boolean {
 }
 
 /**
- * The cohort a new registration should target: the soonest open one that has
- * not started and still has a seat. A full cohort rolls over to the next open
+ * The cohort a new registration should target: the soonest open one whose
+ * admission window is still open and that still has a seat. A full cohort rolls over to the next open
  * one automatically, which is what the waiting list relies on.
  *
  * Returns null when nothing is on sale — a normal state, not an error.
@@ -40,7 +63,7 @@ export function selectRegistrationCohort(
 ): CohortCandidate | null {
   const eligible = cohorts
     .filter((cohort) => cohort.status === SELLABLE_STATUS)
-    .filter((cohort) => cohort.startsAt.getTime() > now.getTime())
+    .filter((cohort) => isAdmissionOpen(cohort.startsAt, now))
     .filter(hasSeats)
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 

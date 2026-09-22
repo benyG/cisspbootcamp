@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
-import { COHORT_STATUS_LABEL as STATUS_LABEL, formatCohortMonth } from "@/lib/cohorts";
+import { COHORT_STATUS_LABEL as STATUS_LABEL, formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
 import { listCohortsWithGauge } from "@/lib/cohorts-admin";
 
 import { createCohort } from "./actions";
@@ -27,7 +27,7 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
                 <span className="text-xs text-[var(--color-muted)]">{STATUS_LABEL[cohort.status]}</span>
               </div>
               <p className="text-sm text-[var(--color-muted)]">
-                {formatCohortMonth(cohort.startsAt)} · {cohort.gauge.confirmed} payée{cohort.gauge.confirmed > 1 ? "s" : ""}
+                {formatCohortMonth(cohort.startsAt)} · admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)} · {cohort.gauge.confirmed} payée{cohort.gauge.confirmed > 1 ? "s" : ""}
                 {cohort.gauge.preEngaged > 0 && ` · ${cohort.gauge.preEngaged} pré-engagé${cohort.gauge.preEngaged > 1 ? "s" : ""}`}
               </p>
               <div className="mt-3"><CohortGauge gauge={cohort.gauge} /></div>
