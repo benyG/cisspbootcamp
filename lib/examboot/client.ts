@@ -40,7 +40,9 @@ function headers(apiKey: string, withBody: boolean): Record<string, string> {
 
 async function failure(prefix: string, response: Response): Promise<ExamBootError> {
   const body = await response.text().catch(() => "");
-  return new ExamBootError(`${prefix} → ${response.status}${body ? ` ${body.replace(/\s+/g, " ").slice(0, 200)}` : ""}`, response.status);
+  // Cloudflare names the product that challenged the request in cf-mitigated; cf-ray identifies the event in its logs.
+  const edge = ["cf-mitigated", "cf-ray", "server"].map((h) => `${h}=${response.headers.get(h) ?? "-"}`).join(" ");
+  return new ExamBootError(`${prefix} → ${response.status} [${edge}]${body ? ` ${body.replace(/\s+/g, " ").slice(0, 160)}` : ""}`, response.status);
 }
 
 function config() {
