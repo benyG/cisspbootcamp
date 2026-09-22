@@ -1,24 +1,25 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
-import { Inter, Inter_Tight } from "next/font/google";
+import localFont from "next/font/local";
 import type { ReactNode } from "react";
 
 import "./globals.css";
 
 /**
- * Both faces are downloaded at build time and served from our own domain:
- * no request to Google at runtime, which keeps the 3G budget (docs/DESIGN.md).
+ * Both faces are variable fonts committed in app/fonts and served from our own
+ * domain: no request to Google at build or run time, which keeps the 3G budget
+ * (docs/DESIGN.md) and removes a network dependency from the Vercel build.
  */
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const inter = localFont({
+  src: "./fonts/inter-latin.woff2",
+  weight: "400 700",
   display: "swap",
   variable: "--font-inter",
 });
 
-const interTight = Inter_Tight({
-  subsets: ["latin"],
-  weight: ["700", "800", "900"],
+const interTight = localFont({
+  src: "./fonts/inter-tight-latin.woff2",
+  weight: "700 900",
   display: "swap",
   variable: "--font-inter-tight",
 });
