@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { btnPrimary, eyebrow, shell } from "@/components/landing/sections";
+import { PracticeTestBox } from "@/components/examboot/PracticeTestBox";
 import { PromoPrice } from "@/components/offer/PromoPrice";
 import { TrackLink } from "@/components/tracking/TrackLink";
 import { TrackView } from "@/components/tracking/TrackView";
@@ -9,6 +10,7 @@ import type { ProfileAnalysis } from "@/lib/analysis";
 import { prospectAxes } from "@/lib/analysis";
 import { publicCohortSummary } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
+import { examBootEnabled } from "@/lib/examboot/client";
 import { convertUsdCents, formatLocal, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { loadRates } from "@/lib/registration";
 import { loadScannerContext } from "@/lib/scanner/context";
@@ -73,6 +75,12 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
         </h1>
 
         <RevealBars axes={axes.map((a) => ({ key: a.key, label: a.label, score: a.score, detail: a.detail }))} />
+
+        {examBootEnabled() && (
+          <div className="mt-8">
+            <PracticeTestBox placement="resultat" token={token} title="Vérifiez-le sur 5 vraies questions d’examen" text="Votre analyse dit où vous en êtes. Cinq questions du vrai niveau CISSP, tirées d’une banque d’examen et corrigées, le confirment en dix minutes. Sans compte." />
+          </div>
+        )}
 
         <section className="mt-8 grid gap-3 sm:grid-cols-2">
           <div className="rounded-[18px] bg-ink p-5 text-white">

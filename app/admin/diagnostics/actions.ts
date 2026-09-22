@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { examBootEnabled } from "@/lib/examboot/client";
 import { sendEmail } from "@/lib/messaging/email";
 
 const reviewSchema = z.object({
@@ -61,6 +62,7 @@ export async function approveDiagnosis(formData: FormData): Promise<ActionResult
     text:
       `${message}\n\n` +
       `Réserver 15 minutes : ${env.NEXT_PUBLIC_APP_URL}/rdv?t=${response.resultToken}\n` +
+      (examBootEnabled() ? `Vous situer sur 5 vraies questions d'examen : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${response.resultToken}&from=relance\n` : "") +
       `Revoir votre analyse : ${resultUrl}\n\n` +
       `—\nPour ne plus recevoir de messages : ${unsubscribeUrl}`,
   });

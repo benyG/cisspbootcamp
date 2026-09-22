@@ -123,6 +123,15 @@ le relance. Sur Vercel Pro : remettre
 `{ "path": "/api/cron/reminders", "schedule": "*/15 * * * *" }` dans
 `vercel.json` et supprimer le workflow.
 
+### ExamBoot (test CISSP en 5 questions)
+
+`EXAMBOOT_API_KEY` (clé remise par ExamBoot) et `EXAMBOOT_CISSP_ID` (`4`).
+Sans clé, aucun bouton n'apparaît. Avec la clé : boutons « 5 vraies
+questions » sur la page résultat, la confirmation d'appel, la section
+« La méthode » et la FAQ ; lien dans l'e-mail de résultat, le rappel 24 h et
+les gabarits (`{{lien_test}}`). Le score revient sur la page du prospect, dans
+sa fiche lead et dans `/admin/tunnel`. Détail : `docs/CONVERSION.md` §8.
+
 ### Message de relance rédigé par l'IA
 
 `ANTHROPIC_API_KEY` sur Vercel. Sans clé, un gabarit sans IA est utilisé. Le

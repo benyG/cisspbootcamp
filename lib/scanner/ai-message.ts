@@ -42,7 +42,7 @@ Règles, dans l'ordre :
 5. Un profil « pas encore » n'est pas écarté : propose des ressources et un point dans six mois, chaleureusement.
 6. Ton : direct, chaleureux, professionnel, tutoiement interdit, phrases courtes, aucun emoji, aucune formule creuse (« n'hésitez pas », « au plaisir »).
 7. Utilise les objectifs écrits par la personne s'il y en a : cite-les, c'est la preuve que tu as lu.
-8. Termine par une seule action : réserver 15 minutes (le lien sera ajouté sous le message). Pour un profil « pas encore », termine par le rendez-vous dans six mois.
+8. Termine par une seule action : réserver 15 minutes (le lien sera ajouté sous le message). Juste avant, en une phrase, propose de se situer sur cinq vraies questions d'examen et de te dire son score (ce lien aussi sera ajouté sous le message). Pour un profil « pas encore », termine par le rendez-vous dans six mois.
 9. 180 à 260 mots. Commence par « Bonjour {prénom}, ». Signe « Ben — Coach CISSP ». Texte brut, sans titres ni listes.`;
 
 export function buildPrompt(input: DraftInput): string {

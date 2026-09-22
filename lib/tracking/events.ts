@@ -19,6 +19,8 @@ export const EVENT_NAMES = [
   "paid",
   "price_country_change",
   "faq_open",
+  "examboot_click",
+  "examboot_done",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];

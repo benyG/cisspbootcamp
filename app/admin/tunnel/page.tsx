@@ -67,6 +67,7 @@ export default async function TunnelPage() {
         <Table title="Par pays" head={["Pays", "Scanner", "Payé"]} rows={report.countries.map((r) => [r.country, r.submitted, r.paid])} empty="Aucun questionnaire terminé." />
         <Table title="Boutons cliqués" head={["Position", "Clics"]} rows={report.ctas.map((r) => [r.label, r.clicks])} empty="Aucun clic mesuré." />
         <Table title="Objections (FAQ ouverte)" head={["Question", "Fois"]} rows={report.faq.map((r) => [r.question, r.opens])} empty="Aucune question ouverte." />
+        <Table title="Tests ExamBoot (5 questions)" head={["Emplacement", "Lancés", "Scores", "Moyenne"]} rows={report.examboot.byPlacement.map((r) => [r.placement, r.started, r.completed, r.averagePercent === null ? "—" : `${r.averagePercent} %`])} empty="Aucun test lancé." />
       </div>
     </main>
   );

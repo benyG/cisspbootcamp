@@ -18,7 +18,7 @@ export default async function TemplatesPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
       <h1 className="mt-3 text-2xl font-bold">Gabarits de messages</h1>
-      <p className="mt-1 text-sm text-muted">Marqueurs disponibles : <code>{"{{prenom}}"}</code>, <code>{"{{nom}}"}</code>, <code>{"{{lien_rdv}}"}</code>, <code>{"{{lien_resultat}}"}</code>, <code>{"{{lien_paiement}}"}</code>, <code>{"{{cohorte}}"}</code>, <code>{"{{mois_cohorte}}"}</code>. Un marqueur inconnu reste visible dans le message : c&apos;est voulu.</p>
+      <p className="mt-1 text-sm text-muted">Marqueurs disponibles : <code>{"{{prenom}}"}</code>, <code>{"{{nom}}"}</code>, <code>{"{{lien_rdv}}"}</code>, <code>{"{{lien_resultat}}"}</code>, <code>{"{{lien_paiement}}"}</code>, <code>{"{{lien_test}}"}</code> (5 questions ExamBoot), <code>{"{{cohorte}}"}</code>, <code>{"{{mois_cohorte}}"}</code>. Un marqueur inconnu reste visible dans le message : c&apos;est voulu.</p>
       <div className="mt-5 grid gap-3">
         {templates.map((t) => (
           <form key={t.key} action={updateTemplate} className="grid gap-2 rounded-xl border border-line bg-white p-4">
