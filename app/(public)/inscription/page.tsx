@@ -5,7 +5,9 @@ import { formatCohortMonth } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 import { buildOffer } from "@/lib/registration";
 
-import { leadIdFromToken, payByCard } from "./actions";
+import { mobileMoneyAvailable } from "@/lib/payments/netticket";
+
+import { leadIdFromToken, payByCard, payByMobileMoney } from "./actions";
 
 export const metadata: Metadata = { title: "S'inscrire au bootcamp — CISSP Bootcamp" };
 export const dynamic = "force-dynamic";
@@ -48,6 +50,7 @@ export default async function RegistrationPage({
 
   const { offer } = result;
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
+  const mobileReady = mobileMoneyAvailable(offer.country, offer.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
 
   return (
     <Shell title={`${lead.firstName}, réservez votre place.`}>
@@ -87,9 +90,33 @@ export default async function RegistrationPage({
             Payer par carte bancaire
           </button>
         </form>
-        <button type="button" disabled className="w-full rounded-lg border border-slate-300 px-5 py-4 font-semibold text-slate-400">
-          Mobile money — bientôt disponible
-        </button>
+        {mobileReady ? (
+          <details className="rounded-lg border border-line bg-white">
+            <summary className="cursor-pointer list-none px-5 py-4 text-center font-semibold">Payer par mobile money (Orange Money, MTN MoMo)</summary>
+            <form
+              className="grid gap-3 border-t border-line p-4"
+              action={async (formData) => {
+                "use server";
+                const result = await payByMobileMoney(formData);
+                if (result && !result.ok) {
+                  const { redirect } = await import("next/navigation");
+                  redirect(`/inscription?t=${formData.get("t")}&erreur=${encodeURIComponent(result.error)}`);
+                }
+              }}
+            >
+              <input type="hidden" name="t" value={t} />
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 rounded-lg border border-line px-3 py-2.5 text-sm"><input type="radio" name="operator" value="orange" defaultChecked className="accent-accent" />Orange Money</label>
+                <label className="flex items-center gap-2 rounded-lg border border-line px-3 py-2.5 text-sm"><input type="radio" name="operator" value="mtn" className="accent-accent" />MTN MoMo</label>
+              </div>
+              <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Numéro mobile money</span><input name="phone" inputMode="numeric" placeholder="677123456" required className="rounded-lg border border-line px-3 py-3 text-base" /></label>
+              <p className="text-xs text-muted">Vous recevrez une demande de confirmation sur votre téléphone. Montant en FCFA au tarif Netticket de votre palier.</p>
+              <button type="submit" className={primary + " w-full"}>Lancer le paiement mobile</button>
+            </form>
+          </details>
+        ) : (
+          <p className="text-center text-sm text-muted">Mobile money : disponible pour la zone CEMAC. Pour les autres pays, carte bancaire.</p>
+        )}
       </div>
 
       <p className="text-xs text-[var(--color-muted)]">

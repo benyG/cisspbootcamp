@@ -1,4 +1,4 @@
-# Booking reminders, every 15 minutes.
+# Booking reminders and mobile-money polling, every 15 minutes.
 #
 # Vercel's Hobby plan only allows daily crons, and the 24 h / 1 h reminders
 # need a finer tick. GitHub Actions calls the same endpoint instead, with the
@@ -36,3 +36,11 @@ jobs:
           curl --fail --silent --show-error --max-time 60 \
             -H "Authorization: Bearer $CRON_SECRET" \
             "$APP_URL/api/cron/reminders"
+      - name: Poll pending mobile-money payments
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail --silent --show-error --max-time 120 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/netticket"

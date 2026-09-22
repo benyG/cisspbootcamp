@@ -103,6 +103,25 @@ sur client HTTP simulé.
 **6. `stock` par ticket.** Peut servir de garde-fou secondaire sur la capacité
 d'une cohorte, mais la source de vérité reste `cohorts.capacity` chez nous.
 
+## État de l'intégration (22/09/2026)
+
+Implémenté : `lib/payments/netticket.ts`, `/api/webhooks/netticket`,
+`/api/cron/netticket` (polling 24 h, appelé toutes les 15 min par le workflow
+GitHub), et le parcours « Payer par mobile money » sur `/inscription`.
+
+- Le code de ticket se saisit **par palier** dans `/admin/parametres/prix`.
+- Le bouton n'apparaît que pour la zone XAF (CM, GA, CG, TD, CF, GQ) tant que
+  Netticket n'a pas confirmé XOF et Wave. Liste dans `NETTICKET_COUNTRIES`.
+- Webhook : `verif-hash` comparé en temps constant, puis **contre-vérification**
+  par `GET /payment/{id}/check` avant tout passage en `paid`.
+- Mode de secours : sans `NETTICKET_API_KEY` mais avec `NETTICKET_FALLBACK_URL`,
+  l'inscription passe en `pending_manual` et le prospect est envoyé sur la page
+  d'achat Netticket avec notre référence (`?ref=`). Ben confirme depuis la file.
+
+À configurer chez Netticket (profil développeur) :
+`webhook_url = https://cisspbootcamp.online/api/webhooks/netticket`,
+`webhook_hash` = la valeur de `NETTICKET_WEBHOOK_SECRET` dans Vercel.
+
 ## Variables d'environnement
 
 `NETTICKET_API_KEY`, `NETTICKET_WEBHOOK_SECRET` (le `webhook_hash`),
