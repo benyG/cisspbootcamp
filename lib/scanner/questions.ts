@@ -3,9 +3,11 @@ import { CERTIFICATIONS, CISSP_DOMAINS } from "@/lib/scoring";
 /**
  * The scanner questionnaire — one screen per question on mobile (SPECS A2).
  *
- * Wording validated by Ben on 19/09/2026 from his previous intake form. Two
- * labels are filled at render time: the price of the prospect's tier in the
- * budget question, and the cohort month in the availability question.
+ * Wording validated by Ben on 19/09/2026 from his previous intake form.
+ * Order matters: experience opens because it decides ISC² eligibility — the
+ * one thing every prospect wants to know — and the country closes, because
+ * asked first it reads as intrusive. Two labels are filled at render time:
+ * the price in the budget question, the cohort month in the availability one.
  */
 
 export type Option = { value: string; label: string; hint?: string };
@@ -48,10 +50,16 @@ export const CERTIFICATION_LABELS: Record<
 
 export const QUESTIONS: Question[] = [
   {
-    id: "country",
-    kind: "country",
-    label: "Dans quel pays résidez-vous ?",
-    hint: "Le tarif du bootcamp dépend de votre pays.",
+    id: "experience",
+    kind: "single",
+    label: "Combien d'années d'expérience avez-vous en sécurité de l'information ?",
+    hint: "C'est le critère n° 1 d'ISC². Comptez uniquement les postes où la sécurité était au cœur de votre travail.",
+    options: [
+      { value: "none", label: "Moins d'un an" },
+      { value: "one_two", label: "1 à 2 ans" },
+      { value: "three_four", label: "3 à 4 ans" },
+      { value: "five_plus", label: "5 ans ou plus" },
+    ],
   },
   {
     id: "professionalStatus",
@@ -64,18 +72,7 @@ export const QUESTIONS: Question[] = [
       { value: "student", label: "Étudiant" },
     ],
   },
-  {
-    id: "experience",
-    kind: "single",
-    label: "Combien d'années d'expérience avez-vous en sécurité de l'information ?",
-    hint: "Comptez uniquement les postes où la sécurité était au cœur de votre travail.",
-    options: [
-      { value: "none", label: "Moins d'un an" },
-      { value: "one_two", label: "1 à 2 ans" },
-      { value: "three_four", label: "3 à 4 ans" },
-      { value: "five_plus", label: "5 ans ou plus" },
-    ],
-  },
+
   {
     id: "hasFourYearDegree",
     kind: "single",
@@ -137,7 +134,8 @@ export const QUESTIONS: Question[] = [
   {
     id: "budget",
     kind: "single",
-    // {{price}} is replaced at render time with the prospect's tier.
+    // {{price}} is the prospect's tier when the country is known, otherwise
+    // both tiers — the country is asked last, on purpose.
     label: "Une inscription à {{price}} est-elle envisageable pour vous ?",
     hint:
       "Ce montant couvre la formation et la préparation. Les frais d'examen ISC² " +
@@ -159,6 +157,12 @@ export const QUESTIONS: Question[] = [
       { value: "later_one", label: "Plutôt la suivante" },
       { value: "unsure", label: "Je ne sais pas encore" },
     ],
+  },
+  {
+    id: "country",
+    kind: "country",
+    label: "Dernière question : dans quel pays résidez-vous ?",
+    hint: "Pour afficher le bon tarif et la bonne devise.",
   },
 ];
 

@@ -138,9 +138,9 @@ export default async function DiagnosisReviewPage({
       </details>
 
       <section className="mt-6">
-        <h2 className="text-lg font-bold">Message au prospect</h2>
+        <h2 className="text-lg font-bold">Message de relance</h2>
         <p className="text-sm text-[var(--color-muted)]">
-          Relisez, corrigez si besoin, puis validez. Rien ne part sans ce clic.
+          Le prospect a déjà son résultat à l&apos;écran et par e-mail. Ce message-ci est l&apos;argumentaire, rédigé par l&apos;IA à partir de son profil : relisez, corrigez, validez. Rien ne part sans ce clic.
         </p>
         {isPending ? (
           <ReviewForm id={response.id} initialMessage={response.coachMessage} />

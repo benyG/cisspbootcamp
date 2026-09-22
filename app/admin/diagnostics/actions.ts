@@ -57,10 +57,11 @@ export async function approveDiagnosis(formData: FormData): Promise<ActionResult
 
   const email = await sendEmail({
     to: response.lead.email,
-    subject: `Votre analyse CISSP, ${response.lead.firstName}`,
+    subject: `${response.lead.firstName}, la suite après votre analyse CISSP`,
     text:
       `${message}\n\n` +
-      `Votre analyse complète, avec le détail par axe : ${resultUrl}\n\n` +
+      `Réserver 15 minutes : ${env.NEXT_PUBLIC_APP_URL}/rdv?t=${response.resultToken}\n` +
+      `Revoir votre analyse : ${resultUrl}\n\n` +
       `—\nPour ne plus recevoir de messages : ${unsubscribeUrl}`,
   });
 
