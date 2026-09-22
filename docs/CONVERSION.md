@@ -218,3 +218,59 @@ et daté dans les paramètres (modifiable par Ben).
 4. **Mini-assistant de rendez-vous** sur la landing.
 5. **Automatisations admin** sur les signaux, lettre employeur, tests A/B.
 6. **Garantie**, dès que Ben a choisi.
+
+## 8. Test ExamBoot en un clic — analyse de placement (22/09/2026)
+
+Source : « API ExamBoot : créer un test en un clic ». Un POST serveur crée un
+test CISSP « shareable » de 5 questions et renvoie une URL publique jouable
+180 jours, sans compte ; le visiteur donne un pseudo et un e-mail à ExamBoot
+pour voir son score. Contraintes : appel serveur à serveur uniquement,
+30 appels/min par IP (donc un test par jour mis en cache, pas un par clic),
+aucun retour de score vers nous, le lead est capté chez ExamBoot.
+
+### Ce que le test apporte à la conversion
+- **Réciprocité** : une vraie valeur donnée avant de demander quoi que ce soit.
+- **Écart ressenti** : un professionnel qui fait 2/5 sur cinq vraies questions
+  comprend, sans discours, pourquoi il a besoin d'une méthode. C'est le levier
+  le plus fort de cette page : la preuve par soi-même.
+- **Crédibilité** : les questions viennent d'une vraie banque, pas d'un
+  argumentaire.
+
+### Le risque à gérer
+Le test capte l'e-mail chez ExamBoot, pas dans notre CRM, et n'en revient
+pas. Placé avant notre capture, il détourne des prospects du scanner ; placé
+après, il renforce un prospect que nous tenons déjà. La règle : **le test
+sert d'abord ceux que nous avons déjà captés**, et n'apparaît avant capture
+que comme argument secondaire, jamais à la place de l'analyse de profil.
+
+### Placements, par ordre de valeur
+1. **Page résultat, pour tous les verdicts** (le meilleur endroit). Un bloc
+   « Vérifiez-le sur 5 vraies questions » entre les axes et la prochaine
+   étape. Le prospect est capté, son diagnostic devient concret, l'écart
+   pousse vers l'appel ou l'inscription. Pour un profil « pas encore », c'est
+   la ressource offerte prévue au §2.6.
+2. **E-mail de résultat et message de relance validé par Ben** : le même
+   lien. Il donne une raison de répondre et un sujet pour l'appel (« vous
+   avez fait combien ? »).
+3. **Page de confirmation d'appel et rappel 24 h** : « Avant l'appel, 5
+   questions pour que Ben cale ses conseils ». Augmente le taux de présence
+   et arme la conversation.
+4. **Landing, section « La méthode »** (bande sombre « le CISSP n'est pas un
+   concours de mémorisation ») : un bouton secondaire « Voyez par vous-même :
+   5 questions réelles », ouvert dans un nouvel onglet. Visible, honnête, mais
+   après le scanner dans l'ordre de lecture, et jamais dans le héros ni dans
+   la section prix : le héros garde une seule action, et le moment du prix ne
+   doit rien avoir qui distraie.
+5. **FAQ**, réponse à « l'examen est en anglais » : « essayez cinq questions
+   en conditions réelles ». Traite l'objection par l'expérience.
+
+### Mise en œuvre prévue
+- Route serveur `POST /api/examboot/test` : crée un test par jour (cache 24 h,
+  invalidable), répond par une redirection 302 vers l'URL ExamBoot ; message
+  de repli si l'API ne répond pas en 15 s. Ouverture dans un nouvel onglet.
+- Variables `EXAMBOOT_API_KEY` et `EXAMBOOT_CISSP_ID` (à fournir par Ben ;
+  l'identifiant se lit dans l'administration ExamBoot).
+- Événement `examboot_click` avec la position, pour mesurer dans `/admin/tunnel`
+  quel emplacement rapporte des appels et des paiements.
+- 5 questions, 10 minutes, correction affichée (`cc: true`).
+- `CLAUDE.md` réserve l'API ExamBoot à la V2 (B6). Ben décide de l'avancer.
