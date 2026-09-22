@@ -27,6 +27,22 @@ export class ExamBootError extends Error {
   }
 }
 
+/** Both header forms the documentation accepts, plus a real User-Agent: some front proxies refuse anonymous clients with a 403. */
+function headers(apiKey: string, withBody: boolean): Record<string, string> {
+  return {
+    "X-API-KEY": apiKey,
+    Authorization: `Bearer ${apiKey}`,
+    Accept: "application/json",
+    "User-Agent": "cisspbootcamp/1.0 (+https://cisspbootcamp.online)",
+    ...(withBody ? { "Content-Type": "application/json" } : {}),
+  };
+}
+
+async function failure(prefix: string, response: Response): Promise<ExamBootError> {
+  const body = await response.text().catch(() => "");
+  return new ExamBootError(`${prefix} → ${response.status}${body ? ` ${body.replace(/\s+/g, " ").slice(0, 200)}` : ""}`, response.status);
+}
+
 function config() {
   const apiKey = process.env.EXAMBOOT_API_KEY ?? "";
   const baseUrl = (process.env.EXAMBOOT_BASE_URL ?? "https://examboot.net").replace(/\/$/, "");
@@ -44,11 +60,11 @@ export async function createTest(fetchImpl: typeof fetch = fetch): Promise<Creat
   if (!apiKey) throw new ExamBootError("EXAMBOOT_API_KEY manquante", 0);
   const response = await fetchImpl(`${baseUrl}/create-test`, {
     method: "POST",
-    headers: { "X-API-KEY": apiKey, "Content-Type": "application/json", Accept: "application/json" },
+    headers: headers(apiKey, true),
     body: JSON.stringify({ type: "shareable", quest: EXAMBOOT_QUESTIONS, certi: certification, timer: EXAMBOOT_TIMER_MINUTES }),
     signal: AbortSignal.timeout(15_000),
   });
-  if (!response.ok) throw new ExamBootError(`ExamBoot create-test → ${response.status}`, response.status);
+  if (!response.ok) throw await failure("ExamBoot create-test", response);
   const data = (await response.json()) as Partial<CreatedTest>;
   if (!data.code || !data.url) throw new ExamBootError("Réponse ExamBoot sans code ni URL", 502);
   return { id: Number(data.id ?? 0), code: data.code, url: data.url };
@@ -58,10 +74,10 @@ export async function fetchResults(code: string, fetchImpl: typeof fetch = fetch
   const { apiKey, baseUrl } = config();
   if (!apiKey) throw new ExamBootError("EXAMBOOT_API_KEY manquante", 0);
   const response = await fetchImpl(`${baseUrl}/create-test/${encodeURIComponent(code)}/results`, {
-    headers: { "X-API-KEY": apiKey, Accept: "application/json" },
+    headers: headers(apiKey, false),
     signal: AbortSignal.timeout(10_000),
   });
-  if (!response.ok) throw new ExamBootError(`ExamBoot results → ${response.status}`, response.status);
+  if (!response.ok) throw await failure("ExamBoot results", response);
   return parseResults(await response.json());
 }
 
