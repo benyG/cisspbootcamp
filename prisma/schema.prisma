@@ -565,3 +565,22 @@ model ProgramPrice {
   @@unique([program, tier])
   @@map("program_prices")
 }
+
+/// A preparation document Ben uploads from the admin (course material, planning,
+/// reading list) and attaches to the onboarding e-mail of a paid participant.
+/// Stored in the database: a handful of files, no extra service to configure.
+model Document {
+  id       Int     @id @default(autoincrement())
+  program  Program @default(cissp)
+  name     String  @db.VarChar(120)
+  filename String  @db.VarChar(160)
+  mimeType String  @map("mime_type") @db.VarChar(120)
+  size     Int
+  content  Bytes   @db.LongBlob
+  active   Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([program, active])
+  @@map("documents")
+}

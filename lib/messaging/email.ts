@@ -9,11 +9,14 @@ import { Resend } from "resend";
  */
 export type EmailResult = { sent: true; id: string | null } | { sent: false; reason: string };
 
+export type EmailAttachment = { filename: string; content: Buffer };
+
 export async function sendEmail(input: {
   to: string;
   subject: string;
   text: string;
   html?: string;
+  attachments?: EmailAttachment[];
 }): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM ?? "CISSP Bootcamp <bonjour@cisspbootcamp.online>";
@@ -30,6 +33,7 @@ export async function sendEmail(input: {
     subject: input.subject,
     text: input.text,
     html: input.html ?? textToHtml(input.text),
+    attachments: input.attachments?.map((a) => ({ filename: a.filename, content: a.content })),
   });
 
   if (error) {

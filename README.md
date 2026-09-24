@@ -193,6 +193,14 @@ Deux paliers : Afrique francophone 625 USD, international 1 200 USD, plus
 « entreprise » sur devis. Les montants locaux affichés (FCFA, EUR…) sont
 indicatifs, convertis chaque nuit ; on encaisse en USD.
 
+### Envoyer les documents de préparation : `/admin/documents`
+
+1. Ajoutez vos fichiers (PDF, Word, PowerPoint, Excel, ZIP, image ; 8 Mo par fichier) avec le nom qui apparaîtra dans l'e-mail et la formation concernée (CISSP ou CC).
+2. Ouvrez la fiche d'un inscrit dont la place est payée : une section « Documents de préparation » liste les fichiers actifs de sa formation, tous cochés.
+3. Décochez ce que vous ne voulez pas joindre, puis « Envoyer l'e-mail d'onboarding ». L'envoi est immédiat, tracé dans l'historique du lead, et un e-mail accepte 25 Mo de pièces jointes au total.
+
+Le texte de l'e-mail est le gabarit « Onboarding : documents de préparation » dans `/admin/parametres/gabarits` ; `{{liste_documents}}` y est remplacé par la liste des fichiers joints. Rien ne part sans votre clic. Un document désactivé reste stocké mais n'est plus proposé.
+
 ### Ajouter un témoignage : `/admin/temoignages`
 
 Prénom, poste, pays, texte, URL de vidéo YouTube (facultatif), ordre, case
