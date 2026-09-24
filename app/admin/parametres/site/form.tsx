@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 
-import type { SiteSectionKey, SiteSettings } from "@/lib/site-settings";
+import { SITE_DEFAULTS, type SiteSectionKey, type SiteSettings } from "@/lib/site-settings";
 
-import { saveSection } from "./actions";
+import { resetSection, saveSection } from "./actions";
 
 /**
  * One card per section, each with its own Save. Lists (promises, steps, FAQ)
@@ -17,12 +17,12 @@ export function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
       <Section title="Héros" section="hero" initial={initial.hero} fields={[
         { name: "title", label: "Titre — la partie entre {{ }} est mise en couleur" },
         { name: "lead", label: "Accroche", rows: 3 },
-        { name: "promises", label: "3 promesses — une par ligne : titre | texte", rows: 3, list: ["title", "text"] },
+        { name: "promises", label: "3 preuves — une par ligne : titre (le texte est facultatif)", rows: 3, list: ["title", "text"] },
         { name: "microcopy", label: "Ligne sous les boutons" },
       ]} />
       <Section title="Chiffres de preuve" section="proof" initial={initial.proof} fields={[
         { name: "title", label: "Titre", rows: 2 },
-        { name: "numbers", label: "4 chiffres — une par ligne : valeur | texte", rows: 4, list: ["value", "text"] },
+        { name: "numbers", label: "3 chiffres — une par ligne : valeur | texte", rows: 3, list: ["value", "text"] },
       ]} />
       <Section title="Méthode" section="method" initial={initial.method} fields={[
         { name: "title", label: "Titre", rows: 2 },
@@ -110,7 +110,25 @@ function Section<K extends SiteSectionKey>({ title, section, initial, fields }: 
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
         <span className="text-sm">{state.ok && <span className="text-emerald-800">Enregistré, en ligne dans la minute.</span>}{state.error && <span className="text-red-700">{state.error}</span>}</span>
-        <button type="button" onClick={submit} disabled={pending} className="rounded-lg bg-accent px-4 py-2.5 font-semibold text-white disabled:opacity-60">Enregistrer</button>
+        <span className="flex items-center gap-3">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              if (!confirm("Remplacer cette section par les textes par défaut du site ?")) return;
+              setState({});
+              start(async () => {
+                const result = await resetSection(section);
+                if (result.ok) setValues(toForm(SITE_DEFAULTS[section], fields));
+                setState(result.ok ? { ok: true } : { error: result.error });
+              });
+            }}
+            className="text-sm text-muted underline disabled:opacity-60"
+          >
+            Textes par défaut
+          </button>
+          <button type="button" onClick={submit} disabled={pending} className="rounded-lg bg-accent px-4 py-2.5 font-semibold text-white disabled:opacity-60">Enregistrer</button>
+        </span>
       </div>
     </section>
   );

@@ -25,10 +25,10 @@ const interTight = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "CISSP Bootcamp — Ne préparez plus le CISSP au hasard",
+  title: "Bootcamp CISSP en français | Préparation intensive CISSP",
   description:
-    "Bootcamp CISSP de 40 h sur 15 jours, en français, avec un coach certifié. " +
-    "Analysez votre profil en 3 minutes : éligibilité ISC², domaines, délai réaliste.",
+    "Préparez le CISSP en français : 40 h de sessions live sur 15 jours, 8 domaines, questions d’entraînement " +
+    "et accompagnement jusqu’à l’examen. Analysez votre profil gratuitement.",
 };
 
 export const viewport: Viewport = {

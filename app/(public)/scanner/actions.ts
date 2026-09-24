@@ -170,7 +170,7 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
       `\n\nDélai réaliste jusqu'à l'examen : ${analysis.timeline.label} accompagné, ${analysis.timeline.soloLabel} seul.\n\n` +
       `Votre analyse complète : ${resultUrl}\n\n` +
       (examBootEnabled()
-        ? `Envie de vérifier ? Cinq vraies questions d'examen, corrigées, en dix minutes : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${resultToken}&from=email-resultat\n\n`
+        ? `Envie de vous tester ? Cinq questions d'entraînement au niveau CISSP, corrigées, en dix minutes : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${resultToken}&from=email-resultat\n\n`
         : "") +
       (context.cohort && analysis.readiness !== "not_yet"
         ? `Prix promotionnel de lancement : ${priceLabelFor(answers.country, context.tiers)}, garanti jusqu'au ${formatAdmissionDeadline(context.cohort.startsAt)} (fin des admissions de la cohorte de ${formatCohortMonth(context.cohort.startsAt)}).\n\n`

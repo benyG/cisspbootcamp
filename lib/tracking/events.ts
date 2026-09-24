@@ -26,6 +26,7 @@ export const EVENT_NAMES = [
   "service_paid",
   "service_booked",
   "program_view",
+  "pricing_view",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];
@@ -47,6 +48,7 @@ export const CLIENT_EVENTS: readonly EventName[] = [
   "faq_open",
   "service_view",
   "program_view",
+  "pricing_view",
 ];
 
 /** The seven steps of the weekly funnel, in order, with their public wording. */

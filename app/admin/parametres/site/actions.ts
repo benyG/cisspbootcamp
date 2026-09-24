@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { SITE_CACHE_TAG, type SiteSectionKey, saveSiteSection } from "@/lib/site-settings";
+import { SITE_CACHE_TAG, SITE_DEFAULTS, type SiteSectionKey, saveSiteSection } from "@/lib/site-settings";
 
 async function requireAdmin() {
   const session = await auth();
@@ -25,6 +25,16 @@ export async function saveSection(key: SiteSectionKey, payload: unknown): Promis
     }
     throw error;
   }
+  revalidateTag(SITE_CACHE_TAG);
+  revalidatePath("/");
+  revalidatePath("/admin/parametres/site");
+  return { ok: true };
+}
+
+/** Back to the copy shipped with the code: the saved row is replaced by the default. */
+export async function resetSection(key: SiteSectionKey): Promise<SaveResult> {
+  await requireAdmin();
+  await saveSiteSection(key, SITE_DEFAULTS[key]);
   revalidateTag(SITE_CACHE_TAG);
   revalidatePath("/");
   revalidatePath("/admin/parametres/site");

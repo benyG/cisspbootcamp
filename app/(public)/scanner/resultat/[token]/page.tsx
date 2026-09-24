@@ -84,20 +84,28 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const ccCohort = programCode === "cc" ? await publicCohortSummary("cc").catch(() => null) : null;
   const ccPrice = programCode === "cc" && tierCode && !isQuoteOnly(tierCode) ? await prisma.programPrice.findUnique({ where: { program_tier: { program: "cc", tier: tierCode } } }).catch(() => null) : null;
 
+  // One route per profile (docs/LANDING.md §24); the headline names it plainly.
+  const route = analysis.recommendation !== "build_first" ? "bootcamp" : programCode === "cc" ? "cc" : "career";
+  const headline =
+    route === "cc" ? "Vous êtes sur la bonne trajectoire, mais le CISSP est encore prématuré."
+    : route === "career" ? "Votre prochaine étape est surtout de structurer votre trajectoire."
+    : analysis.readiness === "ready" ? "Votre profil est compatible avec le bootcamp."
+    : analysis.headline;
+
   return (
     <main className={shell + " py-8 sm:py-12"}>
-      <TrackView name="result_view" label={token.slice(0, 24)} />
+      <TrackView name="result_view" label={route} />
       <div className="mx-auto max-w-2xl">
         <span className={`inline-flex rounded-full px-3 py-1.5 text-[.82rem] font-extrabold ${verdict.tone}`}>{verdict.badge}</span>
         <h1 className="display mt-4 text-[clamp(2.2rem,5vw,3.8rem)] leading-[.98] font-black tracking-[-.05em]">
-          {response.lead.firstName}, {analysis.headline.charAt(0).toLowerCase() + analysis.headline.slice(1)}
+          {response.lead.firstName}, {headline.charAt(0).toLowerCase() + headline.slice(1)}
         </h1>
 
         <RevealBars axes={axes.map((a) => ({ key: a.key, label: a.label, score: a.score, detail: a.detail }))} />
 
         {examBootEnabled() && (
           <div className="mt-8">
-            <PracticeTestBox placement="resultat" token={token} title="Vérifiez-le sur 5 vraies questions d’examen" text="Votre analyse dit où vous en êtes. Cinq questions du vrai niveau CISSP, tirées d’une banque d’examen et corrigées, le confirment en dix minutes. Sans compte." />
+            <PracticeTestBox placement="resultat" token={token} title="Testez votre raisonnement CISSP" text="Votre analyse dit où vous en êtes. Cinq questions d’entraînement, au niveau et dans l’esprit du CISSP, corrigées, montrent comment vous raisonnez. Sans compte, en dix minutes." />
           </div>
         )}
 
@@ -163,7 +171,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
               <TrackLink href={`/rdv?t=${token}`} event="book_click" label="resultat" className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</TrackLink>
               {canRegisterNow && tier && (
                 <TrackLink href={`/inscription?t=${token}`} event="cta_click" label="resultat-inscription" className="mt-3 inline-flex w-full items-center justify-center rounded-[14px] border border-line bg-white px-5 py-3.5 font-extrabold">
-                  Je connais déjà mon choix : m’inscrire →
+                  Rejoindre la cohorte →
                 </TrackLink>
               )}
             </>
@@ -174,7 +182,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
                 <p className="display mt-1 text-[1.35rem] leading-tight font-black">15 jours pour votre première certification : la CC d’ISC².</p>
                 <p className="mt-1 text-[.95rem] text-[#cbd5df]">Aucun prérequis, un examen reconnu, la même maison que le CISSP. Vous en sortez avec une certification, et le chemin vers le CISSP est tracé.{ccCohort ? ` Prochaine session en ${formatCohortMonthLabel(ccCohort.startsAt)} : ${ccCohort.gauge.label.toLowerCase()}.` : ""}</p>
                 {ccPrice && <p className="mt-2 text-[.9rem]"><b>{formatUsdCents(ccPrice.amountUsd)}</b>{ccLocal(ccPrice.amountUsd) && <span className="text-[#cbd5df]"> ≈ {ccLocal(ccPrice.amountUsd)}</span>}</p>}
-                <TrackLink href={`/demarrer?t=${token}`} event="cta_click" label="resultat-cc" className={btnPrimary + " mt-4 w-full border border-white/20"}>Voir la formation CC →</TrackLink>
+                <TrackLink href={`/demarrer?t=${token}`} event="cta_click" label="resultat-cc" className={btnPrimary + " mt-4 w-full border border-white/20"}>Commencer par ISC² CC →</TrackLink>
               </div>
               {service && (
                 <p className="mt-3 rounded-[14px] border border-line bg-white px-4 py-3 text-[.9rem] text-ink-2">
@@ -188,7 +196,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
               <p className="display mt-1 text-[1.35rem] leading-tight font-black">{service.service.name}</p>
               <p className="mt-1 text-[.95rem] text-ink-2">{service.service.tagline} Vous repartez avec : {service.service.deliverable.charAt(0).toLowerCase() + service.service.deliverable.slice(1)}.</p>
               <p className="mt-2 text-[.9rem]"><b>{service.usdLabel}</b>{service.localLabel && <span className="text-muted"> ≈ {service.localLabel}</span>}{service.service.creditable && <span className="text-muted"> · déduit du bootcamp si vous vous inscrivez dans les 90 jours</span>}</p>
-              <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className={btnPrimary + " mt-4 w-full"}>Réserver cette séance →</TrackLink>
+              <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className={btnPrimary + " mt-4 w-full"}>Réserver un conseil carrière →</TrackLink>
               <TrackLink href={`/conseil?t=${token}`} event="cta_click" label="resultat-conseil" className="mt-2 inline-flex w-full items-center justify-center py-2 text-[.9rem] font-bold text-muted underline underline-offset-4">Voir les autres séances</TrackLink>
             </div>
           ) : (
