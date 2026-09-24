@@ -218,7 +218,7 @@ test("paiement : seul le webhook Stripe signé rend la place payée", async ({ p
  */
 test("un prospect « pas encore » achète une heure de conseil et réserve sa séance", async ({ page, request }) => {
   await page.goto("/conseil");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(/une heure avec ben/i);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/à toutes les étapes/i);
   await page.locator("#service-country").selectOption("CM");
   await expect(page.getByText(/bilan de carrière cybersécurité/i).first()).toBeVisible();
   await expect(page.getByText(/^60 USD/).first()).toBeVisible();
