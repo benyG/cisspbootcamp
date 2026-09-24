@@ -1,6 +1,7 @@
 # Offres autour du bootcamp CISSP — conseil carrière et produit d'entrée
 
-Proposition du 24/09/2026, à valider par Ben avant implémentation.
+Proposition du 24/09/2026. Décisions de Ben le même jour (§8) ; la marche
+« Être conseillé » est implémentée (§9), la marche « Débuter » reste à faire.
 
 Le constat de Ben : le CISSP est un produit d'experts. Le site attire aussi
 des personnes qui n'y sont pas encore, et aujourd'hui il les gare six mois
@@ -162,3 +163,63 @@ aiguillage, puis produit d'entrée, puis mentorat.
 4. Combien d'heures par semaine réservées au conseil, et quels jours ?
 5. Crédit de l'heure de conseil sur le bootcamp : oui ?
 6. Mentorat mensuel : maintenant ou plus tard ?
+
+## 8. Décisions de Ben (24/09/2026)
+
+1. Produit d'entrée : **CC d'ISC²**.
+2. Tarifs : **la grille du §2**, telle quelle.
+3. Services au lancement : **bilan, reconversion, certif**.
+4. Conseil : **2 h le mercredi** (plage « conseil » par défaut 18:00–20:00,
+   heure de Douala, à ajuster dans `/admin/parametres/google`).
+5. Heure de conseil déduite du bootcamp : **oui**.
+6. Mentorat mensuel : **maintenant**, structuré comme suit.
+
+### Le mentorat, structuré
+
+Un mois à la fois, sans abonnement (pas de prélèvement récurrent : Netticket
+ne le permet pas, et un mois renouvelé à la main est un mois voulu). 99 USD
+Afrique francophone, 199 USD international. Chaque mois comprend :
+
+| Moment | Contenu | Format |
+|---|---|---|
+| Séance 1, début de mois | Bilan de la progression, objectifs du mois, plan de travail semaine par semaine | 45 min en visio |
+| Entre les deux | Une question par e-mail chaque semaine, réponse sous 48 h | Écrit |
+| Séance 2, mi-mois | Déblocage des points durs, questions d'examen commentées, ajustement du plan | 45 min en visio |
+| Fin de mois | Récapitulatif écrit : ce qui est acquis, ce qui reste, les objectifs du mois suivant | Une page |
+
+Pour qui : avant le bootcamp, pour construire l'éligibilité ou préparer une
+certification intermédiaire ; après le bootcamp, pour tenir jusqu'à la date
+d'examen. Le mentorat n'est pas déductible du bootcamp (ce n'est pas une
+porte d'entrée, c'est un accompagnement dans la durée).
+
+## 9. Ce qui est en place
+
+- **Catalogue** : `lib/services.ts` (définitions, crédit, aiguillage, testé),
+  tables `services`, `service_prices`, `service_orders` ; le seed crée les
+  quatre services aux prix décidés, `/admin/conseil` les active, les
+  désactive et change prix et codes Netticket.
+- **Parcours** : `/conseil` (prix selon le pays) → `/conseil/[code]`
+  (coordonnées avec consentement, ou profil connu par le jeton du scanner ;
+  carte ou mobile money) → paiement confirmé par le webhook (référence
+  `CS-…`) → e-mail avec lien personnel → `/conseil/rdv/[token]` (séances de
+  la commande, créneaux des plages « conseil », une séance à venir à la fois)
+  → confirmation, rappels 24 h et 1 h, déplacement ou annulation par le lien
+  habituel, sans perdre la séance payée.
+- **Agenda** : les règles de disponibilité ont une famille (`discovery` ou
+  `consulting`) ; les séances de 45, 60 ou 90 min sont proposées toutes les
+  30 min, de 24 h à 5 semaines à l'avance ; Google reste la source des
+  occupations, donc appels et séances ne se chevauchent jamais.
+- **Crédit** : `buildOffer` déduit une heure de la dernière commande payée
+  depuis moins de 90 jours et non encore déduite ; le montant est stocké sur
+  l'inscription (`credit_usd`) et la commande pointe vers l'inscription une
+  fois payée.
+- **Aiguillage** : page résultat (bloc principal pour « pas encore », bloc
+  secondaire pour « sous conditions » et « prêt »), e-mail de résultat,
+  message de relance (règles et IA), gabarits (`{{lien_conseil}}`).
+- **Landing** : lien « Conseil carrière » dans la barre, section « Trois façons
+  de travailler avec Ben » après la preuve, question de FAQ.
+- **Admin** : `/admin/conseil`, file d'actions (séances du jour, séances
+  payées à réserver), fiche lead (commandes et séances), tunnel (tableau
+  conseil).
+- **Reste à faire** : la formation CC (`/demarrer`, programmes de cohortes),
+  puis les services `cv` et `eligibilite` sur le même moule.
