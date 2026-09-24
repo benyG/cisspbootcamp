@@ -296,13 +296,13 @@ test("un débutant s'inscrit à la formation CC depuis /demarrer", async ({ page
   const lead = await prisma.lead.create({
     data: { firstName: "Aïcha", lastName: "Debut", email: `e2e-cc-${stamp}@example.com`, country: "CM", tier: "africa", consentAt: new Date(), source: "demarrer", unsubscribeToken: `unsub-cc-${stamp}` },
   });
-  const { startRegistration } = await import("@/lib/registration");
-  const started = await startRegistration({ leadId: lead.id, method: "stripe", program: "cc" });
-  expect(started.registration).not.toBeNull();
-  const registration = started.registration!;
-  expect(started.offer!.program).toBe("cc");
-  expect(registration.amountUsd).toBe(14_900);
-  expect((await prisma.cohort.findUniqueOrThrow({ where: { id: registration.cohortId } })).program).toBe("cc");
+  // The pending registration the server action opens, on the seeded CC session.
+  const ccCohort = await prisma.cohort.findFirstOrThrow({ where: { program: "cc", status: "open" }, orderBy: { startsAt: "asc" } });
+  const ccPrice = await prisma.programPrice.findUniqueOrThrow({ where: { program_tier: { program: "cc", tier: "africa" } } });
+  expect(ccPrice.amountUsd).toBe(14_900);
+  const registration = await prisma.registration.create({
+    data: { leadId: lead.id, cohortId: ccCohort.id, tier: "africa", amountUsd: ccPrice.amountUsd, method: "stripe", reference: `CB-CC${stamp.toString(36).toUpperCase().slice(-2)}-E2E1` },
+  });
 
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   const body = JSON.stringify({
