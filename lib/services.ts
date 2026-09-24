@@ -6,7 +6,7 @@ import type { Readiness, ScannerAnswers } from "@/lib/scoring";
  * the routing from a scanner verdict to the service that fits. No I/O here.
  */
 
-export const SERVICE_CODES = ["bilan", "reconversion", "certif", "mentorat"] as const;
+export const SERVICE_CODES = ["bilan", "evolution", "repositionnement", "reconversion", "certif", "mentorat"] as const;
 export type ServiceCode = (typeof SERVICE_CODES)[number];
 
 export function isServiceCode(value: unknown): value is ServiceCode {
@@ -33,17 +33,49 @@ export const SERVICE_CATALOGUE: readonly ServiceDefinition[] = [
   {
     code: "bilan",
     name: "Bilan de carrière cybersécurité",
-    tagline: "Où vous en êtes, où aller, par quelle certification commencer.",
+    tagline: "Où vous en êtes, où aller, quelle est la prochaine étape, à tout niveau d’expérience.",
     description:
-      "Votre parcours, vos compétences, ce que le marché attend\n" +
-      "Les voies possibles : GRC, SOC, pentest, cloud, audit\n" +
-      "La première certification à viser, et dans quel ordre ensuite\n" +
+      "Votre parcours, vos compétences, ce que le marché attend de vous aujourd’hui\n" +
+      "Les voies possibles : GRC, SOC, pentest, cloud, audit, management\n" +
+      "La prochaine certification utile, et dans quel ordre ensuite\n" +
       "Un plan à 12 mois, daté",
     deliverable: "Un plan écrit d’une page, envoyé après la séance",
     sessionMinutes: 60,
     sessions: 1,
     creditable: true,
     sortOrder: 1,
+    prices: { africa: 6_000, international: 12_000 },
+  },
+  {
+    code: "evolution",
+    name: "Évoluer vers le management ou le poste de RSSI",
+    tagline: "De la technique à la gouvernance : prendre une équipe, un périmètre, une fonction.",
+    description:
+      "Ce qu’un comité de direction attend d’un RSSI, et ce qui manque encore à votre profil\n" +
+      "Passer de l’expertise technique au pilotage : risques, budget, conformité, communication\n" +
+      "Se faire nommer ou recruter : positionnement, visibilité, négociation\n" +
+      "Les certifications qui comptent à ce niveau, CISM, CISSP, CRISC, et lesquelles ignorer",
+    deliverable: "Une feuille de route écrite vers le poste visé",
+    sessionMinutes: 60,
+    sessions: 1,
+    creditable: true,
+    sortOrder: 2,
+    prices: { africa: 6_000, international: 12_000 },
+  },
+  {
+    code: "repositionnement",
+    name: "Se repositionner dans la cybersécurité",
+    tagline: "Spécialisation, freelance, expatriation, retour après une pause : changer de trajectoire sans repartir de zéro.",
+    description:
+      "Le marché de la spécialité visée : cloud, GRC, pentest, réponse à incident, audit\n" +
+      "Ce que votre expérience vaut ailleurs : à l’étranger, en indépendant, dans un autre secteur\n" +
+      "Les écarts à combler, et le plus court chemin pour les combler\n" +
+      "Un plan de transition daté, avec les premiers pas concrets",
+    deliverable: "Un plan de repositionnement écrit",
+    sessionMinutes: 60,
+    sessions: 1,
+    creditable: true,
+    sortOrder: 3,
     prices: { africa: 6_000, international: 12_000 },
   },
   {
@@ -58,13 +90,13 @@ export const SERVICE_CATALOGUE: readonly ServiceDefinition[] = [
     sessionMinutes: 60,
     sessions: 3,
     creditable: true,
-    sortOrder: 2,
+    sortOrder: 4,
     prices: { africa: 15_000, international: 30_000 },
   },
   {
     code: "certif",
     name: "Choisir et préparer sa certification",
-    tagline: "Security+, SSCP, CC, CCSP, CISM, CISA, ISO 27001 : laquelle, quand, comment.",
+    tagline: "De la CC au CCSP, CISM, CISA ou CRISC : laquelle sert votre objectif, quand, comment.",
     description:
       "La certification qui sert votre objectif, pas la plus connue\n" +
       "Les prérequis, le coût réel, le délai réaliste\n" +
@@ -73,7 +105,7 @@ export const SERVICE_CATALOGUE: readonly ServiceDefinition[] = [
     sessionMinutes: 60,
     sessions: 1,
     creditable: true,
-    sortOrder: 3,
+    sortOrder: 5,
     prices: { africa: 6_000, international: 12_000 },
   },
   {
@@ -89,7 +121,7 @@ export const SERVICE_CATALOGUE: readonly ServiceDefinition[] = [
     sessionMinutes: 45,
     sessions: 2,
     creditable: false,
-    sortOrder: 4,
+    sortOrder: 6,
     prices: { africa: 9_900, international: 19_900 },
   },
 ];
@@ -129,17 +161,16 @@ export function consultingCredit(orders: readonly CreditableOrder[], now: Date):
 // --- Aiguillage depuis le scanner ----------------------------------------
 
 /**
- * The step that fits a prospect who is not ready for the bootcamp
- * (docs/OFFRES.md §4). "Pas encore" with little or no experience, or in
- * career change, goes to the reconversion pack; with some experience, to
- * the career review. "Sous conditions" gets the review as a secondary
- * offer — the call stays the main action. "Prêt" gets nothing: never sell
- * the step below to someone who can climb.
+ * The consulting session that speaks to this profile (Ben, 24/09/2026:
+ * consulting is for every level, it is about the career, not about being
+ * ready for the bootcamp). A career change or no experience → the
+ * reconversion pack; five years and more → the evolution session; in
+ * between → the career review. Every verdict gets one.
  */
-export function recommendedService(readiness: Readiness, answers: Pick<ScannerAnswers, "experience" | "professionalStatus">): ServiceCode | null {
-  if (readiness === "ready") return null;
-  if (readiness === "conditional") return "bilan";
+export function recommendedService(readiness: Readiness, answers: Pick<ScannerAnswers, "experience" | "professionalStatus">): ServiceCode {
   if (answers.professionalStatus === "career_change" || answers.experience === "none") return "reconversion";
+  if (answers.experience === "five_plus") return "evolution";
+  void readiness;
   return "bilan";
 }
 

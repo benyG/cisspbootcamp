@@ -82,8 +82,15 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   // The step that fits (docs/OFFRES.md §4): the main offer for "pas encore",
   // a secondary one for "sous conditions", nothing for "prêt".
   const profile = { experience: answers.experience ?? "one_two", professionalStatus: answers.professionalStatus ?? "employed" } as const;
+  // Consulting speaks to every level (Ben, 24/09): the session that fits this profile, whatever the verdict.
   const serviceCode = recommendedService(analysis.readiness, profile);
-  const service = serviceCode ? await buildServiceOffer(serviceCode, response.lead.country).catch(() => null) : null;
+  const service = await buildServiceOffer(serviceCode, response.lead.country).catch(() => null);
+  const serviceLead =
+    analysis.readiness === "ready"
+      ? "Et après le CISSP ? Une heure pour dessiner la suite : poste, spécialisation, management."
+      : analysis.readiness === "conditional"
+        ? "En parallèle, une heure pour poser votre trajectoire, pas seulement l’examen."
+        : "Vous voulez aller plus loin qu’un premier contact ?";
   // No experience, or a career change: the CC course is the first step (docs/OFFRES.md §4).
   const programCode = recommendedProgram(analysis.readiness, profile);
   const ccCohort = programCode === "cc" ? await publicCohortSummary("cc").catch(() => null) : null;
@@ -218,9 +225,9 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
                   <TrackLink href={`/demarrer?t=${token}`} event="cta_click" label="resultat-cc" className="mt-3 inline-flex w-full items-center justify-center rounded-[14px] border border-white/30 px-5 py-3 font-extrabold text-white">Commencer par ISC² CC →</TrackLink>
                 </div>
               )}
-              {analysis.readiness === "not_yet" && service && (
+              {service && (
                 <p className="mt-3 rounded-[14px] border border-line bg-white px-4 py-3 text-[.9rem] text-ink-2">
-                  Vous voulez aller plus loin qu’un premier contact ? <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className="font-bold underline underline-offset-4">{service.service.name}</TrackLink>, {service.service.durationLabel} avec Ben, {service.usdLabel}{service.service.creditable ? ", déduit du bootcamp" : ""}.
+                  {serviceLead} <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className="font-bold underline underline-offset-4">{service.service.name}</TrackLink>, {service.service.durationLabel} avec Ben, {service.usdLabel}. <TrackLink href={`/conseil?t=${token}`} event="cta_click" label="resultat-conseil" className="underline underline-offset-4">Toutes les séances</TrackLink>.
                 </p>
               )}
             </>
@@ -250,11 +257,6 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
             </div>
           ) : (
             <Link href="/" className={btnPrimary + " mt-5 w-full"}>Retour à l’accueil</Link>
-          )}
-          {canBook && service && (
-            <p className="mt-4 rounded-[14px] border border-line bg-white px-4 py-3 text-[.9rem] text-ink-2">
-              Vous préférez d’abord faire le point sur votre parcours ? <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className="font-bold underline underline-offset-4">{service.service.name}</TrackLink>, {service.service.durationLabel} avec Ben, {service.usdLabel}, déduit du bootcamp si vous vous inscrivez ensuite.
-            </p>
           )}
           <p className="mt-3 text-[.86rem] text-muted">Cette analyse vous a aussi été envoyée par e-mail. Ben la lit et vous écrit personnellement.</p>
         </section>

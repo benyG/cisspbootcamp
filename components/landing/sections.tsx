@@ -270,26 +270,27 @@ export function Video({ settings }: { settings: SiteSettings }) {
 }
 
 /**
- * The two steps before the bootcamp, in one slim band (Ben, 24/09): visible
- * without competing with the diagnostic. Three lines, two links.
+ * The two other ways to work with Ben, in one slim band (Ben, 24/09):
+ * the CC course to start, and career consulting at every stage. Neither is
+ * framed as a step before the bootcamp.
  */
 export function LadderStrip({ services, ccCohort }: { services: Array<{ code: string; name: string; durationLabel: string }>; ccCohort: { startsAt: Date } | null }) {
-  const hour = services.find((s) => s.code === "bilan") ?? services[0];
+  if (services.length === 0) return null;
   return (
     <section id="parcours" className="pb-14 sm:pb-16">
       <div className={shell}>
         <div className="grid gap-3 rounded-[22px] border border-line bg-white p-5 sm:grid-cols-[auto_1fr_1fr] sm:items-center sm:gap-6 sm:p-6">
           <div className="sm:max-w-[220px]">
-            <div className="text-[.72rem] font-extrabold tracking-[.1em] text-accent uppercase">Pas encore prêt ?</div>
-            <p className="display mt-1 text-[1.25rem] leading-tight font-black">Deux marches avant le bootcamp.</p>
+            <div className="text-[.72rem] font-extrabold tracking-[.1em] text-accent uppercase">Avec Ben, aussi</div>
+            <p className="display mt-1 text-[1.25rem] leading-tight font-black">Deux autres façons d’avancer.</p>
           </div>
           <TrackLink href="/demarrer" label="parcours-cc" className="group rounded-[14px] border border-line px-4 py-3 hover:border-ink">
             <span className="block text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase">Débuter · certification CC d’ISC²</span>
             <span className="mt-0.5 block font-bold">15 jours pour votre première certification{ccCohort ? `, session ${formatCohortMonth(ccCohort.startsAt)}` : ""} <span className="text-accent-ink">→</span></span>
           </TrackLink>
           <TrackLink href="/conseil" label="parcours-conseil" className="group rounded-[14px] border border-line px-4 py-3 hover:border-ink">
-            <span className="block text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase">Être conseillé · à l’heure</span>
-            <span className="mt-0.5 block font-bold">{hour ? `${hour.name}, ${hour.durationLabel}` : "Conseil carrière avec Ben"}, déduit du bootcamp <span className="text-accent-ink">→</span></span>
+            <span className="block text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase">Conseil carrière · à toutes les étapes</span>
+            <span className="mt-0.5 block font-bold">Débuter, évoluer vers le RSSI, se repositionner : des séances d’une heure avec Ben <span className="text-accent-ink">→</span></span>
           </TrackLink>
         </div>
       </div>

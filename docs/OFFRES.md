@@ -253,3 +253,23 @@ porte d'entrée, c'est un accompagnement dans la durée).
 - **Ben sait à qui il parle** : chaque réservation, gratuite ou payée, lui
   envoie un e-mail avec le code (`RDV-0042`), le verdict, le délai, les axes,
   les objectifs et le lien de la fiche.
+
+## 11. Le conseil, décorrélé de la maturité du profil (Ben, 24/09/2026)
+
+Le conseil carrière est un service à part entière, pour toutes les étapes
+d'une carrière, pas une marche « avant » le bootcamp. Conséquences :
+
+- Deux séances seniors au catalogue, même grille (60 / 120 USD) :
+  `evolution` (vers le management ou le poste de RSSI) et
+  `repositionnement` (spécialisation, freelance, expatriation, retour).
+  Le bilan devient un bilan pour tous ; « Choisir sa certification »
+  couvre aussi CCSP, CISM, CISA, CRISC.
+- La page conseil s'ouvre sur « à toutes les étapes » avec trois publics à
+  égalité (débuter, évoluer, se repositionner) ; le bloc « 4 ans
+  d'expérience ? le conseil n'est pas pour vous » a disparu.
+- Sur la page résultat, une séance est proposée à tous les verdicts, avec un
+  texte qui dépend de l'étape (après le CISSP pour un « prêt »), et le
+  service recommandé dépend de l'expérience : reconversion, évolution, bilan.
+- La bande de la landing dit « Deux autres façons d'avancer », plus « deux
+  marches avant le bootcamp ».
+- Le crédit sur le bootcamp reste, en petit, comme un avantage.

@@ -11,7 +11,7 @@ import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = {
   title: "Conseil carrière cybersécurité — CISSP Bootcamp",
-  description: "Une heure avec un coach CISSP certifié : bilan de carrière, reconversion vers la cyber, choix de certification, mentorat mensuel. Payé à l'avance, réservé en ligne.",
+  description: "Conseil carrière cybersécurité à toutes les étapes, avec un coach CISSP certifié : bilan, évolution vers le management ou le RSSI, repositionnement, reconversion, certifications, mentorat.",
 };
 export const dynamic = "force-dynamic";
 
@@ -35,12 +35,17 @@ export default async function ConsultingPage({ searchParams }: { searchParams: P
       <main className={shell + " pb-16 sm:pb-20"}>
         <div className="max-w-[820px] pt-6 sm:pt-10">
           <div className={eyebrow}>Conseil carrière</div>
-          <h1 className="display mt-4 text-[clamp(2.2rem,4.4vw,4.4rem)] leading-[.98] font-black tracking-[-.05em]">Une heure avec Ben, pour avancer maintenant.</h1>
+          <h1 className="display mt-4 text-[clamp(2.2rem,4.4vw,4.4rem)] leading-[.98] font-black tracking-[-.05em]">Conseil carrière cybersécurité, à toutes les étapes.</h1>
           <p className="mt-4 text-[1.08rem] text-ink-2">
-            Le bootcamp CISSP s’adresse aux profils déjà expérimentés. Si vous n’y êtes pas encore, ou si vous hésitez sur la route à prendre, une séance de conseil vous donne un plan clair : votre situation, la voie qui vous convient, la première certification, les étapes datées.
+            Débuter, évoluer, se repositionner : une carrière en cybersécurité se décide plusieurs fois. Une heure avec Ben, et vous repartez avec un plan écrit pour l’étape qui est la vôtre, que vous ayez un an ou quinze ans de métier.
           </p>
+          <ul className="mt-5 grid gap-2 sm:grid-cols-3">
+            {[["Débuter", "Choisir sa voie, sa première certification, son premier poste."], ["Évoluer", "Prendre une équipe, viser le poste de RSSI, passer à la gouvernance."], ["Se repositionner", "Spécialisation, freelance, expatriation, retour après une pause."]].map(([t, d]) => (
+              <li key={t} className="rounded-[14px] border border-line bg-white px-4 py-3"><b className="display block">{t}</b><span className="text-[.9rem] text-muted">{d}</span></li>
+            ))}
+          </ul>
           <ul className="mt-5 grid gap-1.5 text-ink-2 sm:grid-cols-2">
-            {["Vous choisissez votre créneau (le mercredi soir), puis le paiement le confirme.", "Visio, en français, avec un plan écrit envoyé après la séance.", "Report gratuit jusqu’à 24 h avant. Remboursé si Ben annule.", "Une heure de conseil est déduite du bootcamp CISSP dans les 90 jours."].map((l) => (
+            {["Vous choisissez votre créneau (le mercredi soir), puis le paiement le confirme.", "Visio, en français, avec un plan écrit envoyé après la séance.", "Report gratuit jusqu’à 24 h avant. Remboursé si Ben annule."].map((l) => (
               <li key={l} className="relative py-1.5 pl-7 before:absolute before:left-0 before:font-black before:text-accent before:content-['✓']">{l}</li>
             ))}
           </ul>
@@ -66,9 +71,9 @@ export default async function ConsultingPage({ searchParams }: { searchParams: P
         </div>
 
         <section className="mt-14 max-w-[820px] rounded-[22px] border border-line bg-white p-6 shadow-[var(--shadow-panel)]">
-          <h2 className="display text-[1.5rem] leading-tight font-black">Vous avez déjà 4 ans d’expérience en sécurité ?</h2>
-          <p className="mt-2 text-ink-2">Alors le conseil n’est sans doute pas la bonne marche : le bootcamp CISSP l’est. Trois minutes d’analyse de profil vous le confirment.</p>
-          <Link href="/#evaluation" className="mt-4 inline-flex rounded-[14px] border border-line bg-white px-5 py-3 font-extrabold">Analyser mon profil →</Link>
+          <h2 className="display text-[1.5rem] leading-tight font-black">Le CISSP fait partie de votre trajectoire ?</h2>
+          <p className="mt-2 text-ink-2">Le bootcamp et le conseil se complètent : l’un prépare l’examen, l’autre la carrière. Si vous rejoignez le bootcamp dans les 90 jours qui suivent une séance, cette heure vous est déduite.</p>
+          <Link href="/#evaluation" className="mt-4 inline-flex rounded-[14px] border border-line bg-white px-5 py-3 font-extrabold">Analyser mon profil CISSP →</Link>
         </section>
       </main>
       <Footer settings={settings} />
