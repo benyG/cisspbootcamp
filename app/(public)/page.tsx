@@ -1,8 +1,9 @@
 import { PriceSection } from "@/components/landing/PriceSection";
-import { Coach, Faq, Footer, Hero, Method, Proof, Testimonials, Topbar, Video, eyebrow, shell } from "@/components/landing/sections";
+import { Coach, Faq, Footer, Hero, Ladder, Method, Proof, Testimonials, Topbar, Video, eyebrow, shell } from "@/components/landing/sections";
 import { ScannerWizard } from "@/components/scanner/ScannerWizard";
 import { TrackView } from "@/components/tracking/TrackView";
 import { publicCohortSummary } from "@/lib/cohorts-admin";
+import { loadServices } from "@/lib/consulting";
 import { prisma } from "@/lib/db";
 import { loadRates } from "@/lib/registration";
 import { loadScannerContext } from "@/lib/scanner/context";
@@ -18,12 +19,13 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   // Every read degrades to a sensible default: the landing never goes down
   // because the database blinked (and it is cached anyway).
-  const [settings, cohort, context, rates, testimonials] = await Promise.all([
+  const [settings, cohort, context, rates, testimonials, services] = await Promise.all([
     loadSiteSettings().catch(() => SITE_DEFAULTS),
     publicCohortSummary().catch(() => null),
     loadScannerContext().catch(() => ({ tiers: [], cohort: null, availabilityLabel: "Seriez-vous disponible pour la prochaine cohorte ?" })),
     loadRates().catch(() => ({})),
     prisma.testimonial.findMany({ where: { published: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }], take: 6 }).catch(() => []),
+    loadServices().catch(() => []),
   ]);
 
   return (
@@ -50,6 +52,7 @@ export default async function HomePage() {
         </section>
 
         <Proof settings={settings} />
+        <Ladder services={services} />
         <Method settings={settings} />
         <Testimonials items={testimonials} />
         <Video settings={settings} />

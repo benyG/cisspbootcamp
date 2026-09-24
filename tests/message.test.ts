@@ -64,7 +64,7 @@ describe("draftCoachMessage", () => {
     });
 
     expect(tooEarly).not.toContain("cohorte de janvier");
-    expect(tooEarly).toContain("dans six mois");
+    expect(tooEarly).toContain("séance de conseil");
   });
 
   it("reste cohérent sans cohorte ouverte", () => {

@@ -13,7 +13,9 @@ import { prisma } from "@/lib/db";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { convertUsdCents, formatLocal, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { loadRates } from "@/lib/registration";
+import { buildServiceOffer } from "@/lib/consulting";
 import { loadScannerContext } from "@/lib/scanner/context";
+import { recommendedService } from "@/lib/services";
 import { QUESTIONS } from "@/lib/scanner/questions";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
@@ -55,7 +57,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const localCents = tier && currency !== "USD" ? convertUsdCents(tier.amountUsd, currency, rates) : null;
   const localLabel = localCents !== null ? formatLocal(localCents, currency) : null;
 
-  const answers = response.answers as { examGoal?: string };
+  const answers = response.answers as { examGoal?: string; experience?: "none" | "one_two" | "three_four" | "five_plus"; professionalStatus?: "employed" | "student" | "career_change" | "freelance" };
   const goalQuestion = QUESTIONS.find((q) => q.id === "examGoal");
   const goalLabel = goalQuestion && "options" in goalQuestion ? goalQuestion.options.find((o) => o.value === answers.examGoal)?.label ?? null : null;
 
@@ -64,6 +66,11 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const verdict = VERDICT[analysis.readiness];
   const canBook = analysis.recommendation !== "build_first";
   const canRegisterNow = response.status === "approved" || response.status === "sent" || (analysis.readiness === "ready" && settings.offer.directRegistrationForReady);
+
+  // The step that fits (docs/OFFRES.md §4): the main offer for "pas encore",
+  // a secondary one for "sous conditions", nothing for "prêt".
+  const serviceCode = recommendedService(analysis.readiness, { experience: answers.experience ?? "one_two", professionalStatus: answers.professionalStatus ?? "employed" });
+  const service = serviceCode ? await buildServiceOffer(serviceCode, response.lead.country).catch(() => null) : null;
 
   return (
     <main className={shell + " py-8 sm:py-12"}>
@@ -148,8 +155,22 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
                 </TrackLink>
               )}
             </>
+          ) : service ? (
+            <div className="mt-5 rounded-[18px] border border-line bg-[#fbfffd] p-4">
+              <p className="text-[.78rem] font-extrabold tracking-[.06em] text-accent uppercase">La marche qui vous convient maintenant · {service.service.durationLabel}</p>
+              <p className="display mt-1 text-[1.35rem] leading-tight font-black">{service.service.name}</p>
+              <p className="mt-1 text-[.95rem] text-ink-2">{service.service.tagline} Vous repartez avec : {service.service.deliverable.charAt(0).toLowerCase() + service.service.deliverable.slice(1)}.</p>
+              <p className="mt-2 text-[.9rem]"><b>{service.usdLabel}</b>{service.localLabel && <span className="text-muted"> ≈ {service.localLabel}</span>}{service.service.creditable && <span className="text-muted"> · déduit du bootcamp si vous vous inscrivez dans les 90 jours</span>}</p>
+              <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className={btnPrimary + " mt-4 w-full"}>Réserver cette séance →</TrackLink>
+              <TrackLink href={`/conseil?t=${token}`} event="cta_click" label="resultat-conseil" className="mt-2 inline-flex w-full items-center justify-center py-2 text-[.9rem] font-bold text-muted underline underline-offset-4">Voir les autres séances</TrackLink>
+            </div>
           ) : (
             <Link href="/" className={btnPrimary + " mt-5 w-full"}>Retour à l’accueil</Link>
+          )}
+          {canBook && service && (
+            <p className="mt-4 rounded-[14px] border border-line bg-white px-4 py-3 text-[.9rem] text-ink-2">
+              Vous préférez d’abord faire le point sur votre parcours ? <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className="font-bold underline underline-offset-4">{service.service.name}</TrackLink>, {service.service.durationLabel} avec Ben, {service.usdLabel}, déduit du bootcamp si vous vous inscrivez ensuite.
+            </p>
           )}
           <p className="mt-3 text-[.86rem] text-muted">Cette analyse vous a aussi été envoyée par e-mail. Ben la lit et vous écrit personnellement.</p>
         </section>

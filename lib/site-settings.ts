@@ -154,6 +154,7 @@ export const SITE_DEFAULTS: SiteSettings = {
     { q: "Que se passe-t-il après les 15 jours ?", a: "Vous repartez avec un plan jusqu’à votre date d’examen, et le coach reste joignable. L’objectif n’est pas de finir le bootcamp, c’est d’être certifié." },
     { q: "Mon employeur peut-il financer ?", a: "Oui. Un reçu est émis à chaque paiement, et une facture au nom de l’entreprise est possible sur demande." },
     { q: "Comment payer depuis l’Afrique ?", a: "Carte bancaire, Orange Money ou MTN Mobile Money. Le prix est affiché en USD avec l’équivalent indicatif en FCFA." },
+    { q: "Je n’ai pas encore 5 ans d’expérience. Que puis-je faire maintenant ?", a: "Une séance de conseil carrière d’une heure avec Ben : où vous en êtes, la voie qui vous convient, la première certification à viser et un plan daté. Si vous rejoignez le bootcamp dans les 90 jours, cette heure est déduite de son prix. Le mentorat mensuel prend ensuite le relais si vous voulez être suivi." },
   ],
   contact: {
     whatsapp: "",

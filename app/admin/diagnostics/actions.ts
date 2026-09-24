@@ -61,7 +61,9 @@ export async function approveDiagnosis(formData: FormData): Promise<ActionResult
     subject: `${response.lead.firstName}, la suite après votre analyse CISSP`,
     text:
       `${message}\n\n` +
-      `Réserver 15 minutes : ${env.NEXT_PUBLIC_APP_URL}/rdv?t=${response.resultToken}\n` +
+      (response.readiness === "not_yet"
+        ? `Réserver une séance de conseil carrière : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${response.resultToken}\n`
+        : `Réserver 15 minutes : ${env.NEXT_PUBLIC_APP_URL}/rdv?t=${response.resultToken}\n`) +
       (examBootEnabled() ? `Vous situer sur 5 vraies questions d'examen : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${response.resultToken}&from=relance\n` : "") +
       `Revoir votre analyse : ${resultUrl}\n\n` +
       `—\nPour ne plus recevoir de messages : ${unsubscribeUrl}`,
