@@ -121,14 +121,12 @@ test("réservation : un créneau réel, confirmé, enregistré", async ({ page }
   expect(lead.bookings[0].startsAt.getTime()).toBeGreaterThan(Date.now());
 });
 
-test("inscription : fermée avant validation de Ben, offre au bon palier ensuite", async ({ page }) => {
-  // The sales message is still waiting for Ben: the offer stays closed.
-  await page.goto(`/inscription?t=${resultToken}`);
+test("inscription : ouverte à un profil prêt, fermée sans jeton, offre au bon palier", async ({ page }) => {
+  // No token, no offer: the registration only opens through an analysis.
+  await page.goto("/inscription");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/commencez par votre analyse/i);
 
-  // Ben validates the message in /admin/diagnostics → the link opens.
-  await prisma.scannerResponse.update({ where: { resultToken }, data: { status: "approved" } });
-
+  // A "ready" profile registers without waiting for Ben's message (brainstorm 24/09).
   await page.goto(`/inscription?t=${resultToken}`);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(`${prospect.firstName}, réservez votre place.`);
   await expect(page.getByText(/625/)).toBeVisible();
