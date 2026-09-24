@@ -1,4 +1,5 @@
 import { formatWhen } from "@/lib/booking";
+import { ordersAwaitingBooking } from "@/lib/consulting";
 import { formatCohortMonth } from "@/lib/cohorts";
 import { listCohortsWithGauge } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
@@ -13,7 +14,8 @@ import { leadVars, loadTemplate, renderTemplate, waMeLink } from "@/lib/messagin
 
 export type QueueItem =
   | { kind: "review"; id: number; leadId: number; name: string; country: string; readiness: string; heat: number; hoursWaiting: number; late: boolean }
-  | { kind: "call"; bookingId: number; leadId: number; name: string; when: string; meetUrl: string | null; readiness: string | null; heat: number; goals: string | null; timeline: string | null }
+  | { kind: "call"; bookingId: number; leadId: number; name: string; when: string; meetUrl: string | null; readiness: string | null; heat: number; goals: string | null; timeline: string | null; consulting: { service: string; number: number; total: number } | null }
+  | { kind: "session"; orderId: number; leadId: number; name: string; service: string; number: number; total: number; daysSincePaid: number }
   | { kind: "followup"; leadId: number; name: string; heat: number; stage: string; waLink: string | null; emailSubject: string; emailBody: string; email: string; overdueDays: number }
   | { kind: "payment"; registrationId: number; leadId: number; name: string; reference: string; amountUsd: number; cohortName: string; ageHours: number }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
@@ -35,7 +37,7 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
     prisma.booking.findMany({
       where: { status: "scheduled", startsAt: { gte: dayStart, lt: dayEnd } },
       orderBy: { startsAt: "asc" },
-      include: { lead: { include: { scannerResponses: { orderBy: { createdAt: "desc" }, take: 1 } } } },
+      include: { lead: { include: { scannerResponses: { orderBy: { createdAt: "desc" }, take: 1 } } }, serviceOrder: { include: { service: { select: { name: true } }, bookings: { where: { status: { in: ["scheduled", "done"] } }, orderBy: { startsAt: "asc" }, select: { id: true } } } } },
     }),
     prisma.lead.findMany({
       where: { nextFollowupAt: { lte: now }, unsubscribedAt: null, status: { notIn: ["registered", "lost"] } },
@@ -78,7 +80,13 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
 
   for (const b of todaysCalls) {
     const analysis = b.lead.scannerResponses[0]?.analysis as { timeline?: { label?: string } } | undefined;
-    items.push({ kind: "call", bookingId: b.id, leadId: b.lead.id, name: `${b.lead.firstName} ${b.lead.lastName}`, when: formatWhen(b.startsAt, "Africa/Douala"), meetUrl: b.meetUrl, readiness: b.lead.readiness, heat: b.lead.heatScore, goals: b.lead.goals, timeline: analysis?.timeline?.label ?? null });
+    const consulting = b.serviceOrder ? { service: b.serviceOrder.service.name, number: b.serviceOrder.bookings.findIndex((x) => x.id === b.id) + 1, total: b.serviceOrder.sessionsTotal } : null;
+    items.push({ kind: "call", bookingId: b.id, leadId: b.lead.id, name: `${b.lead.firstName} ${b.lead.lastName}`, when: formatWhen(b.startsAt, "Africa/Douala"), meetUrl: b.meetUrl, readiness: b.lead.readiness, heat: b.lead.heatScore, goals: b.lead.goals, timeline: analysis?.timeline?.label ?? null, consulting });
+  }
+
+  // Paid consulting sessions with no slot chosen: a nudge from Ben, not a chase.
+  for (const o of await ordersAwaitingBooking(now)) {
+    items.push({ kind: "session", orderId: o.id, leadId: o.lead.id, name: `${o.lead.firstName} ${o.lead.lastName}`, service: o.service.name, number: o.sessionsBooked + 1, total: o.sessionsTotal, daysSincePaid: o.daysSincePaid });
   }
 
   for (const l of dueFollowups) {

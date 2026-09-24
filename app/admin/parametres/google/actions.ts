@@ -51,6 +51,7 @@ export async function updateCalendarSettings(formData: FormData): Promise<void> 
 }
 
 const ruleSchema = z.object({
+  kind: z.enum(["discovery", "consulting"]).default("discovery"),
   weekday: z.coerce.number().int().min(0).max(6),
   start: z.string().regex(/^\d{2}:\d{2}$/),
   end: z.string().regex(/^\d{2}:\d{2}$/),
@@ -59,6 +60,7 @@ const ruleSchema = z.object({
 export async function addAvailabilityRule(formData: FormData): Promise<void> {
   await requireAdmin();
   const parsed = ruleSchema.safeParse({
+    kind: formData.get("kind") ?? "discovery",
     weekday: formData.get("weekday"),
     start: formData.get("start"),
     end: formData.get("end"),

@@ -73,15 +73,17 @@ export default async function GoogleSettingsPage({
         )}
       </section>
 
-      <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="font-semibold">Plages de disponibilité</h2>
+      {(["discovery", "consulting"] as const).map((kind) => (
+      <section key={kind} className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+        <h2 className="font-semibold">{kind === "discovery" ? "Plages des appels de découverte" : "Plages des séances de conseil"}</h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Chaque plage est découpée en appels de 15 minutes, 5 minutes de tampon, moins vos
-          événements existants. Réservable de 12 h à 14 jours à l&apos;avance.
+          {kind === "discovery"
+            ? "Chaque plage est découpée en appels de 15 minutes, 5 minutes de tampon, moins vos événements existants. Réservable de 12 h à 14 jours à l'avance."
+            : "Séances payées de 45, 60 ou 90 minutes (conseil carrière), proposées toutes les 30 minutes dans ces plages, moins vos événements existants. Réservable de 24 h à 5 semaines à l'avance. Ces plages ne servent jamais aux appels de découverte."}
         </p>
 
         <ul className="mt-4 divide-y divide-slate-100">
-          {rules.map((rule) => (
+          {rules.filter((rule) => rule.kind === kind).map((rule) => (
             <li key={rule.id} className="flex items-center justify-between py-2 text-sm">
               <span>
                 <strong>{WEEKDAYS[rule.weekday]}</strong> {rule.start} – {rule.end}
@@ -92,15 +94,16 @@ export default async function GoogleSettingsPage({
               </form>
             </li>
           ))}
-          {rules.length === 0 && (
-            <li className="py-2 text-sm text-red-700">Aucune plage : aucun créneau ne sera proposé.</li>
+          {rules.filter((rule) => rule.kind === kind).length === 0 && (
+            <li className="py-2 text-sm text-red-700">Aucune plage : aucun créneau ne sera proposé{kind === "consulting" ? " pour le conseil" : ""}.</li>
           )}
         </ul>
 
         <form action={addAvailabilityRule} className="mt-4 grid grid-cols-[1fr_auto_auto_auto] items-end gap-2">
+          <input type="hidden" name="kind" value={kind} />
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Jour</span>
-            <select name="weekday" className={input} defaultValue="1">
+            <select name="weekday" className={input} defaultValue={kind === "consulting" ? "3" : "1"}>
               {WEEKDAYS.map((day, index) => (
                 <option key={day} value={index}>{day}</option>
               ))}
@@ -117,6 +120,7 @@ export default async function GoogleSettingsPage({
           <button type="submit" className={primary}>Ajouter</button>
         </form>
       </section>
+      ))}
     </main>
   );
 }

@@ -23,6 +23,7 @@ const LOG: Record<string, string> = {
   followup_sent: "Relance envoyée", followup_postponed: "Relance reportée", invited_to_book: "Invité à réserver",
   registration_started: "Inscription commencée", registration_manual_opened: "Inscription manuelle ouverte", payment_confirmed: "Paiement confirmé", payment_confirmed_manually: "Paiement confirmé à la main", payment_amount_mismatch: "Montant inattendu",
   unsubscribed: "Désinscrit", marked_lost: "Marqué perdu",
+  service_order_started: "Commande de conseil ouverte", service_paid: "Séance de conseil payée", session_booked: "Séance réservée", session_cancelled: "Séance annulée", session_outcome: "Séance faite / absent", session_booking_reminded: "Lien de réservation renvoyé",
 };
 
 /** Lead sheet (SPECS A7): timeline, scanner, notes, status, tags, actions. */
@@ -36,6 +37,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
       scannerResponses: { orderBy: { createdAt: "desc" }, take: 1 },
       bookings: { orderBy: { startsAt: "desc" }, take: 5 },
       registrations: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { name: true } } } },
+      serviceOrders: { orderBy: { createdAt: "desc" }, include: { service: { select: { name: true } }, bookings: { where: { status: { in: ["scheduled", "done"] } }, select: { id: true } } } },
       actions: { orderBy: { createdAt: "desc" }, take: 40 },
       practiceTests: { orderBy: { createdAt: "desc" }, take: 5 },
       pricingTier: true,
@@ -116,9 +118,10 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         </section>
       )}
 
-      {(lead.bookings.length > 0 || lead.registrations.length > 0) && (
+      {(lead.bookings.length > 0 || lead.registrations.length > 0 || lead.serviceOrders.length > 0) && (
         <section className="mt-5 grid gap-2 text-sm">
-          {lead.bookings.map((b) => <p key={b.id} className="rounded-lg border border-line bg-white px-3 py-2">Appel {b.startsAt.toLocaleString("fr-FR")} · {b.status}{b.outcome ? ` · ${b.outcome}` : ""}{b.meetUrl && <> · <a href={b.meetUrl} className="underline">Meet</a></>}</p>)}
+          {lead.bookings.map((b) => <p key={b.id} className="rounded-lg border border-line bg-white px-3 py-2">{b.kind === "consulting" ? "Séance de conseil" : "Appel"} {b.startsAt.toLocaleString("fr-FR")} · {b.status}{b.outcome ? ` · ${b.outcome}` : ""}{b.meetUrl && <> · <a href={b.meetUrl} className="underline">Meet</a></>}</p>)}
+          {lead.serviceOrders.map((o) => <p key={o.id} className="rounded-lg border border-line bg-white px-3 py-2">Conseil : {o.service.name} · {formatUsdCents(o.amountUsd)} · {o.method} · {o.status} · {o.bookings.length}/{o.sessionsTotal} séance{o.sessionsTotal > 1 ? "s" : ""} · {o.reference}{o.status === "paid" && <> · <a href={`/conseil/rdv/${o.bookingToken}`} className="underline">lien de réservation</a></>}</p>)}
           {lead.registrations.map((r) => <p key={r.id} className="rounded-lg border border-line bg-white px-3 py-2">{r.cohort.name} · {formatUsdCents(r.amountUsd)} · {r.method} · {r.status} · {r.reference}{r.status === "paid" && <> · <a href={`/inscription/recu/${r.reference}`} className="underline">Reçu</a></>}</p>)}
         </section>
       )}
