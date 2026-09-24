@@ -11,7 +11,9 @@ import { HOLD_HOURS, activeHoldFor, formatDeadline } from "@/lib/seat-holds";
 
 import { holdSeatAction, releaseHoldAction } from "@/app/admin/actions";
 
-import { deleteLead, markLost, registerManually, scheduleFollowup, updateLead } from "../actions";
+import { formatBytes } from "@/lib/documents";
+
+import { deleteLead, markLost, registerManually, scheduleFollowup, sendOnboarding, updateLead } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +25,14 @@ const LOG: Record<string, string> = {
   followup_sent: "Relance envoyée", followup_postponed: "Relance reportée", invited_to_book: "Invité à réserver",
   registration_started: "Inscription commencée", registration_manual_opened: "Inscription manuelle ouverte", payment_confirmed: "Paiement confirmé", payment_confirmed_manually: "Paiement confirmé à la main", payment_amount_mismatch: "Montant inattendu",
   unsubscribed: "Désinscrit", marked_lost: "Marqué perdu",
-  after_call_email: "Lien de paiement envoyé après l'appel", result_reminder: "Rappel J+1 envoyé",
+  after_call_email: "Lien de paiement envoyé après l'appel", result_reminder: "Rappel J+1 envoyé", onboarding_sent: "Documents de préparation envoyés", onboarding_failed: "Documents de préparation : e-mail non parti",
   service_order_started: "Commande de conseil ouverte", service_paid: "Séance de conseil payée", session_booked: "Séance réservée", session_cancelled: "Séance annulée", session_outcome: "Séance faite / absent", session_booking_reminded: "Lien de réservation renvoyé",
 };
 
 /** Lead sheet (SPECS A7): timeline, scanner, notes, status, tags, actions. */
-export default async function LeadPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function LeadPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ onboarding?: string }> }) {
   const { id } = await params;
+  const { onboarding } = await searchParams;
   // Scores revealed since the last visit are pulled now, so the sheet is current.
   await syncLeadTests(Number(id));
   const lead = await prisma.lead.findUnique({
@@ -37,7 +40,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
     include: {
       scannerResponses: { orderBy: { createdAt: "desc" }, take: 1 },
       bookings: { orderBy: { startsAt: "desc" }, take: 5 },
-      registrations: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { name: true } } } },
+      registrations: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { name: true, program: true } } } },
       serviceOrders: { orderBy: { createdAt: "desc" }, include: { service: { select: { name: true } }, bookings: { where: { status: { in: ["scheduled", "done"] } }, select: { id: true } } } },
       actions: { orderBy: { createdAt: "desc" }, take: 40 },
       practiceTests: { orderBy: { createdAt: "desc" }, take: 5 },
@@ -50,6 +53,11 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const hold = await activeHoldFor(lead.id);
   const holdRefusal = lead.status !== "registered" ? await prisma.actionLog.findFirst({ where: { leadId: lead.id, type: "seat_hold_refused", createdAt: { gt: new Date(Date.now() - 60_000) } }, orderBy: { createdAt: "desc" } }) : null;
   const analysis = response?.analysis as ProfileAnalysis | undefined;
+  const paidRegistration = lead.registrations.find((r) => r.status === "paid");
+  const documents = paidRegistration
+    ? await prisma.document.findMany({ where: { program: paidRegistration.cohort.program, active: true }, orderBy: { createdAt: "asc" }, select: { id: true, name: true, filename: true, size: true } })
+    : [];
+  const lastOnboarding = lead.actions.find((a) => a.type === "onboarding_sent");
   const tags = Array.isArray(lead.tags) ? (lead.tags as string[]) : [];
   const toLocal = (d: Date | null) => (d ? new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16) : "");
 
@@ -104,6 +112,29 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Notes</span><textarea name="notes" rows={4} defaultValue={lead.notes ?? ""} className={input} /></label>
         <div className="flex justify-end"><button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Enregistrer</button></div>
       </form>
+
+      {paidRegistration && (
+        <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
+          <h2 className="text-xs font-extrabold tracking-[.06em] text-muted uppercase">Documents de préparation</h2>
+          {onboarding === "ok" && <p className="mt-2 rounded-lg bg-accent-soft px-3 py-2">E-mail d&apos;onboarding envoyé avec les documents.</p>}
+          {onboarding && onboarding !== "ok" && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-red-800">{onboarding}</p>}
+          {lastOnboarding && <p className="mt-2 text-muted">Dernier envoi le {lastOnboarding.createdAt.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.</p>}
+          {documents.length === 0 ? (
+            <p className="mt-2 text-muted">Aucun document actif pour cette formation. <Link href="/admin/documents" className="underline">Ajouter des documents</Link>.</p>
+          ) : (
+            <form action={sendOnboarding} className="mt-2 grid gap-2">
+              <input type="hidden" name="leadId" value={lead.id} />
+              {documents.map((d) => (
+                <label key={d.id} className="flex items-center gap-2"><input type="checkbox" name="documentId" value={d.id} defaultChecked /> {d.name} <span className="text-muted">({formatBytes(d.size)})</span></label>
+              ))}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-muted">Destinataire : {lead.email} · {paidRegistration.cohort.name}</span>
+                <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Envoyer l&apos;e-mail d&apos;onboarding</button>
+              </div>
+            </form>
+          )}
+        </section>
+      )}
 
       {lead.practiceTests.length > 0 && (
         <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">

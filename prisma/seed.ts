@@ -119,6 +119,18 @@ const MESSAGE_TEMPLATES = [
       "Je garde une place pour la {{cohorte}}.",
   },
   {
+    key: "onboarding_documents",
+    channel: MessageChannel.email,
+    subject: "Bienvenue dans la {{cohorte}} : vos documents de préparation",
+    body:
+      "Bonjour {{prenom}},\n\n" +
+      "Votre place dans la {{cohorte}} est confirmée, et la préparation commence maintenant. " +
+      "Vous trouverez en pièces jointes :\n{{liste_documents}}\n\n" +
+      "Lisez-les dans l'ordre, prenez des notes sur ce qui vous semble flou : nous en parlerons dès la première session.\n\n" +
+      "Une question d'ici là ? Répondez simplement à ce message.\n\n" +
+      "Ben — Coach CISSP",
+  },
+  {
     key: "unpaid_reminder_j1",
     channel: MessageChannel.email,
     subject: "Votre place n'est pas encore confirmée",

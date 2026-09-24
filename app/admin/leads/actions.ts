@@ -7,6 +7,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { nextFollowupAt } from "@/lib/followups";
+import { sendOnboardingDocuments } from "@/lib/onboarding";
 import { startRegistration } from "@/lib/registration";
 
 async function requireAdmin() {
@@ -83,4 +84,14 @@ export async function deleteLead(formData: FormData): Promise<void> {
   revalidatePath("/admin");
   revalidatePath("/admin/leads");
   redirect("/admin/leads?supprime=1");
+}
+
+/** Ben picks the documents on a paid lead's sheet; one e-mail goes out with them attached. */
+export async function sendOnboarding(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const leadId = id.parse(formData.get("leadId"));
+  const documentIds = z.array(id).parse(formData.getAll("documentId"));
+  const result = await sendOnboardingDocuments({ leadId, documentIds });
+  revalidatePath(`/admin/leads/${leadId}`);
+  redirect(`/admin/leads/${leadId}?onboarding=${result.ok ? "ok" : encodeURIComponent(result.error)}`);
 }

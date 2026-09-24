@@ -123,7 +123,7 @@ export default async function AdminHomePage() {
       </Group>
 
       <nav className="mt-10 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-        {[["/admin/leads", "Tous les leads"], ["/admin/tunnel", "Tunnel"], ["/admin/cohortes", "Cohortes"], ["/admin/conseil", "Conseil"], ["/admin/temoignages", "Témoignages"], ["/admin/parametres/site", "Page d'accueil"], ["/admin/parametres/prix", "Tarifs"], ["/admin/parametres/gabarits", "Gabarits"], ["/admin/parametres/google", "Agenda"]].map(([href, label]) => (
+        {[["/admin/leads", "Tous les leads"], ["/admin/tunnel", "Tunnel"], ["/admin/cohortes", "Cohortes"], ["/admin/conseil", "Conseil"], ["/admin/temoignages", "Témoignages"], ["/admin/parametres/site", "Page d'accueil"], ["/admin/parametres/prix", "Tarifs"], ["/admin/parametres/gabarits", "Gabarits"], ["/admin/documents", "Documents"], ["/admin/parametres/google", "Agenda"]].map(([href, label]) => (
           <Link key={href} href={href} className="rounded-xl border border-line bg-white px-3 py-2.5 font-semibold">{label} →</Link>
         ))}
       </nav>
