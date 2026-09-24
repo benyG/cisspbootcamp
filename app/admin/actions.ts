@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { nextFollowupAt, postponedAt } from "@/lib/followups";
 import { markRegistrationPaid } from "@/lib/registration";
 import { holdSeat, releaseHold } from "@/lib/seat-holds";
+import { sendAfterCallEmail } from "@/lib/followups-auto";
 
 async function requireAdmin() {
   const session = await auth();
@@ -39,6 +40,10 @@ export async function markCallOutcome(formData: FormData): Promise<void> {
     prisma.lead.update({ where: { id: booking.leadId }, data: leadUpdate }),
     prisma.actionLog.create({ data: { leadId: booking.leadId, type: "call_outcome", payload: { bookingId, outcome } } }),
   ]);
+  // The payment link leaves the same day, whatever Ben's longer message says later.
+  if (booking.kind === "discovery" && (outcome === "registered" || outcome === "to_follow_up")) {
+    await sendAfterCallEmail(booking.leadId, outcome);
+  }
   revalidatePath("/admin");
   revalidatePath(`/admin/leads/${booking.leadId}`);
 }

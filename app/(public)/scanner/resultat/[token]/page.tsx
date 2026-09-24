@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { btnPrimary, eyebrow, shell } from "@/components/landing/sections";
+import { QuickSlots } from "@/components/booking/QuickSlots";
 import { PracticeTestBox } from "@/components/examboot/PracticeTestBox";
+import { bookWithResultToken } from "@/app/(public)/rdv/actions";
+import { listSlots } from "@/lib/booking";
 import { PromoPrice } from "@/components/offer/PromoPrice";
 import { TrackLink } from "@/components/tracking/TrackLink";
 import { TrackView } from "@/components/tracking/TrackView";
@@ -84,6 +87,9 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const ccCohort = programCode === "cc" ? await publicCohortSummary("cc").catch(() => null) : null;
   const ccPrice = programCode === "cc" && tierCode && !isQuoteOnly(tierCode) ? await prisma.programPrice.findUnique({ where: { program_tier: { program: "cc", tier: tierCode } } }).catch(() => null) : null;
 
+  // The next slots, right here: the call is booked in one tap (brainstorm 24/09).
+  const slots = canBook ? await listSlots().then((l) => (l.available ? l : null)).catch(() => null) : null;
+
   // One route per profile (docs/LANDING.md §24); the headline names it plainly.
   const route = analysis.recommendation !== "build_first" ? "bootcamp" : programCode === "cc" ? "cc" : "career";
   const headline =
@@ -152,13 +158,19 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
         )}
 
         <section className="mt-10 rounded-[22px] border border-line bg-white p-6 shadow-[var(--shadow-panel)]">
-          <h2 className="display text-[1.6rem] leading-tight font-black">{canBook ? "Prochaine étape : 15 minutes avec Ben." : "Prochaine étape : construire votre éligibilité."}</h2>
+          <h2 className="display text-[1.6rem] leading-tight font-black">
+            {canBook
+              ? analysis.readiness === "conditional"
+                ? "Prochaine étape : Ben vérifie votre éligibilité avec vous, en 15 minutes."
+                : "Prochaine étape : 15 minutes avec Ben, puis votre place."
+              : "Prochaine étape : votre première marche."}
+          </h2>
           <p className="mt-2 text-ink-2">
             {canBook
               ? analysis.readiness === "conditional"
-                ? "Un appel vidéo, sans engagement : Ben confirme votre éligibilité ISC² avec vous, puis vous fixez ensemble votre date d’examen et le plan pour combler les domaines encore faibles."
-                : "Un appel vidéo, sans engagement, pour vérifier que le format vous convient et fixer votre date d’examen."
-              : "Ben vous envoie de quoi avancer dès maintenant et revient vers vous dans six mois. Si votre situation change avant, écrivez-lui."}
+                ? "Un appel vidéo, sans engagement. Ben passe en revue vos années comptables et la dérogation possible, lève la condition, puis vous fixez ensemble votre date d’examen."
+                : "Un appel vidéo, sans engagement, pour caler votre date d’examen et le plan des 15 jours. Si vous avez déjà décidé, vous pouvez réserver votre place directement."
+              : "Le CISSP viendra ; d’ici là, voici ce qui vous fait avancer maintenant."}
           </p>
           {canBook && tier && (
             <div className="mt-5 rounded-[18px] border border-line bg-[#fbfffd] p-4">
@@ -168,7 +180,19 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
           )}
           {canBook ? (
             <>
-              <TrackLink href={`/rdv?t=${token}`} event="book_click" label="resultat" className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</TrackLink>
+              {slots && slots.slots.length > 0 ? (
+                <QuickSlots
+                  slots={slots.slots.slice(0, 4).map((s) => s.toISOString())}
+                  coachTimeZone={slots.coachTimeZone}
+                  moreHref={`/rdv?t=${token}`}
+                  onBook={async ({ start, timezone }) => {
+                    "use server";
+                    return bookWithResultToken({ token, start, timezone });
+                  }}
+                />
+              ) : (
+                <TrackLink href={`/rdv?t=${token}`} event="book_click" label="resultat" className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</TrackLink>
+              )}
               {canRegisterNow && tier && (
                 <TrackLink href={`/inscription?t=${token}`} event="cta_click" label="resultat-inscription" className="mt-3 inline-flex w-full items-center justify-center rounded-[14px] border border-line bg-white px-5 py-3.5 font-extrabold">
                   Rejoindre la cohorte →

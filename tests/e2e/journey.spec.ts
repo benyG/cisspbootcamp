@@ -82,7 +82,10 @@ test("scanner : 11 questions, consentement, résultat immédiat", async ({ page 
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(prospect.firstName);
   await expect(page.getByText(/avec accompagnement/i)).toBeVisible();
-  await expect(page.getByRole("link", { name: /réserver mon appel/i })).toBeVisible();
+  // The next slots are right on the page (stub calendar in CI), with the full picker one link away.
+  await expect(page.getByText(/prochains créneaux/i)).toBeVisible();
+  await expect(page.getByRole("link", { name: /voir d’autres créneaux/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /rejoindre la cohorte/i })).toBeVisible();
 
   const lead = await prisma.lead.findUniqueOrThrow({ where: { email: prospect.email } });
   expect(lead.consentAt).not.toBeNull();
