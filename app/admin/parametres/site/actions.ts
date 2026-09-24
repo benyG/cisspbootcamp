@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { SITE_CACHE_TAG, SITE_DEFAULTS, type SiteSectionKey, saveSiteSection } from "@/lib/site-settings";
+import { redirect } from "next/navigation";
 
 async function requireAdmin() {
   const session = await auth();
@@ -39,4 +40,16 @@ export async function resetSection(key: SiteSectionKey): Promise<SaveResult> {
   revalidatePath("/");
   revalidatePath("/admin/parametres/site");
   return { ok: true };
+}
+
+/** Every section at once, for a new version of the page's copy (docs/LANDING.md). Contact and video are kept. */
+export async function resetAllCopy(): Promise<void> {
+  await requireAdmin();
+  for (const key of ["hero", "proof", "method", "coach", "offer", "faq"] as const) {
+    await saveSiteSection(key, SITE_DEFAULTS[key]);
+  }
+  revalidateTag(SITE_CACHE_TAG);
+  revalidatePath("/");
+  revalidatePath("/admin/parametres/site");
+  redirect("/admin/parametres/site?ok=1");
 }
