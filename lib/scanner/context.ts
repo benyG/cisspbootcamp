@@ -30,6 +30,7 @@ export async function loadScannerContext(now = new Date()): Promise<ScannerConte
 
   const candidates: CohortCandidate[] = cohorts.map((cohort) => ({
     id: cohort.id,
+    program: cohort.program,
     name: cohort.name,
     startsAt: cohort.startsAt,
     capacity: cohort.capacity,
@@ -38,7 +39,7 @@ export async function loadScannerContext(now = new Date()): Promise<ScannerConte
     heldCount: cohort._count.seatHolds,
   }));
 
-  const cohort = selectRegistrationCohort(candidates, now);
+  const cohort = selectRegistrationCohort(candidates, now, "cissp");
 
   return {
     tiers: tiers.map((tier) => ({

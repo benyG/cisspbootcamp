@@ -38,7 +38,7 @@ export async function holdSeat(leadId: number, now = new Date()): Promise<HoldRe
   if (lead.registrations.length > 0) return { ok: false, error: "Déjà inscrit : rien à tenir." };
   if (await activeHoldFor(leadId, now)) return { ok: false, error: "Une place est déjà tenue pour ce prospect." };
 
-  const cohort = selectRegistrationCohort(await loadOpenCohorts(now, leadId), now);
+  const cohort = selectRegistrationCohort(await loadOpenCohorts(now, leadId, "cissp"), now, "cissp");
   if (!cohort) return { ok: false, error: "Aucune cohorte ouverte aux admissions." };
   if (remainingSeats(cohort) <= 0) return { ok: false, error: "Plus aucune place libre sur cette cohorte." };
 

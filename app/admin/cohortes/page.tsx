@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
 import { COHORT_STATUS_LABEL as STATUS_LABEL, formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
 import { listCohortsWithGauge } from "@/lib/cohorts-admin";
+import { PROGRAMS } from "@/lib/programs";
 
 import { createCohort } from "./actions";
 
@@ -23,7 +24,7 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
           <li key={cohort.id}>
             <Link href={`/admin/cohortes/${cohort.id}`} className="block rounded-xl border border-slate-200 bg-white p-4">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="font-semibold">{cohort.name}</p>
+                <p className="font-semibold">{cohort.program === "cc" && <span className="mr-2 rounded bg-accent-soft px-1.5 py-0.5 text-xs font-bold text-accent-ink">CC</span>}{cohort.name}</p>
                 <span className="text-xs text-[var(--color-muted)]">{STATUS_LABEL[cohort.status]}</span>
               </div>
               <p className="text-sm text-[var(--color-muted)]">
@@ -41,6 +42,12 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
       <section className="mt-8 rounded-xl border border-slate-200 bg-white p-4">
         <h2 className="font-semibold">Nouvelle cohorte</h2>
         <form action={createCohort} className="mt-3 grid grid-cols-2 gap-3">
+          <label className="col-span-2 flex flex-col gap-1 text-sm">
+            <span className="font-medium">Programme</span>
+            <select name="program" defaultValue="cissp" className={input}>
+              {Object.values(PROGRAMS).map((p) => <option key={p.code} value={p.code}>{p.name} · {p.hours} h sur {p.days} jours</option>)}
+            </select>
+          </label>
           <label className="col-span-2 flex flex-col gap-1 text-sm">
             <span className="font-medium">Nom</span>
             <input name="name" required placeholder="Cohorte février 2027" className={input} />

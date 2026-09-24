@@ -148,6 +148,19 @@ heure de conseil payée est déduite du bootcamp si l'inscription suit dans les
 bilan ou la reconversion, sur la page résultat, dans l'e-mail de résultat et
 dans le message de relance ; gabarit : `{{lien_conseil}}`.
 
+### Formation CC d'ISC² (`/demarrer`)
+
+La marche « Débuter » (`docs/OFFRES.md` §3) : « 15 jours pour votre première
+certification », 10 h live, sans prérequis. Les cohortes ont un **programme**
+(`cissp` ou `cc`) choisi à la création dans `/admin/cohortes` ; une session CC
+de novembre 2026 est créée au premier déploiement (dates à ajuster). Prix CC
+par palier et code Netticket dans `/admin/parametres/prix`, section CC.
+Inscription sur `/demarrer/inscription` : coordonnées avec consentement (ou
+profil connu par le jeton du scanner), carte ou mobile money, même webhooks,
+même reçu (libellé CC). Le scanner envoie vers la CC les « pas encore » sans
+expérience ou en reconversion, sur la page résultat, dans l'e-mail et le
+message de relance ; les autres « pas encore » vont au conseil.
+
 ### Message de relance rédigé par l'IA
 
 `ANTHROPIC_API_KEY` sur Vercel. Sans clé, un gabarit sans IA est utilisé. Le
@@ -262,4 +275,4 @@ que dans le workflow (`DATABASE_URL`, `E2E_CALENDAR_STUB=1`,
 - [x] Étape 7 — landing page (prototype validé le 21/09)
 - [x] Étape 8 — parcours Playwright complet, intégration continue, ce guide
 - [x] Conseil carrière : services à l'heure, mentorat, crédit sur le bootcamp, aiguillage du scanner (24/09)
-- [ ] Produit d'entrée : formation ISC² CC « 15 jours pour votre première certification » (`docs/OFFRES.md` §3)
+- [x] Produit d'entrée : formation ISC² CC « 15 jours pour votre première certification », `/demarrer` (24/09)

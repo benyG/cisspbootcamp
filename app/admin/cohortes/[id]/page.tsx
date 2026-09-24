@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
 import { COHORT_STATUS_LABEL as STATUS_LABEL, buildGauge } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
+import { PROGRAMS } from "@/lib/programs";
 import { formatUsdCents } from "@/lib/pricing";
 
 import { updateCohort } from "../actions";
@@ -48,6 +49,12 @@ export default async function CohortPage({
 
       <form action={updateCohort} className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-4">
         <input type="hidden" name="id" value={cohort.id} />
+        <label className="col-span-2 flex flex-col gap-1 text-sm">
+          <span className="font-medium">Programme</span>
+          <select name="program" defaultValue={cohort.program} className={input}>
+            {Object.values(PROGRAMS).map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
+          </select>
+        </label>
         <label className="col-span-2 flex flex-col gap-1 text-sm">
           <span className="font-medium">Nom</span>
           <input name="name" defaultValue={cohort.name} required className={input} />

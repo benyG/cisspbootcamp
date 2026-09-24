@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 import { formatUsdCents } from "@/lib/pricing";
+import { PROGRAMS, type ProgramCode } from "@/lib/programs";
 
 /**
  * Receipt PDF — SPECS A4. pdf-lib rather than a headless browser: pure JS,
@@ -16,6 +17,8 @@ export type ReceiptData = {
   participantEmail: string;
   company: string | null;
   cohortName: string;
+  /** Defaults to the CISSP bootcamp. */
+  program?: ProgramCode;
   issuerName: string;
   issuerEmail: string;
 };
@@ -64,10 +67,11 @@ export async function buildReceiptPdf(data: ReceiptData): Promise<Uint8Array> {
   text("Désignation", { font: bold, size: 10, color: muted });
   text("Montant", { font: bold, size: 10, color: muted, x: 440 });
   y -= 18;
-  text(`CISSP Bootcamp — ${data.cohortName}`, { font: bold });
+  const program = PROGRAMS[data.program ?? "cissp"];
+  text(`${program.productName} — ${data.cohortName}`, { font: bold, size: data.program === "cc" ? 10 : 11 });
   text(formatUsdCents(data.amountUsdCents), { font: bold, x: 440 });
   y -= 14;
-  text("40 h de préparation au CISSP en français, sur 15 jours, avec coach certifié.", { size: 9, color: muted });
+  text(program.productLine, { size: 9, color: muted });
   if (data.amountLocalLabel) {
     y -= 12;
     text(`soit ${data.amountLocalLabel}, montant indicatif`, { size: 9, color: muted, x: 440 });
@@ -81,7 +85,7 @@ export async function buildReceiptPdf(data: ReceiptData): Promise<Uint8Array> {
   text(`Payé par ${data.method === "stripe" ? "carte bancaire (Stripe)" : "mobile money (Netticket)"}`, { size: 9, color: muted });
 
   y -= 40;
-  text("Les frais d'examen CISSP ne sont pas inclus et se règlent auprès d'ISC².", { size: 9, color: muted });
+  text(program.receiptExamNote, { size: 9, color: muted });
   y -= 12;
   text("Ce reçu atteste du paiement de la formation. Il ne constitue pas une facture avec TVA.", { size: 9, color: muted });
 

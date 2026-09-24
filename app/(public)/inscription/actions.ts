@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { StripeNotConfiguredError, createCheckoutSession } from "@/lib/payments/stripe";
+import { PROGRAMS } from "@/lib/programs";
 import { startRegistration } from "@/lib/registration";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 import { recordServerEvent } from "@/lib/tracking/server";
@@ -57,8 +58,8 @@ export async function payByCard(formData: FormData): Promise<PayResult> {
       reference: registration.reference,
       registrationId: registration.id,
       amountUsdCents: registration.amountUsd,
-      productName: `CISSP Bootcamp — ${offer.cohort.name}`,
-      description: "40 h de préparation au CISSP en français, sur 15 jours, avec un coach certifié.",
+      productName: `${PROGRAMS[offer.program].productName} — ${offer.cohort.name}`,
+      description: PROGRAMS[offer.program].productLine,
       customerEmail: lead.email,
       successUrl: `${env.NEXT_PUBLIC_APP_URL}/inscription/merci?ref=${registration.reference}`,
       cancelUrl: `${env.NEXT_PUBLIC_APP_URL}/inscription?t=${token.data}&annule=1`,

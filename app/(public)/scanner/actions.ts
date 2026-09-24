@@ -11,6 +11,7 @@ import { sendEmail } from "@/lib/messaging/email";
 import { formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
 import { resolveTierCode } from "@/lib/pricing";
 import { draftSalesMessage } from "@/lib/scanner/ai-message";
+import { recommendedProgram } from "@/lib/programs";
 import { loadScannerContext, priceLabelFor } from "@/lib/scanner/context";
 import { answersSchema } from "@/lib/scoring";
 import { createToken } from "@/lib/tokens";
@@ -174,7 +175,9 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
       (context.cohort && analysis.readiness !== "not_yet"
         ? `Prix promotionnel de lancement : ${priceLabelFor(answers.country, context.tiers)}, garanti jusqu'au ${formatAdmissionDeadline(context.cohort.startsAt)} (fin des admissions de la cohorte de ${formatCohortMonth(context.cohort.startsAt)}).\n\n`
         : analysis.readiness === "not_yet"
-          ? `La marche qui vous convient maintenant : une heure de conseil carrière avec moi, pour choisir la voie et la première certification, avec un plan écrit. Déduite du bootcamp si vous le rejoignez dans les 90 jours : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${resultToken}\n\n`
+          ? recommendedProgram(analysis.readiness, answers) === "cc"
+            ? `La marche qui vous convient maintenant : la certification CC d'ISC², sans prérequis, préparée en 15 jours avec moi. Votre première certification, dans la maison du CISSP : ${env.NEXT_PUBLIC_APP_URL}/demarrer?t=${resultToken}\nEt si vous préférez d'abord en parler, une heure de conseil : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${resultToken}\n\n`
+            : `La marche qui vous convient maintenant : une heure de conseil carrière avec moi, pour choisir la voie et la première certification, avec un plan écrit. Déduite du bootcamp si vous le rejoignez dans les 90 jours : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${resultToken}\n\n`
           : "") +
       `Je reviens vers vous personnellement sous 24 h.\n\nBen\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${lead.unsubscribeToken}`,
   });

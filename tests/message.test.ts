@@ -64,7 +64,8 @@ describe("draftCoachMessage", () => {
     });
 
     expect(tooEarly).not.toContain("cohorte de janvier");
-    expect(tooEarly).toContain("séance de conseil");
+    expect(tooEarly).toContain("CC d'ISC²");
+    expect(tooEarly).toContain("conseil carrière");
   });
 
   it("reste cohérent sans cohorte ouverte", () => {

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { recommendedProgram } from "@/lib/programs";
 import { env } from "@/lib/env";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { sendEmail } from "@/lib/messaging/email";
@@ -62,7 +63,10 @@ export async function approveDiagnosis(formData: FormData): Promise<ActionResult
     text:
       `${message}\n\n` +
       (response.readiness === "not_yet"
-        ? `Réserver une séance de conseil carrière : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${response.resultToken}\n`
+        ? (recommendedProgram("not_yet", response.answers as { experience: "none" | "one_two" | "three_four" | "five_plus"; professionalStatus: "employed" | "student" | "career_change" | "freelance" }) === "cc"
+            ? `La formation CC en 15 jours : ${env.NEXT_PUBLIC_APP_URL}/demarrer?t=${response.resultToken}\n`
+            : "") +
+          `Réserver une séance de conseil carrière : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${response.resultToken}\n`
         : `Réserver 15 minutes : ${env.NEXT_PUBLIC_APP_URL}/rdv?t=${response.resultToken}\n`) +
       (examBootEnabled() ? `Vous situer sur 5 vraies questions d'examen : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${response.resultToken}&from=relance\n` : "") +
       `Revoir votre analyse : ${resultUrl}\n\n` +

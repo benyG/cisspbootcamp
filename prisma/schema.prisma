@@ -49,6 +49,13 @@ enum BookingKind {
   consulting
 }
 
+/// What a cohort teaches (docs/OFFRES.md §3): the CISSP bootcamp, or the
+/// entry-level ISC² CC course. Pricing and copy live in lib/programs.ts.
+enum Program {
+  cissp
+  cc
+}
+
 enum CohortStatus {
   planned
   open
@@ -209,6 +216,7 @@ model Booking {
 
 model Cohort {
   id       Int          @id @default(autoincrement())
+  program  Program      @default(cissp)
   name     String       @db.VarChar(120)
   startsAt DateTime     @map("starts_at")
   endsAt   DateTime     @map("ends_at")
@@ -221,7 +229,7 @@ model Cohort {
   registrations Registration[]
   seatHolds     SeatHold[]
 
-  @@index([status, startsAt])
+  @@index([program, status, startsAt])
   @@map("cohorts")
 }
 
@@ -537,4 +545,18 @@ model ServiceOrder {
   @@index([leadId, status])
   @@index([status, createdAt])
   @@map("service_orders")
+}
+
+/// Price of a non-CISSP programme for one pricing tier, USD cents. The CISSP
+/// bootcamp keeps its price on PricingTier (SPECS A4).
+model ProgramPrice {
+  id                  Int     @id @default(autoincrement())
+  program             Program
+  tier                String  @db.VarChar(32)
+  amountUsd           Int     @map("amount_usd")
+  /// Netticket ticket selling this programme at this tier; null = card only.
+  netticketTicketCode String? @map("netticket_ticket_code") @db.VarChar(64)
+
+  @@unique([program, tier])
+  @@map("program_prices")
 }

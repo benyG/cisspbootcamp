@@ -15,6 +15,7 @@ async function requireAdmin() {
 
 const cohortSchema = z
   .object({
+    program: z.enum(["cissp", "cc"]).default("cissp"),
     name: z.string().trim().min(1, "Nom requis").max(120),
     startsAt: z.coerce.date(),
     endsAt: z.coerce.date(),
@@ -25,6 +26,7 @@ const cohortSchema = z
 
 function parse(formData: FormData) {
   return cohortSchema.safeParse({
+    program: formData.get("program") ?? "cissp",
     name: formData.get("name"),
     startsAt: formData.get("startsAt"),
     endsAt: formData.get("endsAt"),

@@ -126,7 +126,7 @@ export function Proof({ settings }: { settings: SiteSettings }) {
  * The bootcamp card leads; the two others are there for whoever is not yet
  * at that step, so the page never has to send them away empty-handed.
  */
-export function Ladder({ services }: { services: Array<{ code: string; name: string; durationLabel: string }> }) {
+export function Ladder({ services, ccCohort }: { services: Array<{ code: string; name: string; durationLabel: string }>; ccCohort: { startsAt: Date; gauge: Gauge } | null }) {
   if (services.length === 0) return null;
   const consulting = services.filter((s) => s.code !== "mentorat").slice(0, 3);
   return (
@@ -136,12 +136,19 @@ export function Ladder({ services }: { services: Array<{ code: string; name: str
         <h2 className={sectionTitle + " text-[clamp(2rem,3.4vw,3.4rem)]"}>Le bootcamp est la destination. Il y a une marche pour chacun.</h2>
         <div className="grid gap-3.5 lg:grid-cols-3">
           <article className="rounded-[18px] border border-line bg-white p-5">
+            <div className="text-[.78rem] font-extrabold tracking-[.08em] text-accent uppercase">Débuter</div>
+            <h3 className="display mt-2.5 mb-2 text-[1.35rem] font-black">15 jours pour votre première certification</h3>
+            <p className="text-[.95rem] text-muted">Aucune expérience, ou une reconversion : la certification CC d’ISC², la maison du CISSP, préparée en 10 h de sessions live en français. Sans prérequis.{ccCohort ? ` Prochaine session en ${formatCohortMonth(ccCohort.startsAt)}, ${ccCohort.gauge.label.toLowerCase()}.` : ""}</p>
+            <TrackLink href="/demarrer" label="parcours-cc" className="mt-4 inline-flex font-extrabold text-accent-ink underline underline-offset-4">Voir la formation CC →</TrackLink>
+          </article>
+          <article className="rounded-[18px] border border-line bg-white p-5">
             <div className="text-[.78rem] font-extrabold tracking-[.08em] text-accent uppercase">Être conseillé</div>
             <h3 className="display mt-2.5 mb-2 text-[1.35rem] font-black">Une heure de conseil carrière</h3>
             <p className="text-[.95rem] text-muted">Vous n’avez pas encore les cinq ans, vous hésitez sur la voie, vous changez de métier : une séance et vous repartez avec un plan écrit.</p>
             <ul className="mt-3 grid gap-1 text-[.9rem] text-ink-2">
               {consulting.map((s) => <li key={s.code}>· {s.name} <span className="text-muted">({s.durationLabel})</span></li>)}
             </ul>
+            <p className="mt-2 text-[.9rem] text-muted">Et pour tenir le rythme : le mentorat mensuel, deux séances de 45 min et vos questions entre les deux.</p>
             <TrackLink href="/conseil" label="parcours-conseil" className="mt-4 inline-flex font-extrabold text-accent-ink underline underline-offset-4">Voir les séances →</TrackLink>
           </article>
           <article className="rounded-[18px] border-2 border-ink bg-ink p-5 text-white shadow-[var(--shadow-panel)]">
@@ -149,12 +156,6 @@ export function Ladder({ services }: { services: Array<{ code: string; name: str
             <h3 className="display mt-2.5 mb-2 text-[1.35rem] font-black">Le bootcamp CISSP</h3>
             <p className="text-[.95rem] text-[#cbd5df]">Quatre ans d’expérience ou plus : 40 heures sur 15 jours, en français, jusqu’à la date d’examen. Le produit pour lequel ce site existe.</p>
             <TrackLink href="/#evaluation" label="parcours-bootcamp" className={btnPrimary + " mt-4 w-full border border-white/20"}>Analyser mon profil →</TrackLink>
-          </article>
-          <article className="rounded-[18px] border border-line bg-white p-5">
-            <div className="text-[.78rem] font-extrabold tracking-[.08em] text-accent uppercase">Être suivi</div>
-            <h3 className="display mt-2.5 mb-2 text-[1.35rem] font-black">Le mentorat mensuel</h3>
-            <p className="text-[.95rem] text-muted">Deux séances de 45 minutes par mois, vos questions entre les deux, un récapitulatif écrit. Pour tenir le rythme jusqu’à l’examen, avant ou après le bootcamp.</p>
-            <TrackLink href="/conseil/mentorat" label="parcours-mentorat" className="mt-4 inline-flex font-extrabold text-accent-ink underline underline-offset-4">Voir le mentorat →</TrackLink>
           </article>
         </div>
       </div>

@@ -11,9 +11,11 @@ import { prospectAxes } from "@/lib/analysis";
 import { publicCohortSummary } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { examBootEnabled } from "@/lib/examboot/client";
-import { convertUsdCents, formatLocal, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
+import { formatCohortMonth as formatCohortMonthLabel } from "@/lib/cohorts";
+import { convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { loadRates } from "@/lib/registration";
 import { buildServiceOffer } from "@/lib/consulting";
+import { PROGRAMS, recommendedProgram } from "@/lib/programs";
 import { loadScannerContext } from "@/lib/scanner/context";
 import { recommendedService } from "@/lib/services";
 import { QUESTIONS } from "@/lib/scanner/questions";
@@ -56,6 +58,11 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const currency = localCurrencyFor(response.lead.country);
   const localCents = tier && currency !== "USD" ? convertUsdCents(tier.amountUsd, currency, rates) : null;
   const localLabel = localCents !== null ? formatLocal(localCents, currency) : null;
+  const ccLocal = (cents: number) => {
+    if (currency === "USD") return null;
+    const local = convertUsdCents(cents, currency, rates);
+    return local === null ? null : formatLocal(local, currency);
+  };
 
   const answers = response.answers as { examGoal?: string; experience?: "none" | "one_two" | "three_four" | "five_plus"; professionalStatus?: "employed" | "student" | "career_change" | "freelance" };
   const goalQuestion = QUESTIONS.find((q) => q.id === "examGoal");
@@ -69,8 +76,13 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
 
   // The step that fits (docs/OFFRES.md §4): the main offer for "pas encore",
   // a secondary one for "sous conditions", nothing for "prêt".
-  const serviceCode = recommendedService(analysis.readiness, { experience: answers.experience ?? "one_two", professionalStatus: answers.professionalStatus ?? "employed" });
+  const profile = { experience: answers.experience ?? "one_two", professionalStatus: answers.professionalStatus ?? "employed" } as const;
+  const serviceCode = recommendedService(analysis.readiness, profile);
   const service = serviceCode ? await buildServiceOffer(serviceCode, response.lead.country).catch(() => null) : null;
+  // No experience, or a career change: the CC course is the first step (docs/OFFRES.md §4).
+  const programCode = recommendedProgram(analysis.readiness, profile);
+  const ccCohort = programCode === "cc" ? await publicCohortSummary("cc").catch(() => null) : null;
+  const ccPrice = programCode === "cc" && tierCode && !isQuoteOnly(tierCode) ? await prisma.programPrice.findUnique({ where: { program_tier: { program: "cc", tier: tierCode } } }).catch(() => null) : null;
 
   return (
     <main className={shell + " py-8 sm:py-12"}>
@@ -153,6 +165,21 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
                 <TrackLink href={`/inscription?t=${token}`} event="cta_click" label="resultat-inscription" className="mt-3 inline-flex w-full items-center justify-center rounded-[14px] border border-line bg-white px-5 py-3.5 font-extrabold">
                   Je connais déjà mon choix : m’inscrire →
                 </TrackLink>
+              )}
+            </>
+          ) : programCode === "cc" ? (
+            <>
+              <div className="mt-5 rounded-[18px] border-2 border-ink bg-ink p-4 text-white">
+                <p className="text-[.78rem] font-extrabold tracking-[.06em] text-[#7be0c8] uppercase">Votre première marche · {PROGRAMS.cc.hours} h sur {PROGRAMS.cc.days} jours</p>
+                <p className="display mt-1 text-[1.35rem] leading-tight font-black">15 jours pour votre première certification : la CC d’ISC².</p>
+                <p className="mt-1 text-[.95rem] text-[#cbd5df]">Aucun prérequis, un examen reconnu, la même maison que le CISSP. Vous en sortez avec une certification, et le chemin vers le CISSP est tracé.{ccCohort ? ` Prochaine session en ${formatCohortMonthLabel(ccCohort.startsAt)} : ${ccCohort.gauge.label.toLowerCase()}.` : ""}</p>
+                {ccPrice && <p className="mt-2 text-[.9rem]"><b>{formatUsdCents(ccPrice.amountUsd)}</b>{ccLocal(ccPrice.amountUsd) && <span className="text-[#cbd5df]"> ≈ {ccLocal(ccPrice.amountUsd)}</span>}</p>}
+                <TrackLink href={`/demarrer?t=${token}`} event="cta_click" label="resultat-cc" className={btnPrimary + " mt-4 w-full border border-white/20"}>Voir la formation CC →</TrackLink>
+              </div>
+              {service && (
+                <p className="mt-3 rounded-[14px] border border-line bg-white px-4 py-3 text-[.9rem] text-ink-2">
+                  Vous préférez d’abord en parler ? <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className="font-bold underline underline-offset-4">{service.service.name}</TrackLink>, {service.service.durationLabel} avec Ben, {service.usdLabel}.
+                </p>
               )}
             </>
           ) : service ? (
