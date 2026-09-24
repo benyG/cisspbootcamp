@@ -11,6 +11,26 @@ export const BUFFER_MINUTES = 5;
 export const MIN_NOTICE_HOURS = 12;
 export const MAX_DAYS_AHEAD = 14;
 
+/** Paid consulting sessions (docs/OFFRES.md §2): longer, rarer, booked further ahead. */
+export const CONSULTING_STEP_MINUTES = 30;
+export const CONSULTING_MIN_NOTICE_HOURS = 24;
+export const CONSULTING_MAX_DAYS_AHEAD = 35;
+
+export type SlotShape = {
+  /** Length of one booking. */
+  slotMinutes: number;
+  /** Distance between two candidate starts. */
+  stepMinutes: number;
+  minNoticeHours: number;
+  maxDaysAhead: number;
+};
+
+export const DISCOVERY_SHAPE: SlotShape = { slotMinutes: SLOT_MINUTES, stepMinutes: SLOT_MINUTES, minNoticeHours: MIN_NOTICE_HOURS, maxDaysAhead: MAX_DAYS_AHEAD };
+
+export function consultingShape(sessionMinutes: number): SlotShape {
+  return { slotMinutes: sessionMinutes, stepMinutes: CONSULTING_STEP_MINUTES, minNoticeHours: CONSULTING_MIN_NOTICE_HOURS, maxDaysAhead: CONSULTING_MAX_DAYS_AHEAD };
+}
+
 /** Weekly availability, in the coach's own timezone. */
 export type AvailabilityRule = {
   /** 0 = Sunday … 6 = Saturday, as Date#getDay. */
@@ -29,16 +49,19 @@ export type SlotInput = {
   coachTimeZone: string;
   busy: readonly Interval[];
   now: Date;
+  /** Defaults to the 15-minute discovery call. */
+  shape?: SlotShape;
 };
 
 /**
  * All bookable starts between now + notice and now + horizon, in UTC.
- * A slot needs its 15 minutes plus the buffer on both sides to be free.
+ * A slot needs its length plus the buffer on both sides to be free.
  */
 export function computeSlots(input: SlotInput): Date[] {
   const { rules, coachTimeZone, busy, now } = input;
-  const earliest = addMinutes(now, MIN_NOTICE_HOURS * 60);
-  const latest = addMinutes(now, MAX_DAYS_AHEAD * 24 * 60);
+  const shape = input.shape ?? DISCOVERY_SHAPE;
+  const earliest = addMinutes(now, shape.minNoticeHours * 60);
+  const latest = addMinutes(now, shape.maxDaysAhead * 24 * 60);
   const slots: Date[] = [];
 
   // Walk each calendar day of the horizon in the coach's zone.
@@ -51,14 +74,14 @@ export function computeSlots(input: SlotInput): Date[] {
 
       for (
         let start = windowStart;
-        addMinutes(start, SLOT_MINUTES) <= windowEnd;
-        start = addMinutes(start, SLOT_MINUTES)
+        addMinutes(start, shape.slotMinutes) <= windowEnd;
+        start = addMinutes(start, shape.stepMinutes)
       ) {
         if (start < earliest || start >= latest) continue;
 
         const guarded: Interval = {
           start: addMinutes(start, -BUFFER_MINUTES),
-          end: addMinutes(start, SLOT_MINUTES + BUFFER_MINUTES),
+          end: addMinutes(start, shape.slotMinutes + BUFFER_MINUTES),
         };
         if (busy.some((interval) => overlaps(guarded, interval))) continue;
 

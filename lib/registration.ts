@@ -9,6 +9,7 @@ import { env } from "@/lib/env";
 import { nextFollowupAt } from "@/lib/followups";
 import { sendEmail } from "@/lib/messaging/email";
 import { type RateTable, convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
+import { consultingCredit } from "@/lib/services";
 import { recordEvent } from "@/lib/tracking/server";
 
 /**
@@ -66,6 +67,12 @@ export type Offer = {
   tierCode: string;
   country: string;
   netticketTicketCode: string | null;
+  /** Tier price before any credit. */
+  listPriceUsdCents: number;
+  /** Consulting hour deducted (docs/OFFRES.md §2), 0 when none applies. */
+  creditUsdCents: number;
+  creditOrderId: number | null;
+  /** Amount due, after credit. */
   amountUsdCents: number;
   usdLabel: string;
   currencyLocal: string;
@@ -92,8 +99,19 @@ export async function buildOffer(leadId: number, now = new Date()): Promise<{ of
   const cohort = selectRegistrationCohort(await loadOpenCohorts(now, leadId), now);
   if (!cohort) return { offer: null, reason: "no_cohort" };
 
+  // A consulting hour paid in the last 90 days comes off the price.
+  const paidOrders = await prisma.serviceOrder.findMany({
+    where: { leadId, status: "paid", service: { creditable: true } },
+    include: { service: { select: { sessions: true, sessionMinutes: true } } },
+  });
+  const credit = consultingCredit(
+    paidOrders.filter((o) => o.paidAt).map((o) => ({ id: o.id, amountUsd: o.amountUsd, sessions: o.service.sessions, sessionMinutes: o.service.sessionMinutes, paidAt: o.paidAt as Date, creditedRegistrationId: o.creditedRegistrationId })),
+    now,
+  );
+  const amountUsd = Math.max(0, tier.amountUsd - (credit?.creditUsd ?? 0));
+
   const currencyLocal = localCurrencyFor(lead.country);
-  const amountLocal = convertUsdCents(tier.amountUsd, currencyLocal, await loadRates());
+  const amountLocal = convertUsdCents(amountUsd, currencyLocal, await loadRates());
 
   return {
     offer: {
@@ -101,8 +119,11 @@ export async function buildOffer(leadId: number, now = new Date()): Promise<{ of
       tierCode,
       country: lead.country,
       netticketTicketCode: tier.netticketTicketCode,
-      amountUsdCents: tier.amountUsd,
-      usdLabel: formatUsdCents(tier.amountUsd),
+      listPriceUsdCents: tier.amountUsd,
+      creditUsdCents: credit?.creditUsd ?? 0,
+      creditOrderId: credit?.orderId ?? null,
+      amountUsdCents: amountUsd,
+      usdLabel: formatUsdCents(amountUsd),
       currencyLocal,
       amountLocal,
       localLabel: amountLocal !== null && currencyLocal !== "USD" ? formatLocal(amountLocal, currencyLocal) : null,
@@ -132,6 +153,7 @@ export async function startRegistration(input: { leadId: number; method: "stripe
       cohortId: offer.cohort.id,
       tier: offer.tierCode,
       amountUsd: offer.amountUsdCents,
+      creditUsd: offer.creditUsdCents,
       currencyLocal: offer.currencyLocal === "USD" ? null : offer.currencyLocal,
       amountLocal: offer.currencyLocal === "USD" ? null : offer.amountLocal,
       method: input.method,
@@ -207,6 +229,11 @@ export async function markRegistrationPaid(input: {
       },
     });
     await tx.lead.update({ where: { id: registration.leadId }, data: { status: "registered", nextFollowupAt: null } });
+    // The consulting hour that was deducted is now spent (docs/OFFRES.md §2).
+    if (registration.creditUsd > 0) {
+      const credited = await tx.serviceOrder.findFirst({ where: { leadId: registration.leadId, status: "paid", creditedRegistrationId: null, service: { creditable: true } }, orderBy: { paidAt: "desc" } });
+      if (credited) await tx.serviceOrder.update({ where: { id: credited.id }, data: { creditedRegistrationId: registration.id } });
+    }
     // The seat that was held for them is now theirs for good.
     await tx.seatHold.updateMany({
       where: { leadId: registration.leadId, releasedAt: null },
@@ -241,7 +268,7 @@ export async function markRegistrationPaid(input: {
     subject: `Votre place est réservée — ${cohortName}`,
     text:
       `Bonjour ${registration.lead.firstName},\n\n` +
-      `Votre paiement de ${formatUsdCents(registration.amountUsd)} est confirmé. Votre place dans la ${cohortName} est réservée.\n\n` +
+      `Votre paiement de ${formatUsdCents(registration.amountUsd)} est confirmé${registration.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(registration.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n` +
       (moved
         ? `La cohorte que vous visiez s'est remplie entre-temps : votre place est sur la suivante, en ${cohortMonth}. Si cette date ne vous convient pas, répondez à ce message.\n\n`
         : "") +

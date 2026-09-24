@@ -209,3 +209,68 @@ test("paiement : seul le webhook Stripe signé rend la place payée", async ({ p
   });
   expect(await replay.json()).toMatchObject({ received: true, alreadyPaid: true });
 });
+
+/**
+ * Consulting (docs/OFFRES.md): the catalogue is priced by country, the order
+ * page shows the service, and a paid order (confirmed through the same signed
+ * Stripe webhook) opens the session-booking page on the consulting windows.
+ */
+test("un prospect « pas encore » achète une heure de conseil et réserve sa séance", async ({ page, request }) => {
+  await page.goto("/conseil");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/une heure avec ben/i);
+  await page.locator("#service-country").selectOption("CM");
+  await expect(page.getByText(/bilan de carrière cybersécurité/i).first()).toBeVisible();
+  await expect(page.getByText(/^60 USD/).first()).toBeVisible();
+
+  await page.goto("/conseil/bilan?pays=CM");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/bilan de carrière/i);
+  await expect(page.getByRole("button", { name: /payer par carte bancaire/i })).toBeVisible();
+
+  // The order itself, as the server action would create it, then the webhook.
+  const stamp = Date.now();
+  const lead = await prisma.lead.create({
+    data: { firstName: "Moussa", lastName: "Conseil", email: `e2e-conseil-${stamp}@example.com`, country: "CM", tier: "africa", consentAt: new Date(), source: "conseil", unsubscribeToken: `unsub-${stamp}` },
+  });
+  const order = await prisma.serviceOrder.create({
+    data: { leadId: lead.id, serviceCode: "bilan", tier: "africa", amountUsd: 6_000, method: "stripe", reference: `CS-E2E-${stamp.toString(36).toUpperCase().slice(-4)}`, sessionsTotal: 1, bookingToken: `book-${stamp}` },
+  });
+
+  await page.goto(`/conseil/rdv/${order.bookingToken}`);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/paiement en attente/i);
+
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const body = JSON.stringify({
+    id: `evt_cs_${stamp}`, object: "event", type: "checkout.session.completed", created: Math.floor(stamp / 1000), api_version: "2024-06-20", livemode: false, pending_webhooks: 0, request: null,
+    data: { object: { id: `cs_e2e_conseil_${stamp}`, object: "checkout.session", payment_status: "paid", amount_total: 6_000, client_reference_id: order.reference, metadata: { reference: order.reference } } },
+  });
+  const accepted = await request.post("/api/webhooks/stripe", {
+    data: body,
+    headers: { "content-type": "application/json", "stripe-signature": Stripe.webhooks.generateTestHeaderString({ payload: body, secret: secret! }) },
+  });
+  expect(accepted.status()).toBe(200);
+  expect((await prisma.serviceOrder.findUniqueOrThrow({ where: { id: order.id } })).status).toBe("paid");
+  expect(await prisma.funnelEvent.count({ where: { leadId: lead.id, name: "service_paid" } })).toBe(1);
+
+  await page.goto(`/conseil/merci?ref=${order.reference}`);
+  await expect(page.getByRole("link", { name: /choisir mon créneau/i })).toBeVisible();
+
+  await page.goto(`/conseil/rdv/${order.bookingToken}`);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/choisissez votre créneau/i);
+  const slot = page.getByRole("button").filter({ hasText: /^\d{1,2}:\d{2}$/ }).first();
+  await expect(slot).toBeVisible();
+  await slot.click();
+  await page.getByRole("button", { name: /confirmer ce créneau/i }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Moussa, à");
+
+  const booking = await prisma.booking.findFirstOrThrow({ where: { serviceOrderId: order.id } });
+  expect(booking.kind).toBe("consulting");
+  expect(booking.endsAt.getTime() - booking.startsAt.getTime()).toBe(60 * 60_000);
+
+  // The credited hour comes off the bootcamp price on the registration page.
+  const response = await prisma.scannerResponse.create({
+    data: { leadId: lead.id, answers: {}, readiness: "ready", heatScore: 50, analysis: {}, coachMessage: "", status: "approved", resultToken: `res-${stamp}` },
+  });
+  await page.goto(`/inscription?t=${response.resultToken}`);
+  await expect(page.getByText(/votre heure de conseil/i)).toBeVisible();
+  await expect(page.getByText(/= 565 USD/)).toBeVisible();
+});
