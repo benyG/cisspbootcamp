@@ -68,7 +68,7 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
   ]);
 
   const tpl = Object.fromEntries(templates) as Record<string, { subject: string | null; body: string } | null>;
-  const current = cohorts.find((c) => c.status === "open" && c.startsAt.getTime() > now.getTime()) ?? cohorts.find((c) => c.status === "running") ?? null;
+  const current = cohorts.find((c) => c.program === "cissp" && c.status === "open" && c.startsAt.getTime() > now.getTime()) ?? cohorts.find((c) => c.program === "cissp" && c.status === "running") ?? null;
   const cohortVars = current ? { cohortName: current.name, cohortMonth: formatCohortMonth(current.startsAt) } : {};
 
   const items: QueueItem[] = [];

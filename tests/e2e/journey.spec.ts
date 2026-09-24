@@ -274,3 +274,51 @@ test("un prospect « pas encore » achète une heure de conseil et réserve sa s
   await expect(page.getByText(/votre heure de conseil/i)).toBeVisible();
   await expect(page.getByText(/= 565 USD/)).toBeVisible();
 });
+
+/**
+ * The entry step (docs/OFFRES.md §3): /demarrer sells the seeded CC session,
+ * the registration lands on the CC cohort (never the bootcamp's), and the
+ * signed webhook confirms it with the CC receipt wording.
+ */
+test("un débutant s'inscrit à la formation CC depuis /demarrer", async ({ page, request }) => {
+  await page.goto("/demarrer");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/première certification/i);
+  await page.locator("#program-country").selectOption("CM");
+  await expect(page.getByText(/^149 USD/).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /réserver ma place/i })).toBeVisible();
+
+  await page.goto("/demarrer/inscription?pays=CM");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/réservez votre place/i);
+  await expect(page.getByText(/Session CC/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /payer par carte bancaire · 149 USD/i })).toBeVisible();
+
+  const stamp = Date.now();
+  const lead = await prisma.lead.create({
+    data: { firstName: "Aïcha", lastName: "Debut", email: `e2e-cc-${stamp}@example.com`, country: "CM", tier: "africa", consentAt: new Date(), source: "demarrer", unsubscribeToken: `unsub-cc-${stamp}` },
+  });
+  // The pending registration the server action opens, on the seeded CC session.
+  const ccCohort = await prisma.cohort.findFirstOrThrow({ where: { program: "cc", status: "open" }, orderBy: { startsAt: "asc" } });
+  const ccPrice = await prisma.programPrice.findUniqueOrThrow({ where: { program_tier: { program: "cc", tier: "africa" } } });
+  expect(ccPrice.amountUsd).toBe(14_900);
+  const registration = await prisma.registration.create({
+    data: { leadId: lead.id, cohortId: ccCohort.id, tier: "africa", amountUsd: ccPrice.amountUsd, method: "stripe", reference: `CB-CC${stamp.toString(36).toUpperCase().slice(-2)}-E2E1` },
+  });
+
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const body = JSON.stringify({
+    id: `evt_cc_${stamp}`, object: "event", type: "checkout.session.completed", created: Math.floor(stamp / 1000), api_version: "2024-06-20", livemode: false, pending_webhooks: 0, request: null,
+    data: { object: { id: `cs_e2e_cc_${stamp}`, object: "checkout.session", payment_status: "paid", amount_total: 14_900, client_reference_id: registration.reference, metadata: { reference: registration.reference } } },
+  });
+  const accepted = await request.post("/api/webhooks/stripe", {
+    data: body,
+    headers: { "content-type": "application/json", "stripe-signature": Stripe.webhooks.generateTestHeaderString({ payload: body, secret: secret! }) },
+  });
+  expect(accepted.status()).toBe(200);
+  const paid = await prisma.registration.findUniqueOrThrow({ where: { id: registration.id } });
+  expect(paid.status).toBe("paid");
+  expect(paid.cohortId).toBe(registration.cohortId);
+
+  const receipt = await request.get(`/inscription/recu/${registration.reference}`);
+  expect(receipt.status()).toBe(200);
+  expect(receipt.headers()["content-type"]).toContain("application/pdf");
+});

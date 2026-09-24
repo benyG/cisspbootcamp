@@ -19,13 +19,14 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   // Every read degrades to a sensible default: the landing never goes down
   // because the database blinked (and it is cached anyway).
-  const [settings, cohort, context, rates, testimonials, services] = await Promise.all([
+  const [settings, cohort, context, rates, testimonials, services, ccCohort] = await Promise.all([
     loadSiteSettings().catch(() => SITE_DEFAULTS),
     publicCohortSummary().catch(() => null),
     loadScannerContext().catch(() => ({ tiers: [], cohort: null, availabilityLabel: "Seriez-vous disponible pour la prochaine cohorte ?" })),
     loadRates().catch(() => ({})),
     prisma.testimonial.findMany({ where: { published: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }], take: 6 }).catch(() => []),
     loadServices().catch(() => []),
+    publicCohortSummary("cc").catch(() => null),
   ]);
 
   return (
@@ -52,7 +53,7 @@ export default async function HomePage() {
         </section>
 
         <Proof settings={settings} />
-        <Ladder services={services} />
+        <Ladder services={services} ccCohort={ccCohort} />
         <Method settings={settings} />
         <Testimonials items={testimonials} />
         <Video settings={settings} />

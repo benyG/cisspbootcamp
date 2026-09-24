@@ -1,7 +1,7 @@
 # Offres autour du bootcamp CISSP — conseil carrière et produit d'entrée
 
-Proposition du 24/09/2026. Décisions de Ben le même jour (§8) ; la marche
-« Être conseillé » est implémentée (§9), la marche « Débuter » reste à faire.
+Proposition du 24/09/2026. Décisions de Ben le même jour (§8) ; les marches
+« Être conseillé » et « Débuter » sont implémentées (§9).
 
 Le constat de Ben : le CISSP est un produit d'experts. Le site attire aussi
 des personnes qui n'y sont pas encore, et aujourd'hui il les gare six mois
@@ -221,5 +221,15 @@ porte d'entrée, c'est un accompagnement dans la durée).
 - **Admin** : `/admin/conseil`, file d'actions (séances du jour, séances
   payées à réserver), fiche lead (commandes et séances), tunnel (tableau
   conseil).
-- **Reste à faire** : la formation CC (`/demarrer`, programmes de cohortes),
-  puis les services `cv` et `eligibilite` sur le même moule.
+- **Formation CC** : les cohortes portent un programme (`cissp` ou `cc`,
+  `lib/programs.ts`), la sélection de cohorte, la jauge publique et le
+  basculement à la confirmation restent dans le programme ; prix CC par
+  palier (`program_prices`, 149 / 299 USD), `/demarrer` (session, prix par
+  pays, chrono d'admission, jauge, programme des cinq domaines) et
+  `/demarrer/inscription` (coordonnées ou jeton du scanner, carte ou mobile
+  money, mêmes webhooks, reçu au libellé CC). Le crédit conseil ne s'applique
+  qu'au bootcamp. Aiguillage : « pas encore » sans expérience ou en
+  reconversion → CC en premier, conseil en second ; la carte « Débuter »
+  ouvre la section « Trois façons de travailler avec Ben ».
+- **Reste à faire** : les services `cv` et `eligibilite` sur le même moule ;
+  Security+ comme second produit d'entrée si la demande est plus technique.

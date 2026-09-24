@@ -33,3 +33,25 @@ export async function updateTier(formData: FormData): Promise<void> {
   revalidatePath("/admin/parametres/prix");
   revalidatePath("/");
 }
+
+/** Prices of the entry-level programmes (docs/OFFRES.md §3), whole USD per tier. */
+export async function updateProgramPrice(formData: FormData): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.email) throw new Error("Non autorisé");
+  const parsed = z.object({
+    program: z.enum(["cc"]),
+    tier: z.string().min(1).max(32),
+    amountUsd: z.coerce.number().min(0).max(100_000),
+    netticketTicketCode: z.string().trim().max(64).optional().or(z.literal("")),
+  }).safeParse({ program: formData.get("program"), tier: formData.get("tier"), amountUsd: formData.get("amountUsd"), netticketTicketCode: formData.get("netticketTicketCode") });
+  if (!parsed.success) return;
+  const { program, tier, amountUsd, netticketTicketCode } = parsed.data;
+  await prisma.programPrice.upsert({
+    where: { program_tier: { program, tier } },
+    create: { program, tier, amountUsd: Math.round(amountUsd * 100), netticketTicketCode: netticketTicketCode || null },
+    update: { amountUsd: Math.round(amountUsd * 100), netticketTicketCode: netticketTicketCode || null },
+  });
+  revalidateTag(COHORTS_CACHE_TAG);
+  revalidatePath("/admin/parametres/prix");
+  revalidatePath("/demarrer");
+}

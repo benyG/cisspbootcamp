@@ -36,6 +36,16 @@ describe("remainingSeats", () => {
 });
 
 describe("selectRegistrationCohort", () => {
+  it("ne mélange jamais les programmes : la session CC ne vend pas le bootcamp", () => {
+    const cc = cohort({ id: 9, program: "cc", name: "Session CC novembre 2026", startsAt: new Date("2026-11-16T18:00:00.000Z") });
+    const cissp = cohort({ id: 1 });
+
+    expect(selectRegistrationCohort([cc, cissp], NOW)?.id).toBe(1);
+    expect(selectRegistrationCohort([cc, cissp], NOW, "cissp")?.id).toBe(1);
+    expect(selectRegistrationCohort([cc, cissp], NOW, "cc")?.id).toBe(9);
+    expect(selectRegistrationCohort([cissp], NOW, "cc")).toBeNull();
+  });
+
   it("retient la cohorte ouverte la plus proche", () => {
     const janvier = cohort({ id: 1 });
     const mars = cohort({ id: 2, startsAt: new Date("2027-03-08T18:00:00.000Z") });

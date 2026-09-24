@@ -13,6 +13,7 @@ import { prisma } from "@/lib/db";
  */
 export type CohortWithGauge = {
   id: number;
+  program: string;
   name: string;
   startsAt: Date;
   endsAt: Date;
@@ -36,10 +37,11 @@ export async function listCohortsWithGauge(): Promise<CohortWithGauge[]> {
     }),
   ]);
 
-  const nextOpen = cohorts.find((c) => c.status === "open" && isAdmissionOpen(c.startsAt, now));
+  const nextOpen = cohorts.find((c) => c.program === "cissp" && c.status === "open" && isAdmissionOpen(c.startsAt, now));
 
   return cohorts.map((cohort) => ({
     id: cohort.id,
+    program: cohort.program,
     name: cohort.name,
     startsAt: cohort.startsAt,
     endsAt: cohort.endsAt,
@@ -65,23 +67,24 @@ export type PublicCohort = { name: string; startsAt: Date; admissionClosesAt: Da
  * function rebuilds the Date — the bug that took the landing down on 22/09.
  */
 const cachedPublicCohort = unstable_cache(
-  async (): Promise<{ name: string; startsAt: string; gauge: Gauge } | null> => {
+  async (program: string): Promise<{ name: string; startsAt: string; gauge: Gauge } | null> => {
     const cohorts = await listCohortsWithGauge();
     const now = new Date();
-    const next = cohorts.find((c) => c.status === "open" && isAdmissionOpen(c.startsAt, now));
+    const next = cohorts.find((c) => c.program === program && c.status === "open" && isAdmissionOpen(c.startsAt, now));
     return next ? { name: next.name, startsAt: next.startsAt.toISOString(), gauge: next.gauge } : null;
   },
-  ["public-cohort-summary-v3"],
+  ["public-cohort-summary-v4"],
   { revalidate: 60, tags: [COHORTS_CACHE_TAG] },
 );
 
 /**
- * What the landing shows: the next open cohort and its public gauge, or null.
- * Cached 60 s (CLAUDE.md: public reads must not hit MySQL on every visit) and
- * invalidated by tag the moment a seat is paid, so the gauge stays honest.
+ * What the landing (or /demarrer) shows: the next open cohort of that
+ * programme and its public gauge, or null. Cached 60 s (CLAUDE.md: public
+ * reads must not hit MySQL on every visit) and invalidated by tag the moment
+ * a seat is paid, so the gauge stays honest.
  */
-export async function publicCohortSummary(): Promise<PublicCohort | null> {
-  const cached = await cachedPublicCohort();
+export async function publicCohortSummary(program: "cissp" | "cc" = "cissp"): Promise<PublicCohort | null> {
+  const cached = await cachedPublicCohort(program);
   if (!cached) return null;
   const startsAt = new Date(cached.startsAt);
   return { ...cached, startsAt, admissionClosesAt: admissionClosesAt(startsAt) };

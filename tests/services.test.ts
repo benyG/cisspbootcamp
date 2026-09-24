@@ -84,3 +84,14 @@ describe("formatDuration", () => {
     expect(formatDuration(1, 90)).toBe("1 h 30");
   });
 });
+
+describe("recommendedProgram", () => {
+  it("envoie vers la CC les profils sans expérience ou en reconversion, et personne d'autre", async () => {
+    const { recommendedProgram } = await import("@/lib/programs");
+    expect(recommendedProgram("not_yet", { experience: "none", professionalStatus: "student" })).toBe("cc");
+    expect(recommendedProgram("not_yet", { experience: "three_four", professionalStatus: "career_change" })).toBe("cc");
+    expect(recommendedProgram("not_yet", { experience: "one_two", professionalStatus: "employed" })).toBeNull();
+    expect(recommendedProgram("conditional", { experience: "none", professionalStatus: "career_change" })).toBeNull();
+    expect(recommendedProgram("ready", { experience: "five_plus", professionalStatus: "employed" })).toBeNull();
+  });
+});

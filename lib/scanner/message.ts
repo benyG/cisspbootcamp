@@ -1,6 +1,7 @@
 import type { ProfileAnalysis } from "@/lib/analysis";
 import type { CohortCandidate } from "@/lib/cohorts";
 import { formatCohortMonth } from "@/lib/cohorts";
+import { recommendedProgram } from "@/lib/programs";
 import { buildReasons, type ScannerAnswers } from "@/lib/scoring";
 
 /**
@@ -31,7 +32,7 @@ export function draftCoachMessage(input: {
   paragraphs.push(timelineParagraph(analysis, cohort));
 
   // 3. La suite.
-  paragraphs.push(nextStepParagraph(analysis));
+  paragraphs.push(nextStepParagraph(analysis, answers));
 
   paragraphs.push("Ben\nCoach CISSP");
 
@@ -70,7 +71,7 @@ function timelineParagraph(
   return sentences.join(" ");
 }
 
-function nextStepParagraph(analysis: ProfileAnalysis): string {
+function nextStepParagraph(analysis: ProfileAnalysis, answers: ScannerAnswers): string {
   switch (analysis.recommendation) {
     case "now":
       return (
@@ -85,6 +86,15 @@ function nextStepParagraph(analysis: ProfileAnalysis): string {
         "D'ici là, cinq vraies questions d'examen vous diront où vous en êtes : le lien du test est là aussi."
       );
     case "build_first":
+      if (recommendedProgram("not_yet", answers) === "cc") {
+        return (
+          "Prochaine étape : votre première certification. La CC d'ISC² ne demande aucune " +
+          "expérience, et je la prépare avec vous en 15 jours, en français : dix heures de " +
+          "sessions, les cinq domaines, un examen blanc, un plan jusqu'au jour J. C'est la " +
+          "même maison que le CISSP, et le chemin est tracé. Le lien est ci-dessous ; si vous " +
+          "préférez d'abord en parler, une heure de conseil carrière est là aussi."
+        );
+      }
       return (
         "Prochaine étape : une heure ensemble, en séance de conseil carrière, pour faire " +
         "le point sur votre parcours, choisir la voie et la première certification qui vous " +

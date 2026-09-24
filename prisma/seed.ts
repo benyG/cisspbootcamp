@@ -1,5 +1,6 @@
 import { CohortStatus, MessageChannel, PrismaClient } from "@prisma/client";
 
+import { PROGRAM_PRICES } from "../lib/programs";
 import { SERVICE_CATALOGUE } from "../lib/services";
 
 const prisma = new PrismaClient();
@@ -186,6 +187,22 @@ async function main() {
     console.log(`Cohorte créée : ${cohortName}`);
   } else {
     console.log(`Cohorte déjà présente : ${cohortName}`);
+  }
+
+  // Entry-level programme (docs/OFFRES.md §3): prices per tier, and a first
+  // CC cohort so /demarrer sells from day one. Ben moves the dates in
+  // /admin/cohortes; existing rows are never overwritten.
+  for (const [program, prices] of Object.entries(PROGRAM_PRICES) as Array<["cc", Record<string, number>]>) {
+    for (const [tier, amountUsd] of Object.entries(prices)) {
+      await prisma.programPrice.upsert({ where: { program_tier: { program, tier } }, update: {}, create: { program, tier, amountUsd } });
+    }
+  }
+  const ccCohortName = "Session CC novembre 2026";
+  if (!(await prisma.cohort.findFirst({ where: { program: "cc" } }))) {
+    await prisma.cohort.create({
+      data: { program: "cc", name: ccCohortName, startsAt: new Date("2026-11-16T18:00:00.000Z"), endsAt: new Date("2026-11-30T20:00:00.000Z"), capacity: 15, status: CohortStatus.open },
+    });
+    console.log(`Cohorte CC créée : ${ccCohortName}`);
   }
 
   // Default availability (SPECS A3 example): weekday evenings, four slots.

@@ -8,6 +8,8 @@
 
 export type CohortCandidate = {
   id: number;
+  /** "cissp" (default) or "cc" — see lib/programs.ts. */
+  program?: string;
   name: string;
   startsAt: Date;
   capacity: number;
@@ -62,8 +64,10 @@ export function hasSeats(cohort: CohortCandidate): boolean {
 export function selectRegistrationCohort(
   cohorts: readonly CohortCandidate[],
   now: Date,
+  program = "cissp",
 ): CohortCandidate | null {
   const eligible = cohorts
+    .filter((cohort) => (cohort.program ?? "cissp") === program)
     .filter((cohort) => cohort.status === SELLABLE_STATUS)
     .filter((cohort) => isAdmissionOpen(cohort.startsAt, now))
     .filter(hasSeats)

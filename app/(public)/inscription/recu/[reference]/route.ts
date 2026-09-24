@@ -31,6 +31,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ref
     participantEmail: registration.lead.email,
     company: null,
     cohortName: registration.cohort.name,
+    program: registration.cohort.program,
     issuerName: "Ben — Coach CISSP",
     issuerEmail: (process.env.EMAIL_FROM ?? "").replace(/.*<|>.*/g, "") || `bonjour@${new URL(env.NEXT_PUBLIC_APP_URL).hostname}`,
   });
