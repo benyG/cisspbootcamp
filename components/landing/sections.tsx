@@ -81,28 +81,33 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
           <div className="absolute inset-x-0 bottom-0 h-[78%] rounded-[36px] bg-gradient-to-b from-accent-bright/10 to-accent-bright/[.02]" />
           <Image src="/images/coach-hero.webp" alt={`${coach.name}, coach CISSP`} width={900} height={1006} priority unoptimized className="relative h-full w-full object-contain object-bottom drop-shadow-[0_30px_40px_rgba(7,26,51,.18)]" />
         </div>
-        {/* Cohort facts over the jacket, bottom-left, on every screen size (Ben, 24/09): seats and the admission countdown. */}
-        <div className="absolute inset-x-4 bottom-6 flex flex-col gap-3 sm:inset-x-auto sm:left-0 sm:w-[280px]">
+        {/* Cohort facts over the jacket, bottom-left (Ben, 24/09): seats and the admission countdown.
+            On phones the cards take 62 % of the width so the coach stays visible; the identity card moves under the portrait. */}
+        <div className="absolute bottom-4 left-3 flex w-[62%] flex-col gap-2 sm:bottom-6 sm:left-0 sm:w-[280px] sm:gap-3">
           {cohort && (
-            <div className="flex items-center gap-4 rounded-2xl bg-ink px-4 py-3 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)]">
+            <div className="flex items-center gap-4 rounded-2xl bg-ink px-3 py-2 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)] sm:px-4 sm:py-3">
               <div>
-                <div className="text-[.7rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? "Places restantes" : "Cohorte"}</div>
-                <div className="display text-[1.6rem] leading-none font-black">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? cohort.gauge.remaining : cohort.gauge.capacity} <small className="text-sm font-semibold tracking-normal text-[#cbd5df]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? `sur ${cohort.gauge.capacity}` : "participants max."}</small></div>
+                <div className="text-[.62rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase sm:text-[.7rem]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? "Places restantes" : "Cohorte"}</div>
+                <div className="display text-[1.3rem] leading-none font-black sm:text-[1.6rem]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? cohort.gauge.remaining : cohort.gauge.capacity} <small className="text-[.8rem] font-semibold tracking-normal text-[#cbd5df] sm:text-sm">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? `sur ${cohort.gauge.capacity}` : "participants max."}</small></div>
               </div>
-              {cohort.gauge.confirmed + cohort.gauge.held > 0 && <div className="flex-1"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>}
+              {cohort.gauge.confirmed + cohort.gauge.held > 0 && <div className="hidden flex-1 sm:block"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>}
             </div>
           )}
           {cohort && (
-            <div className="rounded-2xl bg-ink px-4 py-3 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)]">
-              <div className="text-[.7rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase">Admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)}</div>
+            <div className="rounded-2xl bg-ink px-3 py-2 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)] sm:px-4 sm:py-3">
+              <div className="text-[.62rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase sm:text-[.7rem]">Admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)}</div>
               <div className="mt-1"><AdmissionCountdown closesAt={admissionClosesAt(cohort.startsAt).toISOString()} dark compact /></div>
             </div>
           )}
-          <div className="rounded-[18px] border border-line bg-white p-4 shadow-[0_20px_50px_rgba(7,26,51,.14)]">
+          <div className="hidden rounded-[18px] border border-line bg-white p-4 shadow-[0_20px_50px_rgba(7,26,51,.14)] sm:block">
             <strong className="display block text-base">{coach.name}</strong>
             <span className="mt-1 block text-[.86rem] text-muted">{coach.tagline}</span>
           </div>
         </div>
+      </div>
+      <div className="-mt-6 rounded-[18px] border border-line bg-white p-4 shadow-[0_20px_50px_rgba(7,26,51,.14)] sm:hidden">
+        <strong className="display block text-base">{coach.name}</strong>
+        <span className="mt-1 block text-[.86rem] text-muted">{coach.tagline}</span>
       </div>
     </section>
   );
