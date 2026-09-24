@@ -130,7 +130,7 @@ export function Proof({ settings }: { settings: SiteSettings }) {
           ))}
         </div>
         <h2 className="display mt-10 max-w-[860px] text-[clamp(1.8rem,3.4vw,3.2rem)] leading-[1] font-black tracking-[-.05em]">{settings.proof.title}</h2>
-        <p className="mt-3 max-w-[720px] text-[#cbd5df]">Votre diagnostic estime votre horizon de préparation selon votre profil : ni promesse, ni délai fixe.</p>
+        <p className="mt-3 max-w-[720px] text-[#cbd5df]">Votre niveau. Votre trajectoire.</p>
       </div>
     </section>
   );
@@ -142,7 +142,7 @@ export function Method({ settings }: { settings: SiteSettings }) {
   return (
     <section id="methode" className="py-14 sm:py-16">
       <div className={shell}>
-        <div className={eyebrow}>La méthode</div>
+        <div className={eyebrow}>Une méthode claire.</div>
         <h2 className={sectionTitle}>{method.title}</h2>
         <ol className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
           {method.steps.map((s, i) => (
@@ -165,7 +165,7 @@ export function Planning({ settings }: { settings: SiteSettings }) {
     <section id="planning" className="pb-14 sm:pb-16">
       <div className={shell}>
         <div className={eyebrow}>Le planning</div>
-        <h2 className={sectionTitle}>15 jours. Pensés pour les professionnels.</h2>
+        <h2 className={sectionTitle}>15 jours. Sans arrêter de travailler.</h2>
         <div className="grid gap-3.5 sm:grid-cols-2">
           {method.rhythm.map((r) => (
             <div key={r.title} className="rounded-[18px] border border-line bg-white p-5">
@@ -174,7 +174,7 @@ export function Planning({ settings }: { settings: SiteSettings }) {
             </div>
           ))}
         </div>
-        <p className="mt-4 font-bold text-ink">Un format exigeant, mais compatible avec un emploi à temps plein.</p>
+        <p className="mt-4 font-bold text-ink">Un rythme soutenu. Gérable.</p>
       </div>
     </section>
   );

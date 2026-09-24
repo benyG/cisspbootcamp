@@ -85,7 +85,7 @@ export const SITE_DEFAULTS: SiteSettings = {
     microcopy: "Résultat immédiat · Gratuit · Sans engagement",
   },
   proof: {
-    title: "Le CISSP n’est pas un concours de mémorisation. La différence se fait dans la méthode et dans le rythme.",
+    title: "Le CISSP se raisonne.",
     numbers: [
       { value: "40 h", text: "de sessions live avec le coach." },
       { value: "15 jours", text: "de préparation intensive." },
@@ -93,7 +93,7 @@ export const SITE_DEFAULTS: SiteSettings = {
     ],
   },
   method: {
-    title: "Pas 40 heures de cours. Une trajectoire jusqu’au jour de l’examen.",
+    title: "40 heures. Un plan jusqu’à l’examen.",
     steps: [
       { kicker: "Comprendre", title: "Relier les 8 domaines", text: "Pas seulement les apprendre : comprendre comment ils interagissent." },
       { kicker: "Raisonner", title: "Penser CISSP", text: "Choisir la meilleure décision, pas seulement une réponse techniquement correcte." },
@@ -114,7 +114,7 @@ export const SITE_DEFAULTS: SiteSettings = {
   coach: {
     name: "Ben",
     tagline: "Coach CISSP certifié · Auditeur ISO 27001 · Conférencier",
-    quote: "Je vous dis honnêtement si vous êtes prêt. Puis on construit le chemin jusqu’à l’examen.",
+    quote: "J’aide à évaluer, structurer et avancer vers votre objectif.",
     bio: "Une préparation exigeante, structurée et basée sur le terrain, pas une lecture commentée du CBK.",
     credentials: [
       "CISSP",

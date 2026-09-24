@@ -102,7 +102,7 @@ test("scanner : 11 questions, consentement, résultat immédiat", async ({ page 
 test("réservation : un créneau réel, confirmé, enregistré", async ({ page }) => {
   await page.goto(`/rdv?t=${resultToken}`);
 
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(`${prospect.firstName}, choisissez votre créneau.`);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(`${prospect.firstName}, prenez rendez-vous.`);
   await expect(page.getByText(/heures affichées dans votre fuseau/i)).toBeVisible();
 
   // Slots are the buttons labelled with a time; the first one is chosen.
