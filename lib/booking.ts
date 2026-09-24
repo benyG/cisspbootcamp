@@ -325,7 +325,7 @@ function reminderText(
     `Petit rappel : ${describeBooking(booking)} a lieu ${when}, ${formatWhen(booking.startsAt, booking.timezone)} (heure de ${booking.timezone}).\n\n` +
     (booking.meetUrl ? `Lien de visio : ${booking.meetUrl}\n\n` : "") +
     (when === "demain" && booking.kind === "discovery" && examBootEnabled()
-      ? `Avant l'appel, si vous avez dix minutes : cinq vraies questions d'examen, pour que je cale mes conseils sur votre niveau. ${base}/test-cissp?b=${booking.rescheduleToken}&from=rappel-24h\n\n`
+      ? `Avant l'appel, si vous avez dix minutes : cinq questions d'entraînement CISSP, pour que je cale mes conseils sur votre niveau. ${base}/test-cissp?b=${booking.rescheduleToken}&from=rappel-24h\n\n`
       : "") +
     `Un empêchement ? ${base}/rdv/${booking.rescheduleToken}\n\n` +
     `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${booking.lead.unsubscribeToken}`

@@ -25,7 +25,7 @@ export const siteSettingsSchema = z.object({
   }),
   proof: z.object({
     title: short(200),
-    numbers: z.array(z.object({ value: short(12), text: short(120) })).length(4),
+    numbers: z.array(z.object({ value: short(12), text: short(120) })).min(3).max(4),
   }),
   method: z.object({
     title: short(200),
@@ -57,7 +57,7 @@ export const siteSettingsSchema = z.object({
     referencePriceUsd: z.coerce.number().int().min(0).max(100_000).default(2800),
     referenceSource: short(140).default("Formation officielle ISC² (Official Training)"),
     referenceCheckedOn: short(40).default("septembre 2026"),
-    promoLabel: short(80).default("Prix promotionnel de lancement"),
+    promoLabel: short(80).default("Tarif de lancement"),
     /** Let a "ready" profile open the registration page before Ben validates the sales message. */
     directRegistrationForReady: z.boolean().default(false),
   }),
@@ -75,38 +75,34 @@ export type SiteSectionKey = keyof SiteSettings;
 
 export const SITE_DEFAULTS: SiteSettings = {
   hero: {
-    title: "CISSP : révéler {{en toute sérénité}} l’expert en cybersécurité que vous êtes.",
-    lead:
-      "Un bootcamp de 40 heures sur 15 jours, en français, pour structurer votre préparation, " +
-      "relier les 8 domaines et apprendre à raisonner comme l’examen l’exige — avec un coach " +
-      "certifié qui tient le rythme avec vous.",
+    title: "CISSP, {{réveillez le leader en cybersécurité}} qui est en vous.",
+    lead: "40 h sur 15 jours pour maîtriser les 8 domaines, raisonner comme l’examen l’exige et structurer votre préparation jusqu’au jour J.",
     promises: [
-      { title: "15 jours, 40 h", text: "Un rythme clair, pas cinq jours condensés." },
-      { title: "Sessions live", text: "Un cadre guidé pour poser les bonnes questions." },
-      { title: "Jusqu’à l’examen", text: "Un plan de préparation, pas seulement des cours." },
+      { title: "40 h sur 15 jours", text: "" },
+      { title: "Sessions live, en français", text: "" },
+      { title: "Accompagnement jusqu’à l’examen", text: "" },
     ],
-    microcopy: "Résultat immédiat · Gratuit, sans engagement",
+    microcopy: "Résultat immédiat · Gratuit · Sans engagement",
   },
   proof: {
-    title: "Le CISSP n’est pas un concours de mémorisation. La différence se fait dans la méthode — et dans le rythme.",
+    title: "Le CISSP n’est pas un concours de mémorisation. La différence se fait dans la méthode et dans le rythme.",
     numbers: [
-      { value: "8", text: "domaines à relier, pas simplement à réciter." },
-      { value: "40 h", text: "de préparation étalées sur 15 jours, en français." },
-      { value: "10", text: "places par cohorte. Chacun est suivi." },
-      { value: "1 à 2", text: "mois jusqu’à l’examen pour un profil expérimenté accompagné." },
+      { value: "40 h", text: "de sessions live, en français." },
+      { value: "15 jours", text: "de préparation intensive." },
+      { value: "10", text: "participants maximum par cohorte." },
     ],
   },
   method: {
-    title: "Vous n’achetez pas 40 heures de cours. Vous achetez une trajectoire jusqu’au jour de l’examen.",
+    title: "Pas 40 heures de cours. Une trajectoire jusqu’au jour de l’examen.",
     steps: [
-      { kicker: "Comprendre", title: "Structurer les 8 domaines", text: "Revoir les concepts essentiels et surtout comprendre comment ils s’articulent dans les scénarios d’examen." },
-      { kicker: "Raisonner", title: "Penser « CISSP »", text: "Identifier le niveau de décision attendu, éliminer les distracteurs, choisir la réponse la plus pertinente." },
-      { kicker: "S’entraîner", title: "Travailler vos vraies difficultés", text: "Questions, scénarios, corrections commentées et analyse de vos erreurs récurrentes." },
-      { kicker: "Exécuter", title: "Arriver avec un plan", text: "Transformer le bootcamp en stratégie de préparation, jusqu’au passage de l’examen." },
+      { kicker: "Comprendre", title: "Relier les 8 domaines", text: "Pas seulement les apprendre : comprendre comment ils interagissent." },
+      { kicker: "Raisonner", title: "Penser CISSP", text: "Choisir la meilleure décision, pas seulement une réponse techniquement correcte." },
+      { kicker: "S’entraîner", title: "Corriger ses erreurs", text: "Scénarios, questions, corrections commentées." },
+      { kicker: "Exécuter", title: "Arriver prêt", text: "Un plan clair jusqu’à l’examen." },
     ],
     rhythm: [
-      { title: "Lun. → ven.", text: "2 à 3 h en fin de journée. Compatible avec un poste à temps plein." },
-      { title: "Week-ends", text: "Jusqu’à 7 h par jour. Pendant 15 jours, la préparation est la priorité." },
+      { title: "Lun. → ven.", text: "2 à 3 h en soirée." },
+      { title: "Week-ends", text: "Sessions intensives, jusqu’à 7 h par jour." },
     ],
   },
   video: {
@@ -118,43 +114,38 @@ export const SITE_DEFAULTS: SiteSettings = {
   coach: {
     name: "Ben",
     tagline: "Coach CISSP certifié · Auditeur ISO 27001 · Conférencier",
-    quote: "Je vous dis honnêtement si vous êtes prêt. Puis je vous y amène.",
-    bio:
-      "Certifié CISSP, auditeur ISO 27001, conférencier. Deux cohortes encadrées, des participants " +
-      "certifiés — et une conviction : ce qui manque aux candidats, ce n’est pas le matériel, c’est " +
-      "quelqu’un qui tient le rythme avec eux.",
+    quote: "Je vous dis honnêtement si vous êtes prêt. Puis on construit le chemin jusqu’à l’examen.",
+    bio: "Une préparation exigeante, structurée et basée sur le terrain, pas une lecture commentée du CBK.",
     credentials: [
-      "Certifié CISSP (ISC²)",
-      "Auditeur ISO 27001, expérience terrain en audit de sécurité",
-      "Conférencier cybersécurité, communauté francophone",
+      "CISSP",
+      "Auditeur ISO 27001",
+      "Conférencier",
     ],
     linkedinUrl: "",
   },
   offer: {
-    title: "Votre préparation mérite mieux qu’une pile de PDF et des QCM au hasard.",
-    text: "Une préparation intensive, en français, avec un cadre clair, des sessions live et un coach qui reste jusqu’à votre examen.",
+    title: "Ce qui est inclus",
+    text: "Une préparation intensive, en français, avec un coach qui reste jusqu’à votre examen.",
     included: [
-      "40 h de sessions live sur 15 jours",
-      "Les 8 domaines, supports en français",
-      "Questions type examen corrigées et commentées",
-      "Plan de préparation jusqu’à la date d’examen",
+      "Les 8 domaines, en sessions live",
+      "Questions et scénarios corrigés",
+      "Plan de préparation jusqu’à l’examen",
+      "Accompagnement du coach",
     ],
     soonEnabled: true,
     soonText: "Bientôt : modules en ligne entre deux cohortes, avec rendez-vous coach",
     referencePriceUsd: 2800,
     referenceSource: "Formation officielle ISC² (Official Training)",
     referenceCheckedOn: "septembre 2026",
-    promoLabel: "Prix promotionnel de lancement",
+    promoLabel: "Tarif de lancement",
     directRegistrationForReady: false,
   },
   faq: [
-    { q: "Faut-il vraiment 5 ans d’expérience ?", a: "ISC² exige 5 ans d’expérience dans au moins 2 des 8 domaines. Un diplôme de 4 ans ou une certification reconnue en compte pour 1. Avec 3 à 4 ans, vous pouvez passer l’examen et devenir Associate of ISC² le temps de compléter. L’analyse de profil vous le dit précisément." },
-    { q: "L’examen est en anglais — le bootcamp aussi ?", a: "Non. Le bootcamp est intégralement en français. Nous travaillons le vocabulaire technique anglais de l’examen, mais les explications, les échanges et les supports sont en français." },
-    { q: "Je travaille à temps plein. Est-ce compatible ?", a: "C’est conçu pour. En semaine, 2 à 3 h en fin de journée ; les week-ends sont plus denses. Pendant 15 jours, il faut en faire une priorité — c’est le prix d’un format qui ne s’étale pas sur six mois." },
-    { q: "Que se passe-t-il après les 15 jours ?", a: "Vous repartez avec un plan jusqu’à votre date d’examen, et le coach reste joignable. L’objectif n’est pas de finir le bootcamp, c’est d’être certifié." },
-    { q: "Mon employeur peut-il financer ?", a: "Oui. Un reçu est émis à chaque paiement, et une facture au nom de l’entreprise est possible sur demande." },
-    { q: "Comment payer depuis l’Afrique ?", a: "Carte bancaire, Orange Money ou MTN Mobile Money. Le prix est affiché en USD avec l’équivalent indicatif en FCFA." },
-    { q: "Je n’ai pas encore 5 ans d’expérience. Que puis-je faire maintenant ?", a: "Deux marches avant le bootcamp. Sans expérience ou en reconversion : la certification CC d’ISC², préparée en 15 jours avec Ben, sans prérequis. Avec quelques années : une séance de conseil carrière d’une heure, avec un plan daté, déduite du bootcamp si vous le rejoignez dans les 90 jours. Le mentorat mensuel prend ensuite le relais." },
+    { q: "Ai-je besoin de 5 ans d’expérience ?", a: "ISC² demande généralement 5 ans d’expérience cumulée dans au moins 2 des 8 domaines. Un diplôme de 4 ans ou une certification reconnue peut réduire cette exigence d’un an. Si vous ne remplissez pas encore l’expérience requise, vous pouvez passer l’examen et suivre le parcours Associate of ISC². Le diagnostic vous le dit précisément." },
+    { q: "Le bootcamp est-il entièrement en français ?", a: "Oui. Explications, échanges et supports sont en français. Le vocabulaire technique anglais de l’examen est travaillé au fil des sessions." },
+    { q: "Puis-je suivre tout en travaillant ?", a: "C’est conçu pour. En semaine, 2 à 3 h en soirée ; les week-ends sont plus denses. Pendant 15 jours, la préparation est la priorité." },
+    { q: "L’examen CISSP est-il inclus ?", a: "Non. Les frais d’examen se règlent auprès d’ISC². Le bootcamp vous prépare et vous laisse avec un plan jusqu’à votre date d’examen." },
+    { q: "Comment payer depuis l’Afrique ?", a: "Carte bancaire, Orange Money ou MTN Mobile Money. Le prix est en USD, avec l’équivalent indicatif en FCFA. Un reçu est émis à chaque paiement." },
   ],
   contact: {
     whatsapp: "",

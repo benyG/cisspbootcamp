@@ -37,7 +37,7 @@ describe("prix de référence (docs/CONVERSION.md)", () => {
     const stored = { title: "T", text: "x", included: ["a"], soonEnabled: false, soonText: "" };
     const parsed = siteSettingsSchema.shape.offer.parse(stored);
     expect(parsed.referencePriceUsd).toBe(2800);
-    expect(parsed.promoLabel).toBe("Prix promotionnel de lancement");
+    expect(parsed.promoLabel).toBe("Tarif de lancement");
   });
 
   it("accepte le prix saisi comme texte dans le formulaire admin", () => {

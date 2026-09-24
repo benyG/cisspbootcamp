@@ -12,6 +12,8 @@ type Props = {
   bookingToken?: string;
   title?: string;
   text?: string;
+  /** Button label; the default says what happens next. */
+  cta?: string;
   dark?: boolean;
   compact?: boolean;
 };
@@ -22,12 +24,12 @@ const POLL_MS = 10_000;
 const MAX_POLLS = 180;
 
 /**
- * "Vérifiez-le sur 5 vraies questions" — docs/CONVERSION.md §8. Creates the
+ * "Testez votre raisonnement CISSP" — docs/CONVERSION.md §8. Creates the
  * test through our own API, opens it in a new tab, then shows the score on
  * this page once ExamBoot has it. A shared (anonymous) test never shows a
  * score: it could be someone else's.
  */
-export function PracticeTestBox({ placement, token, bookingToken, title = "Vérifiez-le sur 5 vraies questions", text = "Cinq questions du vrai niveau CISSP, tirées d’une banque d’examen, corrigées à la fin. Sans compte, en dix minutes.", dark = false, compact = false }: Props) {
+export function PracticeTestBox({ placement, token, bookingToken, title = "Testez votre raisonnement CISSP", text = "Cinq questions d’entraînement, conçues au niveau et dans l’esprit du CISSP, corrigées à la fin. Sans compte, en dix minutes.", cta = "Tester mon niveau — 10 min →", dark = false, compact = false }: Props) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const polls = useRef(0);
 
@@ -133,7 +135,7 @@ export function PracticeTestBox({ placement, token, bookingToken, title = "Véri
       ) : (
         <div className="mt-4 flex flex-col gap-2">
           <button type="button" onClick={start} disabled={phase.kind === "creating"} className={button}>
-            {phase.kind === "creating" ? "Préparation du test…" : phase.kind === "waiting" ? "Rouvrir le test" : "Lancer les 5 questions →"}
+            {phase.kind === "creating" ? "Préparation du test…" : phase.kind === "waiting" ? "Rouvrir le test" : cta}
           </button>
           {phase.kind === "waiting" && !phase.shared && <p className={"text-[.86rem] " + muted}>Le test s’est ouvert dans un nouvel onglet. Votre score s’affichera ici dès que vous l’aurez révélé.</p>}
           {phase.kind === "waiting" && phase.shared && <p className={"text-[.86rem] " + muted}>Le test s’est ouvert dans un nouvel onglet.</p>}

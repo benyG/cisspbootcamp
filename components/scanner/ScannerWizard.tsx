@@ -93,7 +93,7 @@ export function ScannerWizard({ context, utm, initialCountry, title = "Analyse d
       <div className="px-5 py-6 sm:px-6">
         {question && (
           <section key={question.id} className="flex flex-col gap-4">
-            <p className="text-xs font-extrabold tracking-[.08em] text-accent uppercase">Question {step + 1} sur {QUESTIONS.length}</p>
+            <p className="text-xs font-extrabold tracking-[.08em] text-accent uppercase">Question {step + 1} sur {QUESTIONS.length} <span className="font-semibold text-muted normal-case tracking-normal">· ~{Math.max(1, Math.ceil(((QUESTIONS.length - step) * 15) / 60))} min restante{Math.ceil(((QUESTIONS.length - step) * 15) / 60) > 1 ? "s" : ""}</span></p>
             <h2 className="display text-[1.55rem] leading-[1.18] font-black">{label(question)}</h2>
             {question.hint && <p className="-mt-1 text-[.95rem] text-muted">{question.hint}</p>}
 

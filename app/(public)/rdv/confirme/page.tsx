@@ -43,7 +43,7 @@ export default async function BookingConfirmedPage({
         <p className="text-sm text-[var(--color-muted)]">Vos autres séances : <Link href={`/conseil/rdv/${booking.serviceOrder.bookingToken}`} className="underline">votre page de réservation</Link>.</p>
       )}
       {booking.kind === "discovery" && examBootEnabled() && (
-        <PracticeTestBox placement="rdv-confirme" bookingToken={t} title="Avant l’appel : 5 questions pour que Ben cale ses conseils" text="Dix minutes, cinq vraies questions d’examen. Ben voit votre score et arrive à l’appel avec des conseils pour vous, pas des généralités." />
+        <PracticeTestBox placement="rdv-confirme" bookingToken={t} title="Avant l’appel : 5 questions pour que Ben cale ses conseils" text="Dix minutes, cinq questions d’entraînement au niveau CISSP. Ben voit votre score et arrive à l’appel avec des conseils pour vous, pas des généralités." />
       )}
       {booking.lead.source === "direct_link" && (
         <Link href="/scanner" className="mt-4 rounded-lg border border-[var(--color-accent)] px-5 py-3 text-center font-semibold text-[var(--color-accent)]">

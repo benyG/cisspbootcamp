@@ -68,7 +68,7 @@ export async function approveDiagnosis(formData: FormData): Promise<ActionResult
             : "") +
           `Réserver une séance de conseil carrière : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${response.resultToken}\n`
         : `Réserver 15 minutes : ${env.NEXT_PUBLIC_APP_URL}/rdv?t=${response.resultToken}\n`) +
-      (examBootEnabled() ? `Vous situer sur 5 vraies questions d'examen : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${response.resultToken}&from=relance\n` : "") +
+      (examBootEnabled() ? `Tester votre raisonnement sur 5 questions d'entraînement CISSP : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${response.resultToken}&from=relance\n` : "") +
       `Revoir votre analyse : ${resultUrl}\n\n` +
       `—\nPour ne plus recevoir de messages : ${unsubscribeUrl}`,
   });
