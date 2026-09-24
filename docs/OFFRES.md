@@ -233,3 +233,23 @@ porte d'entrée, c'est un accompagnement dans la durée).
   ouvre la section « Trois façons de travailler avec Ben ».
 - **Reste à faire** : les services `cv` et `eligibilite` sur le même moule ;
   Security+ comme second produit d'entrée si la demande est plus technique.
+
+## 10. Le parcours inversé (Ben, 24/09/2026, après-midi)
+
+- **Premier contact gratuit, 15 minutes**, ouvert à tous les verdicts, y
+  compris « pas encore » : c'est l'appel de découverte, renommé. Cinq par
+  semaine au plus (`FREE_CONTACT_WEEKLY_CAP`) ; une semaine pleine n'offre
+  plus de créneau.
+- **Le créneau d'abord, le profil ensuite.** Sur `/rdv` sans jeton, le
+  visiteur retient un créneau (cookie `cb_slot`, une heure), passe par
+  l'analyse de profil, et le rendez-vous est réservé à son nom à la fin du
+  questionnaire, après re-validation du créneau. Le résultat s'affiche avec
+  le rendez-vous confirmé et son code.
+- **Séances payantes, même ordre** : créneau (plages « conseil ») → profil si
+  inconnu → paiement qui confirme. Le créneau retenu est enregistré sur la
+  commande (`requested_start`), tenu 30 minutes hors de l'agenda pour les
+  commandes en attente, et réservé automatiquement au paiement ; s'il a été
+  pris entre-temps, l'e-mail propose le lien de réservation.
+- **Ben sait à qui il parle** : chaque réservation, gratuite ou payée, lui
+  envoie un e-mail avec le code (`RDV-0042`), le verdict, le délai, les axes,
+  les objectifs et le lien de la fiche.

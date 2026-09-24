@@ -3,8 +3,10 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { type BookResult, isSlotBookable } from "@/lib/booking";
 import { type BookSessionResult, bookSession, startServiceOrder } from "@/lib/consulting";
 import { prisma } from "@/lib/db";
+import { clearPendingSlot, readPendingSlot, setPendingSlot } from "@/lib/pending-slot";
 import { env } from "@/lib/env";
 import { StripeNotConfiguredError, createCheckoutSession } from "@/lib/payments/stripe";
 import { resolveTierCode } from "@/lib/pricing";
@@ -92,7 +94,7 @@ export async function payServiceByCard(formData: FormData): Promise<void> {
   if ("ok" in resolved) return fail(resolved.error);
 
   await recordServerEvent({ name: "service_pay_click", leadId: resolved.leadId, label: `${code}:stripe` });
-  const started = await startServiceOrder({ leadId: resolved.leadId, code, method: "stripe" });
+  const started = await startServiceOrder({ leadId: resolved.leadId, code, method: "stripe", requested: await requestedSlotFor(code) });
   if (!started.order) return fail("Ce service n'est pas disponible pour votre pays.");
   const { order, offer, lead } = started;
 
@@ -140,7 +142,7 @@ export async function payServiceByMobileMoney(formData: FormData): Promise<void>
   const { markServiceOrderPaid } = await import("@/lib/consulting");
 
   await recordServerEvent({ name: "service_pay_click", leadId: resolved.leadId, label: `${code}:netticket` });
-  const started = await startServiceOrder({ leadId: resolved.leadId, code, method: "netticket" });
+  const started = await startServiceOrder({ leadId: resolved.leadId, code, method: "netticket", requested: await requestedSlotFor(code) });
   if (!started.order) return fail("Ce service n'est pas disponible pour votre pays.");
   const { order, offer, lead } = started;
 
@@ -176,4 +178,36 @@ export async function bookSessionWithToken(input: { token: string; start: string
   const parsed = z.object({ token: z.string().min(10), start: instant, timezone: z.string().min(1).max(64) }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "Demande invalide." };
   return bookSession({ bookingToken: parsed.data.token, start: new Date(parsed.data.start), timezone: parsed.data.timezone });
+}
+
+/** The consulting slot kept in the cookie for this service, if any. */
+async function requestedSlotFor(code: ServiceCode): Promise<{ start: Date; timezone: string } | undefined> {
+  const pending = await readPendingSlot();
+  if (!pending || pending.kind !== "consulting" || pending.service !== code) return undefined;
+  return { start: new Date(pending.start), timezone: pending.timezone };
+}
+
+/**
+ * Slot first, then the profile, then the payment (Ben, 24/09/2026). The
+ * slot is kept in a cookie; a known prospect goes straight to the order
+ * page, a new one to the questionnaire, which brings them back here.
+ */
+export async function holdConsultingSlot(input: { code: string; token?: string; start: string; timezone: string; sessionMinutes: number }): Promise<BookResult> {
+  const parsed = z.object({ code: z.string().refine(isServiceCode), token: z.string().max(200).optional(), start: instant, timezone: z.string().min(1).max(64), sessionMinutes: z.number().int().min(15).max(180) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Demande invalide." };
+  const { code, token, start, timezone, sessionMinutes } = parsed.data;
+  if (!(await isSlotBookable(new Date(start), new Date(), { kind: "consulting", sessionMinutes }))) {
+    return { ok: false, error: "Ce créneau vient d'être pris. Choisissez-en un autre." };
+  }
+  await setPendingSlot({ start, timezone, kind: "consulting", service: code });
+  const known = token && token.length >= 10 ? await prisma.scannerResponse.findUnique({ where: { resultToken: token }, select: { id: true } }) : null;
+  redirect(known ? `/conseil/${code}?t=${token}` : "/scanner?suite=conseil");
+}
+
+/** "Changer de créneau": forget the slot and pick again. */
+export async function forgetConsultingSlot(formData: FormData): Promise<void> {
+  await clearPendingSlot();
+  const code = formData.get("code");
+  const token = formData.get("t");
+  redirect(`/conseil/${typeof code === "string" ? code : ""}${typeof token === "string" && token ? `?t=${token}` : ""}`);
 }

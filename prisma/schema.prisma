@@ -532,6 +532,11 @@ model ServiceOrder {
   /// Opaque token addressing the session-booking page. Inert until paid.
   bookingToken  String @unique @map("booking_token") @db.VarChar(64)
 
+  /// Slot chosen before paying (Ben, 24/09): booked automatically once paid,
+  /// softly held for pending orders in the meantime.
+  requestedStart    DateTime? @map("requested_start")
+  requestedTimezone String?   @map("requested_timezone") @db.VarChar(64)
+
   paidAt                 DateTime?     @map("paid_at")
   /// Set when this order's hour was deducted from a bootcamp registration.
   creditedRegistrationId Int?          @map("credited_registration_id")

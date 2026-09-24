@@ -5,7 +5,7 @@ import { btnPrimary, eyebrow, shell } from "@/components/landing/sections";
 import { QuickSlots } from "@/components/booking/QuickSlots";
 import { PracticeTestBox } from "@/components/examboot/PracticeTestBox";
 import { bookWithResultToken } from "@/app/(public)/rdv/actions";
-import { listSlots } from "@/lib/booking";
+import { bookingCode, formatWhen, listSlots } from "@/lib/booking";
 import { PromoPrice } from "@/components/offer/PromoPrice";
 import { TrackLink } from "@/components/tracking/TrackLink";
 import { TrackView } from "@/components/tracking/TrackView";
@@ -43,9 +43,10 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const { token } = await params;
   const response = await prisma.scannerResponse.findUnique({
     where: { resultToken: token },
-    include: { lead: { select: { firstName: true, country: true } } },
+    include: { lead: { select: { firstName: true, country: true, bookings: { where: { status: "scheduled", startsAt: { gt: new Date() } }, orderBy: { startsAt: "asc" }, take: 1 } } } },
   });
   if (!response) notFound();
+  const upcoming = response.lead.bookings[0] ?? null;
 
   // The offer, priced for the prospect's country: this page is the hottest
   // moment of the funnel (docs/CONVERSION.md §2.6), so the promotional price
@@ -74,7 +75,8 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const analysis = response.analysis as unknown as ProfileAnalysis;
   const axes = prospectAxes(analysis.axes);
   const verdict = VERDICT[analysis.readiness];
-  const canBook = analysis.recommendation !== "build_first";
+  // The free 15-minute contact is open to every verdict (Ben, 24/09).
+  const canBook = true;
   const canRegisterNow = response.status === "approved" || response.status === "sent" || (analysis.readiness === "ready" && settings.offer.directRegistrationForReady);
 
   // The step that fits (docs/OFFRES.md §4): the main offer for "pas encore",
@@ -88,7 +90,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
   const ccPrice = programCode === "cc" && tierCode && !isQuoteOnly(tierCode) ? await prisma.programPrice.findUnique({ where: { program_tier: { program: "cc", tier: tierCode } } }).catch(() => null) : null;
 
   // The next slots, right here: the call is booked in one tap (brainstorm 24/09).
-  const slots = canBook ? await listSlots().then((l) => (l.available ? l : null)).catch(() => null) : null;
+  const slots = canBook && !upcoming ? await listSlots().then((l) => (l.available ? l : null)).catch(() => null) : null;
 
   // One route per profile (docs/LANDING.md §24); the headline names it plainly.
   const route = analysis.recommendation !== "build_first" ? "bootcamp" : programCode === "cc" ? "cc" : "career";
@@ -102,6 +104,12 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
     <main className={shell + " py-8 sm:py-12"}>
       <TrackView name="result_view" label={route} />
       <div className="mx-auto max-w-2xl">
+        {upcoming && (
+          <p className="mb-5 rounded-[14px] border border-accent/20 bg-accent-soft px-4 py-3 text-sm">
+            <b>Rendez-vous confirmé : {formatWhen(upcoming.startsAt, upcoming.timezone)}</b> ({upcoming.timezone}) · code {bookingCode(upcoming.id)}. L’invitation est dans votre boîte mail.{" "}
+            <Link href={`/rdv/${upcoming.rescheduleToken}`} className="underline underline-offset-4">Déplacer ou annuler</Link>
+          </p>
+        )}
         <span className={`inline-flex rounded-full px-3 py-1.5 text-[.82rem] font-extrabold ${verdict.tone}`}>{verdict.badge}</span>
         <h1 className="display mt-4 text-[clamp(2.2rem,5vw,3.8rem)] leading-[.98] font-black tracking-[-.05em]">
           {response.lead.firstName}, {headline.charAt(0).toLowerCase() + headline.slice(1)}
@@ -159,20 +167,24 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
 
         <section className="mt-10 rounded-[22px] border border-line bg-white p-6 shadow-[var(--shadow-panel)]">
           <h2 className="display text-[1.6rem] leading-tight font-black">
-            {canBook
-              ? analysis.readiness === "conditional"
+            {upcoming
+              ? "Votre rendez-vous est pris."
+              : analysis.readiness === "conditional"
                 ? "Prochaine étape : Ben vérifie votre éligibilité avec vous, en 15 minutes."
-                : "Prochaine étape : 15 minutes avec Ben, puis votre place."
-              : "Prochaine étape : votre première marche."}
+                : analysis.readiness === "ready"
+                  ? "Prochaine étape : 15 minutes avec Ben, puis votre place."
+                  : "Prochaine étape : 15 minutes avec Ben, gratuites, pour choisir votre première marche."}
           </h2>
           <p className="mt-2 text-ink-2">
-            {canBook
-              ? analysis.readiness === "conditional"
+            {upcoming
+              ? "Ben arrive à l’appel avec votre analyse sous les yeux. D’ici là, tout ce qui suit reste ouvert."
+              : analysis.readiness === "conditional"
                 ? "Un appel vidéo, sans engagement. Ben passe en revue vos années comptables et la dérogation possible, lève la condition, puis vous fixez ensemble votre date d’examen."
-                : "Un appel vidéo, sans engagement, pour caler votre date d’examen et le plan des 15 jours. Si vous avez déjà décidé, vous pouvez réserver votre place directement."
-              : "Le CISSP viendra ; d’ici là, voici ce qui vous fait avancer maintenant."}
+                : analysis.readiness === "ready"
+                  ? "Un appel vidéo, sans engagement, pour caler votre date d’examen et le plan des 15 jours. Si vous avez déjà décidé, vous pouvez réserver votre place directement."
+                  : "Un premier contact gratuit, sans engagement : Ben regarde votre profil avec vous et vous dit quelle marche prendre maintenant, certification CC ou séance de conseil."}
           </p>
-          {canBook && tier && (
+          {canBook && tier && analysis.readiness !== "not_yet" && (
             <div className="mt-5 rounded-[18px] border border-line bg-[#fbfffd] p-4">
               <PromoPrice amountUsdCents={tier.amountUsd} localLabel={localLabel} offer={settings.offer} cohort={cohort ? { startsAt: cohort.startsAt } : null} />
               {cohort && <p className="mt-2 text-[.86rem] text-muted">{cohort.gauge.label}, cohorte de {cohort.name.replace(/^Cohorte /, "")}.</p>}
@@ -193,10 +205,23 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
               ) : (
                 <TrackLink href={`/rdv?t=${token}`} event="book_click" label="resultat" className={btnPrimary + " mt-5 w-full"}>Réserver mon appel →</TrackLink>
               )}
-              {canRegisterNow && tier && (
+              {canRegisterNow && tier && analysis.readiness !== "not_yet" && (
                 <TrackLink href={`/inscription?t=${token}`} event="cta_click" label="resultat-inscription" className="mt-3 inline-flex w-full items-center justify-center rounded-[14px] border border-line bg-white px-5 py-3.5 font-extrabold">
                   Rejoindre la cohorte →
                 </TrackLink>
+              )}
+              {analysis.readiness === "not_yet" && programCode === "cc" && (
+                <div className="mt-4 rounded-[18px] border-2 border-ink bg-ink p-4 text-white">
+                  <p className="text-[.78rem] font-extrabold tracking-[.06em] text-[#7be0c8] uppercase">Votre première marche · {PROGRAMS.cc.hours} h sur {PROGRAMS.cc.days} jours</p>
+                  <p className="display mt-1 text-[1.25rem] leading-tight font-black">15 jours pour votre première certification : la CC d’ISC².</p>
+                  <p className="mt-1 text-[.92rem] text-[#cbd5df]">Aucun prérequis, la même maison que le CISSP.{ccCohort ? ` Prochaine session en ${formatCohortMonthLabel(ccCohort.startsAt)}.` : ""}{ccPrice ? ` ${formatUsdCents(ccPrice.amountUsd)}${ccLocal(ccPrice.amountUsd) ? ` ≈ ${ccLocal(ccPrice.amountUsd)}` : ""}.` : ""}</p>
+                  <TrackLink href={`/demarrer?t=${token}`} event="cta_click" label="resultat-cc" className="mt-3 inline-flex w-full items-center justify-center rounded-[14px] border border-white/30 px-5 py-3 font-extrabold text-white">Commencer par ISC² CC →</TrackLink>
+                </div>
+              )}
+              {analysis.readiness === "not_yet" && service && (
+                <p className="mt-3 rounded-[14px] border border-line bg-white px-4 py-3 text-[.9rem] text-ink-2">
+                  Vous voulez aller plus loin qu’un premier contact ? <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className="font-bold underline underline-offset-4">{service.service.name}</TrackLink>, {service.service.durationLabel} avec Ben, {service.usdLabel}{service.service.creditable ? ", déduit du bootcamp" : ""}.
+                </p>
               )}
             </>
           ) : programCode === "cc" ? (

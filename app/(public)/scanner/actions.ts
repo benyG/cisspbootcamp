@@ -13,6 +13,9 @@ import { resolveTierCode } from "@/lib/pricing";
 import { draftSalesMessage } from "@/lib/scanner/ai-message";
 import { recommendedProgram } from "@/lib/programs";
 import { loadScannerContext, priceLabelFor } from "@/lib/scanner/context";
+import { bookCall } from "@/lib/booking";
+import { clearPendingSlot, readPendingSlot } from "@/lib/pending-slot";
+import { isServiceCode } from "@/lib/services";
 import { answersSchema } from "@/lib/scoring";
 import { createToken } from "@/lib/tokens";
 import { recordServerEvent } from "@/lib/tracking/server";
@@ -53,7 +56,14 @@ const submissionSchema = z.object({
 export type SubmissionInput = z.input<typeof submissionSchema>;
 
 export type SubmissionResult =
-  | { ok: true; resultToken: string }
+  | {
+      ok: true;
+      resultToken: string;
+      /** Set when a slot chosen before the questionnaire was booked in the prospect's name. */
+      booked?: { rescheduleToken: string };
+      /** Where to go next when the profile was the step before a paid session. */
+      next?: string;
+    }
   | { ok: false; errors: Record<string, string> };
 
 /**
@@ -195,6 +205,20 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
 
   await Promise.allSettled([prospectEmail, coachEmail]);
 
+  // 2b. A slot picked before the questionnaire (Ben, 24/09): the free
+  // contact is booked now in the prospect's name; a paid session goes on
+  // to the order page with the slot still remembered.
+  let booked: { rescheduleToken: string } | undefined;
+  let next: string | undefined;
+  const pending = await readPendingSlot();
+  if (pending?.kind === "discovery") {
+    const result = await bookCall({ leadId: lead.id, start: new Date(pending.start), timezone: pending.timezone });
+    await clearPendingSlot();
+    if (result.ok) booked = { rescheduleToken: result.rescheduleToken };
+  } else if (pending?.kind === "consulting" && isServiceCode(pending.service)) {
+    next = `/conseil/${pending.service}?t=${resultToken}`;
+  }
+
   // 3. The sales draft, last: it must never hold the prospect's result.
   const draft = await draftSalesMessage({
     firstName: contact.firstName,
@@ -210,7 +234,7 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
     data: { leadId: lead.id, type: "sales_message_drafted", payload: { source: draft.source } },
   });
 
-  return { ok: true, resultToken };
+  return { ok: true, resultToken, booked, next };
 }
 
 function readinessLabel(readiness: "ready" | "conditional" | "not_yet"): string {

@@ -225,7 +225,9 @@ test("un prospect « pas encore » achète une heure de conseil et réserve sa s
 
   await page.goto("/conseil/bilan?pays=CM");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/bilan de carrière/i);
-  await expect(page.getByRole("button", { name: /payer par carte bancaire/i })).toBeVisible();
+  // Slot first, payment after (Ben, 24/09): the picker opens the page, the payment form waits behind it.
+  await expect(page.getByRole("heading", { name: /choisissez votre créneau/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /retenir ce créneau/i })).toBeVisible();
 
   // The order itself, as the server action would create it, then the webhook.
   const stamp = Date.now();
@@ -322,4 +324,16 @@ test("un débutant s'inscrit à la formation CC depuis /demarrer", async ({ page
   const receipt = await request.get(`/inscription/recu/${registration.reference}`);
   expect(receipt.status()).toBe(200);
   expect(receipt.headers()["content-type"]).toContain("application/pdf");
+});
+
+/** The free contact starts with the slot; the questionnaire confirms it (Ben, 24/09). */
+test("premier contact : le créneau d'abord, le profil ensuite", async ({ page }) => {
+  await page.goto("/rdv");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/15 minutes avec ben, gratuites/i);
+  const slot = page.getByRole("button").filter({ hasText: /^\d{1,2}:\d{2}$/ }).first();
+  await expect(slot).toBeVisible();
+  await slot.click();
+  await page.getByRole("button", { name: /retenir ce créneau, puis mon profil/i }).click();
+  await expect(page).toHaveURL(/\/scanner\?suite=rdv/);
+  await expect(page.getByText(/créneau retenu/i)).toBeVisible();
 });

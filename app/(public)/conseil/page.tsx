@@ -40,11 +40,22 @@ export default async function ConsultingPage({ searchParams }: { searchParams: P
             Le bootcamp CISSP s’adresse aux profils déjà expérimentés. Si vous n’y êtes pas encore, ou si vous hésitez sur la route à prendre, une séance de conseil vous donne un plan clair : votre situation, la voie qui vous convient, la première certification, les étapes datées.
           </p>
           <ul className="mt-5 grid gap-1.5 text-ink-2 sm:grid-cols-2">
-            {["Vous payez, puis vous choisissez votre créneau (le mercredi soir).", "Visio, en français, avec un plan écrit envoyé après la séance.", "Report gratuit jusqu’à 24 h avant. Remboursé si Ben annule.", "Une heure de conseil est déduite du bootcamp CISSP dans les 90 jours."].map((l) => (
+            {["Vous choisissez votre créneau (le mercredi soir), puis le paiement le confirme.", "Visio, en français, avec un plan écrit envoyé après la séance.", "Report gratuit jusqu’à 24 h avant. Remboursé si Ben annule.", "Une heure de conseil est déduite du bootcamp CISSP dans les 90 jours."].map((l) => (
               <li key={l} className="relative py-1.5 pl-7 before:absolute before:left-0 before:font-black before:text-accent before:content-['✓']">{l}</li>
             ))}
           </ul>
         </div>
+
+        <section className="mt-10 rounded-[22px] border-2 border-ink bg-ink p-6 text-white">
+          <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto]">
+            <div>
+              <p className="text-[.78rem] font-extrabold tracking-[.08em] text-[#7be0c8] uppercase">Premier contact · 15 min · gratuit</p>
+              <h2 className="display mt-1 text-[1.5rem] leading-tight font-black">Commencez par 15 minutes avec Ben, sans rien payer.</h2>
+              <p className="mt-2 text-[.95rem] text-[#cbd5df]">Vous choisissez un créneau, vous validez votre profil en 3 minutes, et Ben arrive à l’appel en sachant à qui il parle. À la fin, vous savez quelle marche prendre.</p>
+            </div>
+            <Link href="/rdv" className="inline-flex items-center justify-center rounded-[14px] bg-accent-bright px-6 py-4 font-extrabold text-ink">Réserver mon premier contact →</Link>
+          </div>
+        </section>
 
         <div className="mt-10">
           {services.length === 0 ? (

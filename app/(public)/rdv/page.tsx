@@ -4,10 +4,10 @@ import { SlotPicker } from "@/components/booking/SlotPicker";
 import { listSlots } from "@/lib/booking";
 import { prisma } from "@/lib/db";
 
-import { bookDirect, bookWithResultToken } from "./actions";
+import { bookWithResultToken, holdSlotThenProfile } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Réserver 15 minutes avec Ben — Coach CISSP",
+  title: "Premier contact : 15 minutes avec Ben, gratuit — Coach CISSP",
 };
 export const dynamic = "force-dynamic";
 
@@ -29,14 +29,15 @@ export default async function BookingPage({
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-5 py-8">
       <p className="text-sm font-semibold tracking-wide text-[var(--color-accent)] uppercase">
-        Appel de découverte
+        Premier contact · 15 min · gratuit
       </p>
       <h1 className="mt-2 text-3xl font-bold text-balance">
-        {lead ? `${lead.firstName}, choisissez votre créneau.` : "15 minutes avec Ben."}
+        {lead ? `${lead.firstName}, choisissez votre créneau.` : "15 minutes avec Ben, gratuites."}
       </h1>
       <p className="mt-2 text-[var(--color-muted)]">
-        Un appel vidéo de 15 minutes pour vérifier que le bootcamp vous convient et fixer
-        votre date d&apos;examen. Sans engagement.
+        {lead
+          ? "Un appel vidéo de 15 minutes pour faire le point sur votre profil et décider de la suite. Sans engagement."
+          : "Choisissez votre créneau. Ensuite, 3 minutes d’analyse de profil pour le confirmer : Ben arrive à l’appel en sachant à qui il parle."}
       </p>
 
       <div className="mt-8">
@@ -57,17 +58,10 @@ export default async function BookingPage({
           <SlotPicker
             slots={listing.slots.map((s) => s.toISOString())}
             coachTimeZone={listing.coachTimeZone}
-            askContact
-            onBook={async ({ start, timezone, contact }) => {
+            submitLabel="Retenir ce créneau, puis mon profil →"
+            onBook={async ({ start, timezone }) => {
               "use server";
-              return bookDirect({
-                firstName: contact?.firstName ?? "",
-                lastName: contact?.lastName ?? "",
-                email: contact?.email ?? "",
-                consent: contact?.consent as true,
-                start,
-                timezone,
-              });
+              return holdSlotThenProfile({ start, timezone });
             }}
           />
         )}

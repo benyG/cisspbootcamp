@@ -89,7 +89,7 @@ export function ServiceCards({ services, tiers, rates, token }: Props) {
                   onClick={() => track("cta_click", { label: `conseil-${service.code}` })}
                   className="mt-4 inline-flex w-full items-center justify-center rounded-[14px] bg-ink px-5 py-3.5 font-extrabold text-white"
                 >
-                  Réserver et payer →
+                  Choisir mon créneau →
                 </Link>
               </div>
             </article>

@@ -10,6 +10,7 @@ import {
   addMinutes,
   computeSlots,
   consultingShape,
+  dropWeeksAtCap,
   formatSlotTime,
 } from "@/lib/calendar/slots";
 import { prisma } from "@/lib/db";
@@ -35,6 +36,16 @@ export type SlotFamily = { kind: "discovery" } | { kind: "consulting"; sessionMi
 
 const DISCOVERY: SlotFamily = { kind: "discovery" };
 
+/** Free contacts per week, at most (Ben, 24/09/2026). */
+export const FREE_CONTACT_WEEKLY_CAP = 5;
+/** A consulting slot chosen before paying is kept out of the picker this long. */
+export const CONSULTING_SOFT_HOLD_MINUTES = 30;
+
+/** "RDV-0042": the code the prospect and Ben both see for one booking. */
+export function bookingCode(bookingId: number): string {
+  return `RDV-${String(bookingId).padStart(4, "0")}`;
+}
+
 function shapeFor(family: SlotFamily): SlotShape {
   return family.kind === "consulting" ? consultingShape(family.sessionMinutes) : DISCOVERY_SHAPE;
 }
@@ -56,11 +67,26 @@ export async function listSlots(now = new Date(), family: SlotFamily = DISCOVERY
     end: addMinutes(now, (shape.maxDaysAhead + 1) * 24 * 60),
   });
 
-  return {
-    available: true,
-    slots: computeSlots({ rules, coachTimeZone: credential.timeZone, busy, now, shape }),
-    coachTimeZone: credential.timeZone,
-  };
+  let slots = computeSlots({ rules, coachTimeZone: credential.timeZone, busy, now, shape });
+
+  if (family.kind === "discovery") {
+    // Weeks that already hold the cap of free contacts offer nothing more.
+    const booked = await prisma.booking.findMany({
+      where: { kind: "discovery", status: "scheduled", startsAt: { gte: now } },
+      select: { startsAt: true },
+    });
+    slots = dropWeeksAtCap(slots, booked.map((b) => b.startsAt), FREE_CONTACT_WEEKLY_CAP, credential.timeZone);
+  } else {
+    // Slots chosen by someone who is paying right now stay out of the picker for a while.
+    const held = await prisma.serviceOrder.findMany({
+      where: { status: { in: ["pending", "pending_manual"] }, requestedStart: { not: null, gte: now }, createdAt: { gte: addMinutes(now, -CONSULTING_SOFT_HOLD_MINUTES) } },
+      select: { requestedStart: true },
+    });
+    const heldStarts = new Set(held.map((h) => h.requestedStart?.getTime()));
+    slots = slots.filter((slot) => !heldStarts.has(slot.getTime()));
+  }
+
+  return { available: true, slots, coachTimeZone: credential.timeZone };
 }
 
 /** True when `start` is one of the slots computed right now — never trust the client. */
@@ -164,13 +190,51 @@ export async function bookCall(input: {
 
   await recordServerEvent({ name: "booking_done", leadId: lead.id, label: lead.source });
 
-  await sendEmail({
-    to: lead.email,
-    subject: `C'est confirmé : ${formatWhen(input.start, input.timezone)}`,
-    text: confirmationText({ firstName: lead.firstName, start: input.start, timezone: input.timezone, meetUrl: event.meetUrl, rescheduleToken, unsubscribeToken: lead.unsubscribeToken }),
-  });
+  await Promise.allSettled([
+    sendEmail({
+      to: lead.email,
+      subject: `C'est confirmé : ${formatWhen(input.start, input.timezone)} · ${bookingCode(booking.id)}`,
+      text: confirmationText({ firstName: lead.firstName, start: input.start, timezone: input.timezone, meetUrl: event.meetUrl, rescheduleToken, unsubscribeToken: lead.unsubscribeToken, code: bookingCode(booking.id) }),
+    }),
+    notifyCoachOfBooking({ bookingId: booking.id, leadId: lead.id, start: input.start, what: "Premier contact (15 min, gratuit)", meetUrl: event.meetUrl }),
+  ]);
 
   return { ok: true, bookingId: booking.id, rescheduleToken };
+}
+
+/**
+ * Ben knows who he will be talking to (Ben, 24/09/2026): the booking code,
+ * the profile's verdict, timeline and axes, and the lead sheet, in his inbox
+ * the moment a call or a session is booked.
+ */
+export async function notifyCoachOfBooking(input: { bookingId: number; leadId: number; start: Date; what: string; meetUrl: string | null }): Promise<void> {
+  const lead = await prisma.lead.findUnique({
+    where: { id: input.leadId },
+    include: { scannerResponses: { orderBy: { createdAt: "desc" }, take: 1 } },
+  });
+  if (!lead) return;
+  const response = lead.scannerResponses[0];
+  const analysis = response?.analysis as { headline?: string; readiness?: string; timeline?: { label?: string; soloLabel?: string }; axes?: Array<{ label: string; detail: string; audience?: string }> } | undefined;
+  const readiness: Record<string, string> = { ready: "Prêt", conditional: "Prêt sous conditions", not_yet: "Pas encore" };
+  const base = env.NEXT_PUBLIC_APP_URL;
+  const code = bookingCode(input.bookingId);
+
+  await sendEmail({
+    to: env.ADMIN_EMAIL,
+    subject: `${code} · ${input.what} · ${lead.firstName} ${lead.lastName} — ${analysis?.readiness ? readiness[analysis.readiness] : "sans analyse"}`,
+    text:
+      `${input.what} avec ${lead.firstName} ${lead.lastName} (${lead.country}${lead.jobTitle ? `, ${lead.jobTitle}` : ""}), le ${formatWhen(input.start, "Africa/Douala")} (heure de Douala).\n` +
+      `Code : ${code}${input.meetUrl ? `\nVisio : ${input.meetUrl}` : ""}\n\n` +
+      (analysis
+        ? `Profil : ${analysis.readiness ? readiness[analysis.readiness] : "?"} — ${analysis.headline ?? ""}\n` +
+          `Délai : ${analysis.timeline?.label ?? "?"} accompagné, ${analysis.timeline?.soloLabel ?? "?"} seul\n` +
+          (analysis.axes ?? []).map((a) => `• ${a.label} : ${a.detail}`).join("\n") +
+          "\n"
+        : "Pas encore d'analyse de profil.\n") +
+      (lead.goals ? `\nSes objectifs : « ${lead.goals} »\n` : "") +
+      (response ? `\nAnalyse complète : ${base}/scanner/resultat/${response.resultToken}` : "") +
+      `\nFiche : ${base}/admin/leads/${lead.id}`,
+  });
 }
 
 export async function rescheduleCall(input: { rescheduleToken: string; start: Date; timezone: string }): Promise<BookResult> {
@@ -248,12 +312,14 @@ export function confirmationText(input: {
   unsubscribeToken: string;
   /** "notre appel de 15 minutes" by default. */
   what?: string;
+  /** "RDV-0042", shown so the prospect can name the booking. */
+  code?: string;
 }): string {
   const base = env.NEXT_PUBLIC_APP_URL;
   const what = input.what ?? "notre appel de 15 minutes";
   return (
     `Bonjour ${input.firstName},\n\n` +
-    `${what.charAt(0).toUpperCase()}${what.slice(1)} est fixé${what.includes("séance") ? "e" : ""} au ${formatWhen(input.start, input.timezone)} (heure de ${input.timezone}).\n\n` +
+    `${what.charAt(0).toUpperCase()}${what.slice(1)} est fixé${what.includes("séance") ? "e" : ""} au ${formatWhen(input.start, input.timezone)} (heure de ${input.timezone}).${input.code ? ` Code : ${input.code}.` : ""}\n\n` +
     (input.meetUrl ? `Lien de visio : ${input.meetUrl}\n\n` : "Le lien de visio est dans l'invitation d'agenda.\n\n") +
     `Un empêchement ? Déplacer ou annuler : ${base}/rdv/${input.rescheduleToken}\n\n` +
     `À très vite,\nBen\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${input.unsubscribeToken}`

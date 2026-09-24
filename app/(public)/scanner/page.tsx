@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { ScannerWizard } from "@/components/scanner/ScannerWizard";
+import { formatWhen } from "@/lib/booking";
+import { readPendingSlot } from "@/lib/pending-slot";
 import { loadScannerContext } from "@/lib/scanner/context";
 
 export const metadata: Metadata = {
@@ -15,7 +17,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function ScannerPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const context = await loadScannerContext();
+  const [context, pending] = await Promise.all([loadScannerContext(), readPendingSlot()]);
   const one = (key: string) => {
     const value = params[key];
     return Array.isArray(value) ? value[0] : value;
@@ -35,6 +37,12 @@ export default async function ScannerPage({ searchParams }: { searchParams: Sear
       <p className="mb-4 text-sm font-semibold tracking-wide text-[var(--color-accent)] uppercase">
         Analyse de profil CISSP
       </p>
+      {pending && (
+        <p className="mb-4 rounded-xl border border-accent/20 bg-accent-soft px-4 py-3 text-sm">
+          <b>Créneau retenu : {formatWhen(new Date(pending.start), pending.timezone)}</b> ({pending.timezone}).{" "}
+          {pending.kind === "discovery" ? "Validez votre profil en 3 minutes et le rendez-vous est confirmé." : "Validez votre profil en 3 minutes, puis le paiement confirme la séance."}
+        </p>
+      )}
       <ScannerWizard
         context={{ tiers: context.tiers, availabilityLabel: context.availabilityLabel }}
         utm={utm}

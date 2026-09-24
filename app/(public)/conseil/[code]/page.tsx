@@ -11,7 +11,11 @@ import { COUNTRIES } from "@/lib/scanner/questions";
 import { isServiceCode } from "@/lib/services";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
-import { payServiceByCard, payServiceByMobileMoney } from "../actions";
+import { SlotPicker } from "@/components/booking/SlotPicker";
+import { formatWhen, listSlots } from "@/lib/booking";
+import { readPendingSlot } from "@/lib/pending-slot";
+
+import { forgetConsultingSlot, holdConsultingSlot, payServiceByCard, payServiceByMobileMoney } from "../actions";
 
 export const metadata: Metadata = { title: "Réserver une séance de conseil — CISSP Bootcamp" };
 export const dynamic = "force-dynamic";
@@ -40,6 +44,11 @@ export default async function ServiceOrderPage({
   const [settings, offer] = await Promise.all([loadSiteSettings().catch(() => SITE_DEFAULTS), buildServiceOffer(code, country)]);
   if (!offer) notFound();
   const { service } = offer;
+
+  // Slot first (Ben, 24/09): the payment form only appears once a slot is kept.
+  const pending = await readPendingSlot();
+  const held = pending?.kind === "consulting" && pending.service === service.code ? pending : null;
+  const listing = held ? null : await listSlots(new Date(), { kind: "consulting", sessionMinutes: service.sessionMinutes }).catch(() => null);
 
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
   const mobileReady = mobileMoneyAvailable(country, offer.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
@@ -73,8 +82,32 @@ export default async function ServiceOrderPage({
             </p>
           </section>
 
+          {!held ? (
+            <section className="mt-6">
+              <h2 className="display text-[1.3rem] font-black">1. Choisissez votre créneau</h2>
+              <p className="mt-1 mb-4 text-[.9rem] text-muted">Séance de {service.sessionMinutes} minutes, le mercredi soir. {known ? "Le paiement confirme ensuite." : "Ensuite, 3 minutes d’analyse de profil, puis le paiement confirme."}</p>
+              {listing && listing.available ? (
+                <SlotPicker
+                  slots={listing.slots.map((s) => s.toISOString())}
+                  coachTimeZone={listing.coachTimeZone}
+                  submitLabel="Retenir ce créneau →"
+                  emptyMessage="Aucun créneau de conseil libre dans les cinq prochaines semaines. Réessayez dans quelques jours."
+                  onBook={async ({ start, timezone }) => {
+                    "use server";
+                    return holdConsultingSlot({ code: service.code, token: t, start, timezone, sessionMinutes: service.sessionMinutes });
+                  }}
+                />
+              ) : (
+                <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">La réservation est momentanément fermée. Réessayez un peu plus tard.</p>
+              )}
+            </section>
+          ) : (
           <form className="mt-6 grid gap-4">
             <input type="hidden" name="code" value={service.code} />
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] border border-accent/20 bg-accent-soft px-4 py-3 text-sm">
+              <span><b>Créneau retenu : {formatWhen(new Date(held.start), held.timezone)}</b> ({held.timezone}). Le paiement le confirme.</span>
+              <button formAction={forgetConsultingSlot} className="underline underline-offset-4">Changer</button>
+            </div>
             {t && <input type="hidden" name="t" value={t} />}
             {known ? (
               <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm">{known.firstName}, la séance sera au nom de votre analyse de profil.</p>
@@ -120,8 +153,9 @@ export default async function ServiceOrderPage({
             ) : (
               <p className="text-center text-sm text-muted">Mobile money : disponible pour la zone CEMAC. Pour les autres pays, carte bancaire.</p>
             )}
-            <p className="text-xs text-muted">Paiement sécurisé par Stripe. Le lien pour choisir votre créneau arrive par e-mail dès la confirmation du paiement.</p>
+            <p className="text-xs text-muted">Paiement sécurisé par Stripe. Dès la confirmation, votre séance est réservée et l’invitation arrive par e-mail.</p>
           </form>
+          )}
         </div>
       </main>
       <Footer settings={settings} />

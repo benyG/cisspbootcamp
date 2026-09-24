@@ -2,8 +2,11 @@
 
 import { z } from "zod";
 
-import { type BookResult, bookCall, cancelCall, rescheduleCall } from "@/lib/booking";
+import { redirect } from "next/navigation";
+
+import { type BookResult, bookCall, cancelCall, isSlotBookable, rescheduleCall } from "@/lib/booking";
 import { prisma } from "@/lib/db";
+import { setPendingSlot } from "@/lib/pending-slot";
 import { resolveTierCode } from "@/lib/pricing";
 import { createToken } from "@/lib/tokens";
 
@@ -67,4 +70,19 @@ export async function rescheduleWithToken(input: { rescheduleToken: string; star
 export async function cancelWithToken(rescheduleToken: string): Promise<{ ok: boolean; error?: string }> {
   if (typeof rescheduleToken !== "string" || rescheduleToken.length < 10) return { ok: false, error: "Demande invalide." };
   return cancelCall(rescheduleToken);
+}
+
+/**
+ * Book first, profile next (Ben, 24/09/2026): the visitor picks the slot,
+ * it is kept in a cookie, and the questionnaire confirms it in their name.
+ * The slot is re-validated at that moment, so nothing is promised here.
+ */
+export async function holdSlotThenProfile(input: { start: string; timezone: string }): Promise<BookResult> {
+  const parsed = z.object({ start: instant, timezone: timeZone }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Demande invalide." };
+  if (!(await isSlotBookable(new Date(parsed.data.start)))) {
+    return { ok: false, error: "Ce créneau vient d'être pris. Choisissez-en un autre." };
+  }
+  await setPendingSlot({ start: parsed.data.start, timezone: parsed.data.timezone, kind: "discovery" });
+  redirect("/scanner?suite=rdv");
 }
