@@ -14,8 +14,8 @@ type Props = {
   rates: RateTable;
   /** Scanner result token, so the order form knows the prospect. */
   token?: string;
-  /** Where "choose" goes; defaults to the service's order page. */
-  hrefFor?: (code: string, country: string) => string;
+  /** Where "choose" goes: this path gets ?code=&pays=&t=; defaults to the service's order page. */
+  chooseBase?: string;
   chooseLabel?: string;
 };
 
@@ -26,7 +26,7 @@ const COUNTRY_KEY = "cb_country";
  * §2). Same country selector as the bootcamp price; the choice is remembered
  * so the order page opens with it.
  */
-export function ServiceCards({ services, tiers, rates, token, hrefFor, chooseLabel }: Props) {
+export function ServiceCards({ services, tiers, rates, token, chooseBase, chooseLabel }: Props) {
   const [country, setCountry] = useState("SN");
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export function ServiceCards({ services, tiers, rates, token, hrefFor, chooseLab
                 )}
                 {service.creditable && <p className="mt-1.5 text-[.78rem] text-muted">Déduite du bootcamp CISSP si vous le rejoignez dans les 90 jours.</p>}
                 <Link
-                  href={hrefFor ? hrefFor(service.code, country) : `/conseil/${service.code}?pays=${country}${token ? `&t=${token}` : ""}`}
+                  href={chooseBase ? `${chooseBase}?code=${service.code}&pays=${country}${token ? `&t=${token}` : ""}` : `/conseil/${service.code}?pays=${country}${token ? `&t=${token}` : ""}`}
                   onClick={() => track("cta_click", { label: `conseil-${service.code}` })}
                   className="mt-4 inline-flex w-full items-center justify-center rounded-[14px] bg-ink px-5 py-3.5 font-extrabold text-white"
                 >

@@ -64,7 +64,7 @@ export default async function ConsultingPalettePage({ searchParams }: { searchPa
               tiers={tiers.map((tier) => ({ code: tier.code, countries: Array.isArray(tier.countries) ? (tier.countries as string[]) : [] }))}
               rates={rates}
               token={t}
-              hrefFor={(code, country) => `/rdv/conseil/choisir?code=${code}&pays=${country}${tokenParam}`}
+              chooseBase="/rdv/conseil/choisir"
               chooseLabel="Choisir cette séance →"
             />
           )}
