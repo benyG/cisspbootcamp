@@ -273,3 +273,12 @@ d'une carrière, pas une marche « avant » le bootcamp. Conséquences :
 - La bande de la landing dit « Deux autres façons d'avancer », plus « deux
   marches avant le bootcamp ».
 - Le crédit sur le bootcamp reste, en petit, comme un avantage.
+
+## 12. Une seule porte pour le rendez-vous (Ben, 24/09/2026, soir)
+
+Deux parcours distincts dès le premier écran de `/rdv`, tous deux visibles depuis la landing (barre du haut, hero, bloc final) :
+
+- **Rendez-vous gratuit · 15 min.** Le visiteur choisit un créneau ; rien n'est confirmé. Il passe par l'analyse de profil (3 minutes), qui confirme le rendez-vous en son nom. Le profil est conservé et joint au rendez-vous : Ben le reçoit par e-mail avec le code du rendez-vous.
+- **Consultation approfondie · payante.** Le visiteur choisit d'abord la durée (1 h, 3 × 1 h, 2 × 45 min par mois), puis un créneau pour cette durée. La palette des séances de ce format, avec leurs prix par pays, ne s'affiche qu'à ce moment (`/rdv/conseil`). Il choisit la séance, passe par l'analyse de profil s'il n'est pas connu, puis le paiement confirme la séance au créneau retenu.
+
+`/conseil` reste la page de présentation du conseil carrière, mais n'affiche plus de prix : elle renvoie vers le choix de la durée. Une recommandation de séance sur la page de résultat mène directement à la page de la séance, où le créneau se choisit avant le paiement (§10).

@@ -59,7 +59,7 @@ export default async function ServiceOrderPage({
       <Topbar />
       <main className={shell + " pb-16 sm:pb-20"}>
         <div className="mx-auto max-w-xl pt-4 sm:pt-8">
-          <Link href={`/conseil?pays=${country}${t ? `&t=${t}` : ""}`} className="text-sm text-muted">← Tous les services</Link>
+          <Link href={`/rdv?type=approfondie${t ? `&t=${t}` : ""}`} className="text-sm text-muted">← Changer de séance ou de créneau</Link>
           <div className={eyebrow + " mt-4"}>Conseil carrière · {service.durationLabel}{service.code === "mentorat" ? " par mois" : ""}</div>
           <h1 className="display mt-3 text-[clamp(1.9rem,4vw,3rem)] leading-[1] font-black tracking-[-.04em]">{service.name}</h1>
           <p className="mt-3 text-ink-2">{service.tagline}</p>

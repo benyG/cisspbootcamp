@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ServiceCards } from "@/components/consulting/ServiceCards";
 import { Footer, Topbar, eyebrow, shell } from "@/components/landing/sections";
 import { TrackView } from "@/components/tracking/TrackView";
 import { loadServices } from "@/lib/consulting";
-import { prisma } from "@/lib/db";
-import { loadRates } from "@/lib/registration";
+import { groupByFormat } from "@/lib/services";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
 export const metadata: Metadata = {
@@ -21,12 +19,9 @@ export const dynamic = "force-dynamic";
  */
 export default async function ConsultingPage({ searchParams }: { searchParams: Promise<{ t?: string }> }) {
   const { t } = await searchParams;
-  const [settings, services, tiers, rates] = await Promise.all([
-    loadSiteSettings().catch(() => SITE_DEFAULTS),
-    loadServices().catch(() => []),
-    prisma.pricingTier.findMany({ select: { code: true, countries: true } }).catch(() => []),
-    loadRates().catch(() => ({})),
-  ]);
+  const [settings, services] = await Promise.all([loadSiteSettings().catch(() => SITE_DEFAULTS), loadServices().catch(() => [])]);
+  const formats = groupByFormat(services);
+  const tokenParam = t ? `&t=${encodeURIComponent(t)}` : "";
 
   return (
     <>
@@ -45,7 +40,7 @@ export default async function ConsultingPage({ searchParams }: { searchParams: P
             ))}
           </ul>
           <ul className="mt-5 grid gap-1.5 text-ink-2 sm:grid-cols-2">
-            {["Vous choisissez votre créneau (le mercredi soir), puis le paiement le confirme.", "Visio, en français, avec un plan écrit envoyé après la séance.", "Report gratuit jusqu’à 24 h avant. Remboursé si Ben annule."].map((l) => (
+            {["Vous choisissez la durée, puis votre créneau (le mercredi soir) ; la séance et son prix viennent ensuite.", "Visio, en français, avec un plan écrit envoyé après la séance.", "Report gratuit jusqu’à 24 h avant. Remboursé si Ben annule."].map((l) => (
               <li key={l} className="relative py-1.5 pl-7 before:absolute before:left-0 before:font-black before:text-accent before:content-['✓']">{l}</li>
             ))}
           </ul>
@@ -62,13 +57,25 @@ export default async function ConsultingPage({ searchParams }: { searchParams: P
           </div>
         </section>
 
-        <div className="mt-10">
-          {services.length === 0 ? (
-            <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Les séances de conseil ouvrent bientôt. En attendant, analysez votre profil : c’est gratuit et ça prend 3 minutes.</p>
+        <section className="mt-10 max-w-[820px]">
+          <div className={eyebrow}>Consultation approfondie</div>
+          <h2 className="display mt-3 text-[1.6rem] leading-tight font-black">Choisissez la durée, puis votre créneau.</h2>
+          <p className="mt-2 text-ink-2">Les séances proposées et leur prix s’affichent une fois le créneau retenu ; rien n’est confirmé avant votre analyse de profil et le paiement.</p>
+          {formats.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">Les séances de conseil ouvrent bientôt. En attendant, le premier contact de 15 minutes est ouvert.</p>
           ) : (
-            <ServiceCards services={services} tiers={tiers.map((tier) => ({ code: tier.code, countries: Array.isArray(tier.countries) ? (tier.countries as string[]) : [] }))} rates={rates} token={t} />
+            <ul className="mt-5 grid gap-2">
+              {formats.map((f) => (
+                <li key={f.key}>
+                  <Link href={`/rdv?type=approfondie&format=${f.key}${tokenParam}`} className="flex items-center justify-between gap-3 rounded-[14px] border border-line bg-white px-4 py-3.5 shadow-[var(--shadow-card)] hover:border-ink">
+                    <span><b className="display block text-lg">{f.label}</b><span className="block text-[.9rem] text-muted">{f.services.join(" · ")}</span></span>
+                    <span className="shrink-0 font-black">→</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           )}
-        </div>
+        </section>
 
         <section className="mt-14 max-w-[820px] rounded-[22px] border border-line bg-white p-6 shadow-[var(--shadow-panel)]">
           <h2 className="display text-[1.5rem] leading-tight font-black">Le CISSP fait partie de votre trajectoire ?</h2>
