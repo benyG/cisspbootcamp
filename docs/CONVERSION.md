@@ -287,3 +287,27 @@ que comme argument secondaire, jamais à la place de l'analyse de profil.
 - Variables `EXAMBOOT_API_KEY` (à créer sur Vercel), `EXAMBOOT_CISSP_ID`
   (4). Sans clé, aucun bouton n'apparaît : le site reste tel quel.
 - `CLAUDE.md` réservait l'API ExamBoot à la V2 (B6) ; Ben l'a avancée.
+
+## 9. Parcours après l'analyse (brainstorm du 24/09/2026)
+
+Décidé avec Ben le 24/09 :
+
+- **Créneaux sur la page résultat.** Un profil « prêt » ou « sous conditions »
+  voit les quatre prochains créneaux de l'appel de 15 min sous son verdict ;
+  un tap réserve (`components/booking/QuickSlots.tsx`), « Voir d'autres
+  créneaux » ouvre l'agenda complet. Si l'agenda n'est pas connecté, le
+  bouton classique reste.
+- **Inscription directe pour les « prêt ».** Le réglage « inscription directe »
+  est activé par défaut : « Rejoindre la cohorte » apparaît en second, sans
+  attendre la validation du message de relance. « Sous conditions » passe
+  toujours par l'appel.
+- **Lien de paiement le jour de l'appel.** Quand Ben marque l'issue « Inscrit »
+  ou « À relancer », un e-mail court part avec le lien d'inscription et la
+  date limite d'admission (`lib/followups-auto.ts`). La page d'inscription
+  s'ouvre à tout prospect dont l'appel a eu lieu.
+- **Rappel J+1.** Un « prêt » ou « sous conditions » qui n'a pas réservé
+  reçoit un seul e-mail entre 24 h et 96 h après son analyse, avec le lien
+  de réservation (cron `/api/cron/reminders`, journal `result_reminder`).
+- **« Prêt » et « sous conditions » se lisent différemment** sur la page
+  résultat : l'appel vérifie l'éligibilité pour l'un, cale la date d'examen
+  pour l'autre.

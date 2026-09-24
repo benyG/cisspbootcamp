@@ -23,6 +23,7 @@ const LOG: Record<string, string> = {
   followup_sent: "Relance envoyée", followup_postponed: "Relance reportée", invited_to_book: "Invité à réserver",
   registration_started: "Inscription commencée", registration_manual_opened: "Inscription manuelle ouverte", payment_confirmed: "Paiement confirmé", payment_confirmed_manually: "Paiement confirmé à la main", payment_amount_mismatch: "Montant inattendu",
   unsubscribed: "Désinscrit", marked_lost: "Marqué perdu",
+  after_call_email: "Lien de paiement envoyé après l'appel", result_reminder: "Rappel J+1 envoyé",
   service_order_started: "Commande de conseil ouverte", service_paid: "Séance de conseil payée", session_booked: "Séance réservée", session_cancelled: "Séance annulée", session_outcome: "Séance faite / absent", session_booking_reminded: "Lien de réservation renvoyé",
 };
 

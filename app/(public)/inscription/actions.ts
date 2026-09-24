@@ -11,16 +11,22 @@ import { startRegistration } from "@/lib/registration";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 import { recordServerEvent } from "@/lib/tracking/server";
 
-/** Lead behind a scanner result token — the only way into /inscription in V1. */
+/**
+ * Lead behind a scanner result token — the only way into /inscription in V1.
+ * The page opens once Ben has validated the follow-up, or right away for a
+ * "ready" profile (site settings, on by default since 24/09), or as soon as
+ * the discovery call has taken place: the payment link Ben's e-mail carries
+ * after the call must never be a dead end.
+ */
 export async function leadIdFromToken(token: string | undefined): Promise<number | null> {
   if (!token || token.length < 10) return null;
   const response = await prisma.scannerResponse.findUnique({
     where: { resultToken: token },
-    select: { leadId: true, status: true, readiness: true },
+    select: { leadId: true, status: true, readiness: true, lead: { select: { bookings: { where: { status: "done" }, select: { id: true }, take: 1 } } } },
   });
   if (!response || response.status === "set_aside") return null;
   if (response.status === "pending_review") {
-    // A "ready" profile may skip the wait when Ben allows it (site settings, offer).
+    if (response.lead.bookings.length > 0) return response.leadId;
     const settings = await loadSiteSettings().catch(() => SITE_DEFAULTS);
     if (!(response.readiness === "ready" && settings.offer.directRegistrationForReady)) return null;
   }
