@@ -9,6 +9,7 @@ import {
   addMinutes,
   computeSlots,
   consultingShape,
+  dropWeeksAtCap,
   formatSlotTime,
   groupSlotsByDay,
 } from "@/lib/calendar/slots";
@@ -184,5 +185,21 @@ describe("créneaux de conseil", () => {
     const wednesday = computeSlots({ rules: WEDNESDAY, coachTimeZone: ZONE, busy, now: NOW, shape: consultingShape(60) })
       .filter((slot) => slot.toISOString().startsWith("2026-10-07"));
     expect(wednesday.map((slot) => slot.toISOString())).toEqual(["2026-10-07T18:00:00.000Z"]);
+  });
+});
+
+describe("dropWeeksAtCap (plafond de contacts gratuits)", () => {
+  it("retire les créneaux des semaines qui ont déjà cinq appels, garde les autres", () => {
+    const all = slots();
+    const firstWeek = all.filter((slot) => slot < new Date("2026-10-12T00:00:00.000Z"));
+    const booked = firstWeek.slice(0, 5);
+    const kept = dropWeeksAtCap(all, booked, 5, ZONE);
+    expect(kept.some((slot) => slot < new Date("2026-10-12T00:00:00.000Z"))).toBe(false);
+    expect(kept.some((slot) => slot >= new Date("2026-10-12T00:00:00.000Z"))).toBe(true);
+  });
+
+  it("quatre appels ne ferment rien", () => {
+    const all = slots();
+    expect(dropWeeksAtCap(all, all.slice(0, 4), 5, ZONE)).toEqual(all);
   });
 });

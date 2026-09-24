@@ -93,6 +93,29 @@ export function computeSlots(input: SlotInput): Date[] {
   return slots.sort((a, b) => a.getTime() - b.getTime());
 }
 
+/**
+ * Free contacts are capped per week (Ben, 24/09/2026: five). A week that
+ * already holds `cap` booked calls offers no slot; weeks run Monday to
+ * Sunday in the coach's zone.
+ */
+export function dropWeeksAtCap(slots: readonly Date[], bookedStarts: readonly Date[], cap: number, timeZone: string): Date[] {
+  if (cap <= 0) return [...slots];
+  const counts = new Map<string, number>();
+  for (const start of bookedStarts) {
+    const key = weekKey(start, timeZone);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return slots.filter((slot) => (counts.get(weekKey(slot, timeZone)) ?? 0) < cap);
+}
+
+/** "2026-W41"-like key: the Monday of the slot's week, in the zone. */
+export function weekKey(date: Date, timeZone: string): string {
+  const wall = partsInZone(date, timeZone);
+  const day = new Date(Date.UTC(wall.year, wall.month - 1, wall.day));
+  const monday = new Date(day.getTime() - ((wall.weekday + 6) % 7) * 86_400_000);
+  return monday.toISOString().slice(0, 10);
+}
+
 export function overlaps(a: Interval, b: Interval): boolean {
   return a.start < b.end && b.start < a.end;
 }

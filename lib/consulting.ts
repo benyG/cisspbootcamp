@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { CalendarNotConnectedError, createCallEvent } from "@/lib/calendar/google";
 import { addMinutes } from "@/lib/calendar/slots";
-import { confirmationText, describeBooking, formatWhen, isSlotBookable } from "@/lib/booking";
+import { bookingCode, confirmationText, describeBooking, formatWhen, isSlotBookable, notifyCoachOfBooking } from "@/lib/booking";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
@@ -119,7 +119,7 @@ export async function buildServiceOffer(code: ServiceCode, country: string): Pro
  * Opens a pending order, reusing a pending one for the same service and
  * method so a retried checkout does not multiply rows.
  */
-export async function startServiceOrder(input: { leadId: number; code: ServiceCode; method: "stripe" | "netticket" }) {
+export async function startServiceOrder(input: { leadId: number; code: ServiceCode; method: "stripe" | "netticket"; requested?: { start: Date; timezone: string } }) {
   const lead = await prisma.lead.findUnique({ where: { id: input.leadId } });
   if (!lead) return { order: null, reason: "not_found" } as const;
   const offer = await buildServiceOffer(input.code, lead.country);
@@ -128,7 +128,13 @@ export async function startServiceOrder(input: { leadId: number; code: ServiceCo
   const existing = await prisma.serviceOrder.findFirst({
     where: { leadId: lead.id, serviceCode: input.code, method: input.method, status: { in: ["pending", "pending_manual"] } },
   });
-  if (existing) return { order: existing, offer, lead } as const;
+  if (existing) {
+    // A retried checkout keeps the row, but follows the latest slot choice.
+    const order = input.requested
+      ? await prisma.serviceOrder.update({ where: { id: existing.id }, data: { requestedStart: input.requested.start, requestedTimezone: input.requested.timezone } })
+      : existing;
+    return { order, offer, lead } as const;
+  }
 
   const order = await prisma.serviceOrder.create({
     data: {
@@ -142,6 +148,8 @@ export async function startServiceOrder(input: { leadId: number; code: ServiceCo
       reference: newServiceReference(),
       sessionsTotal: offer.service.sessions,
       bookingToken: createToken(),
+      requestedStart: input.requested?.start ?? null,
+      requestedTimezone: input.requested?.timezone ?? null,
     },
   });
   await prisma.actionLog.create({ data: { leadId: lead.id, type: "service_order_started", payload: { orderId: order.id, service: input.code, method: input.method } } });
@@ -188,6 +196,13 @@ export async function markServiceOrderPaid(input: {
   ]);
   await recordEvent({ name: "service_paid", leadId: order.leadId, label: order.serviceCode, country: order.lead.country });
 
+  // The slot chosen before paying becomes the first session, if it is still free.
+  let bookedSession: { ok: true; bookingId: number; rescheduleToken: string } | null = null;
+  if (order.requestedStart && order.requestedTimezone) {
+    const attempt = await bookSession({ bookingToken: order.bookingToken, start: order.requestedStart, timezone: order.requestedTimezone });
+    if (attempt.ok) bookedSession = attempt;
+  }
+
   const base = env.NEXT_PUBLIC_APP_URL;
   await sendEmail({
     to: order.lead.email,
@@ -195,8 +210,12 @@ export async function markServiceOrderPaid(input: {
     text:
       `Bonjour ${order.lead.firstName},\n\n` +
       `Votre paiement de ${formatUsdCents(order.amountUsd)} pour « ${order.service.name} » est confirmé. Merci.\n\n` +
-      `Choisissez maintenant ${order.sessionsTotal > 1 ? `le créneau de votre première séance (${order.sessionsTotal} séances de ${order.service.sessionMinutes} min au total)` : `le créneau de votre séance de ${order.service.sessionMinutes} minutes`} :\n` +
-      `${base}/conseil/rdv/${order.bookingToken}\n\n` +
+      (bookedSession && order.requestedStart && order.requestedTimezone
+        ? `Votre séance est confirmée le ${formatWhen(order.requestedStart, order.requestedTimezone)} (heure de ${order.requestedTimezone}), code ${bookingCode(bookedSession.bookingId)}. L'invitation et le lien de visio suivent dans un e-mail séparé.\n` +
+          (order.sessionsTotal > 1 ? `Les séances suivantes se réservent ici : ${base}/conseil/rdv/${order.bookingToken}\n\n` : "\n")
+        : (order.requestedStart ? `Le créneau que vous aviez retenu vient d'être pris ; ` : "") +
+          `Choisissez ${order.requestedStart ? "un autre créneau" : "maintenant"} ${order.sessionsTotal > 1 ? `pour votre première séance (${order.sessionsTotal} séances de ${order.service.sessionMinutes} min au total)` : `pour votre séance de ${order.service.sessionMinutes} minutes`} :\n` +
+          `${base}/conseil/rdv/${order.bookingToken}\n\n`) +
       `Ce lien est personnel ; gardez-le, il sert aussi à réserver les séances suivantes et à déplacer un rendez-vous (gratuit jusqu'à 24 h avant).\n` +
       `Référence : ${order.reference}\n\n` +
       (order.service.creditable ? `Si vous rejoignez le bootcamp CISSP dans les 90 jours, cette heure de conseil est déduite de son prix.\n\n` : "") +
@@ -269,12 +288,15 @@ export async function bookSession(input: { bookingToken: string; start: Date; ti
   await recordServerEvent({ name: "service_booked", leadId: lead.id, label: order.serviceCode });
 
   const what = describeBooking({ kind: "consulting", startsAt: input.start, endsAt: end });
-  await sendEmail({
-    to: lead.email,
-    subject: `C'est confirmé : ${formatWhen(input.start, input.timezone)}`,
-    text:
-      confirmationText({ firstName: lead.firstName, start: input.start, timezone: input.timezone, meetUrl: event.meetUrl, rescheduleToken, unsubscribeToken: lead.unsubscribeToken, what: `${what} (${order.service.name}${order.sessionsTotal > 1 ? `, séance ${number} sur ${order.sessionsTotal}` : ""})` }),
-  });
+  await Promise.allSettled([
+    sendEmail({
+      to: lead.email,
+      subject: `C'est confirmé : ${formatWhen(input.start, input.timezone)} · ${bookingCode(booking.id)}`,
+      text:
+        confirmationText({ firstName: lead.firstName, start: input.start, timezone: input.timezone, meetUrl: event.meetUrl, rescheduleToken, unsubscribeToken: lead.unsubscribeToken, what: `${what} (${order.service.name}${order.sessionsTotal > 1 ? `, séance ${number} sur ${order.sessionsTotal}` : ""})`, code: bookingCode(booking.id) }),
+    }),
+    notifyCoachOfBooking({ bookingId: booking.id, leadId: lead.id, start: input.start, what: `Séance payée : ${order.service.name}${order.sessionsTotal > 1 ? ` (${number}/${order.sessionsTotal})` : ""} · ${order.reference}`, meetUrl: event.meetUrl }),
+  ]);
 
   return { ok: true, bookingId: booking.id, rescheduleToken };
 }

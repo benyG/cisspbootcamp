@@ -73,7 +73,7 @@ export function ScannerWizard({ context, utm, initialCountry, title = "Analyse d
         setErrors({ submit: "L'envoi a échoué. Vérifiez votre connexion et réessayez." });
         return;
       }
-      if (result.ok) router.push(`/scanner/resultat/${result.resultToken}`);
+      if (result.ok) router.push(result.next ?? `/scanner/resultat/${result.resultToken}${result.booked ? `?rdv=${result.booked.rescheduleToken}` : ""}`);
       else {
         track("scanner_blocked", { label: Object.keys(result.errors)[0] ?? "inconnu" });
         setErrors(result.errors);
