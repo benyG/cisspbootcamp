@@ -76,7 +76,7 @@ export type SiteSectionKey = keyof SiteSettings;
 export const SITE_DEFAULTS: SiteSettings = {
   hero: {
     title: "CISSP, {{réveillez le leader en cybersécurité}} qui est en vous.",
-    lead: "40 h sur 15 jours pour maîtriser les 8 domaines, raisonner comme l’examen l’exige et structurer votre préparation jusqu’au jour J.",
+    lead: "Une préparation intensive, guidée par un coach certifié, pour raisonner comme l’examen l’exige et arriver au jour J sans doute sur votre niveau.",
     promises: [
       { title: "40 h sur 15 jours", text: "" },
       { title: "Sessions live, en français", text: "" },
@@ -87,9 +87,9 @@ export const SITE_DEFAULTS: SiteSettings = {
   proof: {
     title: "Le CISSP n’est pas un concours de mémorisation. La différence se fait dans la méthode et dans le rythme.",
     numbers: [
-      { value: "40 h", text: "de sessions live, en français." },
+      { value: "40 h", text: "de sessions live avec le coach." },
       { value: "15 jours", text: "de préparation intensive." },
-      { value: "10", text: "participants maximum par cohorte." },
+      { value: "10", text: "participants maximum par cohorte formation CISSP." },
     ],
   },
   method: {
@@ -125,7 +125,7 @@ export const SITE_DEFAULTS: SiteSettings = {
   },
   offer: {
     title: "Ce qui est inclus",
-    text: "Une préparation intensive, en français, avec un coach qui reste jusqu’à votre examen.",
+    text: "Tout ce qu’il faut pour arriver prêt, avec un coach qui reste jusqu’à votre examen.",
     included: [
       "Les 8 domaines, en sessions live",
       "Questions et scénarios corrigés",

@@ -49,7 +49,7 @@ export function StickyCta({ tiers, cohortStartsAt }: Props) {
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 px-4 py-2.5 shadow-[0_-10px_30px_rgba(7,26,51,.12)] backdrop-blur sm:hidden">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 text-[.8rem] leading-tight">
-          <b className="block truncate">{cohortStartsAt ? `Cohorte ${formatCohortMonth(new Date(cohortStartsAt))}` : "Prochaine cohorte"}</b>
+          <b className="block truncate">{cohortStartsAt ? `Cohorte CISSP · ${formatCohortMonth(new Date(cohortStartsAt))}` : "Prochaine cohorte CISSP"}</b>
           {tier && tier.amountUsd > 0 && <span className="text-muted">{formatUsdCents(tier.amountUsd)}</span>}
         </div>
         <TrackLink href="#evaluation" label="sticky" className="shrink-0 rounded-[12px] bg-ink px-4 py-3 text-[.92rem] font-extrabold text-white">Analyser mon profil →</TrackLink>
