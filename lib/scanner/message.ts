@@ -77,7 +77,8 @@ function nextStepParagraph(analysis: ProfileAnalysis, answers: ScannerAnswers): 
       return (
         "Prochaine étape : 15 minutes ensemble, pour vérifier que le format " +
         "vous convient et fixer votre date d'examen. Le lien pour réserver est ci-dessous. " +
-        "D'ici là, si vous voulez tester votre raisonnement sur cinq questions d'entraînement CISSP, le lien du test est là aussi : dites-moi votre score."
+        "D'ici là, si vous voulez tester votre raisonnement sur cinq questions d'entraînement CISSP, le lien du test est là aussi : dites-moi votre score. " +
+        "Et si la question est aussi celle de l'après, poste, spécialisation, management, une heure de conseil carrière est là pour ça."
       );
     case "with_condition":
       return (

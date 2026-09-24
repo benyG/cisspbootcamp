@@ -83,7 +83,7 @@ export function ServiceCards({ services, tiers, rates, token }: Props) {
                 ) : (
                   <p className="text-muted">Sur devis</p>
                 )}
-                {service.creditable && <p className="mt-1.5 text-[.82rem] text-muted">Déduit du bootcamp CISSP si vous vous inscrivez dans les 90 jours.</p>}
+                {service.creditable && <p className="mt-1.5 text-[.78rem] text-muted">Déduite du bootcamp CISSP si vous le rejoignez dans les 90 jours.</p>}
                 <Link
                   href={`/conseil/${service.code}?pays=${country}${token ? `&t=${token}` : ""}`}
                   onClick={() => track("cta_click", { label: `conseil-${service.code}` })}

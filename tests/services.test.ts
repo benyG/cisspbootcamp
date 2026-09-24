@@ -6,8 +6,8 @@ const NOW = new Date("2026-10-05T10:00:00.000Z");
 const daysAgo = (days: number) => new Date(NOW.getTime() - days * 86_400_000);
 
 describe("catalogue", () => {
-  it("contient les quatre services validés, avec les deux paliers", () => {
-    expect(SERVICE_CATALOGUE.map((s) => s.code)).toEqual(["bilan", "reconversion", "certif", "mentorat"]);
+  it("contient les six services validés, avec les deux paliers", () => {
+    expect(SERVICE_CATALOGUE.map((s) => s.code)).toEqual(["bilan", "evolution", "repositionnement", "reconversion", "certif", "mentorat"]);
     for (const service of SERVICE_CATALOGUE) {
       expect(service.prices.africa).toBeGreaterThan(0);
       expect(service.prices.international).toBeGreaterThan(service.prices.africa);
@@ -24,6 +24,8 @@ describe("catalogue", () => {
   it("le mentorat n'est pas déductible du bootcamp, les séances à l'heure le sont", () => {
     expect(serviceDefinition("mentorat").creditable).toBe(false);
     expect(serviceDefinition("bilan").creditable).toBe(true);
+    expect(serviceDefinition("evolution").prices).toEqual({ africa: 6_000, international: 12_000 });
+    expect(serviceDefinition("repositionnement").prices).toEqual({ africa: 6_000, international: 12_000 });
     expect(serviceDefinition("reconversion").creditable).toBe(true);
   });
 
@@ -61,11 +63,12 @@ describe("consultingCredit", () => {
 });
 
 describe("recommendedService", () => {
-  it("ne propose rien à un profil prêt", () => {
-    expect(recommendedService("ready", { experience: "five_plus", professionalStatus: "employed" })).toBeNull();
+  it("propose l'évolution à un profil expérimenté, quel que soit le verdict", () => {
+    expect(recommendedService("ready", { experience: "five_plus", professionalStatus: "employed" })).toBe("evolution");
+    expect(recommendedService("not_yet", { experience: "five_plus", professionalStatus: "freelance" })).toBe("evolution");
   });
 
-  it("propose le bilan en second à un profil sous conditions", () => {
+  it("propose le bilan à un profil sous conditions avec quelques années", () => {
     expect(recommendedService("conditional", { experience: "three_four", professionalStatus: "employed" })).toBe("bilan");
   });
 
