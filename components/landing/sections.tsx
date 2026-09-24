@@ -6,7 +6,8 @@ import { PracticeTestBox } from "@/components/examboot/PracticeTestBox";
 import { TrackFaq } from "@/components/tracking/TrackFaq";
 import { TrackLink } from "@/components/tracking/TrackLink";
 import type { Gauge } from "@/lib/cohorts";
-import { formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
+import { admissionClosesAt, formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
+import { AdmissionCountdown } from "@/components/offer/AdmissionCountdown";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { DOMAIN_LABELS } from "@/lib/scanner/questions";
 import { CISSP_DOMAINS } from "@/lib/scoring";
@@ -42,7 +43,10 @@ export function Topbar() {
     <header className={shell}>
       <div className="flex items-center justify-between py-5">
         <Link href="/" className="display text-[1.18rem] font-black tracking-[-.04em]">CISSP <span className="text-accent">Bootcamp</span></Link>
-        <TrackLink href="/#evaluation" label="topbar" className="hidden rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold sm:inline-flex">Analyser mon profil →</TrackLink>
+        <nav className="flex items-center gap-2 sm:gap-3">
+          <TrackLink href="/conseil" label="topbar-conseil" className="px-2 py-2.5 text-[.92rem] font-bold text-ink-2 underline-offset-4 hover:underline">Conseil carrière</TrackLink>
+          <TrackLink href="/#evaluation" label="topbar" className="hidden rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold sm:inline-flex">Analyser mon profil →</TrackLink>
+        </nav>
       </div>
     </header>
   );
@@ -71,13 +75,29 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
         <p className="mt-3 text-[.88rem] text-muted">{hero.microcopy}</p>
       </div>
 
-      <div className="relative min-h-[420px] sm:min-h-[560px]">
+      <div className="relative min-h-[520px] sm:min-h-[600px]">
         {/* The portrait fills the block, head at the top: nothing may sit on the face. */}
         <div className="absolute inset-0 flex items-end justify-center sm:left-14">
           <div className="absolute inset-x-0 bottom-0 h-[78%] rounded-[36px] bg-gradient-to-b from-accent-bright/10 to-accent-bright/[.02]" />
           <Image src="/images/coach-hero.webp" alt={`${coach.name}, coach CISSP`} width={900} height={1006} priority unoptimized className="relative h-full w-full object-contain object-bottom drop-shadow-[0_30px_40px_rgba(7,26,51,.18)]" />
         </div>
-        <div className="absolute inset-x-4 bottom-6 sm:inset-x-auto sm:left-0 sm:w-[260px]">
+        {/* Cohort facts over the jacket, bottom-left, on every screen size (Ben, 24/09): seats and the admission countdown. */}
+        <div className="absolute inset-x-4 bottom-6 flex flex-col gap-3 sm:inset-x-auto sm:left-0 sm:w-[280px]">
+          {cohort && (
+            <div className="flex items-center gap-4 rounded-2xl bg-ink px-4 py-3 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)]">
+              <div>
+                <div className="text-[.7rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? "Places restantes" : "Cohorte"}</div>
+                <div className="display text-[1.6rem] leading-none font-black">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? cohort.gauge.remaining : cohort.gauge.capacity} <small className="text-sm font-semibold tracking-normal text-[#cbd5df]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? `sur ${cohort.gauge.capacity}` : "participants max."}</small></div>
+              </div>
+              {cohort.gauge.confirmed + cohort.gauge.held > 0 && <div className="flex-1"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>}
+            </div>
+          )}
+          {cohort && (
+            <div className="rounded-2xl bg-ink px-4 py-3 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)]">
+              <div className="text-[.7rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase">Admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)}</div>
+              <div className="mt-1"><AdmissionCountdown closesAt={admissionClosesAt(cohort.startsAt).toISOString()} dark compact /></div>
+            </div>
+          )}
           <div className="rounded-[18px] border border-line bg-white p-4 shadow-[0_20px_50px_rgba(7,26,51,.14)]">
             <strong className="display block text-base">{coach.name}</strong>
             <span className="mt-1 block text-[.86rem] text-muted">{coach.tagline}</span>
@@ -243,6 +263,34 @@ export function Video({ settings }: { settings: SiteSettings }) {
           <div className={eyebrow}>En {video.duration}</div>
           <h2 className={sectionTitle + " text-[clamp(1.8rem,3.2vw,3.2rem)]"}>{video.title}</h2>
           <p className="text-ink-2">{video.text}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The two steps before the bootcamp, in one slim band (Ben, 24/09): visible
+ * without competing with the diagnostic. Three lines, two links.
+ */
+export function LadderStrip({ services, ccCohort }: { services: Array<{ code: string; name: string; durationLabel: string }>; ccCohort: { startsAt: Date } | null }) {
+  const hour = services.find((s) => s.code === "bilan") ?? services[0];
+  return (
+    <section id="parcours" className="pb-14 sm:pb-16">
+      <div className={shell}>
+        <div className="grid gap-3 rounded-[22px] border border-line bg-white p-5 sm:grid-cols-[auto_1fr_1fr] sm:items-center sm:gap-6 sm:p-6">
+          <div className="sm:max-w-[220px]">
+            <div className="text-[.72rem] font-extrabold tracking-[.1em] text-accent uppercase">Pas encore prêt ?</div>
+            <p className="display mt-1 text-[1.25rem] leading-tight font-black">Deux marches avant le bootcamp.</p>
+          </div>
+          <TrackLink href="/demarrer" label="parcours-cc" className="group rounded-[14px] border border-line px-4 py-3 hover:border-ink">
+            <span className="block text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase">Débuter · certification CC d’ISC²</span>
+            <span className="mt-0.5 block font-bold">15 jours pour votre première certification{ccCohort ? `, session ${formatCohortMonth(ccCohort.startsAt)}` : ""} <span className="text-accent-ink">→</span></span>
+          </TrackLink>
+          <TrackLink href="/conseil" label="parcours-conseil" className="group rounded-[14px] border border-line px-4 py-3 hover:border-ink">
+            <span className="block text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase">Être conseillé · à l’heure</span>
+            <span className="mt-0.5 block font-bold">{hour ? `${hour.name}, ${hour.durationLabel}` : "Conseil carrière avec Ben"}, déduit du bootcamp <span className="text-accent-ink">→</span></span>
+          </TrackLink>
         </div>
       </div>
     </section>

@@ -1,9 +1,10 @@
 import { PriceSection } from "@/components/landing/PriceSection";
 import { StickyCta } from "@/components/landing/StickyCta";
-import { Coach, Domains, Faq, FinalCta, Footer, Hero, Method, Planning, PracticeTest, Proof, Testimonials, Topbar, Video, eyebrow, shell } from "@/components/landing/sections";
+import { Coach, Domains, Faq, FinalCta, Footer, Hero, LadderStrip, Method, Planning, PracticeTest, Proof, Testimonials, Topbar, Video, eyebrow, shell } from "@/components/landing/sections";
 import { ScannerWizard } from "@/components/scanner/ScannerWizard";
 import { TrackView } from "@/components/tracking/TrackView";
 import { publicCohortSummary } from "@/lib/cohorts-admin";
+import { loadServices } from "@/lib/consulting";
 import { prisma } from "@/lib/db";
 import { loadRates } from "@/lib/registration";
 import { loadScannerContext } from "@/lib/scanner/context";
@@ -14,18 +15,20 @@ export const dynamic = "force-dynamic";
 /**
  * The landing (docs/LANDING.md): one funnel, visitor → diagnostic → result →
  * registration. The questionnaire sits right under the hero so the visitor
- * acts before changing screens; CC, consulting and mentoring only appear
- * after the diagnostic, as exits by profile.
+ * acts before changing screens; the two steps before the bootcamp (CC,
+ * consulting) stay visible in one slim band after the price.
  */
 export default async function HomePage() {
   // Every read degrades to a sensible default: the landing never goes down
   // because the database blinked (and it is cached anyway).
-  const [settings, cohort, context, rates, testimonials] = await Promise.all([
+  const [settings, cohort, context, rates, testimonials, services, ccCohort] = await Promise.all([
     loadSiteSettings().catch(() => SITE_DEFAULTS),
     publicCohortSummary().catch(() => null),
     loadScannerContext().catch(() => ({ tiers: [], cohort: null, availabilityLabel: "Seriez-vous disponible pour la prochaine cohorte ?" })),
     loadRates().catch(() => ({})),
     prisma.testimonial.findMany({ where: { published: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }], take: 3 }).catch(() => []),
+    loadServices().catch(() => []),
+    publicCohortSummary("cc").catch(() => null),
   ]);
   const tiers = context.tiers;
   const cohortIso = cohort ? { name: cohort.name, startsAt: cohort.startsAt.toISOString(), gauge: cohort.gauge } : null;
@@ -63,6 +66,7 @@ export default async function HomePage() {
         <Domains />
         <PracticeTest />
         <PriceSection settings={settings} tiers={tiers} rates={rates} cohort={cohortIso} />
+        <LadderStrip services={services} ccCohort={ccCohort} />
         <Faq settings={settings} />
         <FinalCta cohort={cohort} />
       </main>
