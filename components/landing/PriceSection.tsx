@@ -76,7 +76,7 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
       <div className="grid items-start gap-8 rounded-[28px] border border-line bg-white p-6 shadow-[var(--shadow-panel)] sm:p-9 lg:grid-cols-2">
         <div>
           <div className={eyebrow}>
-            <span className="rounded-full border border-accent/10 bg-accent/10 px-2.5 py-1.5 tracking-[.1em] text-accent">Cohorte</span>
+            <span className="rounded-full border border-accent/10 bg-accent/10 px-2.5 py-1.5 tracking-[.1em] text-accent">Cohorte formation CISSP</span>
             <span>{startsAt ? formatCohortMonth(startsAt) : "prochaine session"}</span>
           </div>
           <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -89,7 +89,7 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
               <span className="display text-[2rem] leading-none font-black">Sur devis</span>
             )}
           </div>
-          <p className="mt-2 text-[.9rem] font-bold text-ink-2">{offer.promoLabel} · 40 h de live · 15 jours · {cohort ? `${cohort.gauge.capacity} places` : "10 places"}</p>
+          <p className="mt-2 text-[.9rem] font-bold text-ink-2">{offer.promoLabel} · {cohort ? `${cohort.gauge.capacity} places` : "10 places"}</p>
           {offer.referencePriceUsd > 0 && (
             <p className="mt-1 text-[.8rem] text-muted">À titre de repère, {lower(offer.referenceSource)} : environ {formatUsdCents(offer.referencePriceUsd * 100)} ({offer.referenceCheckedOn}).</p>
           )}

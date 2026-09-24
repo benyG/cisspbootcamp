@@ -60,7 +60,7 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
     <section className={shell + " grid items-center gap-10 pt-4 pb-12 lg:grid-cols-[1.1fr_.9fr]"}>
       <div>
         <p className="text-[.76rem] font-extrabold tracking-[.1em] text-accent-ink uppercase">
-          {cohort ? `Cohorte ${formatCohortMonth(cohort.startsAt)} · ${cohort.gauge.capacity} places · admissions jusqu’au ${formatAdmissionDeadline(cohort.startsAt)}` : "Prochaine cohorte"} · 100 % en français
+          {cohort ? `Cohorte formation CISSP · ${formatCohortMonth(cohort.startsAt)} · ${cohort.gauge.capacity} places · admissions jusqu’au ${formatAdmissionDeadline(cohort.startsAt)}` : "Prochaine cohorte formation CISSP"} · 100 % en français
         </p>
         <h1 className={`display my-5 max-w-[840px] font-black tracking-[-.06em] ${hero.title.replace(/[{}]/g, "").length > 44 ? "text-[clamp(2.3rem,4.4vw,4.4rem)] leading-[1]" : "text-[clamp(3rem,6vw,5.9rem)] leading-[.94]"}`}>
           {title.before}{title.highlight && <span className="text-accent">{title.highlight}</span>}{title.after}
@@ -87,7 +87,7 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
           {cohort && (
             <div className="flex items-center gap-4 rounded-2xl bg-ink px-3 py-2 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)] sm:px-4 sm:py-3">
               <div>
-                <div className="text-[.62rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase sm:text-[.7rem]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? "Places restantes" : "Cohorte"}</div>
+                <div className="text-[.62rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase sm:text-[.7rem]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? "Places restantes" : "Cohorte formation CISSP"}</div>
                 <div className="display text-[1.3rem] leading-none font-black sm:text-[1.6rem]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? cohort.gauge.remaining : cohort.gauge.capacity} <small className="text-[.8rem] font-semibold tracking-normal text-[#cbd5df] sm:text-sm">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? `sur ${cohort.gauge.capacity}` : "participants max."}</small></div>
               </div>
               {cohort.gauge.confirmed + cohort.gauge.held > 0 && <div className="hidden flex-1 sm:block"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>}
@@ -331,7 +331,7 @@ export function FinalCta({ cohort }: { cohort: HeroCohort }) {
       <div className={shell}>
         <div className="rounded-[28px] bg-ink px-6 py-10 text-center text-white sm:py-14">
           <h2 className="display text-[clamp(1.9rem,3.8vw,3.4rem)] leading-[1] font-black tracking-[-.05em]">Êtes-vous prêt pour le CISSP ?</h2>
-          <p className="mx-auto mt-3 max-w-[560px] text-[#cbd5df]">Trois minutes pour le savoir{cohort ? `, avant la cohorte de ${formatCohortMonth(cohort.startsAt)}` : ""}. Résultat immédiat, gratuit, sans engagement.</p>
+          <p className="mx-auto mt-3 max-w-[560px] text-[#cbd5df]">Trois minutes pour le savoir{cohort ? `, avant la cohorte formation CISSP de ${formatCohortMonth(cohort.startsAt)}` : ""}. Résultat immédiat, gratuit, sans engagement.</p>
           <TrackLink href="#evaluation" label="final" className="mt-6 inline-flex items-center justify-center rounded-[14px] bg-accent-bright px-6 py-4 font-extrabold text-ink">Analyser mon profil →</TrackLink>
         </div>
       </div>
