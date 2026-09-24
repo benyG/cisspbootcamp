@@ -17,6 +17,8 @@ type Props = {
   /** Ask for name/e-mail/consent first (direct-link access). */
   askContact?: boolean;
   submitLabel?: string;
+  /** Shown when no slot is free; defaults to the 14-day discovery wording. */
+  emptyMessage?: string;
 };
 
 export type Contact = { firstName: string; lastName: string; email: string; consent: boolean };
@@ -25,7 +27,7 @@ export type Contact = { firstName: string; lastName: string; email: string; cons
  * Slots in the prospect's own timezone, detected in the browser and shown
  * explicitly (SPECS A3). Chosen slot is re-validated server-side on submit.
  */
-export function SlotPicker({ slots, coachTimeZone, onBook, askContact, submitLabel }: Props) {
+export function SlotPicker({ slots, coachTimeZone, onBook, askContact, submitLabel, emptyMessage }: Props) {
   const router = useRouter();
   const [timezone, setTimezone] = useState(coachTimeZone);
   const [chosen, setChosen] = useState<string | null>(null);
@@ -59,8 +61,7 @@ export function SlotPicker({ slots, coachTimeZone, onBook, askContact, submitLab
   if (slots.length === 0) {
     return (
       <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-        Aucun créneau libre dans les 14 prochains jours. Réessayez dans quelques jours, ou
-        écrivez directement à Ben.
+        {emptyMessage ?? "Aucun créneau libre dans les 14 prochains jours. Réessayez dans quelques jours, ou écrivez directement à Ben."}
       </p>
     );
   }

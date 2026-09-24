@@ -42,6 +42,13 @@ enum BookingOutcome {
   no_show
 }
 
+/// What a calendar booking is: the free 15-minute discovery call, or a paid
+/// consulting session tied to a ServiceOrder (docs/OFFRES.md §2).
+enum BookingKind {
+  discovery
+  consulting
+}
+
 enum CohortStatus {
   planned
   open
@@ -124,6 +131,7 @@ model Lead {
   practiceTests    PracticeTest[]
   bookings         Booking[]
   registrations    Registration[]
+  serviceOrders    ServiceOrder[]
   actions          ActionLog[]
   pricingTier      PricingTier       @relation(fields: [tier], references: [code])
 
@@ -177,6 +185,10 @@ model Booking {
   /// IANA timezone the prospect booked in, shown back on every reminder.
   timezone String @db.VarChar(64)
 
+  kind           BookingKind   @default(discovery)
+  serviceOrderId Int?          @map("service_order_id")
+  serviceOrder   ServiceOrder? @relation(fields: [serviceOrderId], references: [id], onDelete: SetNull)
+
   status  BookingStatus   @default(scheduled)
   outcome BookingOutcome?
   notes   String?         @db.Text
@@ -191,6 +203,7 @@ model Booking {
 
   @@index([startsAt])
   @@index([leadId])
+  @@index([serviceOrderId])
   @@map("bookings")
 }
 
@@ -221,8 +234,10 @@ model Registration {
 
   tier String @db.VarChar(32)
 
-  /// Reference amount, in USD cents.
+  /// Amount due, in USD cents, after any consulting credit.
   amountUsd Int @map("amount_usd")
+  /// Consulting hour deducted from the tier price (docs/OFFRES.md §2), USD cents.
+  creditUsd Int @default(0) @map("credit_usd")
 
   /// Indicative local amount shown at checkout, in minor units.
   currencyLocal String? @map("currency_local") @db.VarChar(3)
@@ -241,6 +256,8 @@ model Registration {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  creditedOrders ServiceOrder[]
 
   @@index([cohortId, status])
   @@index([leadId])
@@ -322,16 +339,18 @@ model GoogleCredential {
   @@map("google_credentials")
 }
 
-/// Weekly availability for discovery calls, in the coach's zone (SPECS A3).
+/// Weekly availability, in the coach's zone (SPECS A3). Discovery calls and
+/// paid consulting sessions have separate windows so the one never eats the other.
 model AvailabilityRule {
-  id      Int    @id @default(autoincrement())
+  id      Int         @id @default(autoincrement())
+  kind    BookingKind @default(discovery)
   /// 0 = dimanche … 6 = samedi
   weekday Int
   /// "HH:MM"
-  start   String @db.VarChar(5)
-  end     String @db.VarChar(5)
+  start   String      @db.VarChar(5)
+  end     String      @db.VarChar(5)
 
-  @@index([weekday])
+  @@index([kind, weekday])
   @@map("availability_rules")
 }
 
@@ -364,11 +383,11 @@ model FunnelEvent {
   lead      Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   /// landing_view, cta_click, scanner_start, scanner_step, scanner_submit, …
-  name  String  @db.VarChar(40)
+  name    String  @db.VarChar(40)
   /// Scanner question number for scanner_step; null otherwise.
-  step  Int?
+  step    Int?
   /// The main dimension of the event: CTA position, question id, FAQ question, payment method, verdict.
-  label String? @db.VarChar(160)
+  label   String? @db.VarChar(160)
   /// ISO country, when known (scanner_submit, paid).
   country String? @db.VarChar(2)
 
@@ -436,4 +455,86 @@ model PracticeTest {
   @@index([status, createdAt])
   @@index([placement, createdAt])
   @@map("practice_tests")
+}
+
+/// A career-consulting service sold by the hour (docs/OFFRES.md §2). The
+/// catalogue is seeded; Ben switches services on and off and edits prices.
+model Service {
+  code           String  @id @db.VarChar(32)
+  name           String  @db.VarChar(120)
+  tagline        String  @db.VarChar(200)
+  /// One bullet per line: what the session covers.
+  description    String  @db.Text
+  deliverable    String  @db.VarChar(200)
+  /// Length of one session, in minutes (45, 60 or 90).
+  sessionMinutes Int     @map("session_minutes")
+  /// Sessions included in one purchase (pack reconversion = 3, mentorat = 2).
+  sessions       Int     @default(1)
+  /// One paid hour of this service is deducted from the bootcamp (docs/OFFRES.md §2).
+  creditable     Boolean @default(false)
+  active         Boolean @default(true)
+  sortOrder      Int     @default(0) @map("sort_order")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  prices ServicePrice[]
+  orders ServiceOrder[]
+
+  @@map("services")
+}
+
+/// Price of a service for one pricing tier, USD cents.
+model ServicePrice {
+  id                  Int     @id @default(autoincrement())
+  serviceCode         String  @map("service_code") @db.VarChar(32)
+  service             Service @relation(fields: [serviceCode], references: [code], onDelete: Cascade)
+  tier                String  @db.VarChar(32)
+  amountUsd           Int     @map("amount_usd")
+  /// Netticket ticket selling this service at this tier; null = card only.
+  netticketTicketCode String? @map("netticket_ticket_code") @db.VarChar(64)
+
+  @@unique([serviceCode, tier])
+  @@map("service_prices")
+}
+
+/// A purchase of a consulting service. Paid first, booked after: the same
+/// payment rules as a registration (`paid` only from a verified source).
+model ServiceOrder {
+  id          Int     @id @default(autoincrement())
+  leadId      Int     @map("lead_id")
+  lead        Lead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  serviceCode String  @map("service_code") @db.VarChar(32)
+  service     Service @relation(fields: [serviceCode], references: [code])
+
+  tier          String  @db.VarChar(32)
+  amountUsd     Int     @map("amount_usd")
+  currencyLocal String? @map("currency_local") @db.VarChar(3)
+  amountLocal   Int?    @map("amount_local")
+
+  method PaymentMethod
+  status RegistrationStatus @default(pending)
+
+  stripeSessionId        String? @unique @map("stripe_session_id") @db.VarChar(255)
+  netticketTransactionId String? @unique @map("netticket_transaction_id") @db.VarChar(255)
+  /// CS-XXXX-XXXX, carried through both payment flows.
+  reference              String  @unique @db.VarChar(40)
+
+  /// Sessions bought; each one becomes a consulting Booking.
+  sessionsTotal Int    @map("sessions_total")
+  /// Opaque token addressing the session-booking page. Inert until paid.
+  bookingToken  String @unique @map("booking_token") @db.VarChar(64)
+
+  paidAt                 DateTime?     @map("paid_at")
+  /// Set when this order's hour was deducted from a bootcamp registration.
+  creditedRegistrationId Int?          @map("credited_registration_id")
+  creditedRegistration   Registration? @relation(fields: [creditedRegistrationId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bookings Booking[]
+
+  @@index([leadId, status])
+  @@index([status, createdAt])
+  @@map("service_orders")
 }

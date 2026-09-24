@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PromoPrice } from "@/components/offer/PromoPrice";
 import { formatCohortMonth } from "@/lib/cohorts";
+import { formatUsdCents } from "@/lib/pricing";
 import { prisma } from "@/lib/db";
 import { buildOffer } from "@/lib/registration";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
@@ -71,6 +72,11 @@ export default async function RegistrationPage({
         </p>
         <div className="mt-4">
           <PromoPrice amountUsdCents={offer.amountUsdCents} localLabel={offer.localLabel} offer={settings.offer} cohort={{ startsAt: offer.cohort.startsAt }} />
+          {offer.creditUsdCents > 0 && (
+            <p className="mt-2 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent-ink">
+              Votre heure de conseil ({formatUsdCents(offer.creditUsdCents)}) est déduite : {formatUsdCents(offer.listPriceUsdCents)} − {formatUsdCents(offer.creditUsdCents)} = <b>{offer.usdLabel}</b>.
+            </p>
+          )}
         </div>
         <p className="mt-3 text-sm text-[var(--color-muted)]">
           Formation et préparation. Les frais d&apos;examen ISC² (~750 USD) se règlent séparément auprès d&apos;ISC².

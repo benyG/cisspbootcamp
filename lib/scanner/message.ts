@@ -86,8 +86,10 @@ function nextStepParagraph(analysis: ProfileAnalysis): string {
       );
     case "build_first":
       return (
-        "Je vous envoie de quoi avancer dès maintenant, et je reviens vers vous " +
-        "dans six mois pour refaire le point. Si votre situation change avant, écrivez-moi."
+        "Prochaine étape : une heure ensemble, en séance de conseil carrière, pour faire " +
+        "le point sur votre parcours, choisir la voie et la première certification qui vous " +
+        "conviennent, et repartir avec un plan écrit. Le lien pour réserver est ci-dessous. " +
+        "Cette heure est déduite du bootcamp si vous le rejoignez dans les 90 jours."
       );
   }
 }

@@ -8,6 +8,7 @@ import {
   SLOT_MINUTES,
   addMinutes,
   computeSlots,
+  consultingShape,
   formatSlotTime,
   groupSlotsByDay,
 } from "@/lib/calendar/slots";
@@ -147,5 +148,41 @@ describe("groupSlotsByDay / formatSlotTime", () => {
     expect(grouped[0].slots).toHaveLength(2);
     expect(formatSlotTime(utc[0], "America/Montreal")).toBe("13:00");
     expect(formatSlotTime(utc[0], "Africa/Douala")).toBe("18:00");
+  });
+});
+
+describe("créneaux de conseil", () => {
+  /** Wednesday 18:00–20:00 Douala, the window Ben set for consulting. */
+  const WEDNESDAY: AvailabilityRule[] = [{ weekday: 3, start: "18:00", end: "20:00" }];
+
+  it("propose des séances de 60 minutes toutes les 30 minutes dans la plage", () => {
+    const wednesday = computeSlots({ rules: WEDNESDAY, coachTimeZone: ZONE, busy: [], now: NOW, shape: consultingShape(60) })
+      .filter((slot) => slot.toISOString().startsWith("2026-10-07"));
+    expect(wednesday.map((slot) => slot.toISOString())).toEqual([
+      "2026-10-07T17:00:00.000Z",
+      "2026-10-07T17:30:00.000Z",
+      "2026-10-07T18:00:00.000Z",
+    ]);
+  });
+
+  it("une séance de 90 minutes ne peut commencer qu'à 18:00 ou 18:30", () => {
+    const wednesday = computeSlots({ rules: WEDNESDAY, coachTimeZone: ZONE, busy: [], now: NOW, shape: consultingShape(90) })
+      .filter((slot) => slot.toISOString().startsWith("2026-10-07"));
+    expect(wednesday.map((slot) => slot.toISOString())).toEqual(["2026-10-07T17:00:00.000Z", "2026-10-07T17:30:00.000Z"]);
+  });
+
+  it("regarde cinq semaines devant, et exige 24 h de préavis", () => {
+    const shape = consultingShape(60);
+    const slots = computeSlots({ rules: WEDNESDAY, coachTimeZone: ZONE, busy: [], now: NOW, shape });
+    const days = new Set(slots.map((slot) => slot.toISOString().slice(0, 10)));
+    expect(days.size).toBe(5);
+    expect(slots[0].getTime() - NOW.getTime()).toBeGreaterThanOrEqual(shape.minNoticeHours * 3_600_000);
+  });
+
+  it("un appel de découverte déjà pris bloque la séance qui le chevauche", () => {
+    const busy = [{ start: new Date("2026-10-07T17:30:00.000Z"), end: new Date("2026-10-07T17:45:00.000Z") }];
+    const wednesday = computeSlots({ rules: WEDNESDAY, coachTimeZone: ZONE, busy, now: NOW, shape: consultingShape(60) })
+      .filter((slot) => slot.toISOString().startsWith("2026-10-07"));
+    expect(wednesday.map((slot) => slot.toISOString())).toEqual(["2026-10-07T18:00:00.000Z"]);
   });
 });

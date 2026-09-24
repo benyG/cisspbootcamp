@@ -3,11 +3,13 @@ import { randomUUID } from "node:crypto";
 import { CalendarNotConnectedError, cancelCallEvent, createCallEvent, fetchBusy, getCredential, moveCallEvent } from "@/lib/calendar/google";
 import {
   type AvailabilityRule,
-  MAX_DAYS_AHEAD,
+  DISCOVERY_SHAPE,
   MIN_NOTICE_HOURS,
   SLOT_MINUTES,
+  type SlotShape,
   addMinutes,
   computeSlots,
+  consultingShape,
   formatSlotTime,
 } from "@/lib/calendar/slots";
 import { prisma } from "@/lib/db";
@@ -26,31 +28,58 @@ export type SlotListing =
   | { available: true; slots: Date[]; coachTimeZone: string }
   | { available: false; reason: "not_connected" | "no_rules" };
 
-/** Live slots: rules from the DB, busy intervals from Google, right now. */
-export async function listSlots(now = new Date()): Promise<SlotListing> {
+export type BookingKind = "discovery" | "consulting";
+
+/** Which windows and which slot length: the free call, or a paid session of N minutes. */
+export type SlotFamily = { kind: "discovery" } | { kind: "consulting"; sessionMinutes: number };
+
+const DISCOVERY: SlotFamily = { kind: "discovery" };
+
+function shapeFor(family: SlotFamily): SlotShape {
+  return family.kind === "consulting" ? consultingShape(family.sessionMinutes) : DISCOVERY_SHAPE;
+}
+
+/**
+ * Live slots: rules of that family from the DB, busy intervals from Google
+ * (which include every booking of the other family), right now.
+ */
+export async function listSlots(now = new Date(), family: SlotFamily = DISCOVERY): Promise<SlotListing> {
   const credential = await getCredential();
   if (!credential) return { available: false, reason: "not_connected" };
 
-  const rules: AvailabilityRule[] = await prisma.availabilityRule.findMany();
+  const rules: AvailabilityRule[] = await prisma.availabilityRule.findMany({ where: { kind: family.kind } });
   if (rules.length === 0) return { available: false, reason: "no_rules" };
 
+  const shape = shapeFor(family);
   const busy = await fetchBusy({
     start: now,
-    end: addMinutes(now, (MAX_DAYS_AHEAD + 1) * 24 * 60),
+    end: addMinutes(now, (shape.maxDaysAhead + 1) * 24 * 60),
   });
 
   return {
     available: true,
-    slots: computeSlots({ rules, coachTimeZone: credential.timeZone, busy, now }),
+    slots: computeSlots({ rules, coachTimeZone: credential.timeZone, busy, now, shape }),
     coachTimeZone: credential.timeZone,
   };
 }
 
 /** True when `start` is one of the slots computed right now — never trust the client. */
-export async function isSlotBookable(start: Date, now = new Date()): Promise<boolean> {
-  const listing = await listSlots(now);
+export async function isSlotBookable(start: Date, now = new Date(), family: SlotFamily = DISCOVERY): Promise<boolean> {
+  const listing = await listSlots(now, family);
   if (!listing.available) return false;
   return listing.slots.some((slot) => slot.getTime() === start.getTime());
+}
+
+/** The family a stored booking belongs to, from its kind and its length. */
+export function familyOf(booking: { kind: BookingKind; startsAt: Date; endsAt: Date }): SlotFamily {
+  if (booking.kind !== "consulting") return DISCOVERY;
+  return { kind: "consulting", sessionMinutes: Math.round((booking.endsAt.getTime() - booking.startsAt.getTime()) / 60_000) };
+}
+
+/** "notre appel de 15 minutes" or "notre séance de conseil de 60 minutes". */
+export function describeBooking(booking: { kind: BookingKind; startsAt: Date; endsAt: Date }): string {
+  const minutes = Math.round((booking.endsAt.getTime() - booking.startsAt.getTime()) / 60_000);
+  return booking.kind === "consulting" ? `notre séance de conseil de ${minutes} minutes` : "notre appel de 15 minutes";
 }
 
 export function formatWhen(date: Date, timeZone: string): string {
@@ -150,11 +179,12 @@ export async function rescheduleCall(input: { rescheduleToken: string; start: Da
     include: { lead: true },
   });
   if (!booking || booking.status !== "scheduled") return { ok: false, error: "Ce rendez-vous ne peut plus être modifié." };
-  if (!(await isSlotBookable(input.start))) {
+  const family = familyOf(booking);
+  if (!(await isSlotBookable(input.start, new Date(), family))) {
     return { ok: false, error: "Ce créneau n'est plus disponible. Choisissez-en un autre." };
   }
 
-  const end = addMinutes(input.start, SLOT_MINUTES);
+  const end = addMinutes(input.start, family.kind === "consulting" ? family.sessionMinutes : SLOT_MINUTES);
   if (booking.googleEventId) {
     try {
       await moveCallEvent(booking.googleEventId, input.start, end);
@@ -177,7 +207,7 @@ export async function rescheduleCall(input: { rescheduleToken: string; start: Da
   await sendEmail({
     to: booking.lead.email,
     subject: `Nouveau créneau : ${formatWhen(input.start, input.timezone)}`,
-    text: confirmationText({ firstName: booking.lead.firstName, start: input.start, timezone: input.timezone, meetUrl: booking.meetUrl, rescheduleToken: booking.rescheduleToken, unsubscribeToken: booking.lead.unsubscribeToken }),
+    text: confirmationText({ firstName: booking.lead.firstName, start: input.start, timezone: input.timezone, meetUrl: booking.meetUrl, rescheduleToken: booking.rescheduleToken, unsubscribeToken: booking.lead.unsubscribeToken, what: describeBooking({ ...booking, startsAt: input.start, endsAt: end }) }),
   });
 
   return { ok: true, bookingId: booking.id, rescheduleToken: booking.rescheduleToken };
@@ -197,29 +227,33 @@ export async function cancelCall(rescheduleToken: string): Promise<{ ok: boolean
 
   await prisma.$transaction([
     prisma.booking.update({ where: { id: booking.id }, data: { status: "cancelled" } }),
-    // Back to the follow-up loop: a cancelled call is a lead to re-engage in 2 days.
-    prisma.lead.update({
-      where: { id: booking.leadId },
-      data: { status: "contacted", nextFollowupAt: addMinutes(new Date(), 2 * 24 * 60) },
-    }),
-    prisma.actionLog.create({ data: { leadId: booking.leadId, type: "call_cancelled", payload: { bookingId: booking.id } } }),
+    // Back to the follow-up loop: a cancelled call is a lead to re-engage in
+    // 2 days. A cancelled consulting session keeps its paid order: the
+    // session is simply booked again from the same link.
+    ...(booking.kind === "discovery"
+      ? [prisma.lead.update({ where: { id: booking.leadId }, data: { status: "contacted", nextFollowupAt: addMinutes(new Date(), 2 * 24 * 60) } })]
+      : []),
+    prisma.actionLog.create({ data: { leadId: booking.leadId, type: booking.kind === "consulting" ? "session_cancelled" : "call_cancelled", payload: { bookingId: booking.id } } }),
   ]);
 
   return { ok: true };
 }
 
-function confirmationText(input: {
+export function confirmationText(input: {
   firstName: string;
   start: Date;
   timezone: string;
   meetUrl: string | null;
   rescheduleToken: string;
   unsubscribeToken: string;
+  /** "notre appel de 15 minutes" by default. */
+  what?: string;
 }): string {
   const base = env.NEXT_PUBLIC_APP_URL;
+  const what = input.what ?? "notre appel de 15 minutes";
   return (
     `Bonjour ${input.firstName},\n\n` +
-    `Notre appel de 15 minutes est fixé au ${formatWhen(input.start, input.timezone)} (heure de ${input.timezone}).\n\n` +
+    `${what.charAt(0).toUpperCase()}${what.slice(1)} est fixé${what.includes("séance") ? "e" : ""} au ${formatWhen(input.start, input.timezone)} (heure de ${input.timezone}).\n\n` +
     (input.meetUrl ? `Lien de visio : ${input.meetUrl}\n\n` : "Le lien de visio est dans l'invitation d'agenda.\n\n") +
     `Un empêchement ? Déplacer ou annuler : ${base}/rdv/${input.rescheduleToken}\n\n` +
     `À très vite,\nBen\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${input.unsubscribeToken}`
@@ -255,7 +289,7 @@ export async function sendDueReminders(now = new Date()): Promise<{ sent24h: num
     if (booking.lead.unsubscribedAt) continue;
     const result = await sendEmail({
       to: booking.lead.email,
-      subject: "Demain : notre appel de 15 minutes",
+      subject: booking.kind === "consulting" ? "Demain : notre séance de conseil" : "Demain : notre appel de 15 minutes",
       text: reminderText(booking, "demain"),
     });
     if (result.sent) {
@@ -269,7 +303,7 @@ export async function sendDueReminders(now = new Date()): Promise<{ sent24h: num
     if (booking.lead.unsubscribedAt) continue;
     const result = await sendEmail({
       to: booking.lead.email,
-      subject: "Dans une heure : notre appel",
+      subject: booking.kind === "consulting" ? "Dans une heure : notre séance" : "Dans une heure : notre appel",
       text: reminderText(booking, "dans une heure"),
     });
     if (result.sent) {
@@ -282,15 +316,15 @@ export async function sendDueReminders(now = new Date()): Promise<{ sent24h: num
 }
 
 function reminderText(
-  booking: { startsAt: Date; timezone: string; meetUrl: string | null; rescheduleToken: string; lead: { firstName: string; unsubscribeToken: string } },
+  booking: { kind: BookingKind; startsAt: Date; endsAt: Date; timezone: string; meetUrl: string | null; rescheduleToken: string; lead: { firstName: string; unsubscribeToken: string } },
   when: string,
 ): string {
   const base = env.NEXT_PUBLIC_APP_URL;
   return (
     `Bonjour ${booking.lead.firstName},\n\n` +
-    `Petit rappel : nous nous parlons ${when}, ${formatWhen(booking.startsAt, booking.timezone)} (heure de ${booking.timezone}).\n\n` +
+    `Petit rappel : ${describeBooking(booking)} a lieu ${when}, ${formatWhen(booking.startsAt, booking.timezone)} (heure de ${booking.timezone}).\n\n` +
     (booking.meetUrl ? `Lien de visio : ${booking.meetUrl}\n\n` : "") +
-    (when === "demain" && examBootEnabled()
+    (when === "demain" && booking.kind === "discovery" && examBootEnabled()
       ? `Avant l'appel, si vous avez dix minutes : cinq vraies questions d'examen, pour que je cale mes conseils sur votre niveau. ${base}/test-cissp?b=${booking.rescheduleToken}&from=rappel-24h\n\n`
       : "") +
     `Un empêchement ? ${base}/rdv/${booking.rescheduleToken}\n\n` +

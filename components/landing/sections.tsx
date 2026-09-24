@@ -29,7 +29,10 @@ export function Topbar() {
     <header className={shell}>
       <div className="flex items-center justify-between py-5">
         <Link href="/" className="display text-[1.18rem] font-black tracking-[-.04em]">CISSP <span className="text-accent">Bootcamp</span></Link>
-        <TrackLink href="#evaluation" label="topbar" className="hidden rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold sm:inline-flex">Évaluer mon profil →</TrackLink>
+        <nav className="flex items-center gap-2 sm:gap-3">
+          <TrackLink href="/conseil" label="topbar-conseil" className="px-2 py-2.5 text-[.92rem] font-bold text-ink-2 underline-offset-4 hover:underline">Conseil carrière</TrackLink>
+          <TrackLink href="/#evaluation" label="topbar" className="hidden rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold sm:inline-flex">Évaluer mon profil →</TrackLink>
+        </nav>
       </div>
     </header>
   );
@@ -112,6 +115,47 @@ export function Proof({ settings }: { settings: SiteSettings }) {
               <p className="mt-2 text-[#cbd5df]">{n.text}</p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The three steps (docs/OFFRES.md §1): after the proof, before the method.
+ * The bootcamp card leads; the two others are there for whoever is not yet
+ * at that step, so the page never has to send them away empty-handed.
+ */
+export function Ladder({ services }: { services: Array<{ code: string; name: string; durationLabel: string }> }) {
+  if (services.length === 0) return null;
+  const consulting = services.filter((s) => s.code !== "mentorat").slice(0, 3);
+  return (
+    <section id="parcours" className="py-16 sm:py-20">
+      <div className={shell}>
+        <div className={eyebrow}>Trois façons de travailler avec Ben</div>
+        <h2 className={sectionTitle + " text-[clamp(2rem,3.4vw,3.4rem)]"}>Le bootcamp est la destination. Il y a une marche pour chacun.</h2>
+        <div className="grid gap-3.5 lg:grid-cols-3">
+          <article className="rounded-[18px] border border-line bg-white p-5">
+            <div className="text-[.78rem] font-extrabold tracking-[.08em] text-accent uppercase">Être conseillé</div>
+            <h3 className="display mt-2.5 mb-2 text-[1.35rem] font-black">Une heure de conseil carrière</h3>
+            <p className="text-[.95rem] text-muted">Vous n’avez pas encore les cinq ans, vous hésitez sur la voie, vous changez de métier : une séance et vous repartez avec un plan écrit.</p>
+            <ul className="mt-3 grid gap-1 text-[.9rem] text-ink-2">
+              {consulting.map((s) => <li key={s.code}>· {s.name} <span className="text-muted">({s.durationLabel})</span></li>)}
+            </ul>
+            <TrackLink href="/conseil" label="parcours-conseil" className="mt-4 inline-flex font-extrabold text-accent-ink underline underline-offset-4">Voir les séances →</TrackLink>
+          </article>
+          <article className="rounded-[18px] border-2 border-ink bg-ink p-5 text-white shadow-[var(--shadow-panel)]">
+            <div className="text-[.78rem] font-extrabold tracking-[.08em] text-[#7be0c8] uppercase">Certifier son expertise</div>
+            <h3 className="display mt-2.5 mb-2 text-[1.35rem] font-black">Le bootcamp CISSP</h3>
+            <p className="text-[.95rem] text-[#cbd5df]">Quatre ans d’expérience ou plus : 40 heures sur 15 jours, en français, jusqu’à la date d’examen. Le produit pour lequel ce site existe.</p>
+            <TrackLink href="/#evaluation" label="parcours-bootcamp" className={btnPrimary + " mt-4 w-full border border-white/20"}>Analyser mon profil →</TrackLink>
+          </article>
+          <article className="rounded-[18px] border border-line bg-white p-5">
+            <div className="text-[.78rem] font-extrabold tracking-[.08em] text-accent uppercase">Être suivi</div>
+            <h3 className="display mt-2.5 mb-2 text-[1.35rem] font-black">Le mentorat mensuel</h3>
+            <p className="text-[.95rem] text-muted">Deux séances de 45 minutes par mois, vos questions entre les deux, un récapitulatif écrit. Pour tenir le rythme jusqu’à l’examen, avant ou après le bootcamp.</p>
+            <TrackLink href="/conseil/mentorat" label="parcours-mentorat" className="mt-4 inline-flex font-extrabold text-accent-ink underline underline-offset-4">Voir le mentorat →</TrackLink>
+          </article>
         </div>
       </div>
     </section>

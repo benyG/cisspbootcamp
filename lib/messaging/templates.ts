@@ -48,5 +48,6 @@ export function leadVars(input: {
     mois_cohorte: input.cohortMonth ?? null,
     lien_paiement: input.paymentUrl ?? (input.resultToken ? `${input.appUrl}/inscription?t=${input.resultToken}` : null),
     lien_test: input.resultToken ? `${input.appUrl}/test-cissp?t=${input.resultToken}&from=relance` : null,
+    lien_conseil: input.resultToken ? `${input.appUrl}/conseil?t=${input.resultToken}` : `${input.appUrl}/conseil`,
   };
 }

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isServiceReference, markServiceOrderPaid } from "@/lib/consulting";
 import { confirmationFromEvent, parseWebhook } from "@/lib/payments/stripe";
 import { markRegistrationPaid } from "@/lib/registration";
 
@@ -25,7 +26,9 @@ export async function POST(request: NextRequest) {
   const confirmation = confirmationFromEvent(event);
   if (!confirmation) return NextResponse.json({ received: true, ignored: event.type });
 
-  const result = await markRegistrationPaid({
+  // CB- references are bootcamp seats, CS- references consulting orders.
+  const mark = isServiceReference(confirmation.reference) ? markServiceOrderPaid : markRegistrationPaid;
+  const result = await mark({
     reference: confirmation.reference,
     amountPaidUsdCents: confirmation.amountPaidUsdCents,
     paidAt: confirmation.paidAt,

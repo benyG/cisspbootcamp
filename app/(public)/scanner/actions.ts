@@ -173,7 +173,9 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
         : "") +
       (context.cohort && analysis.readiness !== "not_yet"
         ? `Prix promotionnel de lancement : ${priceLabelFor(answers.country, context.tiers)}, garanti jusqu'au ${formatAdmissionDeadline(context.cohort.startsAt)} (fin des admissions de la cohorte de ${formatCohortMonth(context.cohort.startsAt)}).\n\n`
-        : "") +
+        : analysis.readiness === "not_yet"
+          ? `La marche qui vous convient maintenant : une heure de conseil carrière avec moi, pour choisir la voie et la première certification, avec un plan écrit. Déduite du bootcamp si vous le rejoignez dans les 90 jours : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${resultToken}\n\n`
+          : "") +
       `Je reviens vers vous personnellement sous 24 h.\n\nBen\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${lead.unsubscribeToken}`,
   });
 

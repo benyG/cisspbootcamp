@@ -1,5 +1,7 @@
 import { CohortStatus, MessageChannel, PrismaClient } from "@prisma/client";
 
+import { SERVICE_CATALOGUE } from "../lib/services";
+
 const prisma = new PrismaClient();
 
 /** Francophone Africa — tier `africa` (CADRAGE §3, §4). */
@@ -194,6 +196,33 @@ async function main() {
       data: [1, 2, 3, 4, 5].map((weekday) => ({ weekday, start: "18:00", end: "19:00" })),
     });
     console.log("Disponibilités par défaut : lundi–vendredi 18:00–19:00");
+  }
+
+  // Consulting catalogue (docs/OFFRES.md §2). Copy and prices are only a
+  // starting point: Ben edits them from /admin/conseil, so existing rows keep
+  // their values; a new service is added with its defaults.
+  for (const service of SERVICE_CATALOGUE) {
+    const { prices, ...definition } = service;
+    await prisma.service.upsert({ where: { code: service.code }, update: {}, create: definition });
+    for (const [tier, amountUsd] of Object.entries(prices)) {
+      await prisma.servicePrice.upsert({
+        where: { serviceCode_tier: { serviceCode: service.code, tier } },
+        update: {},
+        create: { serviceCode: service.code, tier, amountUsd },
+      });
+    }
+  }
+  console.log(`Services de conseil : ${SERVICE_CATALOGUE.length}`);
+
+  // Consulting window: Wednesday, two hours (Ben, 24/09/2026). Seeded once;
+  // Ben adjusts the hours from /admin/parametres/google.
+  const consultingSeeded = await prisma.siteSetting.findUnique({ where: { key: "seed.consulting_rules" } });
+  if (!consultingSeeded) {
+    if ((await prisma.availabilityRule.count({ where: { kind: "consulting" } })) === 0) {
+      await prisma.availabilityRule.create({ data: { kind: "consulting", weekday: 3, start: "18:00", end: "20:00" } });
+      console.log("Plage conseil par défaut : mercredi 18:00–20:00");
+    }
+    await prisma.siteSetting.create({ data: { key: "seed.consulting_rules", value: { at: new Date().toISOString() } } });
   }
 
   // Starting exchange rates so local prices show before the first cron run.

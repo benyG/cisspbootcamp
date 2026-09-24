@@ -132,6 +132,22 @@ questions » sur la page résultat, la confirmation d'appel, la section
 les gabarits (`{{lien_test}}`). Le score revient sur la page du prospect, dans
 sa fiche lead et dans `/admin/tunnel`. Détail : `docs/CONVERSION.md` §8.
 
+### Conseil carrière (`/conseil`, `/admin/conseil`)
+
+Quatre services à l'heure, décidés le 24/09 (`docs/OFFRES.md` §2) : bilan de
+carrière, pack reconversion (3 × 1 h), choix de certification, mentorat
+mensuel (2 × 45 min). Paiement d'abord (Stripe, ou Netticket si un code de
+ticket est renseigné pour le service et le palier), créneau ensuite, par un
+lien personnel envoyé par e-mail. Les séances se posent uniquement dans les
+**plages « conseil »** de `/admin/parametres/google` (par défaut : mercredi
+18:00–20:00, à ajuster) ; les appels de découverte gardent les leurs. Une
+heure de conseil payée est déduite du bootcamp si l'inscription suit dans les
+90 jours (crédit affiché sur `/inscription`, tracé dans la commande). Sur
+`/admin` : séances du jour à marquer faites, séances payées sans créneau
+(bouton « Renvoyer le lien »). Le scanner aiguille les « pas encore » vers le
+bilan ou la reconversion, sur la page résultat, dans l'e-mail de résultat et
+dans le message de relance ; gabarit : `{{lien_conseil}}`.
+
 ### Message de relance rédigé par l'IA
 
 `ANTHROPIC_API_KEY` sur Vercel. Sans clé, un gabarit sans IA est utilisé. Le
@@ -245,3 +261,5 @@ que dans le workflow (`DATABASE_URL`, `E2E_CALENDAR_STUB=1`,
 - [x] Étape 6 — file d'actions admin, fiche lead, paramètres
 - [x] Étape 7 — landing page (prototype validé le 21/09)
 - [x] Étape 8 — parcours Playwright complet, intégration continue, ce guide
+- [x] Conseil carrière : services à l'heure, mentorat, crédit sur le bootcamp, aiguillage du scanner (24/09)
+- [ ] Produit d'entrée : formation ISC² CC « 15 jours pour votre première certification » (`docs/OFFRES.md` §3)

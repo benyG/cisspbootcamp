@@ -5,6 +5,7 @@ import { loadQueue } from "@/lib/action-queue";
 import { formatUsdCents } from "@/lib/pricing";
 
 import { confirmManualPayment, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
+import { markSessionOutcome, remindSessionBooking } from "./conseil/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export default async function AdminHomePage() {
     payment: items.filter((i) => i.kind === "payment"),
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
+    session: items.filter((i) => i.kind === "session"),
   };
 
   return (
@@ -48,10 +50,17 @@ export default async function AdminHomePage() {
         ))}
       </Group>
 
-      <Group title="Appels du jour" count={groups.call.length}>
+      <Group title="Appels et séances du jour" count={groups.call.length}>
         {groups.call.map((i) => i.kind === "call" && (
-          <Row key={`c${i.bookingId}`} name={i.name} meta={`${i.when} · ${i.readiness ? READINESS[i.readiness] : "sans scanner"}${i.timeline ? ` · ${i.timeline}` : ""}`} heat={i.heat} leadId={i.leadId} note={i.goals}>
+          <Row key={`c${i.bookingId}`} name={i.name} meta={i.consulting ? `${i.when} · Conseil : ${i.consulting.service}${i.consulting.total > 1 ? ` (séance ${i.consulting.number}/${i.consulting.total})` : ""}` : `${i.when} · ${i.readiness ? READINESS[i.readiness] : "sans scanner"}${i.timeline ? ` · ${i.timeline}` : ""}`} heat={i.heat} leadId={i.leadId} note={i.goals}>
             {i.meetUrl && <a href={i.meetUrl} target="_blank" rel="noopener" className={ghost}>Meet</a>}
+            {i.consulting ? (
+              <form action={markSessionOutcome} className="flex gap-1">
+                <input type="hidden" name="bookingId" value={i.bookingId} />
+                <select name="outcome" className="rounded-lg border border-line px-2 py-1.5 text-sm" defaultValue="done"><option value="done">Séance faite</option><option value="no_show">Absent</option></select>
+                <button className={primary}>Marquer</button>
+              </form>
+            ) : (
             <form action={markCallOutcome} className="flex gap-1">
               <input type="hidden" name="bookingId" value={i.bookingId} />
               <select name="outcome" className="rounded-lg border border-line px-2 py-1.5 text-sm" defaultValue="registered">
@@ -59,6 +68,15 @@ export default async function AdminHomePage() {
               </select>
               <button className={primary}>Marquer</button>
             </form>
+            )}
+          </Row>
+        ))}
+      </Group>
+
+      <Group title="Séances payées à réserver" count={groups.session.length}>
+        {groups.session.map((i) => i.kind === "session" && (
+          <Row key={`s${i.orderId}`} name={i.name} meta={`${i.service} · séance ${i.number}/${i.total} · payée il y a ${i.daysSincePaid} j`} leadId={i.leadId}>
+            <form action={remindSessionBooking}><input type="hidden" name="orderId" value={i.orderId} /><button className={ghost}>Renvoyer le lien</button></form>
           </Row>
         ))}
       </Group>
@@ -105,7 +123,7 @@ export default async function AdminHomePage() {
       </Group>
 
       <nav className="mt-10 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-        {[["/admin/leads", "Tous les leads"], ["/admin/tunnel", "Tunnel"], ["/admin/cohortes", "Cohortes"], ["/admin/temoignages", "Témoignages"], ["/admin/parametres/site", "Page d'accueil"], ["/admin/parametres/prix", "Tarifs"], ["/admin/parametres/gabarits", "Gabarits"], ["/admin/parametres/google", "Agenda"]].map(([href, label]) => (
+        {[["/admin/leads", "Tous les leads"], ["/admin/tunnel", "Tunnel"], ["/admin/cohortes", "Cohortes"], ["/admin/conseil", "Conseil"], ["/admin/temoignages", "Témoignages"], ["/admin/parametres/site", "Page d'accueil"], ["/admin/parametres/prix", "Tarifs"], ["/admin/parametres/gabarits", "Gabarits"], ["/admin/parametres/google", "Agenda"]].map(([href, label]) => (
           <Link key={href} href={href} className="rounded-xl border border-line bg-white px-3 py-2.5 font-semibold">{label} →</Link>
         ))}
       </nav>

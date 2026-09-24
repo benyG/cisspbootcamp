@@ -37,6 +37,8 @@ export type TunnelReport = {
   faq: Array<{ question: string; opens: number }>;
   returns: number;
   examboot: { byPlacement: Array<{ placement: string; started: number; completed: number; averagePercent: number | null }> };
+  /** Consulting (docs/OFFRES.md): views of a service page, payment clicks, paid orders, sessions booked. */
+  services: Array<{ service: string; views: number; payClicks: number; paid: number; booked: number }>;
 };
 
 type CountRow = { name: string; visitors: bigint | number };
@@ -57,7 +59,7 @@ export async function tunnelReport(now = new Date()): Promise<TunnelReport> {
   const since = new Date(now.getTime() - WEEK_MS);
   const previousSince = new Date(since.getTime() - WEEK_MS);
 
-  const [current, previous, steps, sources, countries, ctas, faq, tests] = await Promise.all([
+  const [current, previous, steps, sources, countries, ctas, faq, tests, services] = await Promise.all([
     distinctPerEvent(since, until),
     distinctPerEvent(previousSince, since),
     prisma.$queryRaw<Array<{ step: number; visitors: bigint | number }>>(Prisma.sql`
@@ -108,6 +110,17 @@ export async function tunnelReport(now = new Date()): Promise<TunnelReport> {
       WHERE e.name = 'examboot_click' AND e.created_at >= ${since} AND e.created_at < ${until}
       GROUP BY e.label
       ORDER BY started DESC`),
+    prisma.$queryRaw<Array<{ service: string; views: bigint | number; pay_clicks: bigint | number; paid: bigint | number; booked: bigint | number }>>(Prisma.sql`
+      SELECT SUBSTRING_INDEX(label, ':', 1) AS service,
+        COUNT(DISTINCT CASE WHEN name = 'service_view' THEN COALESCE(visitor_id, CONCAT('lead:', lead_id)) END) AS views,
+        COUNT(CASE WHEN name = 'service_pay_click' THEN 1 END) AS pay_clicks,
+        COUNT(CASE WHEN name = 'service_paid' THEN 1 END) AS paid,
+        COUNT(CASE WHEN name = 'service_booked' THEN 1 END) AS booked
+      FROM funnel_events
+      WHERE name IN ('service_view', 'service_pay_click', 'service_paid', 'service_booked') AND label IS NOT NULL AND label <> 'catalogue'
+        AND created_at >= ${since} AND created_at < ${until}
+      GROUP BY SUBSTRING_INDEX(label, ':', 1)
+      ORDER BY paid DESC, views DESC`),
   ]);
 
   const reached = new Map<number, number>();
@@ -132,6 +145,7 @@ export async function tunnelReport(now = new Date()): Promise<TunnelReport> {
     examboot: {
       byPlacement: tests.map((r) => ({ placement: r.placement ?? "?", started: Number(r.started), completed: Number(r.completed), averagePercent: r.average === null ? null : Math.round(Number(r.average)) })),
     },
+    services: services.map((r) => ({ service: r.service ?? "?", views: Number(r.views), payClicks: Number(r.pay_clicks), paid: Number(r.paid), booked: Number(r.booked) })),
   };
 }
 
