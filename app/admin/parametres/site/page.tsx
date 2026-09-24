@@ -17,7 +17,7 @@ export default async function SiteSettingsPage({ searchParams }: { searchParams:
       <p className="mt-1 text-sm text-muted">Chaque section s&apos;enregistre séparément et se met en ligne dans la minute. La cohorte, la jauge et les prix viennent de la base, pas d&apos;ici.</p>
       {ok && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Textes remis par défaut, en ligne dans la minute.</p>}
       <form action={resetAllCopy} className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/20 bg-accent-soft px-4 py-3 text-sm">
-        <span>Nouvelle version des textes de la page (24/09) : héros, chiffres, méthode, coach, offre et FAQ. Vos réglages de contact, vidéo et prix de référence sont conservés.</span>
+        <span>Nouvelle version des textes de la page (24/09) : héros, chiffres, méthode, coach, offre et FAQ. Vos réglages de contact et de vidéo sont conservés.</span>
         <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Tout remettre aux textes par défaut</button>
       </form>
       <SiteSettingsForm key={ok ? "reset" : "current"} initial={settings} />
