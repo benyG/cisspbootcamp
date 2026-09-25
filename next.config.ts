@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Preparation documents are uploaded through a Server Action (lib/documents.ts).
-  experimental: { serverActions: { bodySizeLimit: "10mb" } },
+  /* Documents go straight from the browser to Vercel Blob (lib/documents.ts). */
 };
 
 export default nextConfig;

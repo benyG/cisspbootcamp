@@ -195,9 +195,9 @@ indicatifs, convertis chaque nuit ; on encaisse en USD.
 
 ### Envoyer les documents de préparation : `/admin/documents`
 
-1. Ajoutez vos fichiers (PDF, Word, PowerPoint, Excel, ZIP, image ; 8 Mo par fichier) avec le nom qui apparaîtra dans l'e-mail et la formation concernée (CISSP ou CC).
+1. Ajoutez vos fichiers (PDF, Word, PowerPoint, Excel, ZIP, image ; 30 Mo par fichier) avec le nom qui apparaîtra dans l'e-mail et la formation concernée (CISSP ou CC). Le fichier part directement de votre navigateur vers le stockage privé Vercel Blob, avec une barre de progression.
 2. Ouvrez la fiche d'un inscrit dont la place est payée : une section « Documents de préparation » liste les fichiers actifs de sa formation, tous cochés.
-3. Décochez ce que vous ne voulez pas joindre, puis « Envoyer l'e-mail d'onboarding ». L'envoi est immédiat, tracé dans l'historique du lead, et un e-mail accepte 25 Mo de pièces jointes au total.
+3. Décochez ce que vous ne voulez pas joindre, puis « Envoyer l'e-mail d'onboarding ». L'envoi est immédiat et tracé dans l'historique du lead. Les documents partent en pièces jointes jusqu'à 15 Mo au total ; au-delà, chaque document restant figure dans le même e-mail avec un lien de téléchargement personnel. Ce lien ne fonctionne que tant que le document est actif et la place de l'inscrit payée.
 
 Le texte de l'e-mail est le gabarit « Onboarding : documents de préparation » dans `/admin/parametres/gabarits` ; `{{liste_documents}}` y est remplacé par la liste des fichiers joints. Rien ne part sans votre clic. Un document désactivé reste stocké mais n'est plus proposé.
 
