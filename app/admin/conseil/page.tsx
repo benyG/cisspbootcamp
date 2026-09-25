@@ -1,3 +1,4 @@
+import { CalendarPlus, Compass, List, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 
 import { ordersAwaitingBooking } from "@/lib/consulting";
@@ -26,12 +27,12 @@ export default async function ConsultingAdminPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Administration</Link>
-      <h1 className="mt-3 text-2xl font-bold">Conseil carrière</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Compass className="size-6 shrink-0 text-accent" aria-hidden />Conseil carrière</h1>
       <p className="mt-1 text-sm text-muted">Les plages du mercredi se règlent dans <Link href="/admin/parametres/google" className="underline">Agenda</Link>. Prix en USD entiers ; le code Netticket est facultatif (sans lui : carte seulement).</p>
 
       {awaiting.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-extrabold tracking-[.06em] text-muted uppercase">Payé, pas encore réservé ({awaiting.length})</h2>
+          <h2 className="flex items-center gap-2 text-sm font-extrabold tracking-[.06em] text-muted uppercase"><CalendarPlus className="size-4 text-accent" aria-hidden />Payé, pas encore réservé ({awaiting.length})</h2>
           <ul className="mt-2 grid gap-2">
             {awaiting.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white p-3 text-sm">
@@ -44,7 +45,7 @@ export default async function ConsultingAdminPage() {
       )}
 
       <section className="mt-6">
-        <h2 className="text-sm font-extrabold tracking-[.06em] text-muted uppercase">Services</h2>
+        <h2 className="flex items-center gap-2 text-sm font-extrabold tracking-[.06em] text-muted uppercase"><List className="size-4 text-accent" aria-hidden />Services</h2>
         <div className="mt-2 grid gap-3">
           {services.map((s) => (
             <form key={s.code} action={updateService} className="rounded-xl border border-line bg-white p-4 text-sm">
@@ -75,7 +76,7 @@ export default async function ConsultingAdminPage() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-sm font-extrabold tracking-[.06em] text-muted uppercase">Commandes ({orders.length})</h2>
+        <h2 className="flex items-center gap-2 text-sm font-extrabold tracking-[.06em] text-muted uppercase"><ShoppingCart className="size-4 text-accent" aria-hidden />Commandes ({orders.length})</h2>
         {orders.length === 0 ? (
           <p className="mt-2 text-sm text-muted">Aucune commande pour l&apos;instant.</p>
         ) : (

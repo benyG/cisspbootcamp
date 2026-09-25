@@ -1,3 +1,4 @@
+import { Activity, BadgeCheck, Brain, Briefcase, Building2, CalendarCheck, CalendarClock, CalendarDays, CalendarRange, Check, ChevronDown, CircleHelp, CirclePlay, ClipboardCheck, Clock, CodeXml, Compass, Database, Flag, GraduationCap, KeyRound, Layers, type LucideIcon, MessageSquareQuote, Moon, Network, ScanSearch, ShieldAlert, ShieldCheck, Target, Timer, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -24,6 +25,21 @@ export const shell = "mx-auto w-[min(1180px,calc(100%-32px))]";
 export const eyebrow = "inline-flex items-center gap-2.5 rounded-2xl border border-accent/20 bg-white px-3.5 py-2.5 text-[.76rem] font-extrabold tracking-[.08em] uppercase shadow-[var(--shadow-card)]";
 export const btnPrimary = "inline-flex items-center justify-center gap-2 rounded-[14px] bg-ink px-5.5 py-4 font-extrabold text-white shadow-[0_10px_30px_rgba(7,26,51,.18)] transition-transform hover:-translate-y-0.5";
 export const btnGhost = "inline-flex items-center justify-center gap-2 rounded-[14px] border border-line bg-white px-5.5 py-4 font-extrabold";
+/** Icons (Ben, 25/09): lucide line icons, never emojis, in the accent colour. */
+const eyebrowIcon = "size-4 shrink-0 text-accent";
+const PROOF_ICONS: LucideIcon[] = [Clock, CalendarDays, Users];
+const STEP_ICONS: LucideIcon[] = [Network, Brain, Target, Flag];
+const RHYTHM_ICONS: LucideIcon[] = [Moon, CalendarRange];
+const DOMAIN_ICONS: Record<(typeof CISSP_DOMAINS)[number], LucideIcon> = {
+  security_risk_management: ShieldAlert,
+  asset_security: Database,
+  security_architecture: Building2,
+  network_security: Network,
+  identity_access_management: KeyRound,
+  security_assessment: ClipboardCheck,
+  security_operations: Activity,
+  software_security: CodeXml,
+};
 const sectionTitle = "display mt-3 mb-7 max-w-[860px] text-[clamp(2rem,3.6vw,3.6rem)] leading-[.98] font-black tracking-[-.05em]";
 
 export type HeroCohort = { name: string; startsAt: Date; gauge: Gauge } | null;
@@ -44,8 +60,8 @@ export function Topbar() {
       <div className="flex items-center justify-between py-5">
         <Link href="/" className="display text-[1.18rem] font-black tracking-[-.04em]">CISSP <span className="text-accent">Bootcamp</span></Link>
         <nav className="flex items-center gap-2 sm:gap-3">
-          <TrackLink href="/conseil" label="topbar-conseil" className="hidden px-2 py-2.5 text-[.92rem] font-bold text-ink-2 underline-offset-4 hover:underline sm:inline-flex">Conseil carrière</TrackLink>
-          <TrackLink href="/rdv" label="topbar-rdv" className="rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold">Rendez-vous gratuit</TrackLink>
+          <TrackLink href="/conseil" label="topbar-conseil" className="hidden items-center gap-1.5 px-2 py-2.5 text-[.92rem] font-bold text-ink-2 underline-offset-4 hover:underline sm:inline-flex"><Briefcase className="size-4 text-accent" aria-hidden />Conseil carrière</TrackLink>
+          <TrackLink href="/rdv" label="topbar-rdv" className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold"><CalendarCheck className="size-4 text-accent" aria-hidden />Rendez-vous gratuit</TrackLink>
         </nav>
       </div>
     </header>
@@ -68,12 +84,12 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
         <p className="mb-6 max-w-[700px] text-[clamp(1.08rem,1.4vw,1.3rem)] font-semibold text-ink-2">{hero.lead}</p>
         <ul className="mb-7 flex max-w-[720px] flex-wrap gap-x-6 gap-y-2 text-[.98rem] font-bold text-ink">
           {hero.promises.map((p) => (
-            <li key={p.title} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded-full bg-accent-soft text-[.7rem] font-black text-accent-ink">✓</span>{p.title}</li>
+            <li key={p.title} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded-full bg-accent-soft text-accent-ink"><Check className="size-3.5" strokeWidth={3} aria-hidden /></span>{p.title}</li>
           ))}
         </ul>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <TrackLink href="#evaluation" label="hero" className={btnPrimary + " w-full sm:w-auto"}>Analyser mon profil — 3 min →</TrackLink>
-          <TrackLink href="/rdv" label="hero-rdv" className="inline-flex w-full items-center justify-center rounded-[14px] border border-line bg-white px-5 py-4 font-extrabold sm:w-auto">Rendez-vous gratuit · 15 min avec Ben</TrackLink>
+          <TrackLink href="#evaluation" label="hero" className={btnPrimary + " w-full sm:w-auto"}><ScanSearch className="size-5" aria-hidden />Analyser mon profil — 3 min →</TrackLink>
+          <TrackLink href="/rdv" label="hero-rdv" className="inline-flex w-full items-center justify-center gap-2 rounded-[14px] border border-line bg-white px-5 py-4 font-extrabold sm:w-auto"><CalendarCheck className="size-5 text-accent" aria-hidden />Rendez-vous gratuit · 15 min avec Ben</TrackLink>
         </div>
         <p className="mt-3 text-[.88rem] text-muted">{hero.microcopy}</p>
       </div>
@@ -90,7 +106,7 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
           {cohort && (
             <div className="flex items-center gap-4 rounded-2xl bg-ink px-3 py-2 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)] sm:px-4 sm:py-3">
               <div>
-                <div className="text-[.62rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase sm:text-[.7rem]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? "Places restantes" : "Cohorte formation CISSP"}</div>
+                <div className="flex items-center gap-1.5 text-[.62rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase sm:text-[.7rem]"><Users className="size-3.5" aria-hidden />{cohort.gauge.confirmed + cohort.gauge.held > 0 ? "Places restantes" : "Cohorte formation CISSP"}</div>
                 <div className="display text-[1.3rem] leading-none font-black sm:text-[1.6rem]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? cohort.gauge.remaining : cohort.gauge.capacity} <small className="text-[.8rem] font-semibold tracking-normal text-[#cbd5df] sm:text-sm">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? `sur ${cohort.gauge.capacity}` : "participants max."}</small></div>
               </div>
               {cohort.gauge.confirmed + cohort.gauge.held > 0 && <div className="hidden flex-1 sm:block"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>}
@@ -98,7 +114,7 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
           )}
           {cohort && (
             <div className="rounded-2xl bg-ink px-3 py-2 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)] sm:px-4 sm:py-3">
-              <div className="text-[.62rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase sm:text-[.7rem]">Admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)}</div>
+              <div className="flex items-center gap-1.5 text-[.62rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase sm:text-[.7rem]"><Timer className="size-3.5 shrink-0" aria-hidden />Admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)}</div>
               <div className="mt-1"><AdmissionCountdown closesAt={admissionClosesAt(cohort.startsAt).toISOString()} dark compact /></div>
             </div>
           )}
@@ -122,12 +138,16 @@ export function Proof({ settings }: { settings: SiteSettings }) {
     <section className="bg-ink py-14 text-white sm:py-16">
       <div className={shell}>
         <div className="grid gap-3.5 sm:grid-cols-3">
-          {settings.proof.numbers.slice(0, 3).map((n) => (
+          {settings.proof.numbers.slice(0, 3).map((n, i) => {
+            const Icon = PROOF_ICONS[i] ?? Check;
+            return (
             <div key={n.value + n.text} className="rounded-[18px] border border-white/10 bg-white/[.06] p-5">
+              <Icon className="mb-3 size-6 text-[#7be0c8]" aria-hidden />
               <div className="display text-[2.8rem] leading-none font-black tracking-[-.05em] text-[#7be0c8]">{n.value}</div>
               <p className="mt-2 text-[#cbd5df]">{n.text}</p>
             </div>
-          ))}
+            );
+          })}
         </div>
         <h2 className="display mt-10 max-w-[860px] text-[clamp(1.8rem,3.4vw,3.2rem)] leading-[1] font-black tracking-[-.05em]">{settings.proof.title}</h2>
         <p className="mt-3 max-w-[720px] text-[#cbd5df]">Votre niveau. Votre trajectoire.</p>
@@ -142,16 +162,20 @@ export function Method({ settings }: { settings: SiteSettings }) {
   return (
     <section id="methode" className="py-14 sm:py-16">
       <div className={shell}>
-        <div className={eyebrow}>Une méthode claire.</div>
+        <div className={eyebrow}><Compass className={eyebrowIcon} aria-hidden />Une méthode claire.</div>
         <h2 className={sectionTitle}>{method.title}</h2>
         <ol className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-          {method.steps.map((s, i) => (
+          {method.steps.map((s, i) => {
+            const Icon = STEP_ICONS[i] ?? Check;
+            return (
             <li key={s.title} className="rounded-[18px] border border-line bg-white p-5">
+              <span className="mb-3 grid size-10 place-items-center rounded-xl bg-accent-soft text-accent-ink"><Icon className="size-5" aria-hidden /></span>
               <div className="text-[.78rem] font-extrabold tracking-[.08em] text-accent uppercase">0{i + 1} · {s.kicker}</div>
               <h3 className="display mt-2.5 mb-2 text-[1.22rem] font-black">{s.title}</h3>
               <p className="text-[.95rem] text-muted">{s.text}</p>
             </li>
-          ))}
+            );
+          })}
         </ol>
       </div>
     </section>
@@ -164,15 +188,21 @@ export function Planning({ settings }: { settings: SiteSettings }) {
   return (
     <section id="planning" className="pb-14 sm:pb-16">
       <div className={shell}>
-        <div className={eyebrow}>Le planning</div>
+        <div className={eyebrow}><CalendarClock className={eyebrowIcon} aria-hidden />Le planning</div>
         <h2 className={sectionTitle}>15 jours. Sans arrêter de travailler.</h2>
         <div className="grid gap-3.5 sm:grid-cols-2">
-          {method.rhythm.map((r) => (
-            <div key={r.title} className="rounded-[18px] border border-line bg-white p-5">
-              <strong className="display block text-[1.6rem] tracking-[-.04em]">{r.title}</strong>
-              <p className="text-[.95rem] text-muted">{r.text}</p>
+          {method.rhythm.map((r, i) => {
+            const Icon = RHYTHM_ICONS[i] ?? CalendarDays;
+            return (
+            <div key={r.title} className="flex items-start gap-4 rounded-[18px] border border-line bg-white p-5">
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-ink"><Icon className="size-5" aria-hidden /></span>
+              <div>
+                <strong className="display block text-[1.6rem] tracking-[-.04em]">{r.title}</strong>
+                <p className="text-[.95rem] text-muted">{r.text}</p>
+              </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         <p className="mt-4 font-bold text-ink">Un rythme soutenu. Gérable.</p>
       </div>
@@ -188,9 +218,9 @@ export function Coach({ settings }: { settings: SiteSettings }) {
       <div className={shell + " grid items-start gap-8 lg:grid-cols-[auto_1fr]"}>
         <Image src="/images/coach-avatar.webp" alt={coach.name} width={512} height={512} unoptimized className="size-32 rounded-full border-4 border-white shadow-[var(--shadow-panel)] sm:size-40" />
         <div>
-          <div className={eyebrow}>Votre coach</div>
+          <div className={eyebrow}><BadgeCheck className={eyebrowIcon} aria-hidden />Votre coach</div>
           <h2 className={sectionTitle + " text-[clamp(1.8rem,3.2vw,3.2rem)]"}>« {coach.quote} »</h2>
-          <p className="text-[.95rem] font-extrabold tracking-[.04em] text-accent-ink uppercase">{coach.credentials.join(" · ")}</p>
+          <p className="flex items-center gap-2 text-[.95rem] font-extrabold tracking-[.04em] text-accent-ink uppercase"><ShieldCheck className="size-5 shrink-0" aria-hidden />{coach.credentials.join(" · ")}</p>
           <p className="mt-3 max-w-[720px] text-ink-2">{coach.bio}</p>
           {coach.linkedinUrl && <p className="mt-3 text-[.88rem]"><a href={coach.linkedinUrl} target="_blank" rel="noopener" className="underline underline-offset-4">Profil LinkedIn →</a></p>}
         </div>
@@ -207,7 +237,7 @@ export function Testimonials({ items }: { items: PublicTestimonial[] }) {
   return (
     <section id="temoignages" className="pb-14 sm:pb-16">
       <div className={shell}>
-        <div className={eyebrow}>Ils sont passés par là</div>
+        <div className={eyebrow}><MessageSquareQuote className={eyebrowIcon} aria-hidden />Ils sont passés par là</div>
         <h2 className={sectionTitle}>Des professionnels en poste, comme vous.</h2>
         <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
           {items.slice(0, 3).map((t) => (
@@ -231,14 +261,18 @@ export function Domains() {
   return (
     <section id="domaines" className="pb-14 sm:pb-16">
       <div className={shell}>
-        <div className={eyebrow}>Les 8 domaines</div>
+        <div className={eyebrow}><Layers className={eyebrowIcon} aria-hidden />Les 8 domaines</div>
         <h2 className={sectionTitle}>Tout le blueprint CISSP, relié.</h2>
         <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {CISSP_DOMAINS.map((d, i) => (
+          {CISSP_DOMAINS.map((d, i) => {
+            const Icon = DOMAIN_ICONS[d];
+            return (
             <li key={d} className="flex items-center gap-3 rounded-[14px] border border-line bg-white px-4 py-3 text-[.95rem] font-bold">
-              <span className="display text-[1.1rem] text-accent">{i + 1}</span>{DOMAIN_LABELS[d]}
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent-ink"><Icon className="size-[18px]" aria-hidden /></span>
+              <span><span className="display mr-1.5 text-accent">{i + 1}.</span>{DOMAIN_LABELS[d]}</span>
             </li>
-          ))}
+            );
+          })}
         </ol>
       </div>
     </section>
@@ -268,7 +302,7 @@ export function Video({ settings }: { settings: SiteSettings }) {
           <iframe src={embed} title={video.title} loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="size-full" />
         </div>
         <div>
-          <div className={eyebrow}>En {video.duration}</div>
+          <div className={eyebrow}><CirclePlay className={eyebrowIcon} aria-hidden />En {video.duration}</div>
           <h2 className={sectionTitle + " text-[clamp(1.8rem,3.2vw,3.2rem)]"}>{video.title}</h2>
           <p className="text-ink-2">{video.text}</p>
         </div>
@@ -293,11 +327,11 @@ export function LadderStrip({ services, ccCohort }: { services: Array<{ code: st
             <p className="display mt-1 text-[1.25rem] leading-tight font-black">Deux autres façons d’avancer.</p>
           </div>
           <TrackLink href="/demarrer" label="parcours-cc" className="group rounded-[14px] border border-line px-4 py-3 hover:border-ink">
-            <span className="block text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase">Débuter · certification CC d’ISC²</span>
+            <span className="flex items-center gap-1.5 text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase"><GraduationCap className="size-4 text-accent" aria-hidden />Débuter · certification CC d’ISC²</span>
             <span className="mt-0.5 block font-bold">15 jours pour votre première certification{ccCohort ? `, session ${formatCohortMonth(ccCohort.startsAt)}` : ""} <span className="text-accent-ink">→</span></span>
           </TrackLink>
           <TrackLink href="/conseil" label="parcours-conseil" className="group rounded-[14px] border border-line px-4 py-3 hover:border-ink">
-            <span className="block text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase">Conseil carrière · à toutes les étapes</span>
+            <span className="flex items-center gap-1.5 text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase"><Compass className="size-4 text-accent" aria-hidden />Conseil carrière · à toutes les étapes</span>
             <span className="mt-0.5 block font-bold">Débuter, évoluer vers le RSSI, se repositionner : des séances d’une heure avec Ben <span className="text-accent-ink">→</span></span>
           </TrackLink>
         </div>
@@ -312,12 +346,12 @@ export function Faq({ settings }: { settings: SiteSettings }) {
   return (
     <section id="faq" className="pb-14 sm:pb-16">
       <div className={shell}>
-        <div className={eyebrow}>Questions fréquentes</div>
+        <div className={eyebrow}><CircleHelp className={eyebrowIcon} aria-hidden />Questions fréquentes</div>
         <h2 className={sectionTitle}>Avant de vous décider.</h2>
         <div className="grid max-w-[860px] gap-2.5">
           {settings.faq.map((f) => (
             <TrackFaq key={f.q} question={f.q} className="group rounded-[14px] border border-line bg-white px-4.5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-4 font-bold [&::-webkit-details-marker]:hidden">{f.q}<span className="font-black text-accent group-open:hidden">+</span><span className="hidden font-black text-accent group-open:inline">–</span></summary>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-4 font-bold [&::-webkit-details-marker]:hidden">{f.q}<ChevronDown className="size-5 shrink-0 text-accent transition-transform group-open:rotate-180" aria-hidden /></summary>
               <p className="pb-4 text-ink-2">{f.a}</p>
             </TrackFaq>
           ))}
@@ -336,8 +370,8 @@ export function FinalCta({ cohort }: { cohort: HeroCohort }) {
           <h2 className="display text-[clamp(1.9rem,3.8vw,3.4rem)] leading-[1] font-black tracking-[-.05em]">Êtes-vous prêt pour le CISSP ?</h2>
           <p className="mx-auto mt-3 max-w-[560px] text-[#cbd5df]">Trois minutes pour le savoir{cohort ? `, avant la cohorte formation CISSP de ${formatCohortMonth(cohort.startsAt)}` : ""}. Résultat immédiat, gratuit, sans engagement.</p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <TrackLink href="#evaluation" label="final" className="inline-flex items-center justify-center rounded-[14px] bg-accent-bright px-6 py-4 font-extrabold text-ink">Analyser mon profil →</TrackLink>
-            <TrackLink href="/rdv" label="final-rdv" className="inline-flex items-center justify-center rounded-[14px] border border-white/30 px-6 py-4 font-extrabold text-white">Rendez-vous gratuit avec Ben</TrackLink>
+            <TrackLink href="#evaluation" label="final" className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-accent-bright px-6 py-4 font-extrabold text-ink"><ScanSearch className="size-5" aria-hidden />Analyser mon profil →</TrackLink>
+            <TrackLink href="/rdv" label="final-rdv" className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-white/30 px-6 py-4 font-extrabold text-white"><CalendarCheck className="size-5" aria-hidden />Rendez-vous gratuit avec Ben</TrackLink>
           </div>
         </div>
       </div>

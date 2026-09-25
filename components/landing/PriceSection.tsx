@@ -1,5 +1,7 @@
 "use client";
 
+import { Check, ScanSearch, Users } from "lucide-react";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AdmissionCountdown } from "@/components/offer/AdmissionCountdown";
@@ -76,7 +78,7 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
       <div className="grid items-start gap-8 rounded-[28px] border border-line bg-white p-6 shadow-[var(--shadow-panel)] sm:p-9 lg:grid-cols-2">
         <div>
           <div className={eyebrow}>
-            <span className="rounded-full border border-accent/10 bg-accent/10 px-2.5 py-1.5 tracking-[.1em] text-accent">Cohorte formation CISSP</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/10 bg-accent/10 px-2.5 py-1.5 tracking-[.1em] text-accent"><Users className="size-3.5" aria-hidden />Cohorte formation CISSP</span>
             <span>{startsAt ? formatCohortMonth(startsAt) : "prochaine session"}</span>
           </div>
           <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -102,9 +104,9 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
         <div className="border-t border-line pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
           <h2 className="display text-[1.4rem] leading-tight font-black">{offer.title}</h2>
           <ul className="mt-3 grid gap-2 text-[.95rem] text-ink-2">
-            {offer.included.map((i) => <li key={i} className="relative pl-6.5 before:absolute before:left-0 before:font-black before:text-accent before:content-['✓']">{i}</li>)}
+            {offer.included.map((i) => <li key={i} className="flex items-start gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={3} aria-hidden />{i}</li>)}
           </ul>
-          <TrackLink href="#evaluation" label="prix" className={btnPrimary + " mt-5 w-full"}>Analyser mon profil →</TrackLink>
+          <TrackLink href="#evaluation" label="prix" className={btnPrimary + " mt-5 w-full"}><ScanSearch className="size-5" aria-hidden />Analyser mon profil →</TrackLink>
           <p className="mt-3 text-[.86rem] font-bold text-ink-2">Carte · Orange Money · MTN MoMo</p>
           {startsAt && (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 text-[.86rem] text-muted">

@@ -1,3 +1,4 @@
+import { GraduationCap } from "lucide-react";
 import Link from "next/link";
 
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
@@ -16,7 +17,7 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-[var(--color-muted)]">← Administration</Link>
-      <h1 className="mt-3 text-2xl font-bold">Cohortes</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><GraduationCap className="size-6 shrink-0 text-accent" aria-hidden />Cohortes</h1>
       {erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{erreur}</p>}
 
       <ul className="mt-6 flex flex-col gap-3">

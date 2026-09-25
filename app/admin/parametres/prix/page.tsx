@@ -1,3 +1,4 @@
+import { Tag } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
@@ -13,7 +14,7 @@ export default async function PricingPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
-      <h1 className="mt-3 text-2xl font-bold">Tarifs</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Tag className="size-6 shrink-0 text-accent" aria-hidden />Tarifs</h1>
       <p className="mt-1 text-sm text-muted">Prix en USD, la monnaie de référence. Un pays absent de toute liste relève de l&apos;international. Un montant à 0 signifie « sur devis ».</p>
       <div className="mt-5 grid gap-3">
         {tiers.map((t) => (

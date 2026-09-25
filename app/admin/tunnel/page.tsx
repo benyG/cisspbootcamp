@@ -1,3 +1,4 @@
+import { Filter } from "lucide-react";
 import Link from "next/link";
 
 import { QUESTIONS } from "@/lib/scanner/questions";
@@ -21,7 +22,7 @@ export default async function TunnelPage() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Administration</Link>
-      <h1 className="mt-3 text-2xl font-bold">Tunnel de la semaine</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Filter className="size-6 shrink-0 text-accent" aria-hidden />Tunnel de la semaine</h1>
       <p className="mt-1 text-sm text-muted">Du {fmt.format(report.since)} au {fmt.format(report.until)}, comparé aux sept jours précédents. Visiteurs distincts par étape.</p>
 
       {report.completionAlert && (

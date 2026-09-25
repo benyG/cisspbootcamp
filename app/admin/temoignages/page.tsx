@@ -1,3 +1,4 @@
+import { MessageSquareQuote } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
@@ -13,7 +14,7 @@ export default async function TestimonialsPage() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Administration</Link>
-      <h1 className="mt-3 text-2xl font-bold">Témoignages</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><MessageSquareQuote className="size-6 shrink-0 text-accent" aria-hidden />Témoignages</h1>
       <p className="mt-1 text-sm text-muted">Prénom, rôle, pays : dans une communauté où tout le monde se connaît, un témoignage anonyme ne vaut rien. La section est masquée tant qu&apos;aucun n&apos;est publié.</p>
 
       <ul className="mt-6 grid gap-3">

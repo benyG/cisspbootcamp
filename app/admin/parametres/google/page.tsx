@@ -1,3 +1,4 @@
+import { CalendarCheck } from "lucide-react";
 import Link from "next/link";
 
 import { getCredential } from "@/lib/calendar/google";
@@ -29,7 +30,7 @@ export default async function GoogleSettingsPage({
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-[var(--color-muted)]">← Administration</Link>
-      <h1 className="mt-3 text-2xl font-bold">Agenda et disponibilités</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><CalendarCheck className="size-6 shrink-0 text-accent" aria-hidden />Agenda et disponibilités</h1>
 
       {ok && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Agenda connecté.</p>}
       {erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">Connexion échouée : {erreur}</p>}
