@@ -125,7 +125,7 @@ const MESSAGE_TEMPLATES = [
     body:
       "Bonjour {{prenom}},\n\n" +
       "Votre place dans la {{cohorte}} est confirmée, et la préparation commence maintenant. " +
-      "Vous trouverez en pièces jointes :\n{{liste_documents}}\n\n" +
+      "Voici vos documents de préparation, en pièces jointes ou en lien :\n{{liste_documents}}\n\n" +
       "Lisez-les dans l'ordre, prenez des notes sur ce qui vous semble flou : nous en parlerons dès la première session.\n\n" +
       "Une question d'ici là ? Répondez simplement à ce message.\n\n" +
       "Ben — Coach CISSP",
