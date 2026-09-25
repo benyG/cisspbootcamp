@@ -227,7 +227,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
               )}
               {service && (
                 <p className="mt-3 rounded-[14px] border border-line bg-white px-4 py-3 text-[.9rem] text-ink-2">
-                  {serviceLead} <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className="font-bold underline underline-offset-4">{service.service.name}</TrackLink>, {service.service.durationLabel} avec Ben, {service.usdLabel}. <TrackLink href={`/conseil?t=${token}`} event="cta_click" label="resultat-conseil" className="underline underline-offset-4">Toutes les séances</TrackLink>.
+                  {serviceLead} <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className="font-bold underline underline-offset-4">{service.service.name}</TrackLink>, {service.service.durationLabel} avec Ben, {service.usdLabel}. <TrackLink href={`/rdv?type=approfondie&t=${token}`} event="cta_click" label="resultat-conseil" className="underline underline-offset-4">Toutes les séances</TrackLink>.
                 </p>
               )}
             </>
@@ -253,7 +253,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
               <p className="mt-1 text-[.95rem] text-ink-2">{service.service.tagline} Vous repartez avec : {service.service.deliverable.charAt(0).toLowerCase() + service.service.deliverable.slice(1)}.</p>
               <p className="mt-2 text-[.9rem]"><b>{service.usdLabel}</b>{service.localLabel && <span className="text-muted"> ≈ {service.localLabel}</span>}{service.service.creditable && <span className="text-muted"> · déduit du bootcamp si vous vous inscrivez dans les 90 jours</span>}</p>
               <TrackLink href={`/conseil/${service.service.code}?t=${token}`} event="cta_click" label={`resultat-${service.service.code}`} className={btnPrimary + " mt-4 w-full"}>Réserver un conseil carrière →</TrackLink>
-              <TrackLink href={`/conseil?t=${token}`} event="cta_click" label="resultat-conseil" className="mt-2 inline-flex w-full items-center justify-center py-2 text-[.9rem] font-bold text-muted underline underline-offset-4">Voir les autres séances</TrackLink>
+              <TrackLink href={`/rdv?type=approfondie&t=${token}`} event="cta_click" label="resultat-conseil" className="mt-2 inline-flex w-full items-center justify-center py-2 text-[.9rem] font-bold text-muted underline underline-offset-4">Voir les autres séances</TrackLink>
             </div>
           ) : (
             <Link href="/" className={btnPrimary + " mt-5 w-full"}>Retour à l’accueil</Link>

@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 
 import { type BookResult, bookCall, cancelCall, isSlotBookable, rescheduleCall } from "@/lib/booking";
 import { prisma } from "@/lib/db";
-import { setPendingSlot } from "@/lib/pending-slot";
+import { readPendingSlot, setPendingSlot } from "@/lib/pending-slot";
+import { formatKey, isServiceCode, parseFormatKey } from "@/lib/services";
 import { resolveTierCode } from "@/lib/pricing";
 import { createToken } from "@/lib/tokens";
 
@@ -85,4 +86,40 @@ export async function holdSlotThenProfile(input: { start: string; timezone: stri
   }
   await setPendingSlot({ start: parsed.data.start, timezone: parsed.data.timezone, kind: "discovery" });
   redirect("/scanner?suite=rdv");
+}
+
+/**
+ * Paid path (Ben, 24/09, evening): the visitor chose a format (duration and
+ * number of sessions), then a slot for it. The slot is kept in the cookie
+ * and the palette of services of that format opens next, with prices.
+ */
+export async function holdConsultingFormatSlot(input: { format: string; token?: string; start: string; timezone: string }): Promise<BookResult> {
+  const parsed = z.object({ format: z.string().max(16), token: z.string().max(200).optional(), start: instant, timezone: timeZone }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Demande invalide." };
+  const shape = parseFormatKey(parsed.data.format);
+  if (!shape) return { ok: false, error: "Format inconnu." };
+  if (!(await isSlotBookable(new Date(parsed.data.start), new Date(), { kind: "consulting", sessionMinutes: shape.sessionMinutes }))) {
+    return { ok: false, error: "Ce créneau vient d'être pris. Choisissez-en un autre." };
+  }
+  await setPendingSlot({ start: parsed.data.start, timezone: parsed.data.timezone, kind: "consulting", format: parsed.data.format });
+  const t = parsed.data.token && parsed.data.token.length >= 10 ? `?t=${encodeURIComponent(parsed.data.token)}` : "";
+  redirect(`/rdv/conseil${t}`);
+}
+
+/**
+ * The service picked from the palette: it must belong to the format the
+ * slot was chosen for. A known prospect goes to payment, a new one to the
+ * questionnaire, which then leads to payment.
+ */
+export async function chooseConsultingService(input: { code: string; token?: string }): Promise<{ ok: false; error: string } | never> {
+  const parsed = z.object({ code: z.string().refine(isServiceCode, "Service inconnu"), token: z.string().max(200).optional() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Service inconnu." };
+  const pending = await readPendingSlot();
+  if (!pending || pending.kind !== "consulting" || !pending.format) return { ok: false, error: "Choisissez d'abord un créneau." };
+  const service = await prisma.service.findUnique({ where: { code: parsed.data.code }, select: { sessionMinutes: true, sessions: true, active: true } });
+  if (!service || !service.active || formatKey(service.sessionMinutes, service.sessions) !== pending.format) return { ok: false, error: "Cette séance ne correspond pas au créneau choisi." };
+  await setPendingSlot({ ...pending, service: parsed.data.code });
+  const token = parsed.data.token && parsed.data.token.length >= 10 ? parsed.data.token : undefined;
+  const known = token ? await prisma.scannerResponse.findUnique({ where: { resultToken: token }, select: { id: true } }) : null;
+  redirect(known ? `/conseil/${parsed.data.code}?t=${encodeURIComponent(token as string)}` : "/scanner?suite=conseil");
 }

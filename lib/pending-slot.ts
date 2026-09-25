@@ -14,8 +14,10 @@ const schema = z.object({
   start: z.string().datetime(),
   timezone: z.string().min(1).max(64),
   kind: z.enum(["discovery", "consulting"]),
-  /** Service code for a consulting session. */
+  /** Service code for a consulting session, once chosen. */
   service: z.string().max(32).optional(),
+  /** Consulting format ("60x1") chosen before the service (Ben, 24/09). */
+  format: z.string().max(16).optional(),
 });
 
 export type PendingSlot = z.infer<typeof schema>;

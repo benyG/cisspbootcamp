@@ -102,7 +102,7 @@ test("scanner : 11 questions, consentement, résultat immédiat", async ({ page 
 test("réservation : un créneau réel, confirmé, enregistré", async ({ page }) => {
   await page.goto(`/rdv?t=${resultToken}`);
 
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(`${prospect.firstName}, choisissez votre créneau.`);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(`${prospect.firstName}, prenez rendez-vous.`);
   await expect(page.getByText(/heures affichées dans votre fuseau/i)).toBeVisible();
 
   // Slots are the buttons labelled with a time; the first one is chosen.
@@ -219,15 +219,30 @@ test("paiement : seul le webhook Stripe signé rend la place payée", async ({ p
 test("un prospect « pas encore » achète une heure de conseil et réserve sa séance", async ({ page, request }) => {
   await page.goto("/conseil");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/à toutes les étapes/i);
+  // No price before a slot (Ben, 24/09, evening): the catalogue lists formats only.
+  await expect(page.getByText(/^60 USD/)).toHaveCount(0);
+  await page.getByRole("link", { name: /^1 h/ }).click();
+  await expect(page).toHaveURL(/\/rdv\?type=approfondie&format=60x1/);
+  await expect(page.getByRole("heading", { name: /un créneau pour 1 h/i })).toBeVisible();
+  const consultingSlot = page.getByRole("button").filter({ hasText: /^\d{1,2}:\d{2}$/ }).first();
+  await expect(consultingSlot).toBeVisible();
+  await consultingSlot.click();
+  await page.getByRole("button", { name: /retenir ce créneau, puis choisir la séance/i }).click();
+  await expect(page).toHaveURL(/\/rdv\/conseil/);
+  await expect(page.getByText(/créneau retenu/i)).toBeVisible();
   await page.locator("#service-country").selectOption("CM");
   await expect(page.getByText(/bilan de carrière cybersécurité/i).first()).toBeVisible();
   await expect(page.getByText(/^60 USD/).first()).toBeVisible();
+  await expect(page.getByText(/mentorat mensuel/i)).toHaveCount(0);
+  await page.getByRole("link", { name: /choisir cette séance/i }).first().click();
+  await expect(page).toHaveURL(/\/scanner\?suite=conseil/);
 
   await page.goto("/conseil/bilan?pays=CM");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/bilan de carrière/i);
-  // Slot first, payment after (Ben, 24/09): the picker opens the page, the payment form waits behind it.
-  await expect(page.getByRole("heading", { name: /choisissez votre créneau/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /retenir ce créneau/i })).toBeVisible();
+  // The slot chosen on the palette is kept: the order page opens on the payment, with a way back.
+  await expect(page.getByText(/créneau retenu/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: /payer par carte bancaire/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^changer$/i })).toBeVisible();
 
   // The order itself, as the server action would create it, then the webhook.
   const stamp = Date.now();
@@ -329,7 +344,8 @@ test("un débutant s'inscrit à la formation CC depuis /demarrer", async ({ page
 /** The free contact starts with the slot; the questionnaire confirms it (Ben, 24/09). */
 test("premier contact : le créneau d'abord, le profil ensuite", async ({ page }) => {
   await page.goto("/rdv");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(/15 minutes avec ben, gratuites/i);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/prendre rendez-vous avec ben/i);
+  await expect(page.getByRole("link", { name: /consultation approfondie/i })).toBeVisible();
   const slot = page.getByRole("button").filter({ hasText: /^\d{1,2}:\d{2}$/ }).first();
   await expect(slot).toBeVisible();
   await slot.click();

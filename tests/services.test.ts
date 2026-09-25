@@ -98,3 +98,24 @@ describe("recommendedProgram", () => {
     expect(recommendedProgram("ready", { experience: "five_plus", professionalStatus: "employed" })).toBeNull();
   });
 });
+
+describe("formats de consultation (durée d'abord, Ben 24/09)", async () => {
+  const { formatKey, groupByFormat, parseFormatKey, servicesInFormat, SERVICE_CATALOGUE } = await import("@/lib/services");
+  const catalogue = Object.values(SERVICE_CATALOGUE);
+
+  it("regroupe les séances par durée et nombre de séances, dans l'ordre du catalogue", () => {
+    const formats = groupByFormat(catalogue);
+    expect(formats.map((f) => f.key)).toEqual(["60x1", "60x3", "45x2"]);
+    expect(formats[0].label).toBe("1 h");
+    expect(formats[0].services).toContain("Bilan de carrière cybersécurité");
+    expect(formats[2].label).toBe("2 × 45 min par mois");
+  });
+
+  it("filtre les séances d'un format et lit une clé", () => {
+    expect(servicesInFormat(catalogue, "60x3").map((s) => s.code)).toEqual(["reconversion"]);
+    expect(parseFormatKey("60x1")).toEqual({ sessionMinutes: 60, sessions: 1 });
+    expect(parseFormatKey("abc")).toBeNull();
+    expect(parseFormatKey("5x1")).toBeNull();
+    expect(formatKey(45, 2)).toBe("45x2");
+  });
+});

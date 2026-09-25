@@ -44,8 +44,8 @@ export function Topbar() {
       <div className="flex items-center justify-between py-5">
         <Link href="/" className="display text-[1.18rem] font-black tracking-[-.04em]">CISSP <span className="text-accent">Bootcamp</span></Link>
         <nav className="flex items-center gap-2 sm:gap-3">
-          <TrackLink href="/conseil" label="topbar-conseil" className="px-2 py-2.5 text-[.92rem] font-bold text-ink-2 underline-offset-4 hover:underline">Conseil carrière</TrackLink>
-          <TrackLink href="/#evaluation" label="topbar" className="hidden rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold sm:inline-flex">Analyser mon profil →</TrackLink>
+          <TrackLink href="/conseil" label="topbar-conseil" className="hidden px-2 py-2.5 text-[.92rem] font-bold text-ink-2 underline-offset-4 hover:underline sm:inline-flex">Conseil carrière</TrackLink>
+          <TrackLink href="/rdv" label="topbar-rdv" className="rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold">Rendez-vous gratuit</TrackLink>
         </nav>
       </div>
     </header>
@@ -71,7 +71,10 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
             <li key={p.title} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded-full bg-accent-soft text-[.7rem] font-black text-accent-ink">✓</span>{p.title}</li>
           ))}
         </ul>
-        <TrackLink href="#evaluation" label="hero" className={btnPrimary + " w-full sm:w-auto"}>Analyser mon profil — 3 min →</TrackLink>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <TrackLink href="#evaluation" label="hero" className={btnPrimary + " w-full sm:w-auto"}>Analyser mon profil — 3 min →</TrackLink>
+          <TrackLink href="/rdv" label="hero-rdv" className="inline-flex w-full items-center justify-center rounded-[14px] border border-line bg-white px-5 py-4 font-extrabold sm:w-auto">Rendez-vous gratuit · 15 min avec Ben</TrackLink>
+        </div>
         <p className="mt-3 text-[.88rem] text-muted">{hero.microcopy}</p>
       </div>
 
@@ -127,7 +130,7 @@ export function Proof({ settings }: { settings: SiteSettings }) {
           ))}
         </div>
         <h2 className="display mt-10 max-w-[860px] text-[clamp(1.8rem,3.4vw,3.2rem)] leading-[1] font-black tracking-[-.05em]">{settings.proof.title}</h2>
-        <p className="mt-3 max-w-[720px] text-[#cbd5df]">Votre diagnostic estime votre horizon de préparation selon votre profil : ni promesse, ni délai fixe.</p>
+        <p className="mt-3 max-w-[720px] text-[#cbd5df]">Votre niveau. Votre trajectoire.</p>
       </div>
     </section>
   );
@@ -139,7 +142,7 @@ export function Method({ settings }: { settings: SiteSettings }) {
   return (
     <section id="methode" className="py-14 sm:py-16">
       <div className={shell}>
-        <div className={eyebrow}>La méthode</div>
+        <div className={eyebrow}>Une méthode claire.</div>
         <h2 className={sectionTitle}>{method.title}</h2>
         <ol className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
           {method.steps.map((s, i) => (
@@ -162,7 +165,7 @@ export function Planning({ settings }: { settings: SiteSettings }) {
     <section id="planning" className="pb-14 sm:pb-16">
       <div className={shell}>
         <div className={eyebrow}>Le planning</div>
-        <h2 className={sectionTitle}>15 jours. Pensés pour les professionnels.</h2>
+        <h2 className={sectionTitle}>15 jours. Sans arrêter de travailler.</h2>
         <div className="grid gap-3.5 sm:grid-cols-2">
           {method.rhythm.map((r) => (
             <div key={r.title} className="rounded-[18px] border border-line bg-white p-5">
@@ -171,7 +174,7 @@ export function Planning({ settings }: { settings: SiteSettings }) {
             </div>
           ))}
         </div>
-        <p className="mt-4 font-bold text-ink">Un format exigeant, mais compatible avec un emploi à temps plein.</p>
+        <p className="mt-4 font-bold text-ink">Un rythme soutenu. Gérable.</p>
       </div>
     </section>
   );
@@ -332,7 +335,10 @@ export function FinalCta({ cohort }: { cohort: HeroCohort }) {
         <div className="rounded-[28px] bg-ink px-6 py-10 text-center text-white sm:py-14">
           <h2 className="display text-[clamp(1.9rem,3.8vw,3.4rem)] leading-[1] font-black tracking-[-.05em]">Êtes-vous prêt pour le CISSP ?</h2>
           <p className="mx-auto mt-3 max-w-[560px] text-[#cbd5df]">Trois minutes pour le savoir{cohort ? `, avant la cohorte formation CISSP de ${formatCohortMonth(cohort.startsAt)}` : ""}. Résultat immédiat, gratuit, sans engagement.</p>
-          <TrackLink href="#evaluation" label="final" className="mt-6 inline-flex items-center justify-center rounded-[14px] bg-accent-bright px-6 py-4 font-extrabold text-ink">Analyser mon profil →</TrackLink>
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <TrackLink href="#evaluation" label="final" className="inline-flex items-center justify-center rounded-[14px] bg-accent-bright px-6 py-4 font-extrabold text-ink">Analyser mon profil →</TrackLink>
+            <TrackLink href="/rdv" label="final-rdv" className="inline-flex items-center justify-center rounded-[14px] border border-white/30 px-6 py-4 font-extrabold text-white">Rendez-vous gratuit avec Ben</TrackLink>
+          </div>
         </div>
       </div>
     </section>

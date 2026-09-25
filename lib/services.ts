@@ -179,3 +179,51 @@ export function formatDuration(sessions: number, sessionMinutes: number): string
   const one = sessionMinutes % 60 === 0 ? `${sessionMinutes / 60} h` : sessionMinutes > 60 ? `${Math.floor(sessionMinutes / 60)} h ${sessionMinutes % 60}` : `${sessionMinutes} min`;
   return sessions > 1 ? `${sessions} × ${one}` : one;
 }
+
+/**
+ * A consulting "format" is what the prospect picks first (Ben, 24/09):
+ * the duration and number of sessions, before any service or price. Each
+ * format groups the services that share it, so the slots computed for it
+ * suit every service it contains.
+ */
+export type ServiceFormat = {
+  /** "60x1": session minutes × sessions. */
+  key: string;
+  sessionMinutes: number;
+  sessions: number;
+  label: string;
+  /** Names of the services in this format, in catalogue order. */
+  services: string[];
+};
+
+export function formatKey(sessionMinutes: number, sessions: number): string {
+  return `${sessionMinutes}x${sessions}`;
+}
+
+export function parseFormatKey(key: string): { sessionMinutes: number; sessions: number } | null {
+  const match = /^(\d{2,3})x(\d{1,2})$/.exec(key);
+  if (!match) return null;
+  const sessionMinutes = Number(match[1]);
+  const sessions = Number(match[2]);
+  if (sessionMinutes < 15 || sessionMinutes > 180 || sessions < 1 || sessions > 12) return null;
+  return { sessionMinutes, sessions };
+}
+
+export function groupByFormat<T extends { code: string; name: string; sessionMinutes: number; sessions: number }>(services: readonly T[]): ServiceFormat[] {
+  const formats: ServiceFormat[] = [];
+  for (const service of services) {
+    const key = formatKey(service.sessionMinutes, service.sessions);
+    let format = formats.find((f) => f.key === key);
+    if (!format) {
+      const monthly = service.code === "mentorat";
+      format = { key, sessionMinutes: service.sessionMinutes, sessions: service.sessions, label: formatDuration(service.sessions, service.sessionMinutes) + (monthly ? " par mois" : ""), services: [] };
+      formats.push(format);
+    }
+    format.services.push(service.name);
+  }
+  return formats;
+}
+
+export function servicesInFormat<T extends { sessionMinutes: number; sessions: number }>(services: readonly T[], key: string): T[] {
+  return services.filter((s) => formatKey(s.sessionMinutes, s.sessions) === key);
+}
