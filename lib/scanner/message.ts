@@ -1,7 +1,6 @@
 import type { ProfileAnalysis } from "@/lib/analysis";
 import type { CohortCandidate } from "@/lib/cohorts";
 import { formatCohortMonth } from "@/lib/cohorts";
-import { recommendedProgram } from "@/lib/programs";
 import { buildReasons, type ScannerAnswers } from "@/lib/scoring";
 
 /**
@@ -32,7 +31,7 @@ export function draftCoachMessage(input: {
   paragraphs.push(timelineParagraph(analysis, cohort));
 
   // 3. La suite.
-  paragraphs.push(nextStepParagraph(analysis, answers));
+  paragraphs.push(nextStepParagraph(analysis));
 
   paragraphs.push("Ben\nCoach CISSP");
 
@@ -71,7 +70,7 @@ function timelineParagraph(
   return sentences.join(" ");
 }
 
-function nextStepParagraph(analysis: ProfileAnalysis, answers: ScannerAnswers): string {
+function nextStepParagraph(analysis: ProfileAnalysis): string {
   switch (analysis.recommendation) {
     case "now":
       return (
@@ -82,25 +81,17 @@ function nextStepParagraph(analysis: ProfileAnalysis, answers: ScannerAnswers): 
       );
     case "with_condition":
       return (
-        "Prochaine étape : 15 minutes ensemble, pour lever la condition dont je " +
-        "parle plus haut et fixer votre date d'examen. Le lien pour réserver est ci-dessous. " +
+        "Prochaine étape : 15 minutes ensemble, pour caler votre plan Associate of ISC² " +
+        "et fixer votre date d'examen. Le lien pour réserver est ci-dessous. " +
         "D'ici là, cinq questions d'entraînement CISSP vous diront où vous en êtes : le lien du test est là aussi."
       );
     case "build_first":
-      if (recommendedProgram("not_yet", answers) === "cc") {
-        return (
-          "Prochaine étape : votre première certification. La CC d'ISC² ne demande aucune " +
-          "expérience, et je la prépare avec vous en 15 jours, en français : dix heures de " +
-          "sessions, les cinq domaines, un examen blanc, un plan jusqu'au jour J. C'est la " +
-          "même maison que le CISSP, et le chemin est tracé. Le lien est ci-dessous ; si vous " +
-          "préférez d'abord en parler, une heure de conseil carrière est là aussi."
-        );
-      }
       return (
-        "Prochaine étape : une heure ensemble, en séance de conseil carrière, pour faire " +
-        "le point sur votre parcours, choisir la voie et la première certification qui vous " +
-        "conviennent, et repartir avec un plan écrit. Le lien pour réserver est ci-dessous. " +
-        "Cette heure est déduite du bootcamp si vous le rejoignez dans les 90 jours."
+        "Prochaine étape : votre première certification. La CC d'ISC² ne demande aucune " +
+        "expérience, et je la prépare avec vous en 15 jours, en français : dix heures de " +
+        "sessions, les cinq domaines, un examen blanc, un plan jusqu'au jour J. C'est la " +
+        "même maison que le CISSP, et le CISSP en Associate of ISC² vient juste derrière. " +
+        "Le lien est ci-dessous ; pour poser toute la trajectoire, une séance de conseil carrière est là aussi."
       );
   }
 }

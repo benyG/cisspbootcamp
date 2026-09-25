@@ -248,3 +248,22 @@ describe("answersSchema", () => {
     expect(answersSchema.safeParse(incomplete).success).toBe(false);
   });
 });
+
+describe("les raisons ne ferment jamais la porte (Ben, 25/09)", async () => {
+  const { buildReasons, answersSchema } = await import("@/lib/scoring");
+  const base = answersSchema.parse({
+    country: "SN", professionalStatus: "employed", experience: "one_two", domains: ["network_security"], hasFourYearDegree: false,
+    certifications: [], englishReading: 3, examAttempt: "none", examGoal: "six_to_twelve", budget: "to_discuss", cohortAvailability: "unsure",
+  });
+  it("parle d'Associate of ISC² et de la CC à un profil junior", () => {
+    const text = buildReasons(base, "not_yet").join(" ");
+    expect(text).toContain("Associate of ISC²");
+    expect(text).toContain("certification CC");
+    expect(text).not.toMatch(/n'y êtes pas encore|viendra plus tard|pas prêt/i);
+  });
+  it("idem pour un étudiant", () => {
+    const text = buildReasons({ ...base, professionalStatus: "student", experience: "none" }, "not_yet").join(" ");
+    expect(text).toContain("Associate of ISC²");
+    expect(text).not.toMatch(/viendra plus tard/i);
+  });
+});

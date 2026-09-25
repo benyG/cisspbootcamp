@@ -11,7 +11,6 @@ import { sendEmail } from "@/lib/messaging/email";
 import { formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
 import { resolveTierCode } from "@/lib/pricing";
 import { draftSalesMessage } from "@/lib/scanner/ai-message";
-import { recommendedProgram } from "@/lib/programs";
 import { loadScannerContext, priceLabelFor } from "@/lib/scanner/context";
 import { bookCall } from "@/lib/booking";
 import { clearPendingSlot, readPendingSlot } from "@/lib/pending-slot";
@@ -90,8 +89,9 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
   const analysis = analyseProfile(answers);
   const consentAt = new Date();
   const resultToken = createToken();
-  // Scanner without a call → J+2 (SPECS A6). A "pas encore" lead is parked in nurture instead.
-  const followup = analysis.readiness === "not_yet" ? null : nextFollowupAt("scanner", 0, consentAt);
+  // Scanner without a call → J+2 (SPECS A6), for every verdict.
+  // Everyone is followed up: the foundations path sells the CC course (Ben, 25/09).
+  const followup = nextFollowupAt("scanner", 0, consentAt);
 
   // A placeholder until the AI draft lands; the admin shows it as "en cours".
   const placeholder = "Rédaction du message en cours…";
@@ -118,7 +118,7 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
         utmContent: utm?.content,
         utmTerm: utm?.term,
         unsubscribeToken: createToken(),
-        status: analysis.readiness === "not_yet" ? "nurture" : "new",
+        status: "new",
         nextFollowupAt: followup,
         followupCount: 0,
       },
@@ -185,9 +185,7 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
       (context.cohort && analysis.readiness !== "not_yet"
         ? `Prix promotionnel de lancement : ${priceLabelFor(answers.country, context.tiers)}, garanti jusqu'au ${formatAdmissionDeadline(context.cohort.startsAt)} (fin des admissions de la cohorte de ${formatCohortMonth(context.cohort.startsAt)}).\n\n`
         : analysis.readiness === "not_yet"
-          ? recommendedProgram(analysis.readiness, answers) === "cc"
-            ? `La marche qui vous convient maintenant : la certification CC d'ISC², sans prérequis, préparée en 15 jours avec moi. Votre première certification, dans la maison du CISSP : ${env.NEXT_PUBLIC_APP_URL}/demarrer?t=${resultToken}\nEt si vous préférez d'abord en parler, une heure de conseil : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${resultToken}\n\n`
-            : `La marche qui vous convient maintenant : une heure de conseil carrière avec moi, pour choisir la voie et la première certification, avec un plan écrit. Déduite du bootcamp si vous le rejoignez dans les 90 jours : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${resultToken}\n\n`
+          ? `Votre première marche : la certification CC d'ISC², sans prérequis, préparée en 15 jours avec moi, puis le CISSP en Associate of ISC² juste derrière. Votre première certification, dans la maison du CISSP : ${env.NEXT_PUBLIC_APP_URL}/demarrer?t=${resultToken}\nEt pour poser toute la trajectoire, une séance de conseil carrière : ${env.NEXT_PUBLIC_APP_URL}/rdv?type=approfondie&t=${resultToken}\n\n`
           : "") +
       `Je reviens vers vous personnellement sous 24 h.\n\nBen\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${lead.unsubscribeToken}`,
   });
@@ -238,5 +236,5 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
 }
 
 function readinessLabel(readiness: "ready" | "conditional" | "not_yet"): string {
-  return readiness === "ready" ? "Prêt" : readiness === "conditional" ? "Prêt sous conditions" : "Pas encore";
+  return readiness === "ready" ? "Éligible au titre" : readiness === "conditional" ? "Éligible via Associate" : "Fondations (CC d'abord)";
 }

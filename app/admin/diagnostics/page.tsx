@@ -5,9 +5,9 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 const READINESS_LABEL = {
-  ready: "Prêt",
-  conditional: "Sous conditions",
-  not_yet: "Pas encore",
+  ready: "Éligible",
+  conditional: "Associate",
+  not_yet: "Fondations (CC)",
 } as const;
 
 /** Diagnoses waiting for Ben, oldest first: the promise is 24 hours. */

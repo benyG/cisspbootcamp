@@ -80,7 +80,7 @@ export async function approveDiagnosis(formData: FormData): Promise<ActionResult
     }),
     prisma.lead.update({
       where: { id: response.leadId },
-      data: { status: response.readiness === "not_yet" ? "nurture" : "contacted" },
+      data: { status: "contacted" },
     }),
     prisma.actionLog.create({
       data: {

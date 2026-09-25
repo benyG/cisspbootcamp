@@ -70,12 +70,11 @@ export const CC_DOMAINS: ReadonlyArray<{ title: string; weight: string; text: st
 ];
 
 /**
- * The programme that fits a prospect who is not ready for the bootcamp
- * (docs/OFFRES.md §4): no experience or a career change → the CC course.
- * Everyone else gets the consulting hour (lib/services.ts) or the call.
+ * The programme offered first on the foundations path (Ben, 25/09/2026):
+ * no experience or 1–2 years, student or career change → the CC course, the
+ * CISSP as Associate of ISC² right after. Everyone else is sold the bootcamp.
  */
 export function recommendedProgram(readiness: Readiness, answers: Pick<ScannerAnswers, "experience" | "professionalStatus">): ProgramCode | null {
-  if (readiness !== "not_yet") return null;
-  if (answers.professionalStatus === "career_change" || answers.experience === "none") return "cc";
-  return null;
+  void answers;
+  return readiness === "not_yet" ? "cc" : null;
 }

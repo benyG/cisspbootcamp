@@ -216,7 +216,7 @@ test("paiement : seul le webhook Stripe signé rend la place payée", async ({ p
  * page shows the service, and a paid order (confirmed through the same signed
  * Stripe webhook) opens the session-booking page on the consulting windows.
  */
-test("un prospect « pas encore » achète une heure de conseil et réserve sa séance", async ({ page, request }) => {
+test("un prospect « fondations » achète une heure de conseil et réserve sa séance", async ({ page, request }) => {
   await page.goto("/conseil");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/à toutes les étapes/i);
   // No price before a slot (Ben, 24/09, evening): the catalogue lists formats only.

@@ -9,7 +9,7 @@ import { markSessionOutcome, remindSessionBooking } from "./conseil/actions";
 
 export const dynamic = "force-dynamic";
 
-const READINESS: Record<string, string> = { ready: "Prêt", conditional: "Sous conditions", not_yet: "Pas encore" };
+const READINESS: Record<string, string> = { ready: "Éligible", conditional: "Associate", not_yet: "Fondations (CC)" };
 
 /**
  * Admin home = the day's queue (SPECS A6). Three numbers, then the actions in

@@ -12,9 +12,9 @@ import { ReviewForm } from "./review-form";
 export const dynamic = "force-dynamic";
 
 const READINESS_LABEL = {
-  ready: "Prêt",
-  conditional: "Prêt sous conditions",
-  not_yet: "Pas encore",
+  ready: "Éligible",
+  conditional: "Associate",
+  not_yet: "Fondations (CC)",
 } as const;
 
 /**

@@ -18,7 +18,7 @@ import { deleteLead, markLost, registerManually, scheduleFollowup, sendOnboardin
 export const dynamic = "force-dynamic";
 
 const STATUS: Record<string, string> = { new: "Nouveau", contacted: "Contacté", booked: "RDV pris", called: "Appelé", registered: "Inscrit", nurture: "À recontacter", lost: "Perdu" };
-const READINESS: Record<string, string> = { ready: "Prêt", conditional: "Sous conditions", not_yet: "Pas encore" };
+const READINESS: Record<string, string> = { ready: "Éligible", conditional: "Associate", not_yet: "Fondations (CC)" };
 const LOG: Record<string, string> = {
   scanner_submitted: "Scanner rempli", sales_message_drafted: "Message de relance rédigé", diagnosis_sent: "Message de relance envoyé", diagnosis_approved_email_failed: "Message validé, e-mail non parti",
   call_booked: "Appel réservé", call_rescheduled: "Appel déplacé", call_cancelled: "Appel annulé", call_outcome: "Issue de l'appel",

@@ -141,7 +141,7 @@ export const SITE_DEFAULTS: SiteSettings = {
     directRegistrationForReady: true,
   },
   faq: [
-    { q: "Ai-je besoin de 5 ans d’expérience ?", a: "ISC² demande généralement 5 ans d’expérience cumulée dans au moins 2 des 8 domaines. Un diplôme de 4 ans ou une certification reconnue peut réduire cette exigence d’un an. Si vous ne remplissez pas encore l’expérience requise, vous pouvez passer l’examen et suivre le parcours Associate of ISC². Le diagnostic vous le dit précisément." },
+    { q: "Ai-je besoin de 5 ans d’expérience ?", a: "Non. Vous pouvez passer l’examen dès maintenant et devenir Associate of ISC², puis obtenir le titre quand vos cinq ans sont réunis : vous avez six ans pour cela. Le bootcamp vous prépare à l’examen, quelle que soit votre ancienneté ; sans expérience, la certification CC est la première marche, en 15 jours." },
     { q: "Le bootcamp est-il entièrement en français ?", a: "Oui. Explications, échanges et supports sont en français. Le vocabulaire technique anglais de l’examen est travaillé au fil des sessions." },
     { q: "Puis-je suivre tout en travaillant ?", a: "C’est conçu pour. En semaine, 2 à 3 h en soirée ; les week-ends sont plus denses. Pendant 15 jours, la préparation est la priorité." },
     { q: "L’examen CISSP est-il inclus ?", a: "Non. Les frais d’examen se règlent auprès d’ISC². Le bootcamp vous prépare et vous laisse avec un plan jusqu’à votre date d’examen." },
