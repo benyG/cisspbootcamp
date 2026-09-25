@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Plan de lecture · CISSP Bootcamp</title>
+<style>
+@font-face{font-family:"Inter";src:url(/fonts/inter-latin.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Inter Tight";src:url(/fonts/inter-tight-latin.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{--ink:#071a33;--ink-2:#14324f;--muted:#607085;--paper:#f7f8f6;--accent:#0f8e73;--bright:#17b890;--soft:#dff8f0;--aink:#0d6d5b;--line:#dfe5e8;--warn:#f6b73c;--warn-soft:#fdf1d8;--warn-ink:#8a5a00;--blue-soft:#e6eefb;--blue-ink:#1f4f99;--rose-soft:#fde8e8;--rose-ink:#9b2c2c;--shadow:0 10px 24px rgba(7,26,51,.06)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3{font-family:"Inter Tight","Inter",sans-serif;letter-spacing:-.03em;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 56px}
+.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hero{background:var(--ink);color:#fff;border-radius:24px;padding:24px}
+.brand{font-family:"Inter Tight";font-weight:900;letter-spacing:-.04em}.brand span{color:var(--bright)}
+.hero h1{font-size:clamp(1.8rem,4.2vw,2.8rem);line-height:1.02;font-weight:900;margin-top:12px}.hero h1 em{font-style:normal;color:var(--bright)}
+.hero p{color:#cbd5df;margin:10px 0 0;max-width:720px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.stat{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:8px 12px;font-weight:700;font-size:.9rem}
+.stat .i{color:var(--bright)}
+.rule{margin-top:14px;display:flex;gap:10px;align-items:flex-start;color:#e8eef3;font-size:.92rem}
+.rule .i{color:var(--bright);margin-top:2px}
+.progress{margin-top:16px;background:rgba(255,255,255,.1);border-radius:999px;height:10px;overflow:hidden}
+.progress>div{height:100%;background:var(--bright);width:0;transition:width .4s}
+.progress-label{display:flex;justify-content:space-between;font-size:.8rem;color:#cbd5df;margin-top:6px}
+.tabs{position:sticky;top:0;z-index:5;background:var(--paper);padding:12px 0 10px;margin-top:6px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 14px;font-weight:700;font-size:.9rem}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.tab[aria-selected="true"] .i{color:var(--bright)}
+.panel{display:none}.panel.on{display:block}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--aink)}
+.eyebrow .i{width:15px;height:15px}
+.today{display:grid;gap:14px;grid-template-columns:1.3fr 1fr}
+.big{font-family:"Inter Tight";font-size:1.5rem;font-weight:900;line-height:1.1;margin-top:6px}
+.muted{color:var(--muted)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
+.step b{display:flex;align-items:center;gap:8px;font-family:"Inter Tight";font-size:1.02rem}
+.step .num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;background:var(--soft);color:var(--aink);font-weight:900;font-size:.8rem}
+.step p{margin:6px 0 0;font-size:.9rem;color:var(--ink-2)}
+.strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory}
+.chip{flex:0 0 auto;scroll-snap-align:start;width:92px;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:10px;position:relative}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 3px rgba(7,26,51,.08)}
+.chip .j{font-family:"Inter Tight";font-weight:900;font-size:1.1rem}
+.chip .dt{font-size:.74rem;color:var(--muted);line-height:1.2}
+.chip .hr{font-size:.74rem;font-weight:700;margin-top:6px;display:flex;align-items:center;gap:4px}
+.chip .hr .i{width:13px;height:13px;color:var(--accent)}
+.chip .bar{display:flex;height:5px;border-radius:99px;overflow:hidden;margin-top:8px;background:var(--line)}
+.chip .done{position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:99px;background:var(--accent);color:#fff;display:none;place-items:center}
+.chip.rest{background:var(--warn-soft);border-style:dashed}.chip.rest .hr .i{color:var(--warn-ink)}.chip.rest .hr{color:var(--warn-ink)}
+.restnote{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);color:var(--warn-ink);border-radius:14px;padding:12px 14px;margin-top:14px;font-weight:600}
+.chip.is-done .done{display:grid}.chip .done .i{width:12px;height:12px;stroke-width:3}
+.chip.is-today{background:var(--soft)}
+.chip.dim{opacity:.35}
+.detail{display:grid;grid-template-columns:1fr 280px;gap:14px;margin-top:6px}
+.dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.dhead h2{font-size:1.45rem;font-weight:900;line-height:1.1;margin-top:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:.76rem;font-weight:800;background:#f1f4f6;color:var(--ink-2);margin:6px 6px 0 0}
+.pill .dot{width:8px;height:8px;border-radius:99px}
+.goal{margin:12px 0 0;color:var(--ink-2)}
+.list{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;border:1px solid var(--line);border-radius:14px;padding:11px 12px;cursor:pointer;transition:background .15s}
+.item:hover{background:#fbfcfb}
+.item input{appearance:none;width:22px;height:22px;border:2px solid #b9c4cc;border-radius:7px;margin:1px 0 0;display:grid;place-items:center;cursor:pointer}
+.item input:checked{background:var(--accent);border-color:var(--accent)}
+.item input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.item.is-read .ctext{opacity:.55}
+.ctext b{font-family:"Inter Tight";font-size:1.02rem}
+.ctext .what{display:block;font-size:.88rem;color:var(--ink-2);margin-top:3px}
+.mins{font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:4px}
+.mins .i{width:13px;height:13px}
+.tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.7rem;font-weight:800;margin-left:6px;vertical-align:2px}
+.k-full{background:var(--soft);color:var(--aink)}.k-only{background:var(--blue-soft);color:var(--blue-ink)}.k-except{background:var(--rose-soft);color:var(--rose-ink)}.k-range{background:var(--warn-soft);color:var(--warn-ink)}.k-review{background:#eef0f3;color:var(--ink-2)}
+.side .card{padding:16px}
+.side h3{font-size:1rem;font-weight:900}
+.when{display:grid;gap:10px;margin-top:10px}
+.when div{display:flex;gap:10px;align-items:flex-start;font-size:.9rem}
+.when .i{color:var(--accent);margin-top:2px}
+.nav{display:flex;gap:8px;margin-top:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;font-weight:700;font-size:.88rem}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.todo{margin-top:14px;display:flex;gap:10px;background:var(--warn-soft);color:var(--warn-ink);border-radius:14px;padding:12px;font-weight:600}
+.agenda{display:grid;gap:8px}
+.aday{display:grid;grid-template-columns:110px 1fr;gap:12px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.aday.is-today{border-color:var(--accent);box-shadow:0 0 0 3px rgba(15,142,115,.12)}
+.aday .date{font-weight:800;font-size:.9rem}.aday .date small{display:block;color:var(--muted);font-weight:600}
+.aday ul{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:.9rem}
+.aday li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.for{font-size:.74rem;font-weight:800;color:var(--aink);background:var(--soft);border-radius:8px;padding:1px 7px}
+.sess{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--ink);background:#f1f4f6;border-radius:10px;padding:5px 9px;font-size:.84rem;width:fit-content}
+.sess .i{width:15px;height:15px;color:var(--accent)}
+.dom{display:grid;gap:10px}
+.drow{display:grid;grid-template-columns:28px 1fr 180px;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;text-align:left;width:100%}
+.drow:hover{border-color:var(--ink)}
+.drow[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 3px rgba(7,26,51,.08)}
+.dn{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;color:#fff;font-weight:900;font-family:"Inter Tight"}
+.bars{display:grid;gap:4px;font-size:.72rem;color:var(--muted)}
+.b{display:grid;grid-template-columns:62px 1fr 34px;gap:6px;align-items:center}
+.b i{display:block;height:7px;border-radius:99px;background:var(--line);position:relative;overflow:hidden}
+.b i span{position:absolute;inset:0 auto 0 0;border-radius:99px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:.8rem;color:var(--muted);margin:10px 0}
+.sec-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px;flex-wrap:wrap}
+.sec-title h2{font-size:1.25rem;font-weight:900}
+.foot{margin-top:28px;color:var(--muted);font-size:.8rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.printall{display:none}
+@media (max-width:820px){.today,.detail{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.drow{grid-template-columns:28px 1fr}.drow .bars{grid-column:1/-1}.aday{grid-template-columns:1fr}}
+@media print{.tabs,.nav,.strip,.btn,.today{display:none!important}.panel{display:none!important}.printall{display:block}.hero{-webkit-print-color-adjust:exact;print-color-adjust:exact}.card{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <symbol id="book" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+ <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+ <symbol id="cal" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+ <symbol id="layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+ <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+ <symbol id="video" viewBox="0 0 24 24"><path d="m16 13 5.22 3.48a.5.5 0 0 0 .78-.42V7.94a.5.5 0 0 0-.76-.43L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+ <symbol id="pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86z"/></symbol>
+ <symbol id="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+ <symbol id="left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+ <symbol id="right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+ <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+ <symbol id="moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+ <symbol id="download" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
+ <symbol id="list" viewBox="0 0 24 24"><path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/></symbol>
+ <symbol id="flag" viewBox="0 0 24 24"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.33 2q2 0 3.67-.67a1 1 0 0 1 1.4.9v9.53a1 1 0 0 1-.7.96A10 10 0 0 1 15.33 15C13 15 11 13 8 13a6 6 0 0 0-4 1.5"/></symbol>
+ <symbol id="print" viewBox="0 0 24 24"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></symbol>
+ <symbol id="alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+</svg>
+<main class="wrap">
+ <section class="hero">
+  <div class="brand">CISSP <span>Bootcamp</span></div>
+  <h1>Votre plan de lecture, <em>jour par jour.</em></h1>
+  <p>Vous lisez avant, nous raisonnons ensemble pendant les sessions en ligne. Ce plan vous dit exactement quoi lire, et quand, pour arriver à chaque session avec les bonnes pages en tête.</p>
+  <div class="stats">
+   <span class="stat"><svg class="i"><use href="#cal"/></svg><span id="dates"></span></span>
+   <span class="stat"><svg class="i"><use href="#video"/></svg>40 h de sessions live</span>
+   <span class="stat"><svg class="i"><use href="#layers"/></svg>8 domaines</span>
+   <span class="stat"><svg class="i"><use href="#book"/></svg><span id="readTotal"></span></span>
+  </div>
+  <div class="rule"><svg class="i"><use href="#book"/></svg><span>Règle générale : quand la partie à lire d’un chapitre n’est pas précisée, c’est tout le chapitre qui doit être lu.</span></div>
+  <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+  <div class="progress-label"><span id="progressText"></span><span>Vos coches restent sur cet appareil, dans ce navigateur. Rien n’est envoyé.</span></div>
+ </section>
+
+ <nav class="tabs" role="tablist" aria-label="Vues du plan">
+  <button class="tab" role="tab" data-tab="now"><svg class="i"><use href="#target"/></svg>Aujourd’hui</button>
+  <button class="tab" role="tab" data-tab="days"><svg class="i"><use href="#cal"/></svg>Les 15 jours</button>
+  <button class="tab" role="tab" data-tab="agenda"><svg class="i"><use href="#list"/></svg>Agenda de lecture</button>
+  <button class="tab" role="tab" data-tab="domains"><svg class="i"><use href="#layers"/></svg>Les 8 domaines</button>
+ </nav>
+
+ <section class="panel" id="p-now">
+  <div class="today">
+   <div class="card" id="nowCard"></div>
+   <div class="card" id="nextCard"></div>
+  </div>
+  <div class="steps">
+   <div class="step"><b><span class="num">1</span>Lire avant</b><p>Suivez l’agenda : environ 1 h 30 par jour. Lisez pour comprendre, pas pour retenir chaque mot.</p></div>
+   <div class="step"><b><span class="num">2</span>Noter vos questions</b><p>Ce qui résiste, ce qui vous surprend, ce que vous feriez autrement en entreprise. Apportez-le en session.</p></div>
+   <div class="step"><b><span class="num">3</span>Raisonner en session</b><p>La session relie les notions, entraîne le raisonnement d’examen et corrige les erreurs. Elle ne remplace pas la lecture.</p></div>
+  </div>
+ </section>
+
+ <section class="panel" id="p-days">
+  <div class="legend">
+   <span><span class="tag k-full" style="margin:0">Chapitre entier</span></span>
+   <span><span class="tag k-only" style="margin:0">Seulement</span> les sections citées</span>
+   <span><span class="tag k-except" style="margin:0">Tout, sauf</span> la section citée</span>
+   <span><span class="tag k-range" style="margin:0">Partie</span> entre deux sections</span>
+  </div>
+  <div class="strip" id="strip" role="tablist" aria-label="Sessions"></div>
+  <div class="detail">
+   <div class="card" id="detail"></div>
+   <aside class="side"><div class="card" id="side"></div></aside>
+  </div>
+ </section>
+
+ <section class="panel" id="p-agenda">
+  <div class="sec-title"><h2>Quoi lire, chaque jour</h2><span class="muted" style="font-size:.85rem">Environ 1 h 30 de lecture par jour, calculé pour que tout soit lu avant la session concernée.</span></div>
+  <div class="agenda" id="agenda"></div>
+ </section>
+
+ <section class="panel" id="p-domains">
+  <div class="sec-title"><h2>Le poids de chaque domaine</h2><span class="muted" style="font-size:.85rem">Poids officiel à l’examen ISC², et temps que le bootcamp y consacre. Touchez un domaine pour voir ses sessions.</span></div>
+  <div class="dom" id="domains"></div>
+ </section>
+
+ <section class="printall" id="printall"></section>
+ <div class="foot"><span>CISSP Bootcamp · Plan de lecture des participants</span><span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="saveCopy" title="Une copie de cette page, avec vos coches, qui s’ouvre sans connexion"><svg class="i"><use href="#download"/></svg>Enregistrer sur mon appareil</button><button class="btn" onclick="window.print()"><svg class="i"><use href="#print"/></svg>Imprimer le plan</button></span></div>
+</main>
+<script>
+const SOURCE = document.documentElement.outerHTML;
+const DATA = __DATA__;
+// A copy saved with "Enregistrer sur mon appareil" carries its start date and ticks here.
+const SAVED = null;
+const COLORS = {1:"#0f8e73",2:"#3b6e9e",3:"#14324f",4:"#17b890",5:"#c2410c",6:"#8a5a00",7:"#0d6d5b",8:"#6b4bb3",0:"#607085"};
+const KIND = {full:["Chapitre entier","k-full"],only:["Seulement","k-only"],except:["Tout, sauf","k-except"],range:["Partie","k-range"],review:["Retour sur","k-review"]};
+const DAILY = 90; // minutes de lecture par jour
+const REST_DAILY = 150; // un mercredi sans session : journée repos lecture
+const S = DATA.sessions, D = DATA.domains;
+const $ = (s) => document.querySelector(s);
+const svg = (id) => `<svg class="i"><use href="#${id}"/></svg>`;
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---- dates
+const params = new URLSearchParams(location.search);
+const startStr = /^\d{4}-\d{2}-\d{2}$/.test(params.get("debut") || "") ? params.get("debut") : SAVED ? SAVED.start : DATA.defaultStart;
+const start = new Date(startStr + "T12:00:00");
+const dayAt = (offset) => new Date(start.getTime() + offset * 86400000);
+const today = (() => { const t = params.get("aujourdhui"); const d = t ? new Date(t + "T12:00:00") : new Date(); d.setHours(12,0,0,0); return d; })();
+const offsetOf = (d) => Math.round((d - start) / 86400000);
+const fmt = (d, o) => d.toLocaleDateString("fr-FR", o);
+const long = (d) => fmt(d, { weekday: "long", day: "numeric", month: "long" });
+const short = (d) => fmt(d, { weekday: "short", day: "numeric", month: "short" }).replace(".", "");
+const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
+const hrs = (h) => (h % 1 ? `${Math.floor(h)} h 30` : `${h} h`);
+const mins = (m) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? " " + String(m % 60).padStart(2, "0") : ""}` : `${m} min`);
+S.forEach((s) => { s.date = dayAt(s.n - 1); s.offset = s.n - 1; });
+$("#dates").textContent = `Du ${fmt(S[0].date, { day: "numeric", month: "long" })} au ${fmt(S[14].date, { day: "numeric", month: "long", year: "numeric" })}`;
+
+// ---- progress (per-viewer, localStorage, never required)
+const KEY = "cb_plan_lecture_" + startStr;
+// Kept for the participant only: this browser's storage, seeded by a saved copy.
+let done = SAVED && SAVED.start === startStr ? { ...SAVED.done } : {};
+try { const stored = localStorage.getItem(KEY); if (stored !== null) done = JSON.parse(stored) || {}; } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch {} };
+const id = (s, i) => `${s.n}-${i}`;
+const allItems = S.flatMap((s) => s.read.map((r, i) => ({ s, r, i })));
+const totalMin = allItems.reduce((a, x) => a + x.r.min, 0);
+$("#readTotal").textContent = `≈ ${Math.round(totalMin / 60)} h de lecture`;
+
+// ---- reading agenda: backward scheduling, DAILY minutes a day, finished before each session
+const agenda = {}; // offset -> [{s, r, min}]
+(function schedule() {
+  const cap = {};
+  const capOf = (o) => (cap[o] ??= DAILY);
+  S.filter((s) => s.rest).forEach((s) => (cap[s.offset] = REST_DAILY));
+  for (let k = S.length - 1; k >= 0; k--) {
+    const s = S[k];
+    if (s.rest) continue;
+    // an evening session leaves the morning of its own day; a weekend day starts early
+    let o = isWeekend(s.date) ? s.offset - 1 : s.offset;
+    if (!isWeekend(s.date)) cap[o] = Math.min(capOf(o), 45);
+    for (let i = s.read.length - 1; i >= 0; i--) {
+      let need = s.read[i].min;
+      while (need > 0) {
+        const room = capOf(o);
+        // No crumbs: a day with less than 20 minutes left is skipped, and a
+        // remainder under 20 minutes is read in the same sitting.
+        if (room < 20) { o--; continue; }
+        const take = need - room < 20 ? need : Math.min(room, need);
+        cap[o] = Math.max(0, room - take); need -= take;
+        (agenda[o] ??= []).unshift({ s, r: s.read[i], i, min: take });
+        if (need > 0) o--;
+      }
+    }
+  }
+})();
+const firstReadOffset = Math.min(...Object.keys(agenda).map(Number));
+S.forEach((s) => { s.startRead = Math.min(...Object.entries(agenda).filter(([, l]) => l.some((x) => x.s === s)).map(([o]) => +o), s.offset); });
+
+// ---- rendering helpers
+const domPills = (s) => s.blocks.map((b) => `<span class="pill"><span class="dot" style="background:${COLORS[b.d]}"></span>${b.d ? "Domaine " + b.d : "Bilan"} · ${hrs(b.h)}</span>`).join("");
+const sessionDone = (s) => s.read.length > 0 && s.read.every((_, i) => done[id(s, i)]);
+function refreshProgress() {
+  const n = allItems.filter((x) => done[id(x.s, x.i)]).length;
+  $("#bar").style.width = `${(n / allItems.length) * 100}%`;
+  $("#progressText").textContent = `${n} lecture${n > 1 ? "s" : ""} faite${n > 1 ? "s" : ""} sur ${allItems.length}`;
+  document.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-done", sessionDone(S[+c.dataset.k])));
+}
+
+// ---- tabs
+function show(tab) {
+  document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", t.dataset.tab === tab));
+  document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("on", p.id === "p-" + tab));
+  try { history.replaceState(null, "", "#" + tab); } catch {}
+}
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => show(t.dataset.tab)));
+
+// ---- 15 days
+let current = 0, filter = 0;
+function renderStrip() {
+  $("#strip").innerHTML = S.map((s, k) => {
+    const bar = s.blocks.map((b) => `<span style="flex:${b.h};background:${COLORS[b.d]}"></span>`).join("");
+    const dim = filter && !s.blocks.some((b) => b.d === filter) ? " dim" : "";
+    const tod = offsetOf(today) === s.offset ? " is-today" : "";
+    const hr = s.rest ? `${svg("book")}Repos lecture` : `${svg(isWeekend(s.date) ? "sun" : "moon")}${hrs(s.hours)}`;
+    return `<button class="chip${dim}${tod}${s.rest ? " rest" : ""}" role="tab" data-k="${k}" aria-pressed="${k === current}"><span class="done">${svg("check")}</span><div class="j">J${s.n}</div><div class="dt">${short(s.date)}</div><div class="hr">${hr}</div><div class="bar">${bar}</div></button>`;
+  }).join("");
+  document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => select(+c.dataset.k)));
+  refreshProgress();
+}
+function select(k) {
+  current = k; const s = S[k];
+  document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", +c.dataset.k === k));
+  const chip = document.querySelector(`.chip[data-k="${k}"]`), strip = $("#strip");
+  if (chip) strip.scrollTo({ left: chip.offsetLeft - strip.clientWidth / 2 + chip.clientWidth / 2, behavior: "smooth" });
+  const readMin = s.read.reduce((a, r) => a + r.min, 0);
+  const items = s.read.map((r, i) => {
+    const [label, cls] = KIND[r.kind];
+    return `<li><label class="item${done[id(s, i)] ? " is-read" : ""}"><input type="checkbox" data-id="${id(s, i)}" ${done[id(s, i)] ? "checked" : ""} aria-label="Chapitre ${r.ch} lu"><span class="ctext"><b>Chapitre ${r.ch}</b><span class="tag ${cls}">${label}</span>${r.text ? `<span class="what">${esc(r.text)}</span>` : ""}</span><span class="mins">${svg("clock")}${mins(r.min)}</span></label></li>`;
+  }).join("");
+  if (s.rest) return selectRest(k, s);
+  $("#detail").innerHTML = `
+   <div class="dhead"><div><span class="eyebrow">${svg(isWeekend(s.date) ? "sun" : "moon")}J${s.n} · ${long(s.date)} · ${isWeekend(s.date) ? "journée" : "soirée"}, ${hrs(s.hours)}</span><h2>${esc(s.title)}</h2>${domPills(s)}</div></div>
+   <p class="goal">${esc(s.goal)}</p>
+   ${s.read.length ? `<div class="sec-title" style="margin:16px 0 0"><span class="eyebrow">${svg("book")}À lire avant cette session</span><span class="muted" style="font-size:.84rem">≈ ${mins(readMin)} de lecture</span></div><ul class="list">${items}</ul>` : ""}
+   ${s.todo ? `<div class="todo">${svg("pen")}<span>${esc(s.todo)}</span></div>` : ""}
+   <div class="nav"><button class="btn" id="prev" ${k === 0 ? "disabled" : ""}>${svg("left")}J${s.n - 1 || ""}</button><button class="btn primary" id="next" ${k === S.length - 1 ? "disabled" : ""}>J${s.n + 1 > 15 ? "" : s.n + 1}${svg("right")}</button></div>`;
+  const plan = Object.entries(agenda).filter(([, l]) => l.some((x) => x.s === s)).map(([o, l]) => `<div>${svg("book")}<span><b>${short(dayAt(+o))}</b> · ${l.filter((x) => x.s === s).map((x) => `ch. ${x.r.ch}, ${mins(x.min)}`).join(" · ")}</span></div>`).join("");
+  $("#side").innerHTML = `<h3>Quand lire ?</h3>${s.read.length ? `<p class="muted" style="font-size:.86rem;margin:6px 0 0">Commencez au plus tard le <b style="color:var(--ink)">${long(dayAt(s.startRead))}</b>.</p><div class="when">${plan}</div>` : `<p class="muted" style="font-size:.86rem">Pas de lecture : cette session s’appuie sur votre examen blanc.</p>`}<div class="when" style="border-top:1px dashed var(--line);padding-top:10px">${svg("video")}<span style="display:flex;gap:10px"><span>Session en ligne le <b>${long(s.date)}</b>. Horaires communiqués par Ben.</span></span></div>`;
+  $("#prev")?.addEventListener("click", () => select(k - 1));
+  $("#next")?.addEventListener("click", () => select(k + 1));
+  document.querySelectorAll("#detail input[type=checkbox]").forEach((c) => c.addEventListener("change", () => {
+    done[c.dataset.id] = c.checked; if (!c.checked) delete done[c.dataset.id]; save();
+    c.closest(".item").classList.toggle("is-read", c.checked); refreshProgress(); renderNow(); renderAgenda();
+  }));
+}
+// A Wednesday without session: what the agenda plans to read that day.
+function selectRest(k, s) {
+  const reads = agenda[s.offset] || [];
+  const total = reads.reduce((a, x) => a + x.min, 0);
+  const lis = reads.map((x) => `<li><button class="item" data-open="${x.s.n - 1}" style="width:100%;text-align:left;background:none">${svg("book")}<span class="ctext"><b>Chapitre ${x.r.ch}</b>${x.r.kind !== "full" ? `<span class="tag ${KIND[x.r.kind][1]}">${KIND[x.r.kind][0]}</span>` : ""}<span class="what">pour la session J${x.s.n}${done[id(x.s, x.i)] ? " · déjà lu" : ""}</span></span><span class="mins">${svg("clock")}${mins(x.min)}</span></button></li>`).join("");
+  $("#detail").innerHTML = `
+   <div class="dhead"><div><span class="eyebrow">${svg("book")}J${s.n} · ${long(s.date)} · pas de session en ligne</span><h2>${esc(s.title)}</h2></div></div>
+   <div class="restnote">${svg("moon")}<span>Mercredi, journée repos lecture : aucune session en ligne ce jour-là. Les heures du mercredi sont reportées sur le samedi et le dimanche.</span></div>
+   <p class="goal">${esc(s.goal)}</p>
+   ${reads.length ? `<div class="sec-title" style="margin:16px 0 0"><span class="eyebrow">${svg("book")}Lecture prévue ce jour</span><span class="muted" style="font-size:.84rem">≈ ${mins(total)}</span></div><ul class="list">${lis}</ul>` : ""}
+   <div class="nav"><button class="btn" id="prev">${svg("left")}J${s.n - 1}</button><button class="btn primary" id="next">J${s.n + 1}${svg("right")}</button></div>`;
+  $("#side").innerHTML = `<h3>Quand lire ?</h3><p class="muted" style="font-size:.86rem;margin:6px 0 0">Aujourd’hui, justement. Touchez un chapitre pour voir la session qu’il prépare et le cocher.</p>`;
+  $("#prev").addEventListener("click", () => select(k - 1));
+  $("#next").addEventListener("click", () => select(k + 1));
+  document.querySelectorAll("#detail [data-open]").forEach((b) => b.addEventListener("click", () => select(+b.dataset.open)));
+}
+document.addEventListener("keydown", (e) => {
+  if (!$("#p-days").classList.contains("on")) return;
+  if (e.key === "ArrowRight" && current < 14) select(current + 1);
+  if (e.key === "ArrowLeft" && current > 0) select(current - 1);
+});
+
+// ---- agenda
+function renderAgenda() {
+  const tOff = offsetOf(today);
+  const days = [];
+  for (let o = firstReadOffset; o <= 14; o++) days.push(o);
+  $("#agenda").innerHTML = days.map((o) => {
+    const d = dayAt(o), reads = agenda[o] || [], sess = S.find((s) => s.offset === o);
+    const lis = reads.map((x) => `<li><span style="display:inline-flex;align-items:center;gap:5px">${done[id(x.s, x.i)] ? `<svg class="i" style="width:14px;height:14px;color:var(--accent)"><use href="#check"/></svg>` : ""}Chapitre ${x.r.ch}${x.r.kind !== "full" ? ` <span class="muted">(${KIND[x.r.kind][0].toLowerCase()}${x.r.text && x.r.kind !== "except" ? " : " + esc(x.r.text.split(" · ")[0]) + (x.r.text.includes(" · ") ? "…" : "") : ""})</span>` : ""}</span><span class="for">pour J${x.s.n}</span><span class="muted">${mins(x.min)}</span></li>`).join("");
+    const label = o < 0 ? `Avant le bootcamp` : `J${o + 1}`;
+    return `<div class="aday${o === tOff ? " is-today" : ""}"><div class="date">${short(d)}<small>${label}${o === tOff ? " · aujourd’hui" : ""}</small></div><div>${lis ? `<ul>${lis}</ul>` : `<span class="muted" style="font-size:.9rem">Pas de lecture prévue : relisez vos notes.</span>`}${sess ? (sess.rest ? `<div class="sess" style="margin-top:${lis ? 8 : 6}px;color:var(--warn-ink)">${svg("moon")}Mercredi : journée repos lecture, pas de session</div>` : `<div class="sess" style="margin-top:${lis ? 8 : 6}px">${svg("video")}Session J${sess.n} · ${esc(sess.title)} · ${hrs(sess.hours)}</div>`) : ""}</div></div>`;
+  }).join("");
+}
+
+// ---- today
+function renderNow() {
+  const tOff = offsetOf(today);
+  const next = S.find((s) => !s.rest && s.offset >= tOff);
+  const restToday = S.find((s) => s.rest && s.offset === tOff);
+  const todays = agenda[tOff] || [];
+  let a;
+  if (tOff < firstReadOffset) {
+    a = `<span class="eyebrow">${svg("flag")}Avant de commencer</span><div class="big">Le bootcamp commence le ${long(start)}.</div><p class="muted">Votre première lecture commence le <b style="color:var(--ink)">${long(dayAt(firstReadOffset))}</b>, soit ${-firstReadOffset} jours avant le J1 : c’est ce qui allège les soirées de la première semaine.</p>`;
+  } else if (tOff > 14) {
+    a = `<span class="eyebrow">${svg("flag")}Bootcamp terminé</span><div class="big">Place au plan de révision jusqu’à votre examen.</div><p class="muted">Reprenez les chapitres que vous n’avez pas cochés.</p>`;
+  } else {
+    const lis = todays.map((x) => `<li style="margin:4px 0"><b>Chapitre ${x.r.ch}</b> <span class="muted">pour J${x.s.n} · ${mins(x.min)}</span></li>`).join("");
+    a = `<span class="eyebrow">${svg("book")}${restToday ? "Journée repos lecture" : "À lire aujourd’hui"} · ${long(today)}</span><div class="big">${todays.length ? mins(todays.reduce((t, x) => t + x.min, 0)) + " de lecture" : "Pas de lecture prévue"}</div>${lis ? `<ul style="padding-left:18px;margin:10px 0 0">${lis}</ul>` : `<p class="muted">Profitez-en pour relire vos notes et préparer vos questions.</p>`}`;
+  }
+  $("#nowCard").innerHTML = a + `<div class="nav"><button class="btn primary" data-go="agenda">${svg("list")}Voir l’agenda complet</button></div>`;
+  $("#nextCard").innerHTML = next ? `<span class="eyebrow">${svg("video")}Prochaine session</span><div class="big">J${next.n} · ${long(next.date)}</div><p style="margin:6px 0 0;font-weight:700">${esc(next.title)}</p><div>${domPills(next)}</div><div class="nav"><button class="btn" data-open="${next.n - 1}">${svg("book")}Ce qu’il faut lire</button></div>` : `<span class="eyebrow">${svg("flag")}Toutes les sessions sont passées</span><div class="big">Bravo.</div>`;
+  document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => show(b.dataset.go)));
+  document.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => { show("days"); select(+b.dataset.open); }));
+}
+
+// ---- domains
+function renderDomains() {
+  const hours = {}; S.forEach((s) => s.blocks.forEach((b) => (hours[b.d] = (hours[b.d] || 0) + b.h)));
+  $("#domains").innerHTML = Object.entries(D).map(([n, d]) => {
+    const h = hours[n] || 0, pct = Math.round((h / 40) * 100);
+    const sess = S.filter((s) => s.blocks.some((b) => b.d == n)).map((s) => "J" + s.n).join(", ");
+    return `<button class="drow" data-d="${n}" aria-pressed="${filter == n}"><span class="dn" style="background:${COLORS[n]}">${n}</span><span><b>${esc(d.name)}</b><span class="muted" style="display:block;font-size:.82rem">${sess}</span></span><span class="bars"><span class="b">Examen<i><span style="width:${d.weight * 4}%;background:#b9c4cc"></span></i>${d.weight} %</span><span class="b">Bootcamp<i><span style="width:${pct * 4}%;background:${COLORS[n]}"></span></i>${hrs(h)}</span></span></button>`;
+  }).join("") + `<p class="muted" style="font-size:.84rem;margin:4px 2px">Le domaine 3 reçoit plus que son poids : la cryptographie et les modèles de sécurité sont les notions les plus denses. Les 2 heures restantes vont au bilan et à l’examen blanc.</p>`;
+  document.querySelectorAll(".drow").forEach((r) => r.addEventListener("click", () => {
+    filter = filter == r.dataset.d ? 0 : +r.dataset.d;
+    renderDomains(); renderStrip();
+    if (filter) { show("days"); const k = S.findIndex((s) => s.blocks.some((b) => b.d === filter)); select(k); }
+  }));
+}
+
+// ---- print: every session in full
+$("#printall").innerHTML = S.map((s) => s.rest ? `<div class="card" style="margin:10px 0"><span class="eyebrow">J${s.n} · ${long(s.date)} · pas de session</span><h3 style="margin-top:4px">${esc(s.title)}</h3><p class="muted" style="margin:6px 0 0">${esc(s.goal)}</p></div>` : `<div class="card" style="margin:10px 0"><span class="eyebrow">J${s.n} · ${long(s.date)} · ${hrs(s.hours)}</span><h3 style="margin-top:4px">${esc(s.title)}</h3>${domPills(s)}<ul style="margin:8px 0 0;padding-left:18px">${s.read.map((r) => `<li><b>Chapitre ${r.ch}</b> ${KIND[r.kind][0].toLowerCase()}${r.text ? " : " + esc(r.text) : ""}</li>`).join("") || `<li>${esc(s.todo || "")}</li>`}</ul></div>`).join("");
+
+// ---- save a copy: this page, fonts inlined, with the current ticks; it works offline
+async function saveCopy() {
+  let html = "<!doctype html>\n" + SOURCE;
+  for (const url of ["/fonts/inter-latin.woff2", "/fonts/inter-tight-latin.woff2"]) {
+    if (!html.includes(`url(${url})`)) continue;
+    try {
+      const blob = await (await fetch(url)).blob();
+      const data = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(blob); });
+      html = html.split(`url(${url})`).join(`url(${data})`);
+    } catch {}
+  }
+  const state = JSON.stringify({ start: startStr, done }).replace(/</g, "\\u003c");
+  html = html.replace(/const SAVED = [^\n]*;/, () => `const SAVED = ${state};`);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+  a.download = `plan-de-lecture-cissp-${startStr}.html`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$("#saveCopy").addEventListener("click", saveCopy);
+
+renderStrip(); renderAgenda(); renderDomains(); renderNow();
+const tOff = offsetOf(today);
+select(Math.max(0, Math.min(14, S.findIndex((s) => s.offset >= tOff) === -1 ? 14 : S.findIndex((s) => s.offset >= tOff))));
+show(["now", "days", "agenda", "domains"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "now");
+</script>
+</body>
+</html>

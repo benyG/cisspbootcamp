@@ -13,6 +13,7 @@ import { HOLD_HOURS, activeHoldFor, formatDeadline } from "@/lib/seat-holds";
 import { holdSeatAction, releaseHoldAction } from "@/app/admin/actions";
 
 import { formatBytes } from "@/lib/documents";
+import { planStart } from "@/lib/reading-plan/page";
 
 import { deleteLead, markLost, registerManually, scheduleFollowup, sendOnboarding, updateLead } from "../actions";
 
@@ -41,7 +42,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
     include: {
       scannerResponses: { orderBy: { createdAt: "desc" }, take: 1 },
       bookings: { orderBy: { startsAt: "desc" }, take: 5 },
-      registrations: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { name: true, program: true } } } },
+      registrations: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { name: true, program: true, startsAt: true } } } },
       serviceOrders: { orderBy: { createdAt: "desc" }, include: { service: { select: { name: true } }, bookings: { where: { status: { in: ["scheduled", "done"] } }, select: { id: true } } } },
       actions: { orderBy: { createdAt: "desc" }, take: 40 },
       practiceTests: { orderBy: { createdAt: "desc" }, take: 5 },
@@ -120,11 +121,14 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           {onboarding === "ok" && <p className="mt-2 rounded-lg bg-accent-soft px-3 py-2">E-mail d&apos;onboarding envoyé avec les documents.</p>}
           {onboarding && onboarding !== "ok" && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-red-800">{onboarding}</p>}
           {lastOnboarding && <p className="mt-2 text-muted">Dernier envoi le {lastOnboarding.createdAt.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.</p>}
-          {documents.length === 0 ? (
+          {documents.length === 0 && paidRegistration.cohort.program !== "cissp" ? (
             <p className="mt-2 text-muted">Aucun document actif pour cette formation. <Link href="/admin/documents" className="underline">Ajouter des documents</Link>.</p>
           ) : (
             <form action={sendOnboarding} className="mt-2 grid gap-2">
               <input type="hidden" name="leadId" value={lead.id} />
+              {paidRegistration.cohort.program === "cissp" && (
+                <p className="flex items-center gap-2"><input type="checkbox" checked disabled aria-label="Toujours inclus" /> Plan de lecture interactif <span className="text-muted">(lien, toujours inclus)</span> <a href={`/plan-de-lecture?debut=${planStart(paidRegistration.cohort.startsAt)}`} target="_blank" rel="noopener" className="underline">voir</a></p>
+              )}
               {documents.map((d) => (
                 <label key={d.id} className="flex items-center gap-2"><input type="checkbox" name="documentId" value={d.id} defaultChecked /> {d.name} <span className="text-muted">({formatBytes(d.size)})</span></label>
               ))}

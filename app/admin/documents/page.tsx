@@ -1,4 +1,4 @@
-import { FileText } from "lucide-react";
+import { BookOpenCheck, FileText } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
@@ -20,6 +20,14 @@ export default async function DocumentsPage() {
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
       <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><FileText className="size-6 shrink-0 text-accent" aria-hidden />Documents de préparation</h1>
       <p className="mt-1 text-sm text-muted">Les fichiers envoyés avec l&apos;e-mail d&apos;onboarding, 30 Mo maximum par fichier. Jusqu&apos;à {formatBytes(ATTACHMENT_BUDGET_BYTES)} au total, ils partent en pièces jointes ; au-delà, chaque inscrit reçoit un lien de téléchargement personnel dans le même e-mail. L&apos;envoi se déclenche depuis la fiche d&apos;un inscrit, jamais automatiquement. Le texte de l&apos;e-mail se modifie dans les <Link href="/admin/parametres/gabarits" className="underline">gabarits</Link>.</p>
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white px-4 py-3 text-sm">
+        <div>
+          <p className="flex items-center gap-2 font-semibold"><BookOpenCheck className="size-4 shrink-0 text-accent" aria-hidden />Plan de lecture interactif <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-muted">{PROGRAMS.cissp.name}</span><span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs text-accent-ink">toujours inclus</span></p>
+          <p className="text-muted">Un lien dans chaque e-mail d&apos;onboarding CISSP, daté pour la cohorte de l&apos;inscrit. Le suivi de lecture reste sur son appareil.</p>
+        </div>
+        <a href="/plan-de-lecture" target="_blank" rel="noopener" className={ghost}>Voir la page</a>
+      </div>
 
       <UploadForm programs={Object.values(PROGRAMS).map((p) => ({ code: p.code, name: p.name }))} />
 

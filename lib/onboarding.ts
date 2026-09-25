@@ -7,13 +7,16 @@ import { documentList, planAttachments, safeFilename } from "@/lib/documents";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
 import { loadTemplate, renderTemplate } from "@/lib/messaging/templates";
+import { readingPlanUrl } from "@/lib/reading-plan/page";
 
 /**
  * The onboarding e-mail (Ben, 24/09): once a participant has paid, Ben picks
  * the preparation documents from the library and triggers one e-mail with
  * them. Files fit in attachments up to a budget; past it, each one goes as a
  * personal download link (Ben, 25/09: 30 MB per file). Nothing goes out on
- * its own; each send is logged on the lead.
+ * its own; each send is logged on the lead. A CISSP e-mail always starts with
+ * the link to the interactive reading plan, dated for the cohort (Ben, 25/09),
+ * so it can go out even with no file selected.
  */
 
 export type OnboardingResult = { ok: true; documents: number } | { ok: false; error: string };
@@ -32,7 +35,8 @@ export async function sendOnboardingDocuments(input: { leadId: number; documentI
     select: { id: true, name: true, filename: true, size: true, active: true },
     orderBy: { createdAt: "asc" },
   });
-  const plan = planAttachments(library, input.documentIds);
+  const withReadingPlan = registration.cohort.program === "cissp";
+  const plan = planAttachments(library, input.documentIds, undefined, { allowEmpty: withReadingPlan });
   if (!plan.ok) return plan;
 
   const files = await prisma.document.findMany({ where: { id: { in: plan.attached.map((d) => d.id) } }, select: { id: true, filename: true, content: true, blobPathname: true } });
@@ -53,7 +57,7 @@ export async function sendOnboardingDocuments(input: { leadId: number; documentI
     nom: lead.lastName,
     cohorte: registration.cohort.name,
     mois_cohorte: formatCohortMonth(registration.cohort.startsAt),
-    liste_documents: documentList(plan.documents, links),
+    liste_documents: [withReadingPlan ? readingPlanLine(readingPlanUrl(env.NEXT_PUBLIC_APP_URL, registration.cohort.startsAt)) : "", documentList(plan.documents, links)].filter(Boolean).join("\n"),
   };
   const subject = renderTemplate(template?.subject ?? "Bienvenue dans la {{cohorte}} : vos documents de préparation", vars);
   const body =
@@ -66,11 +70,16 @@ export async function sendOnboardingDocuments(input: { leadId: number; documentI
       leadId: lead.id,
       type: result.sent ? "onboarding_sent" : "onboarding_failed",
       channel: "email",
-      payload: { registrationId: registration.id, documents: plan.documents.map((d) => ({ id: d.id, name: d.name, as: links[d.id] ? "link" : "attachment" })), totalBytes: plan.totalBytes, reason: result.sent ? undefined : result.reason },
+      payload: { registrationId: registration.id, readingPlan: withReadingPlan, documents: plan.documents.map((d) => ({ id: d.id, name: d.name, as: links[d.id] ? "link" : "attachment" })), totalBytes: plan.totalBytes, reason: result.sent ? undefined : result.reason },
     },
   });
   if (!result.sent) return { ok: false, error: `E-mail non envoyé : ${result.reason}` };
   return { ok: true, documents: plan.documents.length };
+}
+
+/** The reading plan's line in {{liste_documents}}. */
+export function readingPlanLine(url: string): string {
+  return `• Plan de lecture interactif, à ouvrir en premier (quoi lire, et quand, avant chaque session) : ${url}`;
 }
 
 function downloadLink(documentId: number, leadId: number): string {

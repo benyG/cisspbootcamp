@@ -40,10 +40,10 @@ export type AttachmentPlan =
  * running total fits the budget, as a download link past it. Order is kept,
  * so the list in the e-mail matches the library.
  */
-export function planAttachments(library: DocumentSummary[], selectedIds: number[], budget = ATTACHMENT_BUDGET_BYTES): AttachmentPlan {
+export function planAttachments(library: DocumentSummary[], selectedIds: number[], budget = ATTACHMENT_BUDGET_BYTES, options: { allowEmpty?: boolean } = {}): AttachmentPlan {
   const wanted = new Set(selectedIds);
   const documents = library.filter((d) => d.active && wanted.has(d.id));
-  if (documents.length === 0) return { ok: false, error: "Aucun document sélectionné." };
+  if (documents.length === 0 && !options.allowEmpty) return { ok: false, error: "Aucun document sélectionné." };
   const attached: DocumentSummary[] = [];
   const linked: DocumentSummary[] = [];
   let used = 0;
