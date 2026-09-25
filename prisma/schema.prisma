@@ -576,7 +576,10 @@ model Document {
   filename String  @db.VarChar(160)
   mimeType String  @map("mime_type") @db.VarChar(120)
   size     Int
-  content  Bytes   @db.LongBlob
+  /// Legacy: small files stored in the database before Vercel Blob (25/09).
+  content  Bytes?  @db.LongBlob
+  /// Private Vercel Blob pathname; the file itself never transits a function on upload.
+  blobPathname String? @map("blob_pathname") @db.VarChar(255)
   active   Boolean @default(true)
 
   createdAt DateTime @default(now()) @map("created_at")
