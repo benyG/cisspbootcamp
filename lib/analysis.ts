@@ -168,11 +168,13 @@ export function buildAxes(answers: ScannerAnswers): AnalysisAxis[] {
   return [
     {
       key: "isc2_prerequisite",
-      label: "Prérequis ISC²",
+      label: "Expérience vers le titre",
       score: Math.round((credited / REQUIRED_YEARS) * 100),
-      detail: grantsWaiver(answers)
-        ? `${years} an${years > 1 ? "s" : ""} d'expérience + 1 an de dérogation, sur 5 requis`
-        : `${years} an${years > 1 ? "s" : ""} d'expérience sur 5 requis`,
+      detail:
+        (grantsWaiver(answers)
+          ? `${years} an${years > 1 ? "s" : ""} d'expérience + 1 an de dérogation, sur 5 pour le titre`
+          : `${years} an${years > 1 ? "s" : ""} d'expérience sur 5 pour le titre`) +
+        (credited < REQUIRED_YEARS ? " · Associate of ISC² possible dès maintenant" : ""),
       audience: "prospect",
     },
     {
@@ -240,8 +242,8 @@ export function recommend(readiness: Readiness): Recommendation {
 
 export const RECOMMENDATION_HEADLINES: Record<Recommendation, string> = {
   now: "Le bootcamp est fait pour vous, maintenant.",
-  with_condition: "Le bootcamp vous fera gagner du temps, à une condition près.",
-  build_first: "Construisons d'abord votre éligibilité — je vous y accompagne.",
+  with_condition: "Le bootcamp vous mène à l'examen ; le titre Associate of ISC² vous attend derrière.",
+  build_first: "Votre première certification en 15 jours, puis le CISSP : le chemin est tracé.",
 };
 
 // --- Analyse complète ---------------------------------------------------

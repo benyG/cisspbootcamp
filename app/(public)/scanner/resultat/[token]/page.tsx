@@ -29,9 +29,9 @@ import { RevealBars } from "./reveal";
 export const dynamic = "force-dynamic";
 
 const VERDICT = {
-  ready: { badge: "Profil prêt", tone: "bg-accent-soft text-accent-ink" },
-  conditional: { badge: "Prêt sous conditions", tone: "bg-amber-100 text-amber-900" },
-  not_yet: { badge: "Construisons votre éligibilité", tone: "bg-slate-100 text-ink-2" },
+  ready: { badge: "Éligible au titre CISSP", tone: "bg-accent-soft text-accent-ink" },
+  conditional: { badge: "Éligible via Associate of ISC²", tone: "bg-amber-100 text-amber-900" },
+  not_yet: { badge: "Fondations, puis Associate of ISC²", tone: "bg-slate-100 text-ink-2" },
 } as const;
 
 /**
@@ -90,8 +90,8 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
       ? "Et après le CISSP ? Une heure pour dessiner la suite : poste, spécialisation, management."
       : analysis.readiness === "conditional"
         ? "En parallèle, une heure pour poser votre trajectoire, pas seulement l’examen."
-        : "Vous voulez aller plus loin qu’un premier contact ?";
-  // No experience, or a career change: the CC course is the first step (docs/OFFRES.md §4).
+        : "Et pour poser toute la trajectoire, pas seulement la première marche ?";
+  // Foundations path: the CC course first, the CISSP as Associate right after (Ben, 25/09).
   const programCode = recommendedProgram(analysis.readiness, profile);
   const ccCohort = programCode === "cc" ? await publicCohortSummary("cc").catch(() => null) : null;
   const ccPrice = programCode === "cc" && tierCode && !isQuoteOnly(tierCode) ? await prisma.programPrice.findUnique({ where: { program_tier: { program: "cc", tier: tierCode } } }).catch(() => null) : null;
@@ -177,19 +177,19 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
             {upcoming
               ? "Votre rendez-vous est pris."
               : analysis.readiness === "conditional"
-                ? "Prochaine étape : Ben vérifie votre éligibilité avec vous, en 15 minutes."
+                ? "Prochaine étape : 15 minutes avec Ben pour caler votre plan Associate et votre date d’examen."
                 : analysis.readiness === "ready"
                   ? "Prochaine étape : 15 minutes avec Ben, puis votre place."
-                  : "Prochaine étape : 15 minutes avec Ben, gratuites, pour choisir votre première marche."}
+                  : "Prochaine étape : 15 minutes avec Ben, gratuites, pour caler votre première certification et la suite vers le CISSP."}
           </h2>
           <p className="mt-2 text-ink-2">
             {upcoming
               ? "Ben arrive à l’appel avec votre analyse sous les yeux. D’ici là, tout ce qui suit reste ouvert."
               : analysis.readiness === "conditional"
-                ? "Un appel vidéo, sans engagement. Ben passe en revue vos années comptables et la dérogation possible, lève la condition, puis vous fixez ensemble votre date d’examen."
+                ? "Un appel vidéo, sans engagement. Ben passe en revue vos années comptables et la dérogation possible, puis vous fixez ensemble votre date d’examen. Le titre Associate of ISC² s’obtient dès l’examen réussi."
                 : analysis.readiness === "ready"
                   ? "Un appel vidéo, sans engagement, pour caler votre date d’examen et le plan des 15 jours. Si vous avez déjà décidé, vous pouvez réserver votre place directement."
-                  : "Un premier contact gratuit, sans engagement : Ben regarde votre profil avec vous et vous dit quelle marche prendre maintenant, certification CC ou séance de conseil."}
+                  : "Un premier contact gratuit, sans engagement : Ben regarde votre profil avec vous, cale la CC en 15 jours et le passage au CISSP en Associate of ISC² juste après."}
           </p>
           {canBook && tier && analysis.readiness !== "not_yet" && (
             <div className="mt-5 rounded-[18px] border border-line bg-[#fbfffd] p-4">
@@ -221,7 +221,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
                 <div className="mt-4 rounded-[18px] border-2 border-ink bg-ink p-4 text-white">
                   <p className="text-[.78rem] font-extrabold tracking-[.06em] text-[#7be0c8] uppercase">Votre première marche · {PROGRAMS.cc.hours} h sur {PROGRAMS.cc.days} jours</p>
                   <p className="display mt-1 text-[1.25rem] leading-tight font-black">15 jours pour votre première certification : la CC d’ISC².</p>
-                  <p className="mt-1 text-[.92rem] text-[#cbd5df]">Aucun prérequis, la même maison que le CISSP.{ccCohort ? ` Prochaine session en ${formatCohortMonthLabel(ccCohort.startsAt)}.` : ""}{ccPrice ? ` ${formatUsdCents(ccPrice.amountUsd)}${ccLocal(ccPrice.amountUsd) ? ` ≈ ${ccLocal(ccPrice.amountUsd)}` : ""}.` : ""}</p>
+                  <p className="mt-1 text-[.92rem] text-[#cbd5df]">Aucun prérequis, la même maison que le CISSP, et le CISSP en Associate of ISC² juste derrière.{ccCohort ? ` Prochaine session en ${formatCohortMonthLabel(ccCohort.startsAt)}.` : ""}{ccPrice ? ` ${formatUsdCents(ccPrice.amountUsd)}${ccLocal(ccPrice.amountUsd) ? ` ≈ ${ccLocal(ccPrice.amountUsd)}` : ""}.` : ""}</p>
                   <TrackLink href={`/demarrer?t=${token}`} event="cta_click" label="resultat-cc" className="mt-3 inline-flex w-full items-center justify-center rounded-[14px] border border-white/30 px-5 py-3 font-extrabold text-white">Commencer par ISC² CC →</TrackLink>
                 </div>
               )}
@@ -236,7 +236,7 @@ export default async function ScannerResultPage({ params }: { params: Promise<{ 
               <div className="mt-5 rounded-[18px] border-2 border-ink bg-ink p-4 text-white">
                 <p className="text-[.78rem] font-extrabold tracking-[.06em] text-[#7be0c8] uppercase">Votre première marche · {PROGRAMS.cc.hours} h sur {PROGRAMS.cc.days} jours</p>
                 <p className="display mt-1 text-[1.35rem] leading-tight font-black">15 jours pour votre première certification : la CC d’ISC².</p>
-                <p className="mt-1 text-[.95rem] text-[#cbd5df]">Aucun prérequis, un examen reconnu, la même maison que le CISSP. Vous en sortez avec une certification, et le chemin vers le CISSP est tracé.{ccCohort ? ` Prochaine session en ${formatCohortMonthLabel(ccCohort.startsAt)} : ${ccCohort.gauge.label.toLowerCase()}.` : ""}</p>
+                <p className="mt-1 text-[.95rem] text-[#cbd5df]">Aucun prérequis, un examen reconnu, la même maison que le CISSP. Vous en sortez avec une certification, et le CISSP en Associate of ISC² vient juste derrière.{ccCohort ? ` Prochaine session en ${formatCohortMonthLabel(ccCohort.startsAt)} : ${ccCohort.gauge.label.toLowerCase()}.` : ""}</p>
                 {ccPrice && <p className="mt-2 text-[.9rem]"><b>{formatUsdCents(ccPrice.amountUsd)}</b>{ccLocal(ccPrice.amountUsd) && <span className="text-[#cbd5df]"> ≈ {ccLocal(ccPrice.amountUsd)}</span>}</p>}
                 <TrackLink href={`/demarrer?t=${token}`} event="cta_click" label="resultat-cc" className={btnPrimary + " mt-4 w-full border border-white/20"}>Commencer par ISC² CC →</TrackLink>
               </div>

@@ -59,7 +59,6 @@ export async function sendResultReminders(now = new Date()): Promise<number> {
   const responses = await prisma.scannerResponse.findMany({
     where: {
       createdAt: { gte: since, lte: until },
-      readiness: { in: ["ready", "conditional"] },
       lead: {
         unsubscribedAt: null,
         status: { in: ["new", "contacted"] },

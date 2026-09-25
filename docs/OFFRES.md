@@ -282,3 +282,15 @@ Deux parcours distincts dès le premier écran de `/rdv`, tous deux visibles dep
 - **Consultation approfondie · payante.** Le visiteur choisit d'abord la durée (1 h, 3 × 1 h, 2 × 45 min par mois), puis un créneau pour cette durée. La palette des séances de ce format, avec leurs prix par pays, ne s'affiche qu'à ce moment (`/rdv/conseil`). Il choisit la séance, passe par l'analyse de profil s'il n'est pas connu, puis le paiement confirme la séance au créneau retenu.
 
 `/conseil` reste la page de présentation du conseil carrière, mais n'affiche plus de prix : elle renvoie vers le choix de la durée. Une recommandation de séance sur la page de résultat mène directement à la page de la séance, où le créneau se choisit avant le paiement (§10).
+
+## 13. Personne n'est « pas prêt » (Ben, 25/09/2026)
+
+Les trois clés du scanner restent (`ready`, `conditional`, `not_yet`, stockées sur les réponses), mais chacune vend :
+
+| Profil | Verdict affiché | Première proposition |
+|---|---|---|
+| 5 ans et plus, ou 3 à 4 ans avec dérogation | Éligible au titre CISSP | Bootcamp CISSP, prix, inscription directe |
+| 3 à 4 ans sans dérogation | Éligible via Associate of ISC² | Bootcamp CISSP, prix, inscription directe ; l'examen réussi donne le titre Associate, six ans pour compléter l'expérience |
+| Sans expérience, 1 à 2 ans, étudiant, reconversion | Fondations, puis Associate of ISC² | Bootcamp CC en premier (idéal entry level), avec le CISSP en Associate juste derrière ; conseil carrière en option |
+
+Conséquences : plus de statut « à recontacter » à la sortie du scanner, relances J+2 et rappel J+1 pour tout le monde, aucune phrase du type « vous n'y êtes pas encore » ni « l'examen viendra plus tard ». La barre « Prérequis ISC² » devient « Expérience vers le titre » et mentionne l'Associate sous cinq ans. La FAQ répond « Non » à la question des cinq ans.

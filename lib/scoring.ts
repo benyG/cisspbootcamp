@@ -123,10 +123,12 @@ export type ScannerScore = {
 // --- Éligibilité --------------------------------------------------------
 
 /**
- * ISC² eligibility (SPECS A2):
- *   5+ years, or 3–4 years with the one-year waiver  -> ready
- *   3–4 years without the waiver                     -> conditional (Associate)
- *   under 3 years, or still a student                -> not yet
+ * The path to the title (Ben, 25/09/2026: nobody is "not ready"):
+ *   5+ years, or 3–4 years with the one-year waiver  -> ready        (title on passing)
+ *   3–4 years without the waiver                     -> conditional  (Associate of ISC² on passing)
+ *   under 3 years, or still a student                -> not_yet      (foundations: the CC course first,
+ *                                                                     the CISSP as Associate right after)
+ * The keys are stored on scanner responses, so they stay; the words shown do not.
  */
 export function assessReadiness(answers: ScannerAnswers): Readiness {
   if (answers.professionalStatus === "student") return "not_yet";
@@ -208,13 +210,16 @@ export function buildReasons(
     );
   } else if (answers.professionalStatus === "student") {
     reasons.push(
-      "Le CISSP exige 5 ans d'expérience professionnelle : en tant " +
-        "qu'étudiant, l'examen viendra plus tard.",
+      "Étudiant, vous pouvez passer l'examen et devenir Associate of ISC² " +
+        "avant même votre premier poste : un vrai avantage à l'embauche. " +
+        "La certification CC est la première marche, le CISSP vient juste derrière.",
     );
   } else {
     reasons.push(
-      "Le prérequis ISC² est de 5 ans d'expérience (4 avec dérogation). " +
-        "Vous n'y êtes pas encore.",
+      `Avec ${experienceLabel(answers.experience)} d'expérience, vous passez l'examen dès ` +
+        "maintenant et devenez Associate of ISC². Le titre CISSP suit quand les " +
+        "cinq ans sont réunis, et vous avez six ans pour cela. La certification CC " +
+        "est la première marche pour y arriver vite.",
     );
   }
 
@@ -281,4 +286,18 @@ export function scoreScanner(answers: ScannerAnswers): ScannerScore {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+/** "un an", "1 à 2 ans"… for the sentences above. */
+export function experienceLabel(experience: ScannerAnswers["experience"]): string {
+  switch (experience) {
+    case "none":
+      return "vos premiers pas";
+    case "one_two":
+      return "1 à 2 ans";
+    case "three_four":
+      return "3 à 4 ans";
+    default:
+      return "5 ans ou plus";
+  }
 }

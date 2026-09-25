@@ -215,7 +215,7 @@ export async function notifyCoachOfBooking(input: { bookingId: number; leadId: n
   if (!lead) return;
   const response = lead.scannerResponses[0];
   const analysis = response?.analysis as { headline?: string; readiness?: string; timeline?: { label?: string; soloLabel?: string }; axes?: Array<{ label: string; detail: string; audience?: string }> } | undefined;
-  const readiness: Record<string, string> = { ready: "Prêt", conditional: "Prêt sous conditions", not_yet: "Pas encore" };
+  const readiness: Record<string, string> = { ready: "Éligible au titre", conditional: "Éligible via Associate", not_yet: "Fondations (CC d'abord)" };
   const base = env.NEXT_PUBLIC_APP_URL;
   const code = bookingCode(input.bookingId);
 

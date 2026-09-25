@@ -241,7 +241,8 @@ describe("analyseProfile", () => {
 
     expect(analysis.readiness).toBe("not_yet");
     expect(analysis.recommendation).toBe("build_first");
-    expect(analysis.headline).toContain("accompagne");
+    expect(analysis.headline).toContain("première certification");
+    expect(analysis.headline).not.toMatch(/pas prêt|pas encore|éligibilité/i);
   });
 
   it("calcule la chaleur commerciale séparément des axes montrés", () => {
