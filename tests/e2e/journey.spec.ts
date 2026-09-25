@@ -239,9 +239,10 @@ test("un prospect « pas encore » achète une heure de conseil et réserve sa s
 
   await page.goto("/conseil/bilan?pays=CM");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/bilan de carrière/i);
-  // Slot first, payment after (Ben, 24/09): the picker opens the page, the payment form waits behind it.
-  await expect(page.getByRole("heading", { name: /choisissez votre créneau/i })).toBeVisible();
-  await expect(page.getByRole("button", { name: /retenir ce créneau/i })).toBeVisible();
+  // The slot chosen on the palette is kept: the order page opens on the payment, with a way back.
+  await expect(page.getByText(/créneau retenu/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: /payer par carte bancaire/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^changer$/i })).toBeVisible();
 
   // The order itself, as the server action would create it, then the webhook.
   const stamp = Date.now();
