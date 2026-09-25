@@ -1,3 +1,4 @@
+import { Mail } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
@@ -17,7 +18,7 @@ export default async function TemplatesPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
-      <h1 className="mt-3 text-2xl font-bold">Gabarits de messages</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Mail className="size-6 shrink-0 text-accent" aria-hidden />Gabarits de messages</h1>
       <p className="mt-1 text-sm text-muted">Marqueurs disponibles : <code>{"{{prenom}}"}</code>, <code>{"{{nom}}"}</code>, <code>{"{{lien_rdv}}"}</code>, <code>{"{{lien_resultat}}"}</code>, <code>{"{{lien_paiement}}"}</code>, <code>{"{{lien_test}}"}</code> (5 questions ExamBoot), <code>{"{{cohorte}}"}</code>, <code>{"{{mois_cohorte}}"}</code>, <code>{"{{liste_documents}}"}</code> (onboarding). Un marqueur inconnu reste visible dans le message : c&apos;est voulu.</p>
       <div className="mt-5 grid gap-3">
         {templates.map((t) => (

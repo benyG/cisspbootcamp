@@ -1,3 +1,4 @@
+import { FileText } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
@@ -17,7 +18,7 @@ export default async function DocumentsPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
-      <h1 className="mt-3 text-2xl font-bold">Documents de préparation</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><FileText className="size-6 shrink-0 text-accent" aria-hidden />Documents de préparation</h1>
       <p className="mt-1 text-sm text-muted">Les fichiers envoyés avec l&apos;e-mail d&apos;onboarding, 30 Mo maximum par fichier. Jusqu&apos;à {formatBytes(ATTACHMENT_BUDGET_BYTES)} au total, ils partent en pièces jointes ; au-delà, chaque inscrit reçoit un lien de téléchargement personnel dans le même e-mail. L&apos;envoi se déclenche depuis la fiche d&apos;un inscrit, jamais automatiquement. Le texte de l&apos;e-mail se modifie dans les <Link href="/admin/parametres/gabarits" className="underline">gabarits</Link>.</p>
 
       <UploadForm programs={Object.values(PROGRAMS).map((p) => ({ code: p.code, name: p.name }))} />

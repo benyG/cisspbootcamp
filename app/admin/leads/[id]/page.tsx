@@ -1,3 +1,4 @@
+import { FileText, FlaskConical, History } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -115,7 +116,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
 
       {paidRegistration && (
         <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
-          <h2 className="text-xs font-extrabold tracking-[.06em] text-muted uppercase">Documents de préparation</h2>
+          <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><FileText className="size-4 text-accent" aria-hidden />Documents de préparation</h2>
           {onboarding === "ok" && <p className="mt-2 rounded-lg bg-accent-soft px-3 py-2">E-mail d&apos;onboarding envoyé avec les documents.</p>}
           {onboarding && onboarding !== "ok" && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-red-800">{onboarding}</p>}
           {lastOnboarding && <p className="mt-2 text-muted">Dernier envoi le {lastOnboarding.createdAt.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.</p>}
@@ -138,7 +139,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
 
       {lead.practiceTests.length > 0 && (
         <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
-          <h2 className="text-xs font-extrabold tracking-[.06em] text-muted uppercase">Tests ExamBoot</h2>
+          <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><FlaskConical className="size-4 text-accent" aria-hidden />Tests ExamBoot</h2>
           <ul className="mt-2 grid gap-1">
             {lead.practiceTests.map((t) => (
               <li key={t.id}>
@@ -159,7 +160,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       )}
 
       <section className="mt-6">
-        <h2 className="text-sm font-extrabold tracking-[.06em] text-muted uppercase">Historique</h2>
+        <h2 className="flex items-center gap-2 text-sm font-extrabold tracking-[.06em] text-muted uppercase"><History className="size-4 text-accent" aria-hidden />Historique</h2>
         <ol className="mt-2 grid gap-1 text-sm">
           {lead.actions.map((a) => <li key={a.id} className="flex gap-3"><span className="w-32 shrink-0 text-muted">{a.createdAt.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}</span><span>{LOG[a.type] ?? a.type}{a.channel ? ` (${a.channel})` : ""}</span></li>)}
           <li className="flex gap-3"><span className="w-32 shrink-0 text-muted">{lead.createdAt.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}</span><span>Lead créé{lead.source ? ` · ${lead.source}` : ""}{lead.consentAt ? " · consentement donné" : ""}</span></li>

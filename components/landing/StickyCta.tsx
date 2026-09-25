@@ -1,5 +1,7 @@
 "use client";
 
+import { ScanSearch } from "lucide-react";
+
 import { useEffect, useState } from "react";
 
 import { TrackLink } from "@/components/tracking/TrackLink";
@@ -52,7 +54,7 @@ export function StickyCta({ tiers, cohortStartsAt }: Props) {
           <b className="block truncate">{cohortStartsAt ? `Cohorte CISSP · ${formatCohortMonth(new Date(cohortStartsAt))}` : "Prochaine cohorte CISSP"}</b>
           {tier && tier.amountUsd > 0 && <span className="text-muted">{formatUsdCents(tier.amountUsd)}</span>}
         </div>
-        <TrackLink href="#evaluation" label="sticky" className="shrink-0 rounded-[12px] bg-ink px-4 py-3 text-[.92rem] font-extrabold text-white">Analyser mon profil →</TrackLink>
+        <TrackLink href="#evaluation" label="sticky" className="inline-flex shrink-0 items-center gap-1.5 rounded-[12px] bg-ink px-4 py-3 text-[.92rem] font-extrabold text-white"><ScanSearch className="size-4" aria-hidden />Analyser mon profil →</TrackLink>
       </div>
     </div>
   );

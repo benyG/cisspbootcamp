@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CalendarCheck, Clock, Gift, Lightbulb } from "lucide-react";
 import Link from "next/link";
 
 import { SlotPicker } from "@/components/booking/SlotPicker";
@@ -46,12 +47,12 @@ export default async function BookingPage({
 
       <nav className="mt-6 grid gap-2 sm:grid-cols-2" aria-label="Type de rendez-vous">
         <Link href={`/rdv?type=gratuit${tokenParam}`} aria-current={!paid ? "page" : undefined} className={option + (!paid ? " border-ink bg-ink text-white" : " bg-white")}>
-          <span className={"block text-[.72rem] font-extrabold tracking-[.1em] uppercase " + (!paid ? "text-[#7be0c8]" : "text-accent")}>Rendez-vous gratuit · 15 min</span>
+          <span className={"flex items-center gap-1.5 text-[.72rem] font-extrabold tracking-[.1em] uppercase " + (!paid ? "text-[#7be0c8]" : "text-accent")}><Gift className="size-4" aria-hidden />Rendez-vous gratuit · 15 min</span>
           <b className="display mt-1 block text-lg">Premier contact, 0 USD, sans engagement</b>
           <span className={"mt-1 block text-[.88rem] " + (!paid ? "text-[#cbd5df]" : "text-muted")}>Faire le point sur votre profil et décider de la suite.</span>
         </Link>
         <Link href={`/rdv?type=approfondie${tokenParam}`} aria-current={paid ? "page" : undefined} className={option + (paid ? " border-ink bg-ink text-white" : " bg-white")}>
-          <span className={"block text-[.72rem] font-extrabold tracking-[.1em] uppercase " + (paid ? "text-[#7be0c8]" : "text-accent")}>Consultation approfondie · payante</span>
+          <span className={"flex items-center gap-1.5 text-[.72rem] font-extrabold tracking-[.1em] uppercase " + (paid ? "text-[#7be0c8]" : "text-accent")}><Lightbulb className="size-4" aria-hidden />Consultation approfondie · payante</span>
           <b className="display mt-1 block text-lg">Une séance avec un plan écrit, tarif selon la durée</b>
           <span className={"mt-1 block text-[.88rem] " + (paid ? "text-[#cbd5df]" : "text-muted")}>Bilan, évolution, reconversion, certification, mentorat.</span>
         </Link>
@@ -68,7 +69,7 @@ async function FreeSlots({ token, known }: { token?: string; known: boolean }) {
   if (!listing.available) return <Closed />;
   return (
     <section>
-      <h2 className="text-xl font-bold">Rendez-vous gratuit : choisissez votre créneau de 15 minutes</h2>
+      <h2 className="flex items-center gap-2 text-xl font-bold"><CalendarCheck className="size-5 shrink-0 text-[var(--color-accent)]" aria-hidden />Rendez-vous gratuit : choisissez votre créneau de 15 minutes</h2>
       <p className="mt-1 mb-4 text-sm text-[var(--color-muted)]">Appel vidéo, en français, sans paiement. {known ? "Confirmé dès votre clic." : "Ensuite, votre analyse de profil confirme le rendez-vous."}</p>
       {token && known ? (
         <SlotPicker
@@ -108,7 +109,7 @@ async function PaidSteps({ format, token, known }: { format?: string; token?: st
   if (!chosen) {
     return (
       <section>
-        <h2 className="text-xl font-bold">1. Quelle durée ?</h2>
+        <h2 className="flex items-center gap-2 text-xl font-bold"><Clock className="size-5 text-[var(--color-accent)]" aria-hidden />1. Quelle durée ?</h2>
         <p className="mt-1 mb-4 text-sm text-[var(--color-muted)]">Vous verrez ensuite les créneaux disponibles pour cette durée, puis les séances proposées et leur prix.</p>
         <ul className="grid gap-2">
           {formats.map((f) => (
@@ -131,7 +132,7 @@ async function PaidSteps({ format, token, known }: { format?: string; token?: st
   return (
     <section>
       <p className="text-sm"><Link href={`/rdv?type=approfondie${tokenParam}`} className="underline underline-offset-4">← Changer de durée</Link></p>
-      <h2 className="mt-3 text-xl font-bold">2. Un créneau pour {chosen.label}</h2>
+      <h2 className="mt-3 flex items-center gap-2 text-xl font-bold"><CalendarCheck className="size-5 text-[var(--color-accent)]" aria-hidden />2. Un créneau pour {chosen.label}</h2>
       <p className="mt-1 mb-4 text-sm text-[var(--color-muted)]">
         {chosen.sessions > 1 ? "Le créneau de la première séance ; les suivantes se fixent avec Ben. " : ""}Ensuite : la séance et son prix{known ? ", puis le paiement." : ", votre analyse de profil, puis le paiement."}
       </p>

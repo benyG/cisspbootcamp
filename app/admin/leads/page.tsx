@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
@@ -17,7 +18,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
-      <h1 className="mt-3 text-2xl font-bold">Leads</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Users className="size-6 shrink-0 text-accent" aria-hidden />Leads</h1>
       {supprime && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Lead supprimé, avec tout son historique.</p>}
       <form className="mt-4"><input name="q" defaultValue={q} placeholder="Chercher un nom ou un e-mail" className="w-full rounded-lg border border-line px-3 py-2.5" /></form>
       <ul className="mt-4 divide-y divide-slate-100 rounded-xl border border-line bg-white">
