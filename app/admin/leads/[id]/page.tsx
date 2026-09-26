@@ -107,6 +107,42 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       )}
       {holdRefusal && !hold && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Place non tenue : {String((holdRefusal.payload as { error?: string })?.error ?? "")}</p>}
 
+      {lead.status === "registered" && !paidRegistration && (
+        <p className="mt-5 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Marqué « Inscrit », mais cette personne n&apos;a encore aucune place dans une cohorte. Inscrivez-la ci-dessous : c&apos;est ce qui lui réserve sa place et lui envoie ses documents.</p>
+      )}
+      {inscription && (
+        <p className={"mt-3 rounded-lg px-3 py-2 text-sm " + (inscription.startsWith("ok") ? "bg-accent-soft" : "bg-red-50 text-red-800")}>
+          {inscription.startsWith("ok:") ? inscription.slice(3) : inscription}
+        </p>
+      )}
+      <details open={!paidRegistration} className="mt-5 rounded-xl border-2 border-accent/40 bg-white p-4 text-sm">
+        <summary className="flex cursor-pointer items-center gap-2 font-semibold"><UserCheck className="size-4 text-accent" aria-hidden />{paidRegistration ? "Inscrire dans une autre cohorte" : "Inscrire dans une cohorte"}</summary>
+        {cohorts.length === 0 ? (
+          <p className="mt-3 text-muted">Aucune cohorte à venir. <Link href="/admin/cohortes" className="underline">Créer une cohorte</Link>.</p>
+        ) : (
+          <form action={registerDirectly} className="mt-3 grid gap-3">
+            <input type="hidden" name="leadId" value={lead.id} />
+            <p className="text-muted">Pour une personne qui a payé hors de l&apos;application. La place est confirmée tout de suite, même si la cohorte est pleine ou pas encore ouverte, et la personne passe en « Inscrit ».</p>
+            <label className="flex flex-col gap-1"><span className="font-medium">Cohorte</span>
+              <select name="cohortId" required className={input} defaultValue={cohorts.find((c) => c.status === "open")?.id ?? cohorts[0].id}>
+                {cohorts.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.program.toUpperCase()} · {c.startsAt.toLocaleDateString("fr-FR", { timeZone: "UTC" })} · {c._count.registrations}/{c.capacity} payées{c.status !== "open" ? ` · ${c.status === "full" ? "pleine" : c.status === "planned" ? "pas encore ouverte" : "en cours"}` : ""}</option>)}
+              </select></label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1"><span className="font-medium">Montant reçu (USD)</span>
+                <input name="amountUsd" type="number" min="0" step="0.01" required defaultValue={lead.pricingTier && lead.pricingTier.amountUsd > 0 ? lead.pricingTier.amountUsd / 100 : undefined} className={input} /></label>
+              <label className="flex flex-col gap-1"><span className="font-medium">Mode de paiement</span>
+                <select name="paymentMode" required className={input} defaultValue="virement">
+                  {["virement", "espèces", "mobile money hors application", "carte hors application", "offert", "autre"].map((m) => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}
+                </select></label>
+            </div>
+            <label className="flex flex-col gap-1"><span className="font-medium">Précision, facultative</span><input name="paymentDetail" maxLength={150} placeholder="ex. référence du virement, payé par l’employeur" className={input} /></label>
+            <label className="flex items-center gap-2"><input type="checkbox" name="notify" defaultChecked /> Envoyer l&apos;e-mail « votre place est réservée » avec le reçu</label>
+            <label className="flex items-start gap-2"><input type="checkbox" name="onboard" defaultChecked className="mt-1" /> Envoyer aussi les documents de préparation : le plan de lecture (CISSP) et les documents actifs du programme, dans un second e-mail</label>
+            <div className="flex justify-end"><button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Inscrire et envoyer</button></div>
+          </form>
+        )}
+      </details>
+
       {paidRegistration ? (
         <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
           <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><FileText className="size-4 text-accent" aria-hidden />Documents de préparation</h2>
@@ -134,47 +170,17 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       ) : (
         <section className="mt-5 rounded-xl border border-dashed border-line bg-white p-4 text-sm">
           <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><FileText className="size-4 text-accent" aria-hidden />Documents de préparation</h2>
-          <p className="mt-2 text-muted">Ils s&apos;envoient une fois la place payée. Si cette personne a payé hors de l&apos;application, inscrivez-la avec le bloc « Inscrire directement dans une cohorte » ci-dessous : l&apos;envoi apparaît alors ici.</p>
+          <p className="mt-2 text-muted">Ils s&apos;envoient une fois la personne inscrite dans une cohorte, avec le bloc ci-dessus (case « Envoyer aussi les documents de préparation »).</p>
         </section>
       )}
 
-      {inscription && (
-        <p className={"mt-3 rounded-lg px-3 py-2 text-sm " + (inscription.startsWith("ok") ? "bg-accent-soft" : "bg-red-50 text-red-800")}>
-          {inscription === "ok" ? "Inscription confirmée, e-mail de confirmation envoyé avec le reçu." : inscription === "ok-sans-email" ? "Inscription confirmée. Aucun e-mail n’est parti." : inscription}
-        </p>
-      )}
-      <details className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
-        <summary className="flex cursor-pointer items-center gap-2 font-semibold"><UserCheck className="size-4 text-accent" aria-hidden />Inscrire directement dans une cohorte</summary>
-        {cohorts.length === 0 ? (
-          <p className="mt-3 text-muted">Aucune cohorte à venir. <Link href="/admin/cohortes" className="underline">Créer une cohorte</Link>.</p>
-        ) : (
-          <form action={registerDirectly} className="mt-3 grid gap-3">
-            <input type="hidden" name="leadId" value={lead.id} />
-            <p className="text-muted">Pour un paiement reçu hors de l&apos;application. La place est confirmée tout de suite, même si la cohorte est pleine ou pas encore ouverte.</p>
-            <label className="flex flex-col gap-1"><span className="font-medium">Cohorte</span>
-              <select name="cohortId" required className={input} defaultValue={cohorts.find((c) => c.status === "open")?.id ?? cohorts[0].id}>
-                {cohorts.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.program.toUpperCase()} · {c.startsAt.toLocaleDateString("fr-FR", { timeZone: "UTC" })} · {c._count.registrations}/{c.capacity} payées{c.status !== "open" ? ` · ${c.status === "full" ? "pleine" : c.status === "planned" ? "pas encore ouverte" : "en cours"}` : ""}</option>)}
-              </select></label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex flex-col gap-1"><span className="font-medium">Montant reçu (USD)</span>
-                <input name="amountUsd" type="number" min="0" step="0.01" required defaultValue={lead.pricingTier && lead.pricingTier.amountUsd > 0 ? lead.pricingTier.amountUsd / 100 : undefined} className={input} /></label>
-              <label className="flex flex-col gap-1"><span className="font-medium">Mode de paiement</span>
-                <select name="paymentMode" required className={input} defaultValue="virement">
-                  {["virement", "espèces", "mobile money hors application", "carte hors application", "offert", "autre"].map((m) => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}
-                </select></label>
-            </div>
-            <label className="flex flex-col gap-1"><span className="font-medium">Précision, facultative</span><input name="paymentDetail" maxLength={150} placeholder="ex. référence du virement, payé par l’employeur" className={input} /></label>
-            <label className="flex items-center gap-2"><input type="checkbox" name="notify" defaultChecked /> Envoyer l&apos;e-mail « votre place est réservée » avec le reçu</label>
-            <div className="flex justify-end"><button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Inscrire et confirmer la place</button></div>
-          </form>
-        )}
-      </details>
 
       <form action={updateLead} className="mt-5 grid gap-3 rounded-xl border border-line bg-white p-4">
         <input type="hidden" name="leadId" value={lead.id} />
         <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Statut</span>
-            <select name="status" defaultValue={lead.status} className={input}>{Object.entries(STATUS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+          <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Étape de suivi</span>
+            <select name="status" defaultValue={lead.status} className={input}>{Object.entries(STATUS).filter(([v]) => v !== "registered" || paidRegistration || lead.status === "registered").map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+            <span className="text-xs text-muted">Étape de suivi commercial. « Inscrit » vient d&apos;une place payée : utilisez « Inscrire dans une cohorte ».</span></label>
           <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Prochaine relance</span><input type="datetime-local" name="nextFollowupAt" defaultValue={toLocal(lead.nextFollowupAt)} className={input} /></label>
         </div>
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Tags, séparés par des virgules</span><input name="tags" defaultValue={tags.join(", ")} placeholder="entreprise, financement, urgent" className={input} /></label>
