@@ -305,11 +305,18 @@ Cette information répond à une objection majeure :
 
 # 15 jours. Pensés pour les professionnels.
 
-### Lun. — Ven.
-**2 à 3 h en soirée**
+### En semaine
+**2 h en soirée : lundi, mardi, jeudi, vendredi**
+
+### Mercredi
+**Repos lecture : pas de session, vous avancez vos chapitres**
 
 ### Week-ends
-**Sessions intensives jusqu’à 7 h**
+**Sessions intensives, 5 h 30 par jour**
+
+(Ben, 26/09 : mercredis sans session, leurs heures reportées sur les
+week-ends ; 9 soirs × 2 h + 4 jours × 5 h 30 = 40 h, comme le plan de
+lecture `/plan-de-lecture`.)
 
 ### Phrase finale
 
