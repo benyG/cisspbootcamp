@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { PROGRAMS } from "@/lib/programs";
 import { formatUsdCents } from "@/lib/pricing";
 
-import { updateCohort } from "../actions";
+import { deleteCohort, updateCohort } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,15 @@ export default async function CohortPage({
   const pending = cohort.registrations.filter((r) => r.status !== "paid" && r.status !== "refunded");
   const held = await prisma.seatHold.count({ where: { cohortId: cohort.id, releasedAt: null, expiresAt: { gt: new Date() } } });
   const gauge = buildGauge({ capacity: cohort.capacity, confirmed: paid.length, preEngaged: 0, held });
+  const peopleInside = new Set([
+    ...cohort.registrations.map((r) => r.lead.id),
+    ...(await prisma.seatHold.findMany({ where: { cohortId: cohort.id, releasedAt: null, expiresAt: { gt: new Date() } }, select: { leadId: true } })).map((h) => h.leadId),
+  ]).size;
+  const destinations = await prisma.cohort.findMany({
+    where: { program: cohort.program, status: { not: "done" }, id: { not: cohort.id } },
+    orderBy: { startsAt: "asc" },
+    select: { id: true, name: true, startsAt: true, capacity: true, _count: { select: { registrations: { where: { status: "paid" } } } } },
+  });
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
@@ -111,6 +120,32 @@ export default async function CohortPage({
           </ul>
         </section>
       )}
+
+      <details className="mt-10 rounded-xl border border-red-200 bg-white p-4 text-sm">
+        <summary className="flex cursor-pointer items-center gap-2 font-semibold text-red-800"><Trash2 className="size-4" aria-hidden />Supprimer cette cohorte</summary>
+        <form action={deleteCohort} className="mt-3 grid gap-3">
+          <input type="hidden" name="id" value={cohort.id} />
+          {peopleInside === 0 ? (
+            <p className="text-muted">Personne n&apos;est inscrit ni en attente dans cette cohorte : elle peut être supprimée directement.</p>
+          ) : destinations.length === 0 ? (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-amber-900">{peopleInside} personne{peopleInside > 1 ? "s" : ""} dans cette cohorte (payées, en attente ou place tenue). Créez d&apos;abord la cohorte {PROGRAMS[cohort.program].name} qui les accueillera, puis revenez ici.</p>
+          ) : (
+            <>
+              <p className="text-ink-2">{peopleInside} personne{peopleInside > 1 ? "s" : ""} dans cette cohorte ({paid.length} payée{paid.length > 1 ? "s" : ""}, les autres en attente ou avec une place tenue). Elles passent toutes dans la cohorte choisie, avec leur paiement et leur référence. Aucun e-mail ne part : prévenez-les vous-même avant.</p>
+              <label className="flex flex-col gap-1"><span className="font-medium">Déplacer les personnes vers</span>
+                <select name="targetId" required className={input}>
+                  {destinations.map((d) => <option key={d.id} value={d.id}>{d.name} · {d.startsAt.toLocaleDateString("fr-FR", { timeZone: "UTC" })} · {d._count.registrations}/{d.capacity} payées</option>)}
+                </select></label>
+            </>
+          )}
+          {(peopleInside === 0 || destinations.length > 0) && (
+            <>
+              <label className="flex items-start gap-2"><input type="checkbox" name="confirm" required className="mt-1" /> {peopleInside === 0 ? "Je confirme la suppression de cette cohorte." : "J’ai prévenu les personnes concernées de leur changement de cohorte, et je confirme la suppression."}</label>
+              <div className="flex justify-end"><button className="rounded-lg bg-red-700 px-4 py-2 font-semibold text-white">{peopleInside === 0 ? "Supprimer la cohorte" : "Déplacer et supprimer"}</button></div>
+            </>
+          )}
+        </form>
+      </details>
     </main>
   );
 }

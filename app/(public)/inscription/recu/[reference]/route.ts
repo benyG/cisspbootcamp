@@ -22,6 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ref
     reference: registration.reference,
     paidAt: registration.paidAt,
     method: registration.method,
+    paymentNote: registration.paymentNote,
     amountUsdCents: registration.amountUsd,
     amountLocalLabel:
       registration.currencyLocal && registration.amountLocal !== null

@@ -10,8 +10,8 @@ import { createCohort } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function CohortsPage({ searchParams }: { searchParams: Promise<{ erreur?: string }> }) {
-  const { erreur } = await searchParams;
+export default async function CohortsPage({ searchParams }: { searchParams: Promise<{ erreur?: string; supprime?: string; vers?: string; n?: string }> }) {
+  const { erreur, supprime, vers, n } = await searchParams;
   const cohorts = await listCohortsWithGauge();
 
   return (
@@ -19,6 +19,7 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
       <Link href="/admin" className="text-sm text-[var(--color-muted)]">← Administration</Link>
       <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><GraduationCap className="size-6 shrink-0 text-accent" aria-hidden />Cohortes</h1>
       {erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{erreur}</p>}
+      {supprime && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{supprime} supprimée.{vers ? ` ${n} personne${Number(n) > 1 ? "s" : ""} déplacée${Number(n) > 1 ? "s" : ""} vers ${vers}.` : ""}</p>}
 
       <ul className="mt-6 flex flex-col gap-3">
         {cohorts.map((cohort) => (

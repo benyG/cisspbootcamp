@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   ADMISSION_CLOSE_DAYS,
+  adminRegistrationProblem,
+  cohortDeletionProblem,
   type CohortCandidate,
   admissionClosesAt,
   availabilityQuestionLabel,
@@ -183,5 +185,47 @@ describe("places tenues (docs/CONVERSION.md §2.4)", () => {
 
   it("remainingSeats retire les places tenues d'une cohorte candidate", () => {
     expect(remainingSeats(cohort({ confirmedCount: 4, heldCount: 3 }))).toBe(3);
+  });
+});
+
+describe("adminRegistrationProblem", () => {
+  it("accepte une cohorte pleine ou pas encore ouverte : c'est Ben qui décide", () => {
+    for (const cohortStatus of ["open", "full", "planned", "running"]) {
+      expect(adminRegistrationProblem({ cohortStatus, alreadyPaidInCohort: false, amountUsdCents: 62500 })).toBeNull();
+    }
+  });
+
+  it("accepte une place offerte, à 0", () => {
+    expect(adminRegistrationProblem({ cohortStatus: "open", alreadyPaidInCohort: false, amountUsdCents: 0 })).toBeNull();
+  });
+
+  it("refuse une cohorte terminée, un doublon, un montant négatif", () => {
+    expect(adminRegistrationProblem({ cohortStatus: "done", alreadyPaidInCohort: false, amountUsdCents: 100 })).toMatch(/terminée/);
+    expect(adminRegistrationProblem({ cohortStatus: "open", alreadyPaidInCohort: true, amountUsdCents: 100 })).toMatch(/déjà/);
+    expect(adminRegistrationProblem({ cohortStatus: "open", alreadyPaidInCohort: false, amountUsdCents: -1 })).toMatch(/Montant/);
+  });
+});
+
+describe("cohortDeletionProblem", () => {
+  const base = { sourceId: 1, sourceProgram: "cissp", acknowledged: true };
+  const target = { id: 2, program: "cissp", status: "open" };
+
+  it("supprime une cohorte vide sans destination", () => {
+    expect(cohortDeletionProblem({ ...base, people: 0, target: null })).toBeNull();
+  });
+
+  it("exige une destination quand des personnes sont dedans", () => {
+    expect(cohortDeletionProblem({ ...base, people: 3, target: null })).toMatch(/Choisissez/);
+    expect(cohortDeletionProblem({ ...base, people: 3, target })).toBeNull();
+  });
+
+  it("refuse la même cohorte, un autre programme, une cohorte terminée", () => {
+    expect(cohortDeletionProblem({ ...base, people: 1, target: { ...target, id: 1 } })).toMatch(/autre cohorte/);
+    expect(cohortDeletionProblem({ ...base, people: 1, target: { ...target, program: "cc" } })).toMatch(/même programme/);
+    expect(cohortDeletionProblem({ ...base, people: 1, target: { ...target, status: "done" } })).toMatch(/terminée/);
+  });
+
+  it("demande toujours la confirmation", () => {
+    expect(cohortDeletionProblem({ ...base, acknowledged: false, people: 0, target: null })).toMatch(/confirmation/);
   });
 });

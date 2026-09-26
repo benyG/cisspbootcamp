@@ -10,7 +10,9 @@ import { PROGRAMS, type ProgramCode } from "@/lib/programs";
 export type ReceiptData = {
   reference: string;
   paidAt: Date;
-  method: "stripe" | "netticket";
+  method: "stripe" | "netticket" | "manual";
+  /** For a manual payment: how it reached Ben (virement, espèces…). */
+  paymentNote?: string | null;
   amountUsdCents: number;
   amountLocalLabel: string | null;
   participantName: string;
@@ -82,7 +84,7 @@ export async function buildReceiptPdf(data: ReceiptData): Promise<Uint8Array> {
   text("Total réglé", { font: bold, size: 13 });
   text(formatUsdCents(data.amountUsdCents), { font: bold, size: 13, x: 440 });
   y -= 16;
-  text(`Payé par ${data.method === "stripe" ? "carte bancaire (Stripe)" : "mobile money (Netticket)"}`, { size: 9, color: muted });
+  text(`Payé par ${data.method === "stripe" ? "carte bancaire (Stripe)" : data.method === "netticket" ? "mobile money (Netticket)" : `règlement direct${data.paymentNote ? ` (${data.paymentNote})` : ""}`}`, { size: 9, color: muted });
 
   y -= 40;
   text(program.receiptExamNote, { size: 9, color: muted });

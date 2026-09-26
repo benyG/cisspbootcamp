@@ -154,3 +154,37 @@ export const COHORT_STATUS_LABEL: Record<string, string> = {
   running: "En cours",
   done: "Terminée",
 };
+
+/**
+ * Ben registers someone himself, paid outside the app (26/09): any cohort
+ * not yet over, even a full or planned one — his call, not the funnel's.
+ * Returns the reason to refuse, or null.
+ */
+export function adminRegistrationProblem(input: { cohortStatus: string; alreadyPaidInCohort: boolean; amountUsdCents: number }): string | null {
+  if (input.cohortStatus === "done") return "Cette cohorte est terminée.";
+  if (input.alreadyPaidInCohort) return "Cette personne a déjà une place payée dans cette cohorte.";
+  if (!Number.isInteger(input.amountUsdCents) || input.amountUsdCents < 0) return "Montant invalide.";
+  return null;
+}
+
+/**
+ * Deleting a cohort created by mistake (Ben, 26/09). Anyone inside it —
+ * paid, pending, or holding a seat — moves to another cohort of the same
+ * programme first; Ben has told them beforehand, so nothing is sent.
+ * Returns the reason to refuse, or null.
+ */
+export function cohortDeletionProblem(input: {
+  sourceId: number;
+  sourceProgram: string;
+  people: number;
+  target: { id: number; program: string; status: string } | null;
+  acknowledged: boolean;
+}): string | null {
+  if (!input.acknowledged) return "Cochez la confirmation pour supprimer.";
+  if (input.people === 0) return null;
+  if (!input.target) return "Choisissez la cohorte qui accueille les personnes inscrites.";
+  if (input.target.id === input.sourceId) return "La cohorte de destination doit être une autre cohorte.";
+  if (input.target.program !== input.sourceProgram) return "La cohorte de destination doit être du même programme.";
+  if (input.target.status === "done") return "La cohorte de destination est terminée.";
+  return null;
+}

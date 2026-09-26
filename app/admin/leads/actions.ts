@@ -8,7 +8,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { nextFollowupAt } from "@/lib/followups";
 import { sendOnboardingDocuments } from "@/lib/onboarding";
-import { startRegistration } from "@/lib/registration";
+import { registerByAdmin } from "@/lib/registration";
 
 async function requireAdmin() {
   const session = await auth();
@@ -40,18 +40,37 @@ export async function updateLead(formData: FormData): Promise<void> {
   revalidatePath("/admin");
 }
 
-/** Manual registration (SPECS A7): opens a pending_manual seat Ben confirms once paid. */
-export async function registerManually(formData: FormData): Promise<void> {
+const directSchema = z.object({
+  leadId: id,
+  cohortId: id,
+  amountUsd: z.coerce.number().min(0).max(100_000),
+  paymentMode: z.enum(["virement", "espèces", "mobile money hors application", "carte hors application", "offert", "autre"]),
+  paymentDetail: z.string().trim().max(150).optional().default(""),
+  notify: z.literal("on").optional(),
+});
+
+/**
+ * Direct registration (Ben, 26/09): someone paid outside the app, Ben puts
+ * them in the cohort he picks and the seat is paid at once.
+ */
+export async function registerDirectly(formData: FormData): Promise<void> {
   await requireAdmin();
+  const parsed = directSchema.safeParse(Object.fromEntries(formData));
   const leadId = id.safeParse(formData.get("leadId"));
   if (!leadId.success) return;
-  const started = await startRegistration({ leadId: leadId.data, method: "netticket" });
-  if (started.registration) {
-    await prisma.registration.update({ where: { id: started.registration.id }, data: { status: "pending_manual" } });
-    await prisma.actionLog.create({ data: { leadId: leadId.data, type: "registration_manual_opened", payload: { registrationId: started.registration.id } } });
-  }
+  if (!parsed.success) redirect(`/admin/leads/${leadId.data}?inscription=${encodeURIComponent("Cohorte, montant et mode de paiement sont requis.")}`);
+  const { cohortId, amountUsd, paymentMode, paymentDetail, notify } = parsed.data;
+  const result = await registerByAdmin({
+    leadId: leadId.data,
+    cohortId,
+    amountUsdCents: Math.round(amountUsd * 100),
+    paymentNote: [paymentMode, paymentDetail].filter(Boolean).join(" · "),
+    notify: notify === "on",
+  });
   revalidatePath(`/admin/leads/${leadId.data}`);
   revalidatePath("/admin");
+  revalidatePath("/admin/cohortes");
+  redirect(`/admin/leads/${leadId.data}?inscription=${result.ok ? (result.emailSent ? "ok" : "ok-sans-email") : encodeURIComponent(result.error)}`);
 }
 
 export async function markLost(formData: FormData): Promise<void> {
