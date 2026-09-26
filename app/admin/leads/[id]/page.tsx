@@ -107,6 +107,37 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       )}
       {holdRefusal && !hold && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Place non tenue : {String((holdRefusal.payload as { error?: string })?.error ?? "")}</p>}
 
+      {paidRegistration ? (
+        <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
+          <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><FileText className="size-4 text-accent" aria-hidden />Documents de préparation</h2>
+          {onboarding === "ok" && <p className="mt-2 rounded-lg bg-accent-soft px-3 py-2">E-mail d&apos;onboarding envoyé avec les documents.</p>}
+          {onboarding && onboarding !== "ok" && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-red-800">{onboarding}</p>}
+          {lastOnboarding && <p className="mt-2 text-muted">Dernier envoi le {lastOnboarding.createdAt.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.</p>}
+          {documents.length === 0 && paidRegistration.cohort.program !== "cissp" ? (
+            <p className="mt-2 text-muted">Aucun document actif pour cette formation. <Link href="/admin/documents" className="underline">Ajouter des documents</Link>.</p>
+          ) : (
+            <form action={sendOnboarding} className="mt-2 grid gap-2">
+              <input type="hidden" name="leadId" value={lead.id} />
+              {paidRegistration.cohort.program === "cissp" && (
+                <p className="flex items-center gap-2"><input type="checkbox" checked disabled aria-label="Toujours inclus" /> Plan de lecture interactif <span className="text-muted">(lien, toujours inclus)</span> <a href={`/plan-de-lecture?debut=${planStart(paidRegistration.cohort.startsAt)}`} target="_blank" rel="noopener" className="underline">voir</a></p>
+              )}
+              {documents.map((d) => (
+                <label key={d.id} className="flex items-center gap-2"><input type="checkbox" name="documentId" value={d.id} defaultChecked /> {d.name} <span className="text-muted">({formatBytes(d.size)})</span></label>
+              ))}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-muted">Destinataire : {lead.email} · {paidRegistration.cohort.name}</span>
+                <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Envoyer l&apos;e-mail d&apos;onboarding</button>
+              </div>
+            </form>
+          )}
+        </section>
+      ) : (
+        <section className="mt-5 rounded-xl border border-dashed border-line bg-white p-4 text-sm">
+          <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><FileText className="size-4 text-accent" aria-hidden />Documents de préparation</h2>
+          <p className="mt-2 text-muted">Ils s&apos;envoient une fois la place payée. Si cette personne a payé hors de l&apos;application, inscrivez-la avec le bloc « Inscrire directement dans une cohorte » ci-dessous : l&apos;envoi apparaît alors ici.</p>
+        </section>
+      )}
+
       {inscription && (
         <p className={"mt-3 rounded-lg px-3 py-2 text-sm " + (inscription.startsWith("ok") ? "bg-accent-soft" : "bg-red-50 text-red-800")}>
           {inscription === "ok" ? "Inscription confirmée, e-mail de confirmation envoyé avec le reçu." : inscription === "ok-sans-email" ? "Inscription confirmée. Aucun e-mail n’est parti." : inscription}
@@ -150,32 +181,6 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Notes</span><textarea name="notes" rows={4} defaultValue={lead.notes ?? ""} className={input} /></label>
         <div className="flex justify-end"><button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Enregistrer</button></div>
       </form>
-
-      {paidRegistration && (
-        <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
-          <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><FileText className="size-4 text-accent" aria-hidden />Documents de préparation</h2>
-          {onboarding === "ok" && <p className="mt-2 rounded-lg bg-accent-soft px-3 py-2">E-mail d&apos;onboarding envoyé avec les documents.</p>}
-          {onboarding && onboarding !== "ok" && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-red-800">{onboarding}</p>}
-          {lastOnboarding && <p className="mt-2 text-muted">Dernier envoi le {lastOnboarding.createdAt.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.</p>}
-          {documents.length === 0 && paidRegistration.cohort.program !== "cissp" ? (
-            <p className="mt-2 text-muted">Aucun document actif pour cette formation. <Link href="/admin/documents" className="underline">Ajouter des documents</Link>.</p>
-          ) : (
-            <form action={sendOnboarding} className="mt-2 grid gap-2">
-              <input type="hidden" name="leadId" value={lead.id} />
-              {paidRegistration.cohort.program === "cissp" && (
-                <p className="flex items-center gap-2"><input type="checkbox" checked disabled aria-label="Toujours inclus" /> Plan de lecture interactif <span className="text-muted">(lien, toujours inclus)</span> <a href={`/plan-de-lecture?debut=${planStart(paidRegistration.cohort.startsAt)}`} target="_blank" rel="noopener" className="underline">voir</a></p>
-              )}
-              {documents.map((d) => (
-                <label key={d.id} className="flex items-center gap-2"><input type="checkbox" name="documentId" value={d.id} defaultChecked /> {d.name} <span className="text-muted">({formatBytes(d.size)})</span></label>
-              ))}
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-muted">Destinataire : {lead.email} · {paidRegistration.cohort.name}</span>
-                <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Envoyer l&apos;e-mail d&apos;onboarding</button>
-              </div>
-            </form>
-          )}
-        </section>
-      )}
 
       {lead.practiceTests.length > 0 && (
         <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
