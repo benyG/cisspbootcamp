@@ -25,10 +25,12 @@ import {
 
 // --- Estimation de délai ------------------------------------------------
 //
-// Calibrated on what Ben observed over two cohorts, *with* coaching:
+// Calibrated on what Ben observed over two cohorts. The weeks below give
+// the solo figure's base; the coached range is then shortened by
+// COACHING_REDUCTION_MONTHS (Ben, 26/09), never under a 1-to-2-month range:
 //   senior (5+ years, most domains, fluent reader)   -> 1 to 2 months
-//   median (3-4 years, half the domains, English 3)  -> 3 to 4 months
-//   too early (1-2 years, one domain, English 2)     -> 5 to 6 months
+//   median (3-4 years, half the domains, English 3)  -> 2 to 3 months
+//   too early (1-2 years, one domain, English 2)     -> 4 to 5 months
 // tests/analysis.test.ts pins these three profiles.
 
 /** Coached preparation for an eligible, comfortable profile. */
@@ -64,6 +66,12 @@ export const MINIMUM_PREPARATION_WEEKS = 4;
  */
 export const SOLO_MULTIPLIER = 2;
 
+/**
+ * Months taken off the coached range (Ben, 26/09: "2 à 3 mois" becomes
+ * "1 à 2 mois"). The solo range is left as it was.
+ */
+export const COACHING_REDUCTION_MONTHS = 1;
+
 const WEEKS_PER_MONTH = 4.345;
 
 export type TimelineEstimate = {
@@ -83,6 +91,13 @@ function monthsRange(minWeeks: number, maxWeeks: number) {
     minMonths + 1,
     Math.round(maxWeeks / WEEKS_PER_MONTH),
   );
+  return { minMonths, maxMonths, label: `${minMonths} à ${maxMonths} mois` };
+}
+
+/** A coached range, shortened; still at least one month, still a range. */
+function coachedRange(range: { minMonths: number; maxMonths: number }) {
+  const minMonths = Math.max(1, range.minMonths - COACHING_REDUCTION_MONTHS);
+  const maxMonths = Math.max(minMonths + 1, range.maxMonths - COACHING_REDUCTION_MONTHS);
   return { minMonths, maxMonths, label: `${minMonths} à ${maxMonths} mois` };
 }
 
@@ -108,7 +123,7 @@ export function estimateTimeline(answers: ScannerAnswers): TimelineEstimate {
 
   const minWeeks = Math.max(MINIMUM_PREPARATION_WEEKS, weeks);
   const maxWeeks = minWeeks + ESTIMATE_SPREAD_WEEKS;
-  const coached = monthsRange(minWeeks, maxWeeks);
+  const coached = coachedRange(monthsRange(minWeeks, maxWeeks));
   const solo = monthsRange(
     minWeeks * SOLO_MULTIPLIER,
     maxWeeks * SOLO_MULTIPLIER,

@@ -34,7 +34,7 @@ describe("buildPrompt", () => {
 
     expect(prompt).toContain("DIAGNOSTIC (règles, fait foi)");
     expect(prompt).toContain("Verdict : ready");
-    expect(prompt).toContain("accompagné : 3 à 4 mois");
+    expect(prompt).toContain("accompagné : 2 à 3 mois");
     expect(prompt).toContain("7 places restantes sur 10");
   });
 

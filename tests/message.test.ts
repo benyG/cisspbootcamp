@@ -49,7 +49,7 @@ describe("draftCoachMessage", () => {
     const message = draft(BASE);
 
     expect(message).toContain("Seul,");
-    expect(message).toContain("Accompagné, en 3 à 4 mois");
+    expect(message).toContain("Accompagné, en 2 à 3 mois");
   });
 
   it("nomme la cohorte en vente pour un profil prêt", () => {
@@ -81,6 +81,7 @@ describe("draftCoachMessage", () => {
       examGoal: "under_three_months",
       englishReading: 1,
       domains: [],
+      experience: "one_two",
     });
 
     expect(message).toContain("plus serré");
