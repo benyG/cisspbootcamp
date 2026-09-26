@@ -1,4 +1,4 @@
-import { Activity, BadgeCheck, Brain, Briefcase, Building2, CalendarCheck, CalendarClock, CalendarDays, CalendarRange, Check, ChevronDown, CircleHelp, CirclePlay, ClipboardCheck, Clock, CodeXml, Compass, Database, Flag, GraduationCap, KeyRound, Layers, type LucideIcon, MessageSquareQuote, Moon, Network, ScanSearch, ShieldAlert, ShieldCheck, Target, Timer, Users } from "lucide-react";
+import { Activity, BadgeCheck, BookOpen, Brain, Briefcase, Building2, CalendarCheck, CalendarClock, CalendarDays, CalendarRange, Check, ChevronDown, CircleHelp, CirclePlay, ClipboardCheck, Clock, CodeXml, Compass, Database, Flag, GraduationCap, KeyRound, Layers, type LucideIcon, MessageSquareQuote, Moon, Network, ScanSearch, ShieldAlert, ShieldCheck, Target, Timer, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -29,7 +29,7 @@ export const btnGhost = "inline-flex items-center justify-center gap-2 rounded-[
 const eyebrowIcon = "size-4 shrink-0 text-accent";
 const PROOF_ICONS: LucideIcon[] = [Clock, CalendarDays, Users];
 const STEP_ICONS: LucideIcon[] = [Network, Brain, Target, Flag];
-const RHYTHM_ICONS: LucideIcon[] = [Moon, CalendarRange];
+const RHYTHM_ICONS: LucideIcon[] = [Moon, BookOpen, CalendarRange];
 const DOMAIN_ICONS: Record<(typeof CISSP_DOMAINS)[number], LucideIcon> = {
   security_risk_management: ShieldAlert,
   asset_security: Database,
@@ -190,7 +190,7 @@ export function Planning({ settings }: { settings: SiteSettings }) {
       <div className={shell}>
         <div className={eyebrow}><CalendarClock className={eyebrowIcon} aria-hidden />Le planning</div>
         <h2 className={sectionTitle}>15 jours. Sans arrêter de travailler.</h2>
-        <div className="grid gap-3.5 sm:grid-cols-2">
+        <div className="grid gap-3.5 sm:grid-cols-3">
           {method.rhythm.map((r, i) => {
             const Icon = RHYTHM_ICONS[i] ?? CalendarDays;
             return (

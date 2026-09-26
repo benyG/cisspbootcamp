@@ -27,7 +27,7 @@ export function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
       <Section title="Méthode" section="method" initial={initial.method} fields={[
         { name: "title", label: "Titre", rows: 2 },
         { name: "steps", label: "4 étapes — une par ligne : verbe | titre | texte", rows: 4, list: ["kicker", "title", "text"] },
-        { name: "rhythm", label: "Rythme — 2 lignes : titre | texte", rows: 2, list: ["title", "text"] },
+        { name: "rhythm", label: "Rythme — 3 lignes : titre | texte (semaine, mercredi, week-ends)", rows: 3, list: ["title", "text"] },
       ]} />
       <Section title="Vidéo" section="video" initial={initial.video} fields={[
         { name: "url", label: "URL YouTube ou Vimeo (vide = section masquée)" },

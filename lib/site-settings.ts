@@ -30,7 +30,7 @@ export const siteSettingsSchema = z.object({
   method: z.object({
     title: short(200),
     steps: z.array(z.object({ kicker: short(30), title: short(60), text: short(220) })).length(4),
-    rhythm: z.array(z.object({ title: short(30), text: short(160) })).length(2),
+    rhythm: z.array(z.object({ title: short(30), text: short(160) })).length(3),
   }),
   video: z.object({
     /** YouTube or Vimeo page URL; empty hides the section. */
@@ -101,8 +101,9 @@ export const SITE_DEFAULTS: SiteSettings = {
       { kicker: "Exécuter", title: "Arriver prêt", text: "Un plan clair jusqu’à l’examen." },
     ],
     rhythm: [
-      { title: "Lun. → ven.", text: "2 à 3 h en soirée." },
-      { title: "Week-ends", text: "Sessions intensives, jusqu’à 7 h par jour." },
+      { title: "En semaine", text: "2 h en soirée : lundi, mardi, jeudi, vendredi." },
+      { title: "Mercredi", text: "Repos lecture : pas de session, vous avancez vos chapitres." },
+      { title: "Week-ends", text: "Sessions intensives, 5 h 30 par jour." },
     ],
   },
   video: {
@@ -143,7 +144,7 @@ export const SITE_DEFAULTS: SiteSettings = {
   faq: [
     { q: "Ai-je besoin de 5 ans d’expérience ?", a: "Non. Vous pouvez passer l’examen dès maintenant et devenir Associate of ISC², puis obtenir le titre quand vos cinq ans sont réunis : vous avez six ans pour cela. Le bootcamp vous prépare à l’examen, quelle que soit votre ancienneté ; sans expérience, la certification CC est la première marche, en 15 jours." },
     { q: "Le bootcamp est-il entièrement en français ?", a: "Oui. Explications, échanges et supports sont en français. Le vocabulaire technique anglais de l’examen est travaillé au fil des sessions." },
-    { q: "Puis-je suivre tout en travaillant ?", a: "C’est conçu pour. En semaine, 2 à 3 h en soirée ; les week-ends sont plus denses. Pendant 15 jours, la préparation est la priorité." },
+    { q: "Puis-je suivre tout en travaillant ?", a: "C’est conçu pour. En semaine, 2 h en soirée, et le mercredi reste libre pour lire ; les week-ends sont plus denses, 5 h 30 par jour. Pendant 15 jours, la préparation est la priorité." },
     { q: "L’examen CISSP est-il inclus ?", a: "Non. Les frais d’examen se règlent auprès d’ISC². Le bootcamp vous prépare et vous laisse avec un plan jusqu’à votre date d’examen." },
     { q: "Comment payer depuis l’Afrique ?", a: "Carte bancaire, Orange Money ou MTN Mobile Money. Le prix est en USD, avec l’équivalent indicatif en FCFA. Un reçu est émis à chaque paiement." },
   ],
