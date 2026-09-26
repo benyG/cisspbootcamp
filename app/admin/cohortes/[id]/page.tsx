@@ -1,4 +1,4 @@
-import { GraduationCap, Trash2 } from "lucide-react";
+import { FileText, GraduationCap, Send, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { PROGRAMS } from "@/lib/programs";
 import { formatUsdCents } from "@/lib/pricing";
 
-import { deleteCohort, updateCohort } from "../actions";
+import { deleteCohort, sendCohortOnboarding, updateCohort } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +19,10 @@ export default async function CohortPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; erreur?: string }>;
+  searchParams: Promise<{ ok?: string; erreur?: string; envoi?: string }>;
 }) {
   const { id } = await params;
-  const { ok, erreur } = await searchParams;
+  const { ok, erreur, envoi } = await searchParams;
   const cohort = await prisma.cohort.findUnique({
     where: { id: Number(id) },
     include: {
@@ -42,6 +42,16 @@ export default async function CohortPage({
     ...cohort.registrations.map((r) => r.lead.id),
     ...(await prisma.seatHold.findMany({ where: { cohortId: cohort.id, releasedAt: null, expiresAt: { gt: new Date() } }, select: { leadId: true } })).map((h) => h.leadId),
   ]).size;
+  const documents = await prisma.document.findMany({ where: { program: cohort.program, active: true }, orderBy: { createdAt: "asc" }, select: { id: true, name: true } });
+  const onboardingLogs = paid.length
+    ? await prisma.actionLog.findMany({ where: { leadId: { in: paid.map((r) => r.lead.id) }, type: "onboarding_sent" }, orderBy: { createdAt: "desc" }, select: { payload: true, createdAt: true } })
+    : [];
+  const onboardedAt = new Map<number, Date>();
+  for (const log of onboardingLogs) {
+    const registrationId = (log.payload as { registrationId?: number } | null)?.registrationId;
+    if (typeof registrationId === "number" && !onboardedAt.has(registrationId)) onboardedAt.set(registrationId, log.createdAt);
+  }
+  const notOnboarded = paid.filter((r) => !onboardedAt.has(r.id)).length;
   const destinations = await prisma.cohort.findMany({
     where: { program: cohort.program, status: { not: "done" }, id: { not: cohort.id } },
     orderBy: { startsAt: "asc" },
@@ -54,6 +64,7 @@ export default async function CohortPage({
       <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><GraduationCap className="size-6 shrink-0 text-accent" aria-hidden />{cohort.name}</h1>
       {ok && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Enregistré.</p>}
       {erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{erreur}</p>}
+      {envoi && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{envoi}</p>}
 
       <div className="mt-4"><CohortGauge gauge={gauge} /></div>
 
@@ -92,6 +103,22 @@ export default async function CohortPage({
         </div>
       </form>
 
+      <section className="mt-8 rounded-xl border border-line bg-white p-4 text-sm">
+        <h2 className="flex items-center gap-2 font-semibold"><FileText className="size-4 text-accent" aria-hidden />Documents de préparation</h2>
+        <p className="mt-1 text-muted">
+          Un e-mail par inscrit, avec {cohort.program === "cissp" ? "le lien du plan de lecture daté pour cette cohorte" : "les documents"}{documents.length > 0 ? `${cohort.program === "cissp" ? " et " : " : "}${documents.map((d) => d.name).join(", ")}` : cohort.program === "cissp" ? " (aucun fichier actif pour l’instant)" : " : aucun document actif pour l’instant"}. <Link href="/admin/documents" className="underline">Gérer les documents</Link>.
+        </p>
+        {paid.length === 0 ? (
+          <p className="mt-2 text-muted">Aucun inscrit payé pour l&apos;instant.</p>
+        ) : cohort.program !== "cissp" && documents.length === 0 ? null : (
+          <form action={sendCohortOnboarding} className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <input type="hidden" name="cohortId" value={cohort.id} />
+            <span className="text-muted">{notOnboarded === 0 ? "Tous les inscrits les ont déjà reçus. Renvoi possible inscrit par inscrit ci-dessous." : `${notOnboarded} inscrit${notOnboarded > 1 ? "s" : ""} ne les ${notOnboarded > 1 ? "ont" : "a"} pas encore reçus.`}</span>
+            {notOnboarded > 0 && <button className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-white"><Send className="size-4" aria-hidden />Envoyer à {notOnboarded > 1 ? `ces ${notOnboarded} inscrits` : "cet inscrit"}</button>}
+          </form>
+        )}
+      </section>
+
       <section className="mt-8">
         <h2 className="font-semibold">Inscrits ({paid.length})</h2>
         <ul className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
@@ -100,7 +127,16 @@ export default async function CohortPage({
               <Link href={`/admin/leads/${r.lead.id}`} className="font-medium underline-offset-2 hover:underline">
                 {r.lead.firstName} {r.lead.lastName} <span className="text-[var(--color-muted)]">· {r.lead.country}</span>
               </Link>
-              <span className="text-[var(--color-muted)]">{formatUsdCents(r.amountUsd)} · {r.method} · {r.paidAt?.toLocaleDateString("fr-FR")}</span>
+              <span className="flex items-center gap-2 text-[var(--color-muted)]">
+                {formatUsdCents(r.amountUsd)} · {r.method} · {r.paidAt?.toLocaleDateString("fr-FR")}
+                <form action={sendCohortOnboarding}>
+                  <input type="hidden" name="cohortId" value={cohort.id} />
+                  <input type="hidden" name="leadId" value={r.lead.id} />
+                  <button title={onboardedAt.has(r.id) ? `Documents envoyés le ${onboardedAt.get(r.id)?.toLocaleDateString("fr-FR")} · renvoyer` : "Envoyer les documents de préparation"} className={"inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold " + (onboardedAt.has(r.id) ? "border-line text-muted" : "border-accent text-accent")}>
+                    <Send className="size-3" aria-hidden />{onboardedAt.has(r.id) ? `Envoyé le ${onboardedAt.get(r.id)?.toLocaleDateString("fr-FR")}` : "Envoyer les documents"}
+                  </button>
+                </form>
+              </span>
             </li>
           ))}
           {paid.length === 0 && <li className="px-4 py-3 text-sm text-[var(--color-muted)]">Aucune place payée pour l&apos;instant.</li>}

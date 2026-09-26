@@ -8,6 +8,7 @@ import { auth } from "@/auth";
 import { cohortDeletionProblem } from "@/lib/cohorts";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
+import { sendOnboardingDocuments } from "@/lib/onboarding";
 
 async function requireAdmin() {
   const session = await auth();
@@ -112,4 +113,44 @@ export async function deleteCohort(formData: FormData): Promise<void> {
   if (target) revalidatePath(`/admin/cohortes/${target.id}`);
   revalidateTag(COHORTS_CACHE_TAG);
   redirect(`/admin/cohortes?supprime=${encodeURIComponent(source.name)}${target && people > 0 ? `&vers=${encodeURIComponent(target.name)}&n=${people}` : ""}`);
+}
+
+/**
+ * Preparation documents from the cohort page (Ben, 27/09): to one paid
+ * participant, or to every paid participant who has not had them yet. Each
+ * e-mail carries every active document of the programme and, for CISSP, the
+ * reading plan link. Triggered by Ben only, never on its own.
+ */
+export async function sendCohortOnboarding(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const cohortId = z.coerce.number().int().positive().safeParse(formData.get("cohortId"));
+  if (!cohortId.success) redirect("/admin/cohortes");
+  const onlyLead = z.coerce.number().int().positive().safeParse(formData.get("leadId"));
+  const cohort = await prisma.cohort.findUnique({
+    where: { id: cohortId.data },
+    include: { registrations: { where: { status: "paid", ...(onlyLead.success ? { leadId: onlyLead.data } : {}) }, select: { id: true, leadId: true } } },
+  });
+  if (!cohort) redirect("/admin/cohortes");
+
+  const sentTo = onlyLead.success ? new Set<number>() : await registrationsAlreadyOnboarded(cohort.registrations.map((r) => r.leadId));
+  const targets = cohort.registrations.filter((r) => !sentTo.has(r.id));
+  const documents = await prisma.document.findMany({ where: { program: cohort.program, active: true }, select: { id: true } });
+
+  let sent = 0;
+  const failures: string[] = [];
+  for (const r of targets) {
+    const result = await sendOnboardingDocuments({ leadId: r.leadId, documentIds: documents.map((d) => d.id) });
+    if (result.ok) sent++;
+    else failures.push(result.error);
+  }
+  revalidatePath(`/admin/cohortes/${cohort.id}`);
+  const message = targets.length === 0 ? "Tous les inscrits ont déjà reçu les documents." : `Documents envoyés à ${sent} inscrit${sent > 1 ? "s" : ""}.${failures.length ? ` Échec pour ${failures.length} : ${failures[0]}` : ""}`;
+  redirect(`/admin/cohortes/${cohort.id}?envoi=${encodeURIComponent(message)}`);
+}
+
+/** Registrations whose onboarding e-mail already went out, read from the leads' logs. */
+async function registrationsAlreadyOnboarded(leadIds: number[]): Promise<Set<number>> {
+  if (leadIds.length === 0) return new Set();
+  const logs = await prisma.actionLog.findMany({ where: { leadId: { in: leadIds }, type: "onboarding_sent" }, select: { payload: true } });
+  return new Set(logs.map((l) => (l.payload as { registrationId?: number } | null)?.registrationId).filter((id): id is number => typeof id === "number"));
 }
