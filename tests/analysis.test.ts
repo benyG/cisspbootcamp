@@ -102,6 +102,14 @@ describe("estimateTimeline", () => {
     expect(timeline.soloLabel).toMatch(/^\d+ à \d+ mois$/);
     expect(timeline.soloLabel).not.toBe(timeline.label);
   });
+
+  it("retire un mois à l'accompagnement, rien au délai seul", () => {
+    const median = answers({ experience: "three_four", domains: CISSP_DOMAINS.slice(0, 4), englishReading: 3, hasFourYearDegree: true });
+    const timeline = estimateTimeline(median);
+
+    expect(timeline.label).toBe("2 à 3 mois");
+    expect(timeline.soloLabel).toBe("6 à 8 mois");
+  });
 });
 
 /**
@@ -120,7 +128,7 @@ describe("estimateTimeline — calibration sur les cohortes passées", () => {
     expect(estimateTimeline(senior).label).toBe("1 à 2 mois");
   });
 
-  it("profil médian : 3 à 4 mois", () => {
+  it("profil médian : 2 à 3 mois", () => {
     const median = answers({
       experience: "three_four",
       domains: CISSP_DOMAINS.slice(0, 4),
@@ -128,10 +136,10 @@ describe("estimateTimeline — calibration sur les cohortes passées", () => {
       hasFourYearDegree: true,
     });
 
-    expect(estimateTimeline(median).label).toBe("3 à 4 mois");
+    expect(estimateTimeline(median).label).toBe("2 à 3 mois");
   });
 
-  it("trop tôt : 5 à 6 mois", () => {
+  it("trop tôt : 4 à 5 mois", () => {
     const tooEarly = answers({
       professionalStatus: "career_change",
       experience: "one_two",
@@ -140,7 +148,7 @@ describe("estimateTimeline — calibration sur les cohortes passées", () => {
       hasFourYearDegree: false,
     });
 
-    expect(estimateTimeline(tooEarly).label).toBe("5 à 6 mois");
+    expect(estimateTimeline(tooEarly).label).toBe("4 à 5 mois");
   });
 });
 
@@ -150,6 +158,7 @@ describe("isGoalTight", () => {
       examGoal: "under_three_months",
       englishReading: 1,
       domains: [],
+      experience: "one_two",
     });
     expect(isGoalTight(tendu, estimateTimeline(tendu))).toBe(true);
   });

@@ -56,7 +56,7 @@ Contraintes : mobile-first (majorité du trafic africain sur mobile), chargement
 **Scoring** (règles, pas d'IA en V1) :
 - Éligibilité : 5+ ans, ou 3–4 ans + dérogation → éligible ; 3–4 sans dérogation → sous conditions (Associate of ISC²) ; < 3 ou étudiant → pas encore.
 - Dérogation d'un an : **déduite** d'un diplôme de 4 ans ou d'une certification de la liste (`lib/scoring.ts`, `WAIVER_CERTIFICATIONS`), jamais demandée au prospect. Une certification « autre » ne la donne pas automatiquement.
-- Délai jusqu'à l'examen (`lib/analysis.ts`) : calibré sur les cohortes passées, avec coach — senior 1 à 2 mois, médian 3 à 4, trop tôt 5 à 6. Toujours une fourchette. Le délai seul est un multiple (`SOLO_MULTIPLIER`).
+- Délai jusqu'à l'examen (`lib/analysis.ts`) : calibré sur les cohortes passées, avec coach — senior 1 à 2 mois, médian 2 à 3, trop tôt 4 à 5 (Ben, 26/09 : un mois de moins que le calibrage initial, `COACHING_REDUCTION_MONTHS`, jamais sous 1 à 2 mois). Toujours une fourchette. Le délai seul reste un multiple du calibrage initial (`SOLO_MULTIPLIER`), inchangé.
 - Chaleur commerciale (interne, 0–100) : budget oui +30, employeur +20, cohorte prochaine +20, objectif < 6 mois +15, en poste +10, déjà échoué +5. Détermine la priorité dans la file du coach.
 
 ### A3. Booking d'appel de découverte `/rdv`
