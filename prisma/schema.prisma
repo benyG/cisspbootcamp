@@ -67,6 +67,8 @@ enum CohortStatus {
 enum PaymentMethod {
   stripe
   netticket
+  /// Paid outside the app (transfer, cash, other channel), confirmed by Ben on the lead sheet.
+  manual
 }
 
 enum RegistrationStatus {
@@ -259,6 +261,9 @@ model Registration {
 
   /// Our own unique reference, carried through both payment flows.
   reference String @unique @db.VarChar(40)
+
+  /// How a "manual" payment reached Ben (virement, espèces…), as he typed it.
+  paymentNote String? @map("payment_note") @db.VarChar(200)
 
   paidAt DateTime? @map("paid_at")
 

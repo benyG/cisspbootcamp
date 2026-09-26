@@ -1,4 +1,4 @@
-import { FileText, FlaskConical, History } from "lucide-react";
+import { FileText, FlaskConical, History, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -15,7 +15,7 @@ import { holdSeatAction, releaseHoldAction } from "@/app/admin/actions";
 import { formatBytes } from "@/lib/documents";
 import { planStart } from "@/lib/reading-plan/page";
 
-import { deleteLead, markLost, registerManually, scheduleFollowup, sendOnboarding, updateLead } from "../actions";
+import { deleteLead, markLost, registerDirectly, scheduleFollowup, sendOnboarding, updateLead } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -25,16 +25,16 @@ const LOG: Record<string, string> = {
   scanner_submitted: "Scanner rempli", sales_message_drafted: "Message de relance rédigé", diagnosis_sent: "Message de relance envoyé", diagnosis_approved_email_failed: "Message validé, e-mail non parti",
   call_booked: "Appel réservé", call_rescheduled: "Appel déplacé", call_cancelled: "Appel annulé", call_outcome: "Issue de l'appel",
   followup_sent: "Relance envoyée", followup_postponed: "Relance reportée", invited_to_book: "Invité à réserver",
-  registration_started: "Inscription commencée", registration_manual_opened: "Inscription manuelle ouverte", payment_confirmed: "Paiement confirmé", payment_confirmed_manually: "Paiement confirmé à la main", payment_amount_mismatch: "Montant inattendu",
+  registration_started: "Inscription commencée", registration_manual_opened: "Inscription manuelle ouverte", registered_by_admin: "Inscrit directement par Ben", moved_to_cohort: "Déplacé vers une autre cohorte", payment_confirmed: "Paiement confirmé", payment_confirmed_manually: "Paiement confirmé à la main", payment_amount_mismatch: "Montant inattendu",
   unsubscribed: "Désinscrit", marked_lost: "Marqué perdu",
   after_call_email: "Lien de paiement envoyé après l'appel", result_reminder: "Rappel J+1 envoyé", onboarding_sent: "Documents de préparation envoyés", onboarding_failed: "Documents de préparation : e-mail non parti",
   service_order_started: "Commande de conseil ouverte", service_paid: "Séance de conseil payée", session_booked: "Séance réservée", session_cancelled: "Séance annulée", session_outcome: "Séance faite / absent", session_booking_reminded: "Lien de réservation renvoyé",
 };
 
 /** Lead sheet (SPECS A7): timeline, scanner, notes, status, tags, actions. */
-export default async function LeadPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ onboarding?: string }> }) {
+export default async function LeadPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ onboarding?: string; inscription?: string }> }) {
   const { id } = await params;
-  const { onboarding } = await searchParams;
+  const { onboarding, inscription } = await searchParams;
   // Scores revealed since the last visit are pulled now, so the sheet is current.
   await syncLeadTests(Number(id));
   const lead = await prisma.lead.findUnique({
@@ -60,6 +60,11 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
     ? await prisma.document.findMany({ where: { program: paidRegistration.cohort.program, active: true }, orderBy: { createdAt: "asc" }, select: { id: true, name: true, filename: true, size: true } })
     : [];
   const lastOnboarding = lead.actions.find((a) => a.type === "onboarding_sent");
+  const cohorts = await prisma.cohort.findMany({
+    where: { status: { not: "done" } },
+    orderBy: { startsAt: "asc" },
+    select: { id: true, name: true, program: true, startsAt: true, capacity: true, status: true, _count: { select: { registrations: { where: { status: "paid" } } } } },
+  });
   const tags = Array.isArray(lead.tags) ? (lead.tags as string[]) : [];
   const toLocal = (d: Date | null) => (d ? new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16) : "");
 
@@ -91,7 +96,6 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       <div className="mt-4 flex flex-wrap gap-2">
         {lead.scannerResponses[0] && lead.status !== "registered" && <a href={`/rdv?t=${lead.scannerResponses[0].resultToken}`} className={ghost}>Lien de réservation</a>}
         <form action={scheduleFollowup}><input type="hidden" name="leadId" value={lead.id} /><button className={ghost}>Relancer dans 3 j</button></form>
-        {!lead.registrations.some((r) => r.status === "paid") && <form action={registerManually}><input type="hidden" name="leadId" value={lead.id} /><button className={ghost}>Inscrire manuellement</button></form>}
         {lead.status !== "lost" && <form action={markLost}><input type="hidden" name="leadId" value={lead.id} /><button className={ghost}>Marquer perdu</button></form>}
         {!hold && lead.status !== "registered" && lead.status !== "lost" && <form action={holdSeatAction}><input type="hidden" name="leadId" value={lead.id} /><button className={ghost}>Tenir la place {HOLD_HOURS} h</button></form>}
       </div>
@@ -102,6 +106,38 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
         </p>
       )}
       {holdRefusal && !hold && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Place non tenue : {String((holdRefusal.payload as { error?: string })?.error ?? "")}</p>}
+
+      {inscription && (
+        <p className={"mt-3 rounded-lg px-3 py-2 text-sm " + (inscription.startsWith("ok") ? "bg-accent-soft" : "bg-red-50 text-red-800")}>
+          {inscription === "ok" ? "Inscription confirmée, e-mail de confirmation envoyé avec le reçu." : inscription === "ok-sans-email" ? "Inscription confirmée. Aucun e-mail n’est parti." : inscription}
+        </p>
+      )}
+      <details className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
+        <summary className="flex cursor-pointer items-center gap-2 font-semibold"><UserCheck className="size-4 text-accent" aria-hidden />Inscrire directement dans une cohorte</summary>
+        {cohorts.length === 0 ? (
+          <p className="mt-3 text-muted">Aucune cohorte à venir. <Link href="/admin/cohortes" className="underline">Créer une cohorte</Link>.</p>
+        ) : (
+          <form action={registerDirectly} className="mt-3 grid gap-3">
+            <input type="hidden" name="leadId" value={lead.id} />
+            <p className="text-muted">Pour un paiement reçu hors de l&apos;application. La place est confirmée tout de suite, même si la cohorte est pleine ou pas encore ouverte.</p>
+            <label className="flex flex-col gap-1"><span className="font-medium">Cohorte</span>
+              <select name="cohortId" required className={input} defaultValue={cohorts.find((c) => c.status === "open")?.id ?? cohorts[0].id}>
+                {cohorts.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.program.toUpperCase()} · {c.startsAt.toLocaleDateString("fr-FR", { timeZone: "UTC" })} · {c._count.registrations}/{c.capacity} payées{c.status !== "open" ? ` · ${c.status === "full" ? "pleine" : c.status === "planned" ? "pas encore ouverte" : "en cours"}` : ""}</option>)}
+              </select></label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1"><span className="font-medium">Montant reçu (USD)</span>
+                <input name="amountUsd" type="number" min="0" step="0.01" required defaultValue={lead.pricingTier && lead.pricingTier.amountUsd > 0 ? lead.pricingTier.amountUsd / 100 : undefined} className={input} /></label>
+              <label className="flex flex-col gap-1"><span className="font-medium">Mode de paiement</span>
+                <select name="paymentMode" required className={input} defaultValue="virement">
+                  {["virement", "espèces", "mobile money hors application", "carte hors application", "offert", "autre"].map((m) => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}
+                </select></label>
+            </div>
+            <label className="flex flex-col gap-1"><span className="font-medium">Précision, facultative</span><input name="paymentDetail" maxLength={150} placeholder="ex. référence du virement, payé par l’employeur" className={input} /></label>
+            <label className="flex items-center gap-2"><input type="checkbox" name="notify" defaultChecked /> Envoyer l&apos;e-mail « votre place est réservée » avec le reçu</label>
+            <div className="flex justify-end"><button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Inscrire et confirmer la place</button></div>
+          </form>
+        )}
+      </details>
 
       <form action={updateLead} className="mt-5 grid gap-3 rounded-xl border border-line bg-white p-4">
         <input type="hidden" name="leadId" value={lead.id} />

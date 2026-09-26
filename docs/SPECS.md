@@ -184,7 +184,7 @@ cohorts
 
 registrations
   id, lead_id, cohort_id, tier, amount_usd, currency_local, amount_local,
-  method (stripe|netticket), status (pending|pending_manual|paid|refunded),
+  method (stripe|netticket|manual), status (pending|pending_manual|paid|refunded), payment_note (manual : virement, espèces…),
   stripe_session_id, netticket_transaction_id, reference, paid_at
 
 pricing_tiers

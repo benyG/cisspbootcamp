@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 
 import { revalidateTag } from "next/cache";
 
-import { type CohortCandidate, formatCohortMonth, isAdmissionOpen, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
+import { type CohortCandidate, adminRegistrationProblem, formatCohortMonth, isAdmissionOpen, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -271,23 +271,97 @@ export async function markRegistrationPaid(input: {
   revalidateTag(COHORTS_CACHE_TAG);
   await recordEvent({ name: "paid", leadId: registration.leadId, label: registration.method });
 
-  const cohortName = `${PROGRAMS[program].name} — ${(target?.name ?? registration.cohort.name)}`;
-  const cohortMonth = formatCohortMonth(target?.startsAt ?? registration.cohort.startsAt);
-
-  await sendEmail({
-    to: registration.lead.email,
-    subject: `Votre place est réservée — ${cohortName}`,
-    text:
-      `Bonjour ${registration.lead.firstName},\n\n` +
-      `Votre paiement de ${formatUsdCents(registration.amountUsd)} est confirmé${registration.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(registration.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n` +
-      (moved
-        ? `La cohorte que vous visiez s'est remplie entre-temps : votre place est sur la suivante, en ${cohortMonth}. Si cette date ne vous convient pas, répondez à ce message.\n\n`
-        : "") +
-      `Référence : ${registration.reference}\n` +
-      `Votre reçu : ${env.NEXT_PUBLIC_APP_URL}/inscription/recu/${registration.reference}\n\n` +
-      `Je vous écris avant le démarrage avec le programme détaillé et les accès${program === "cc" ? ", et la marche à suivre pour réserver votre examen CC auprès d'ISC²" : ""}.\n\n` +
-      `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${registration.lead.unsubscribeToken}`,
+  await sendSeatConfirmation({
+    lead: registration.lead,
+    amountUsd: registration.amountUsd,
+    creditUsd: registration.creditUsd,
+    reference: registration.reference,
+    program,
+    cohort: target ?? registration.cohort,
+    moved,
   });
 
   return { ok: true, alreadyPaid: false };
+}
+
+/** The "votre place est réservée" e-mail, with the receipt link. */
+async function sendSeatConfirmation(input: {
+  lead: { email: string; firstName: string; unsubscribeToken: string };
+  amountUsd: number;
+  creditUsd: number;
+  reference: string;
+  program: ProgramCode;
+  cohort: { name: string; startsAt: Date };
+  moved?: boolean;
+}) {
+  const cohortName = `${PROGRAMS[input.program].name} — ${input.cohort.name}`;
+  const cohortMonth = formatCohortMonth(input.cohort.startsAt);
+  return sendEmail({
+    to: input.lead.email,
+    subject: `Votre place est réservée — ${cohortName}`,
+    text:
+      `Bonjour ${input.lead.firstName},\n\n` +
+      `Votre paiement de ${formatUsdCents(input.amountUsd)} est confirmé${input.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(input.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n` +
+      (input.moved
+        ? `La cohorte que vous visiez s'est remplie entre-temps : votre place est sur la suivante, en ${cohortMonth}. Si cette date ne vous convient pas, répondez à ce message.\n\n`
+        : "") +
+      `Référence : ${input.reference}\n` +
+      `Votre reçu : ${env.NEXT_PUBLIC_APP_URL}/inscription/recu/${input.reference}\n\n` +
+      `Je vous écris avant le démarrage avec le programme détaillé et les accès${input.program === "cc" ? ", et la marche à suivre pour réserver votre examen CC auprès d'ISC²" : ""}.\n\n` +
+      `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${input.lead.unsubscribeToken}`,
+  });
+}
+
+export type AdminRegistrationResult = { ok: true; reference: string; emailSent: boolean } | { ok: false; error: string };
+
+/**
+ * Ben registers a participant who paid outside the app (26/09): transfer,
+ * cash, another channel. A manual admin confirmation (CLAUDE.md, Paiement):
+ * the seat is paid at once, in the cohort he picks, any open pending
+ * registration of the lead is dropped, held seats are released.
+ */
+export async function registerByAdmin(input: { leadId: number; cohortId: number; amountUsdCents: number; paymentNote: string; notify: boolean }): Promise<AdminRegistrationResult> {
+  const [lead, cohort] = await Promise.all([
+    prisma.lead.findUnique({ where: { id: input.leadId }, include: { pricingTier: true } }),
+    prisma.cohort.findUnique({ where: { id: input.cohortId } }),
+  ]);
+  if (!lead) return { ok: false, error: "Lead introuvable." };
+  if (!cohort) return { ok: false, error: "Cohorte introuvable." };
+  const alreadyPaidInCohort = (await prisma.registration.count({ where: { leadId: lead.id, cohortId: cohort.id, status: "paid" } })) > 0;
+  const problem = adminRegistrationProblem({ cohortStatus: cohort.status, alreadyPaidInCohort, amountUsdCents: input.amountUsdCents });
+  if (problem) return { ok: false, error: problem };
+
+  const reference = newReference();
+  const now = new Date();
+  await prisma.$transaction(async (tx) => {
+    // A checkout left open for the same programme would double the seat.
+    await tx.registration.deleteMany({ where: { leadId: lead.id, status: { in: ["pending", "pending_manual"] }, cohort: { program: cohort.program } } });
+    const registration = await tx.registration.create({
+      data: {
+        leadId: lead.id,
+        cohortId: cohort.id,
+        tier: lead.pricingTier?.code ?? "manuel",
+        amountUsd: input.amountUsdCents,
+        method: "manual",
+        status: "paid",
+        paidAt: now,
+        paymentNote: input.paymentNote || null,
+        reference,
+      },
+    });
+    await tx.lead.update({ where: { id: lead.id }, data: { status: "registered", nextFollowupAt: null } });
+    await tx.seatHold.updateMany({ where: { leadId: lead.id, releasedAt: null }, data: { releasedAt: now, releaseReason: "paid" } });
+    await tx.actionLog.create({
+      data: { leadId: lead.id, type: "registered_by_admin", payload: { registrationId: registration.id, reference, cohortId: cohort.id, amountUsd: input.amountUsdCents, note: input.paymentNote } },
+    });
+    const paid = await tx.registration.count({ where: { cohortId: cohort.id, status: "paid" } });
+    if (paid >= cohort.capacity && cohort.status === "open") await tx.cohort.update({ where: { id: cohort.id }, data: { status: "full" } });
+  });
+
+  revalidateTag(COHORTS_CACHE_TAG);
+  await recordEvent({ name: "paid", leadId: lead.id, label: "manual" });
+  const email = input.notify
+    ? await sendSeatConfirmation({ lead, amountUsd: input.amountUsdCents, creditUsd: 0, reference, program: cohort.program, cohort })
+    : null;
+  return { ok: true, reference, emailSent: Boolean(email?.sent) };
 }
