@@ -163,7 +163,7 @@ h1,h2,h3{font-family:"Inter Tight","Inter",sans-serif;letter-spacing:-.03em;marg
    <div class="card" id="nextCard"></div>
   </div>
   <div class="steps">
-   <div class="step"><b><span class="num">1</span>Lire avant</b><p>Suivez l’agenda : environ 1 h 30 par jour. Lisez pour comprendre, pas pour retenir chaque mot.</p></div>
+   <div class="step"><b><span class="num">1</span>Lire avant</b><p>Suivez l’agenda, jour par jour : il part d’aujourd’hui et s’adapte à vos coches. Lisez pour comprendre, pas pour retenir chaque mot.</p></div>
    <div class="step"><b><span class="num">2</span>Noter vos questions</b><p>Ce qui résiste, ce qui vous surprend, ce que vous feriez autrement en entreprise. Apportez-le en session.</p></div>
    <div class="step"><b><span class="num">3</span>Raisonner en session</b><p>La session relie les notions, entraîne le raisonnement d’examen et corrige les erreurs. Elle ne remplace pas la lecture.</p></div>
   </div>
@@ -184,7 +184,7 @@ h1,h2,h3{font-family:"Inter Tight","Inter",sans-serif;letter-spacing:-.03em;marg
  </section>
 
  <section class="panel" id="p-agenda">
-  <div class="sec-title"><h2>Quoi lire, chaque jour</h2><span class="muted" style="font-size:.85rem">Environ 1 h 30 de lecture par jour, calculé pour que tout soit lu avant la session concernée.</span></div>
+  <div class="sec-title"><h2>Quoi lire, chaque jour</h2><span class="muted" style="font-size:.85rem" id="paceText"></span></div>
   <div class="agenda" id="agenda"></div>
  </section>
 
@@ -237,35 +237,97 @@ const allItems = S.flatMap((s) => s.read.map((r, i) => ({ s, r, i })));
 const totalMin = allItems.reduce((a, x) => a + x.r.min, 0);
 $("#readTotal").textContent = `≈ ${Math.round(totalMin / 60)} h de lecture`;
 
-// ---- reading agenda: backward scheduling, DAILY minutes a day, finished before each session
-const agenda = {}; // offset -> [{s, r, min}]
-(function schedule() {
-  const cap = {};
-  const capOf = (o) => (cap[o] ??= DAILY);
-  S.filter((s) => s.rest).forEach((s) => (cap[s.offset] = REST_DAILY));
+// ---- reading agenda, planned from the reader's own today (Ben, 27/09)
+// Never a date in the past: the plan starts today at the earliest. Each
+// unread chapter is placed backwards from the session it prepares, about
+// DAILY minutes a day; someone who starts late (paid the day before J1)
+// gets a denser pace instead of dates already gone. Sessions already held
+// leave their unread chapters in a catch-up list. Recomputed on every tick.
+const TODAY_OFF = offsetOf(today);
+const EARLIEST = -21; // never ask to start more than three weeks before J1
+const MAX_DAILY = 180; // a late start never asks more than 3 h a day; the rest goes to catch-up
+let agenda = {}, pace = DAILY, squeezed = false, catchUp = [], overflow = [], firstReadOffset = Infinity;
+function schedule(daily) {
+  const plan = {}, cap = {};
+  const floor = Math.max(TODAY_OFF, EARLIEST);
+  const capOf = (o) => (cap[o] ??= daily);
+  S.filter((s) => s.rest).forEach((s) => (cap[s.offset] = daily + 60));
   for (let k = S.length - 1; k >= 0; k--) {
     const s = S[k];
-    if (s.rest) continue;
+    if (s.rest || s.offset < TODAY_OFF) continue;
     // an evening session leaves the morning of its own day; a weekend day starts early
     let o = isWeekend(s.date) ? s.offset - 1 : s.offset;
-    if (!isWeekend(s.date)) cap[o] = Math.min(capOf(o), 45);
+    if (o < floor) o = s.offset;
+    if (!isWeekend(s.date) && o === s.offset) cap[o] = Math.min(capOf(o), Math.round(daily / 2));
     for (let i = s.read.length - 1; i >= 0; i--) {
+      if (done[id(s, i)]) continue;
       let need = s.read[i].min;
       while (need > 0) {
+        if (o < floor) return null; // does not fit at this pace
         const room = capOf(o);
         // No crumbs: a day with less than 20 minutes left is skipped, and a
         // remainder under 20 minutes is read in the same sitting.
         if (room < 20) { o--; continue; }
         const take = need - room < 20 ? need : Math.min(room, need);
         cap[o] = Math.max(0, room - take); need -= take;
-        (agenda[o] ??= []).unshift({ s, r: s.read[i], i, min: take });
+        (plan[o] ??= []).unshift({ s, r: s.read[i], i, min: take });
         if (need > 0) o--;
       }
     }
   }
-})();
-const firstReadOffset = Math.min(...Object.keys(agenda).map(Number));
-S.forEach((s) => { s.startRead = Math.min(...Object.entries(agenda).filter(([, l]) => l.some((x) => x.s === s)).map(([o]) => +o), s.offset); });
+  return plan;
+}
+// When time is short: nearest session first, each chapter as early as it
+// fits (from today), up to the day of its session; what cannot fit before
+// its session goes to catch-up.
+function scheduleNearestFirst(daily) {
+  const plan = {}, cap = {}, rest = [];
+  const floor = Math.max(TODAY_OFF, EARLIEST);
+  const capOf = (o) => {
+    if (cap[o] !== undefined) return cap[o];
+    const s = S.find((x) => x.offset === o);
+    return (cap[o] = s && s.rest ? daily + 60 : s && !isWeekend(s.date) ? Math.round(daily / 2) : daily);
+  };
+  for (const s of S) {
+    if (s.rest || s.offset < TODAY_OFF) continue;
+    let last = isWeekend(s.date) ? s.offset - 1 : s.offset;
+    if (last < floor) last = s.offset;
+    s.read.forEach((r, i) => {
+      if (done[id(s, i)]) return;
+      let need = r.min;
+      for (let o = floor; o <= last && need > 0; o++) {
+        const room = capOf(o);
+        if (room < 20) continue;
+        const take = need - room < 20 ? need : Math.min(room, need);
+        cap[o] = Math.max(0, room - take); need -= take;
+        (plan[o] ??= []).push({ s, r, i, min: take });
+      }
+      if (need > 0) rest.push({ s, r, i, min: need });
+    });
+  }
+  return { plan, rest };
+}
+function replan() {
+  pace = DAILY;
+  let plan = schedule(pace);
+  while (!plan && pace < MAX_DAILY) { pace += 15; plan = schedule(pace); }
+  squeezed = !plan;
+  overflow = [];
+  if (plan) agenda = plan;
+  else ({ plan: agenda, rest: overflow } = scheduleNearestFirst(pace));
+  // Chapters of sessions already held, then what could not fit before its session.
+  catchUp = [
+    ...S.filter((s) => !s.rest && s.offset < TODAY_OFF).flatMap((s) => s.read.map((r, i) => ({ s, r, i, min: r.min })).filter((x) => !done[id(x.s, x.i)])),
+    ...overflow,
+  ];
+  const keys = Object.keys(agenda).map(Number);
+  firstReadOffset = keys.length ? Math.min(...keys) : Infinity;
+  S.forEach((s) => {
+    const days = Object.entries(agenda).filter(([, l]) => l.some((x) => x.s === s)).map(([o]) => +o);
+    s.startRead = days.length ? Math.min(...days) : null;
+  });
+}
+replan();
 
 // ---- rendering helpers
 const domPills = (s) => s.blocks.map((b) => `<span class="pill"><span class="dot" style="background:${COLORS[b.d]}"></span>${b.d ? "Domaine " + b.d : "Bilan"} · ${hrs(b.h)}</span>`).join("");
@@ -298,6 +360,11 @@ function renderStrip() {
   document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => select(+c.dataset.k)));
   refreshProgress();
 }
+// The "Quand lire ?" card of a session: its reading days, from today on.
+function renderSide(s) {
+  const plan = Object.entries(agenda).sort(([a], [b]) => a - b).filter(([, l]) => l.some((x) => x.s === s)).map(([o, l]) => `<div>${svg("book")}<span><b>${short(dayAt(+o))}</b> · ${l.filter((x) => x.s === s).map((x) => `ch. ${x.r.ch}, ${mins(x.min)}`).join(" · ")}</span></div>`).join("");
+  $("#side").innerHTML = `<h3>Quand lire ?</h3>${!s.read.length ? `<p class="muted" style="font-size:.86rem">Pas de lecture : cette session s’appuie sur votre examen blanc.</p>` : s.offset < TODAY_OFF ? `<p class="muted" style="font-size:.86rem;margin:6px 0 0">Cette session est passée. Les chapitres non cochés restent à lire : ils comptent pour l’examen.</p>` : s.startRead === null ? `<p class="muted" style="font-size:.86rem;margin:6px 0 0">Tout est lu pour cette session. Bravo.</p>` : `<p class="muted" style="font-size:.86rem;margin:6px 0 0">${s.startRead <= TODAY_OFF ? "Commencez <b style=\"color:var(--ink)\">aujourd’hui</b>." : `Commencez au plus tard le <b style="color:var(--ink)">${long(dayAt(s.startRead))}</b>.`}</p><div class="when">${plan}</div>`}<div class="when" style="border-top:1px dashed var(--line);padding-top:10px">${svg("video")}<span style="display:flex;gap:10px"><span>Session en ligne le <b>${long(s.date)}</b>. Horaires communiqués par Ben.</span></span></div>`;
+}
 function select(k) {
   current = k; const s = S[k];
   document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", +c.dataset.k === k));
@@ -315,13 +382,12 @@ function select(k) {
    ${s.read.length ? `<div class="sec-title" style="margin:16px 0 0"><span class="eyebrow">${svg("book")}À lire avant cette session</span><span class="muted" style="font-size:.84rem">≈ ${mins(readMin)} de lecture</span></div><ul class="list">${items}</ul>` : ""}
    ${s.todo ? `<div class="todo">${svg("pen")}<span>${esc(s.todo)}</span></div>` : ""}
    <div class="nav"><button class="btn" id="prev" ${k === 0 ? "disabled" : ""}>${svg("left")}J${s.n - 1 || ""}</button><button class="btn primary" id="next" ${k === S.length - 1 ? "disabled" : ""}>J${s.n + 1 > 15 ? "" : s.n + 1}${svg("right")}</button></div>`;
-  const plan = Object.entries(agenda).filter(([, l]) => l.some((x) => x.s === s)).map(([o, l]) => `<div>${svg("book")}<span><b>${short(dayAt(+o))}</b> · ${l.filter((x) => x.s === s).map((x) => `ch. ${x.r.ch}, ${mins(x.min)}`).join(" · ")}</span></div>`).join("");
-  $("#side").innerHTML = `<h3>Quand lire ?</h3>${s.read.length ? `<p class="muted" style="font-size:.86rem;margin:6px 0 0">Commencez au plus tard le <b style="color:var(--ink)">${long(dayAt(s.startRead))}</b>.</p><div class="when">${plan}</div>` : `<p class="muted" style="font-size:.86rem">Pas de lecture : cette session s’appuie sur votre examen blanc.</p>`}<div class="when" style="border-top:1px dashed var(--line);padding-top:10px">${svg("video")}<span style="display:flex;gap:10px"><span>Session en ligne le <b>${long(s.date)}</b>. Horaires communiqués par Ben.</span></span></div>`;
+  renderSide(s);
   $("#prev")?.addEventListener("click", () => select(k - 1));
   $("#next")?.addEventListener("click", () => select(k + 1));
   document.querySelectorAll("#detail input[type=checkbox]").forEach((c) => c.addEventListener("change", () => {
     done[c.dataset.id] = c.checked; if (!c.checked) delete done[c.dataset.id]; save();
-    c.closest(".item").classList.toggle("is-read", c.checked); refreshProgress(); renderNow(); renderAgenda();
+    c.closest(".item").classList.toggle("is-read", c.checked); replan(); refreshProgress(); renderNow(); renderAgenda(); renderSide(s);
   }));
 }
 // A Wednesday without session: what the agenda plans to read that day.
@@ -350,13 +416,24 @@ document.addEventListener("keydown", (e) => {
 function renderAgenda() {
   const tOff = offsetOf(today);
   const days = [];
-  for (let o = firstReadOffset; o <= 14; o++) days.push(o);
+  const from = Math.max(TODAY_OFF, 0);
+  for (let o = Number.isFinite(firstReadOffset) ? Math.min(firstReadOffset, from) : from; o <= 14; o++) days.push(o);
+  $("#paceText").textContent = paceLine();
   $("#agenda").innerHTML = days.map((o) => {
     const d = dayAt(o), reads = agenda[o] || [], sess = S.find((s) => s.offset === o);
     const lis = reads.map((x) => `<li><span style="display:inline-flex;align-items:center;gap:5px">${done[id(x.s, x.i)] ? `<svg class="i" style="width:14px;height:14px;color:var(--accent)"><use href="#check"/></svg>` : ""}Chapitre ${x.r.ch}${x.r.kind !== "full" ? ` <span class="muted">(${KIND[x.r.kind][0].toLowerCase()}${x.r.text && x.r.kind !== "except" ? " : " + esc(x.r.text.split(" · ")[0]) + (x.r.text.includes(" · ") ? "…" : "") : ""})</span>` : ""}</span><span class="for">pour J${x.s.n}</span><span class="muted">${mins(x.min)}</span></li>`).join("");
     const label = o < 0 ? `Avant le bootcamp` : `J${o + 1}`;
     return `<div class="aday${o === tOff ? " is-today" : ""}"><div class="date">${short(d)}<small>${label}${o === tOff ? " · aujourd’hui" : ""}</small></div><div>${lis ? `<ul>${lis}</ul>` : `<span class="muted" style="font-size:.9rem">Pas de lecture prévue : relisez vos notes.</span>`}${sess ? (sess.rest ? `<div class="sess" style="margin-top:${lis ? 8 : 6}px;color:var(--warn-ink)">${svg("moon")}Mercredi : journée repos lecture, pas de session</div>` : `<div class="sess" style="margin-top:${lis ? 8 : 6}px">${svg("video")}Session J${sess.n} · ${esc(sess.title)} · ${hrs(sess.hours)}</div>`) : ""}</div></div>`;
   }).join("");
+}
+
+/** How much to read a day, in words, from the plan just computed. */
+function paceLine() {
+  if (!Number.isFinite(firstReadOffset)) return TODAY_OFF > 14 ? "Le bootcamp est terminé." : "Toutes les lectures prévues sont faites.";
+  if (squeezed) return `Vous démarrez tard : l’agenda vous demande ${mins(pace)} de lecture par jour au plus, pour préparer d’abord les prochaines sessions. Ce qui ne tient pas est dans « À rattraper ».`;
+  const when = TODAY_OFF < 0 ? `à ${-TODAY_OFF} jour${-TODAY_OFF > 1 ? "s" : ""} du J1` : "en cours de bootcamp";
+  if (pace > DAILY) return `Vous démarrez ${when} : pour arriver prêt à chaque session, comptez environ ${mins(pace)} de lecture par jour, à partir d’aujourd’hui.`;
+  return `Environ ${mins(DAILY)} de lecture par jour, à partir d’aujourd’hui au plus tôt, calculé pour que tout soit lu avant la session concernée.`;
 }
 
 // ---- today
@@ -366,7 +443,7 @@ function renderNow() {
   const restToday = S.find((s) => s.rest && s.offset === tOff);
   const todays = agenda[tOff] || [];
   let a;
-  if (tOff < firstReadOffset) {
+  if (tOff < 0 && tOff < firstReadOffset) {
     a = `<span class="eyebrow">${svg("flag")}Avant de commencer</span><div class="big">Le bootcamp commence le ${long(start)}.</div><p class="muted">Votre première lecture commence le <b style="color:var(--ink)">${long(dayAt(firstReadOffset))}</b>, soit ${-firstReadOffset} jours avant le J1 : c’est ce qui allège les soirées de la première semaine.</p>`;
   } else if (tOff > 14) {
     a = `<span class="eyebrow">${svg("flag")}Bootcamp terminé</span><div class="big">Place au plan de révision jusqu’à votre examen.</div><p class="muted">Reprenez les chapitres que vous n’avez pas cochés.</p>`;
@@ -374,6 +451,8 @@ function renderNow() {
     const lis = todays.map((x) => `<li style="margin:4px 0"><b>Chapitre ${x.r.ch}</b> <span class="muted">pour J${x.s.n} · ${mins(x.min)}</span></li>`).join("");
     a = `<span class="eyebrow">${svg("book")}${restToday ? "Journée repos lecture" : "À lire aujourd’hui"} · ${long(today)}</span><div class="big">${todays.length ? mins(todays.reduce((t, x) => t + x.min, 0)) + " de lecture" : "Pas de lecture prévue"}</div>${lis ? `<ul style="padding-left:18px;margin:10px 0 0">${lis}</ul>` : `<p class="muted">Profitez-en pour relire vos notes et préparer vos questions.</p>`}`;
   }
+  if (pace > DAILY || squeezed) a += `<p class="todo" style="margin-top:12px">${svg("clock")}<span>${esc(paceLine())}</span></p>`;
+  if (catchUp.length && tOff <= 14) a += `<div style="margin-top:12px"><span class="eyebrow">${svg("pen")}À rattraper</span><ul style="padding-left:18px;margin:6px 0 0">${catchUp.map((x) => `<li style="margin:3px 0"><b>Chapitre ${x.r.ch}</b> <span class="muted">${x.s.offset < TODAY_OFF ? `vu en J${x.s.n}` : `pour J${x.s.n}`} · ${mins(x.min)}</span></li>`).join("")}</ul><p class="muted" style="font-size:.84rem;margin:4px 0 0">Quand vous le pouvez, après les lectures du jour : ils comptent pour l’examen.</p></div>`;
   $("#nowCard").innerHTML = a + `<div class="nav"><button class="btn primary" data-go="agenda">${svg("list")}Voir l’agenda complet</button></div>`;
   $("#nextCard").innerHTML = next ? `<span class="eyebrow">${svg("video")}Prochaine session</span><div class="big">J${next.n} · ${long(next.date)}</div><p style="margin:6px 0 0;font-weight:700">${esc(next.title)}</p><div>${domPills(next)}</div><div class="nav"><button class="btn" data-open="${next.n - 1}">${svg("book")}Ce qu’il faut lire</button></div>` : `<span class="eyebrow">${svg("flag")}Toutes les sessions sont passées</span><div class="big">Bravo.</div>`;
   document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => show(b.dataset.go)));
