@@ -1,7 +1,9 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
+
+import { ActivityFeedback } from "@/components/ui/ActivityFeedback";
 
 import "./globals.css";
 
@@ -42,6 +44,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="fr" className={`${inter.variable} ${interTight.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         {children}
+        <Suspense fallback={null}>
+          <ActivityFeedback />
+        </Suspense>
         {/* Cookieless page-view counting; no personal data leaves the browser. */}
         <Analytics />
       </body>

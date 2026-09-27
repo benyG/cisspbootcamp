@@ -86,6 +86,11 @@ h1,h2,h3{font-family:"Inter Tight","Inter",sans-serif;letter-spacing:-.03em;marg
 .nav{display:flex;gap:8px;margin-top:14px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;font-weight:700;font-size:.88rem}
 .btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn,.tab,.chip,.drow,.item{transition:filter .15s,transform .08s,box-shadow .15s,border-color .15s}
+.btn:not(:disabled):hover,.tab:hover{filter:brightness(.93);box-shadow:0 6px 16px rgba(7,26,51,.1)}
+.btn:not(:disabled):active,.tab:active,.chip:active,.drow:active{transform:translateY(1px) scale(.98);filter:brightness(.88)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+:where(button,a,input):focus-visible{outline:2px solid var(--bright);outline-offset:2px}
 .todo{margin-top:14px;display:flex;gap:10px;background:var(--warn-soft);color:var(--warn-ink);border-radius:14px;padding:12px;font-weight:600}
 .agenda{display:grid;gap:8px}
 .aday{display:grid;grid-template-columns:110px 1fr;gap:12px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px}

@@ -43,6 +43,76 @@ h1, h2, h3, .display {
   text-wrap: balance;
 }
 
+/*
+ * Every clickable thing answers (Ben, 27/09): hover, press, keyboard focus,
+ * and a spinner while its form is being processed (components/ui/ActivityFeedback).
+ */
+@layer base {
+  button, summary, [role="button"], a[class*="rounded"] {
+    transition: filter 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  }
+  button:not(:disabled), summary, [role="button"], label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) {
+    cursor: pointer;
+  }
+  button:not(:disabled):hover, a[class*="rounded"]:hover, [role="button"]:hover {
+    filter: brightness(0.93);
+    box-shadow: 0 6px 16px rgba(7, 26, 51, 0.1);
+  }
+  button:not(:disabled):active, a[class*="rounded"]:active, [role="button"]:active {
+    transform: translateY(1px) scale(0.98);
+    filter: brightness(0.86);
+    box-shadow: none;
+  }
+  summary:hover { color: var(--color-accent-ink); }
+  :where(button, a, summary, input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-accent-bright);
+    outline-offset: 2px;
+  }
+  button:disabled { cursor: not-allowed; opacity: 0.6; }
+
+  [data-pending="true"] {
+    cursor: progress !important;
+    pointer-events: none;
+    opacity: 0.8;
+  }
+  [data-pending="true"]::after {
+    content: "";
+    display: inline-block;
+    width: 0.95em;
+    height: 0.95em;
+    margin-left: 0.5em;
+    vertical-align: -0.15em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 999px;
+    animation: cb-spin 0.7s linear infinite;
+  }
+}
+
+@keyframes cb-spin { to { transform: rotate(360deg); } }
+
+/* The thin bar at the top while the server works. */
+.activity-bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, var(--color-accent-bright), var(--color-accent), transparent);
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  transition: opacity 0.2s ease 0.15s;
+}
+.activity-bar[data-active="true"] {
+  opacity: 1;
+  animation: cb-bar 1.1s ease-in-out infinite;
+}
+@keyframes cb-bar {
+  from { background-position: -50% 0; }
+  to { background-position: 150% 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
