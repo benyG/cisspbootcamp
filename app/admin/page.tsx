@@ -1,4 +1,4 @@
-import { BellRing, CalendarCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, type LucideIcon, Mail, MessageSquareQuote, MessageSquareText, PhoneCall, LayoutDashboard, Settings2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BellRing, CalendarCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -137,6 +137,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/leads", label: "Tous les leads", icon: Users },
   { href: "/admin/tunnel", label: "Tunnel", icon: Filter },
   { href: "/admin/cohortes", label: "Cohortes", icon: GraduationCap },
+  { href: "/admin/marketing", label: "Marketing", icon: Megaphone },
   { href: "/admin/conseil", label: "Conseil", icon: Compass },
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquareQuote },
   { href: "/admin/parametres/site", label: "Page d'accueil", icon: Settings2 },
