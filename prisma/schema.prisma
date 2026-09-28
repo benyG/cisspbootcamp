@@ -230,6 +230,7 @@ model Cohort {
 
   registrations Registration[]
   seatHolds     SeatHold[]
+  marketingPosts MarketingPost[]
 
   @@index([program, status, startsAt])
   @@map("cohorts")
@@ -591,4 +592,30 @@ model Document {
 
   @@index([program, active])
   @@map("documents")
+}
+
+/// Marketing content Ben keeps from the AI studio (Ben, 28/09): one post per
+/// channel, with its visual brief and the tracked link that measures it.
+model MarketingPost {
+  id       Int     @id @default(autoincrement())
+  cohortId Int?    @map("cohort_id")
+  cohort   Cohort? @relation(fields: [cohortId], references: [id], onDelete: SetNull)
+
+  /// linkedin | whatsapp_status | whatsapp_group | tiktok
+  channel String @db.VarChar(32)
+  angle   String @db.VarChar(48)
+  /// utm_content of the tracked link: leads that came through it carry it.
+  code    String @unique @db.VarChar(24)
+
+  text        String  @db.Text
+  /// JSON: format, scene, on-screen text, art direction notes.
+  visualBrief String  @map("visual_brief") @db.Text
+  /// TikTok only: the storyboard and the text-to-video prompt, JSON.
+  video       String? @db.Text
+
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([cohortId, createdAt])
+  @@map("marketing_posts")
 }
