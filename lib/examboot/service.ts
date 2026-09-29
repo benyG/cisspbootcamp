@@ -10,7 +10,8 @@ import { recordEvent } from "@/lib/tracking/server";
  * afterwards, so Ben sees them on the lead sheet even if the tab was closed.
  */
 
-export const PLACEMENTS = ["resultat", "email-resultat", "relance", "rdv-confirme", "rappel-24h", "landing-methode", "faq", "daily"] as const;
+/** "post": the /test page, opened from a marketing post (Ben, 29/09). */
+export const PLACEMENTS = ["resultat", "email-resultat", "relance", "rdv-confirme", "rappel-24h", "landing-methode", "faq", "post", "daily"] as const;
 export type Placement = (typeof PLACEMENTS)[number];
 
 export function isPlacement(value: unknown): value is Placement {
@@ -34,7 +35,7 @@ const SWEEP_HOURS = 48;
 export type TestLink = { code: string; url: string; testId: number; shared: boolean };
 
 /** Test for a known lead: their own, created on demand, reused for a day. */
-export async function testForLead(input: { leadId: number; placement: Placement; visitorId?: string | null }, now = new Date()): Promise<TestLink> {
+export async function testForLead(input: { leadId: number; placement: Placement; visitorId?: string | null; campaignCode?: string | null }, now = new Date()): Promise<TestLink> {
   const recent = await prisma.practiceTest.findFirst({
     where: { leadId: input.leadId, createdAt: { gt: new Date(now.getTime() - REUSE_HOURS * 3_600_000) } },
     orderBy: { createdAt: "desc" },
@@ -45,7 +46,7 @@ export async function testForLead(input: { leadId: number; placement: Placement;
   }
   const created = await createTest();
   const row = await prisma.practiceTest.create({
-    data: { code: created.code, url: created.url, placement: input.placement, leadId: input.leadId, visitorId: input.visitorId ?? null, questions: EXAMBOOT_QUESTIONS },
+    data: { code: created.code, url: created.url, placement: input.placement, leadId: input.leadId, visitorId: input.visitorId ?? null, campaignCode: input.campaignCode ?? null, questions: EXAMBOOT_QUESTIONS },
   });
   await recordEvent({ name: "examboot_click", leadId: input.leadId, visitorId: input.visitorId ?? null, label: input.placement });
   return { code: row.code, url: row.url, testId: row.id, shared: false };
@@ -64,7 +65,7 @@ export async function sharedTest(placement: Placement, visitorId: string | null,
 }
 
 /** Test for an anonymous visitor: their own, keyed on the visitor cookie, reused for a day. */
-export async function testForVisitor(input: { visitorId: string; placement: Placement }, now = new Date()): Promise<TestLink> {
+export async function testForVisitor(input: { visitorId: string; placement: Placement; campaignCode?: string | null }, now = new Date()): Promise<TestLink> {
   const recent = await prisma.practiceTest.findFirst({
     where: { visitorId: input.visitorId, leadId: null, placement: { not: "daily" }, createdAt: { gt: new Date(now.getTime() - REUSE_HOURS * 3_600_000) } },
     orderBy: { createdAt: "desc" },
@@ -75,7 +76,7 @@ export async function testForVisitor(input: { visitorId: string; placement: Plac
   }
   const created = await createTest();
   const row = await prisma.practiceTest.create({
-    data: { code: created.code, url: created.url, placement: input.placement, visitorId: input.visitorId, questions: EXAMBOOT_QUESTIONS },
+    data: { code: created.code, url: created.url, placement: input.placement, visitorId: input.visitorId, campaignCode: input.campaignCode ?? null, questions: EXAMBOOT_QUESTIONS },
   });
   await recordEvent({ name: "examboot_click", visitorId: input.visitorId, label: input.placement });
   return { code: row.code, url: row.url, testId: row.id, shared: false };
@@ -86,9 +87,9 @@ async function underCreationBudget(now: Date): Promise<boolean> {
   return created < PER_CLICK_BUDGET_PER_MINUTE;
 }
 
-export async function testFor(input: { placement: Placement; leadId: number | null; visitorId: string | null }, now = new Date()): Promise<TestLink> {
-  if (input.leadId) return testForLead({ leadId: input.leadId, placement: input.placement, visitorId: input.visitorId }, now);
-  if (input.visitorId && (await underCreationBudget(now))) return testForVisitor({ visitorId: input.visitorId, placement: input.placement }, now);
+export async function testFor(input: { placement: Placement; leadId: number | null; visitorId: string | null; campaignCode?: string | null }, now = new Date()): Promise<TestLink> {
+  if (input.leadId) return testForLead({ leadId: input.leadId, placement: input.placement, visitorId: input.visitorId, campaignCode: input.campaignCode }, now);
+  if (input.visitorId && (await underCreationBudget(now))) return testForVisitor({ visitorId: input.visitorId, placement: input.placement, campaignCode: input.campaignCode }, now);
   return sharedTest(input.placement, input.visitorId, now);
 }
 
@@ -197,4 +198,16 @@ export async function leadFromTokens(input: { resultToken?: string | null; resch
     if (b) return b.leadId;
   }
   return null;
+}
+
+/**
+ * A visitor who took the test before the analysis (from a post, typically)
+ * brings the score along once they become a lead: the tests this browser
+ * took anonymously are attached to the lead (Ben, 29/09). Shared tests stay
+ * anonymous: their score may be someone else's.
+ */
+export async function adoptVisitorTests(visitorId: string | null, leadId: number): Promise<number> {
+  if (!visitorId) return 0;
+  const { count } = await prisma.practiceTest.updateMany({ where: { visitorId, leadId: null, placement: { not: "daily" } }, data: { leadId } });
+  return count;
 }

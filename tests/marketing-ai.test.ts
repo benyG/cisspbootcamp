@@ -7,7 +7,7 @@ vi.mock("@anthropic-ai/sdk", () => {
   return { default: Anthropic };
 });
 
-import { generateVariants } from "@/lib/marketing/ai";
+import { draftFollowup, generateVariants } from "@/lib/marketing/ai";
 
 const variant = {
   title: "Accroche places",
@@ -46,5 +46,24 @@ describe("studio : appel au modèle", () => {
     delete process.env.ANTHROPIC_API_KEY;
     expect(await generateVariants({ facts: "x", channel: "linkedin", angle: "places", brief: "" })).toMatchObject({ ok: false });
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it("annonce la destination du lien : le test ou l'analyse", async () => {
+    create.mockResolvedValue({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify({ variants: [variant] }) }] });
+    await generateVariants({ facts: "Cohorte : test", channel: "tiktok", angle: "test", destination: "test", brief: "" });
+    expect(create.mock.calls[0][0].messages[0].content).toMatch(/Le lien \[LIEN\] mène à : un test gratuit de 5 questions d'entraînement/);
+    await generateVariants({ facts: "Cohorte : test", channel: "linkedin", angle: "places", brief: "" });
+    expect(create.mock.calls[1][0].messages[0].content).toMatch(/Le lien \[LIEN\] mène à : l'analyse de profil gratuite/);
+    expect(create.mock.calls[1][0].system[0].text).toContain("il ne prédit jamais le résultat");
+  });
+
+  it("une relance reçoit l'offre et la destination de son segment", async () => {
+    create.mockResolvedValue({ stop_reason: "end_turn", content: [{ type: "text", text: "Bonjour Awa, votre score de 2 sur 5 montre… [LIEN] Ben" }] });
+    const result = await draftFollowup({ facts: "Cohorte : test", channel: "whatsapp", person: "Prénom : Awa\nTest d'entraînement : 2 bonnes réponses sur 5 (40 %).", segment: "Score sous le seuil", offer: "Sa place dans la cohorte.", link: "sa page de résultat" });
+    expect(result).toMatchObject({ ok: true });
+    const content = create.mock.calls[0][0].messages[0].content;
+    expect(content).toContain("2 bonnes réponses sur 5");
+    expect(content).toContain("Ce qu'on lui propose : Sa place dans la cohorte.");
+    expect(content).toContain("Le lien [LIEN] mène à : sa page de résultat");
   });
 });

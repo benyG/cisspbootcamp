@@ -7,10 +7,11 @@ import { generatePosts, savePost, type StudioVariant } from "@/app/admin/marketi
 
 type Option = { value: string; label: string };
 
-/** The AI content studio: channel, angle, a note; three variants to edit, copy, keep. */
-export function Studio({ cohortId, channels, angles }: { cohortId: number; channels: Option[]; angles: Option[] }) {
+/** The AI content studio: channel, angle, where the link leads, a note; three variants to edit, copy, keep. */
+export function Studio({ cohortId, channels, angles, destinations }: { cohortId: number; channels: Option[]; angles: Option[]; destinations: Option[] }) {
   const [channel, setChannel] = useState(channels[0].value);
   const [angle, setAngle] = useState(angles[0].value);
+  const [destination, setDestination] = useState(angles[0].value === "test" && destinations.some((d) => d.value === "test") ? "test" : "scanner");
   const [brief, setBrief] = useState("");
   const [variants, setVariants] = useState<StudioVariant[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -19,23 +20,25 @@ export function Studio({ cohortId, channels, angles }: { cohortId: number; chann
   const generate = () =>
     start(async () => {
       setError(null);
-      const result = await generatePosts({ cohortId, channel, angle, brief });
+      const result = await generatePosts({ cohortId, channel, angle, destination, brief });
       if (result.ok) setVariants(result.variants);
       else setError(result.error);
     });
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Canal</span>
           <select value={channel} onChange={(e) => setChannel(e.target.value)} className={input}>{channels.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></label>
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Angle</span>
-          <select value={angle} onChange={(e) => setAngle(e.target.value)} className={input}>{angles.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
+          <select value={angle} onChange={(e) => { setAngle(e.target.value); if (destinations.some((d) => d.value === "test")) setDestination(e.target.value === "test" ? "test" : e.target.value === "eligibilite" ? "scanner" : destination); }} className={input}>{angles.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}</select></label>
+        <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Le lien mène à</span>
+          <select value={destination} onChange={(e) => setDestination(e.target.value)} className={input}>{destinations.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
       </div>
       <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Consigne, facultative</span>
         <textarea value={brief} onChange={(e) => setBrief(e.target.value)} rows={2} maxLength={600} placeholder="ex. viser les RSSI au Sénégal, ton plus direct, parler du mercredi lecture" className={input} /></label>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted">L&apos;IA n&apos;utilise que les faits de la cohorte : dates, places, prix. Aucun chiffre ni témoignage inventé.</p>
+        <p className="text-xs text-muted">L&apos;IA n&apos;utilise que les faits de la cohorte : dates, places, prix, et les chiffres réels du test quand il y en a assez. Aucun chiffre ni témoignage inventé.</p>
         <button type="button" onClick={generate} disabled={pending} className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-white">
           <Sparkles className="size-4" aria-hidden />{pending ? "Rédaction… (20 s environ)" : variants.length ? "Trois autres variantes" : "Générer trois variantes"}
         </button>
@@ -54,7 +57,7 @@ function VariantCard({ variant, cohortId, channel, angle }: { variant: StudioVar
 
   const save = () =>
     start(async () => {
-      const result = await savePost({ cohortId, channel: channel as never, angle: angle as never, code: variant.code, text, visual: variant.visual, video: hasVideo ? variant.video : null });
+      const result = await savePost({ cohortId, channel: channel as never, angle: angle as never, destination: variant.destination, code: variant.code, text, visual: variant.visual, video: hasVideo ? variant.video : null });
       setSaved(result.ok);
     });
 
@@ -62,7 +65,7 @@ function VariantCard({ variant, cohortId, channel, angle }: { variant: StudioVar
     <article className="grid gap-3 rounded-xl border border-line bg-white p-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-bold">{variant.title}</h3>
-        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-muted">lien suivi · {variant.code}</span>
+        <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-muted">lien suivi vers {variant.destination === "test" ? "le test" : "l’analyse"} · {variant.code}</span>
       </div>
       <textarea value={text} onChange={(e) => { setText(e.target.value); setSaved(false); }} rows={Math.min(16, Math.max(5, text.split("\n").length + 2))} className={input + " font-[inherit] leading-relaxed"} />
       <div className="flex flex-wrap gap-2">

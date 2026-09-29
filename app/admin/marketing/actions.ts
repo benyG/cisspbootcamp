@@ -7,9 +7,12 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { draftFollowup, generateVariants, type Variant } from "@/lib/marketing/ai";
-import { cohortFacts, factsForModel } from "@/lib/marketing/data";
-import { ANGLES, CHANNELS, newPostCode, trackedLink, withLink } from "@/lib/marketing/plan";
+import { examBootEnabled } from "@/lib/examboot/client";
+import { cohortFacts, factsForModel, recentTestStats } from "@/lib/marketing/data";
+import { ANGLES, CHANNELS, DESTINATIONS, POST_CODE_PATTERN, type SegmentKey, newPostCode, trackedLink, withLink } from "@/lib/marketing/plan";
+import { loadMarketingSettings, saveMarketingSettings } from "@/lib/marketing/settings";
 import { sendEmail } from "@/lib/messaging/email";
+import { recommendedService, serviceDefinition } from "@/lib/services";
 
 async function requireAdmin() {
   const session = await auth();
@@ -18,25 +21,28 @@ async function requireAdmin() {
 
 const channel = z.enum(Object.keys(CHANNELS) as [keyof typeof CHANNELS, ...Array<keyof typeof CHANNELS>]);
 const angle = z.enum(Object.keys(ANGLES) as [keyof typeof ANGLES, ...Array<keyof typeof ANGLES>]);
+const destination = z.enum(Object.keys(DESTINATIONS) as [keyof typeof DESTINATIONS, ...Array<keyof typeof DESTINATIONS>]);
 const id = z.coerce.number().int().positive();
 
-export type StudioVariant = Variant & { code: string; link: string };
+export type StudioVariant = Variant & { code: string; link: string; destination: keyof typeof DESTINATIONS };
 
 /** Three variants for a channel and an angle, each with its own tracked link. */
-export async function generatePosts(input: { cohortId: number; channel: string; angle: string; brief: string }): Promise<{ ok: true; variants: StudioVariant[] } | { ok: false; error: string }> {
+export async function generatePosts(input: { cohortId: number; channel: string; angle: string; destination: string; brief: string }): Promise<{ ok: true; variants: StudioVariant[] } | { ok: false; error: string }> {
   await requireAdmin();
-  const parsed = z.object({ cohortId: id, channel, angle, brief: z.string().trim().max(600) }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Choisissez une cohorte, un canal et un angle." };
-  const facts = await cohortFacts(parsed.data.cohortId);
+  const parsed = z.object({ cohortId: id, channel, angle, destination, brief: z.string().trim().max(600) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Choisissez une cohorte, un canal, un angle et une destination." };
+  if (parsed.data.destination === "test" && !examBootEnabled()) return { ok: false, error: "Le test d'entraînement n'est pas activé sur le site : choisissez l'analyse de profil." };
+  const settings = await loadMarketingSettings();
+  const [facts, tests] = await Promise.all([cohortFacts(parsed.data.cohortId), recentTestStats(settings.testThreshold)]);
   if (!facts) return { ok: false, error: "Cohorte introuvable." };
-  const result = await generateVariants({ facts: factsForModel(facts), channel: parsed.data.channel, angle: parsed.data.angle, brief: parsed.data.brief });
+  const result = await generateVariants({ facts: factsForModel(facts, tests.stats), channel: parsed.data.channel, angle: parsed.data.angle, destination: parsed.data.destination, brief: parsed.data.brief });
   if (!result.ok) return result;
   return {
     ok: true,
     variants: result.variants.map((v) => {
       const code = newPostCode(parsed.data.channel);
-      const link = trackedLink(env.NEXT_PUBLIC_APP_URL, parsed.data.channel, facts.id, code);
-      return { ...v, code, link, text: withLink(v.text, link) };
+      const link = trackedLink(env.NEXT_PUBLIC_APP_URL, parsed.data.channel, facts.id, code, parsed.data.destination);
+      return { ...v, code, link, destination: parsed.data.destination, text: withLink(v.text, link) };
     }),
   };
 }
@@ -45,7 +51,8 @@ const saveSchema = z.object({
   cohortId: id,
   channel,
   angle,
-  code: z.string().regex(/^[a-z]{2}-[a-f0-9]{6}$/),
+  destination,
+  code: z.string().regex(POST_CODE_PATTERN),
   text: z.string().trim().min(10).max(6000),
   visual: z.object({ format: z.string(), scene: z.string(), onScreenText: z.string(), direction: z.string() }),
   video: z.object({ scenes: z.array(z.object({ seconds: z.number(), image: z.string(), voiceover: z.string(), onScreen: z.string() })), minimaxPrompt: z.string() }).nullable(),
@@ -59,7 +66,7 @@ export async function savePost(input: z.input<typeof saveSchema>): Promise<{ ok:
   const d = parsed.data;
   await prisma.marketingPost.upsert({
     where: { code: d.code },
-    create: { cohortId: d.cohortId, channel: d.channel, angle: d.angle, code: d.code, text: d.text, visualBrief: JSON.stringify(d.visual), video: d.video && d.video.scenes.length ? JSON.stringify(d.video) : null },
+    create: { cohortId: d.cohortId, channel: d.channel, angle: d.angle, destination: d.destination, code: d.code, text: d.text, visualBrief: JSON.stringify(d.visual), video: d.video && d.video.scenes.length ? JSON.stringify(d.video) : null },
     update: { text: d.text },
   });
   revalidatePath("/admin/marketing");
@@ -80,40 +87,70 @@ export async function deletePost(formData: FormData): Promise<void> {
   revalidatePath("/admin/marketing");
 }
 
-const SEGMENT_REASON: Record<string, string> = {
+const SEGMENT_REASON: Record<SegmentKey, string> = {
   called: "Elle a fait l'appel découverte avec Ben mais ne s'est pas inscrite.",
-  hot: "Profil chaud (forte intention) sans place réservée.",
+  test_high: "Bon score au test d'entraînement, sans place réservée : elle peut viser l'examen plus vite avec la méthode et le rythme du bootcamp.",
+  test_low: "Score au test d'entraînement sous le seuil, sans place réservée : le bootcamp travaille justement ces angles morts, avec un coach.",
+  hot: "Profil chaud (forte intention), pas encore testé : le test de 5 questions est le prochain pas naturel.",
   associate: "Profil éligible via le titre Associate of ISC² : elle peut passer l'examen dès maintenant.",
-  cc: "Profil qui débute : la bonne première marche est la certification CC d'ISC².",
+  conseil: "Son échéance est plus courte que le délai estimé par l'analyse : un échange de conseil d'abord, pour bâtir un plan réaliste.",
+  cc: "Profil qui débute : la bonne première marche est la certification CC d'ISC², ou un bilan de carrière.",
 };
+
+const segmentKey = z.enum(["called", "test_high", "test_low", "hot", "associate", "conseil", "cc"]);
 
 /** A personal follow-up for one consenting prospect. Nothing is sent here. */
 export async function draftFollowupFor(input: { leadId: number; cohortId: number; channel: "whatsapp" | "email"; segment: string }): Promise<{ ok: true; text: string; subject: string | null } | { ok: false; error: string }> {
   await requireAdmin();
-  const parsed = z.object({ leadId: id, cohortId: id, channel: z.enum(["whatsapp", "email"]), segment: z.enum(["called", "hot", "associate", "cc"]) }).safeParse(input);
+  const parsed = z.object({ leadId: id, cohortId: id, channel: z.enum(["whatsapp", "email"]), segment: segmentKey }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "Demande invalide." };
   const [lead, facts] = await Promise.all([
     prisma.lead.findUnique({
       where: { id: parsed.data.leadId },
-      include: { scannerResponses: { orderBy: { createdAt: "desc" }, take: 1, select: { resultToken: true, analysis: true } } },
+      include: {
+        scannerResponses: { orderBy: { createdAt: "desc" }, take: 1, select: { resultToken: true, analysis: true, answers: true } },
+        practiceTests: { where: { status: "completed", percent: { not: null } }, orderBy: { finishedAt: "desc" }, take: 1, select: { percent: true, correct: true, questions: true } },
+      },
     }),
     cohortFacts(parsed.data.cohortId),
   ]);
   if (!lead || !facts) return { ok: false, error: "Introuvable." };
   if (!lead.consentAt || lead.unsubscribedAt) return { ok: false, error: "Cette personne n'a pas accepté d'être recontactée." };
-  const analysis = lead.scannerResponses[0]?.analysis as { headline?: string; timeline?: { label?: string } } | undefined;
+  const scan = lead.scannerResponses[0];
+  const analysis = scan?.analysis as { headline?: string; timeline?: { label?: string } } | undefined;
+  const test = lead.practiceTests[0];
   const person = [
     `Prénom : ${lead.firstName}`,
     lead.jobTitle ? `Poste : ${lead.jobTitle}` : null,
     `Pays : ${lead.country}`,
     lead.readiness ? `Verdict de l'analyse : ${lead.readiness}${analysis?.headline ? ` — ${analysis.headline}` : ""}` : null,
     analysis?.timeline?.label ? `Délai estimé, accompagné : ${analysis.timeline.label}` : null,
+    test ? `Test d'entraînement : ${test.correct} bonne${(test.correct ?? 0) > 1 ? "s" : ""} réponse${(test.correct ?? 0) > 1 ? "s" : ""} sur ${test.questions} (${test.percent} %).` : "Test d'entraînement : pas encore fait.",
     lead.goals ? `Ses objectifs, écrits par elle : « ${lead.goals} »` : null,
   ].filter(Boolean).join("\n");
-  const result = await draftFollowup({ facts: factsForModel(facts), channel: parsed.data.channel, person, segment: SEGMENT_REASON[parsed.data.segment] });
+
+  // What to offer and where the link leads, by segment (Ben, 29/09).
+  const app = env.NEXT_PUBLIC_APP_URL;
+  const resultLink = scan?.resultToken ? `${app}/scanner/resultat/${scan.resultToken}` : trackedLink(app, "whatsapp_status", facts.id, "relance");
+  let offer = `Sa place dans la cohorte ${facts.name}.`;
+  let link = resultLink;
+  let linkWhat = "sa page de résultat, avec son analyse et l'inscription à la cohorte";
+  const segment = parsed.data.segment;
+  if (segment === "hot" && examBootEnabled() && scan?.resultToken) {
+    offer = "Le test gratuit de 5 questions d'entraînement, pour voir comment elle raisonne ; la cohorte ensuite.";
+    link = `${app}/test-cissp?from=relance&t=${scan.resultToken}`;
+    linkWhat = "son test d'entraînement personnel (5 questions, 10 minutes, sans compte) ; son score s'affichera sur sa fiche";
+  } else if (segment === "conseil" || segment === "cc") {
+    const answers = (scan?.answers ?? {}) as { experience?: string; professionalStatus?: string };
+    const service = serviceDefinition(recommendedService(lead.readiness ?? "not_yet", answers as never));
+    const cc = segment === "cc" ? "la certification CC d'ISC² comme première marche (présentée sur sa page de résultat), ou " : "";
+    offer = `${cc}une séance de conseil « ${service.name} » : ${service.tagline}`;
+    link = segment === "cc" ? resultLink : `${app}/conseil/${service.code}`;
+    linkWhat = segment === "cc" ? linkWhat : `la page de la séance « ${service.name} », avec son prix et la prise de rendez-vous`;
+  }
+
+  const result = await draftFollowup({ facts: factsForModel(facts), channel: parsed.data.channel, person, segment: SEGMENT_REASON[segment], offer, link: linkWhat });
   if (!result.ok) return result;
-  const token = lead.scannerResponses[0]?.resultToken;
-  const link = token ? `${env.NEXT_PUBLIC_APP_URL}/scanner/resultat/${token}` : trackedLink(env.NEXT_PUBLIC_APP_URL, "whatsapp_status", facts.id, "relance");
   let text = withLink(result.text, link);
   let subject: string | null = null;
   const match = /^Objet\s*:\s*(.+)\n+/i.exec(text);
@@ -122,6 +159,14 @@ export async function draftFollowupFor(input: { leadId: number; cohortId: number
     text = text.slice(match[0].length);
   }
   return { ok: true, text, subject: parsed.data.channel === "email" ? subject ?? `${lead.firstName}, votre place pour la ${facts.name}` : null };
+}
+
+/** Ben's score threshold for the "test réussi" and "test à consolider" segments. */
+export async function saveTestThreshold(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const parsed = z.coerce.number().int().min(20).max(100).safeParse(formData.get("testThreshold"));
+  if (parsed.success) await saveMarketingSettings({ testThreshold: parsed.data });
+  revalidatePath("/admin/marketing");
 }
 
 /** Sends one follow-up e-mail Ben has read, with the unsubscribe link. */

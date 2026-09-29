@@ -228,8 +228,8 @@ model Cohort {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  registrations Registration[]
-  seatHolds     SeatHold[]
+  registrations  Registration[]
+  seatHolds      SeatHold[]
   marketingPosts MarketingPost[]
 
   @@index([program, status, startsAt])
@@ -443,15 +443,17 @@ model SeatHold {
 /// One row per created test; the score comes back through the results
 /// endpoint and is kept here for the lead sheet and the tunnel.
 model PracticeTest {
-  id        Int     @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   /// ExamBoot test code; the public URL is https://examboot.net/shared/<code>.
-  code      String  @unique @db.VarChar(80)
-  url       String  @db.VarChar(255)
+  code         String  @unique @db.VarChar(80)
+  url          String  @db.VarChar(255)
   /// Where the click came from: resultat, email-resultat, relance, rdv-confirme, rappel-24h, landing-methode, faq, daily.
-  placement String  @db.VarChar(40)
-  leadId    Int?    @map("lead_id")
-  lead      Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  visitorId String? @map("visitor_id") @db.VarChar(48)
+  placement    String  @db.VarChar(40)
+  leadId       Int?    @map("lead_id")
+  lead         Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  visitorId    String? @map("visitor_id") @db.VarChar(48)
+  /// Marketing post code (utm_content) the visitor came from, when the test was opened from a post.
+  campaignCode String? @map("campaign_code") @db.VarChar(40)
 
   /// pending | completed
   status     String    @default("pending") @db.VarChar(20)
@@ -468,6 +470,7 @@ model PracticeTest {
   @@index([leadId, createdAt])
   @@index([status, createdAt])
   @@index([placement, createdAt])
+  @@index([campaignCode])
   @@map("practice_tests")
 }
 
@@ -576,17 +579,17 @@ model ProgramPrice {
 /// reading list) and attaches to the onboarding e-mail of a paid participant.
 /// Stored in the database: a handful of files, no extra service to configure.
 model Document {
-  id       Int     @id @default(autoincrement())
-  program  Program @default(cissp)
-  name     String  @db.VarChar(120)
-  filename String  @db.VarChar(160)
-  mimeType String  @map("mime_type") @db.VarChar(120)
-  size     Int
+  id           Int     @id @default(autoincrement())
+  program      Program @default(cissp)
+  name         String  @db.VarChar(120)
+  filename     String  @db.VarChar(160)
+  mimeType     String  @map("mime_type") @db.VarChar(120)
+  size         Int
   /// Legacy: small files stored in the database before Vercel Blob (25/09).
-  content  Bytes?  @db.LongBlob
+  content      Bytes?  @db.LongBlob
   /// Private Vercel Blob pathname; the file itself never transits a function on upload.
   blobPathname String? @map("blob_pathname") @db.VarChar(255)
-  active   Boolean @default(true)
+  active       Boolean @default(true)
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -602,10 +605,12 @@ model MarketingPost {
   cohort   Cohort? @relation(fields: [cohortId], references: [id], onDelete: SetNull)
 
   /// linkedin | whatsapp_status | whatsapp_group | tiktok
-  channel String @db.VarChar(32)
-  angle   String @db.VarChar(48)
+  channel     String @db.VarChar(32)
+  angle       String @db.VarChar(48)
   /// utm_content of the tracked link: leads that came through it carry it.
-  code    String @unique @db.VarChar(24)
+  code        String @unique @db.VarChar(24)
+  /// Where the link leads: scanner (profile analysis) | test (practice test page).
+  destination String @default("scanner") @db.VarChar(20)
 
   text        String  @db.Text
   /// JSON: format, scene, on-screen text, art direction notes.
