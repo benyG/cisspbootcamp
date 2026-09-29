@@ -6,6 +6,7 @@ import { analyseProfile, prospectAxes } from "@/lib/analysis";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { examBootEnabled } from "@/lib/examboot/client";
+import { adoptVisitorTests } from "@/lib/examboot/service";
 import { nextFollowupAt } from "@/lib/followups";
 import { sendEmail } from "@/lib/messaging/email";
 import { formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
@@ -17,7 +18,7 @@ import { clearPendingSlot, readPendingSlot } from "@/lib/pending-slot";
 import { isServiceCode } from "@/lib/services";
 import { answersSchema } from "@/lib/scoring";
 import { createToken } from "@/lib/tokens";
-import { recordServerEvent } from "@/lib/tracking/server";
+import { currentVisitorId, recordServerEvent } from "@/lib/tracking/server";
 
 const contactSchema = z.object({
   firstName: z.string().trim().min(1, "Prénom requis").max(80),
@@ -165,6 +166,8 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
     country: answers.country,
     utm: utm ? { source: utm.source, medium: utm.medium, campaign: utm.campaign } : null,
   });
+  // A test taken before the analysis (from a post) now belongs to this lead.
+  await adoptVisitorTests(await currentVisitorId(), lead.id).catch((error) => console.warn("[scanner] rattachement du test", error));
 
   const resultUrl = `${env.NEXT_PUBLIC_APP_URL}/scanner/resultat/${resultToken}`;
   const axes = prospectAxes(analysis.axes);

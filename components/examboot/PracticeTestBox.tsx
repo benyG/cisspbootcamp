@@ -10,6 +10,8 @@ type Props = {
   token?: string;
   /** Booking reschedule token: same, from the call confirmation page. */
   bookingToken?: string;
+  /** Marketing post code (utm_content), so the post gets the credit. */
+  campaignCode?: string;
   title?: string;
   text?: string;
   /** Button label; the default says what happens next. */
@@ -29,7 +31,7 @@ const MAX_POLLS = 180;
  * this page once ExamBoot has it. A shared (anonymous) test never shows a
  * score: it could be someone else's.
  */
-export function PracticeTestBox({ placement, token, bookingToken, title = "Testez votre raisonnement CISSP", text = "Cinq questions d’entraînement, conçues au niveau et dans l’esprit du CISSP, corrigées à la fin. Sans compte, en dix minutes.", cta = "Tester mon niveau — 10 min →", dark = false, compact = false }: Props) {
+export function PracticeTestBox({ placement, token, bookingToken, campaignCode, title = "Testez votre raisonnement CISSP", text = "Cinq questions d’entraînement, conçues au niveau et dans l’esprit du CISSP, corrigées à la fin. Sans compte, en dix minutes.", cta = "Tester mon niveau — 10 min →", dark = false, compact = false }: Props) {
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const polls = useRef(0);
 
@@ -98,7 +100,7 @@ export function PracticeTestBox({ placement, token, bookingToken, title = "Teste
       const res = await fetch("/api/examboot/test", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ placement, t: token, b: bookingToken }),
+        body: JSON.stringify({ placement, t: token, b: bookingToken, c: campaignCode }),
       });
       if (!res.ok) throw new Error(String(res.status));
       const data = (await res.json()) as { code: string; url: string; shared: boolean };

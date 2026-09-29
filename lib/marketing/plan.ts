@@ -14,6 +14,8 @@ export const CHANNELS = {
 export type Channel = keyof typeof CHANNELS;
 
 export const ANGLES = {
+  test: "Testez-vous : 5 questions d'entraînement CISSP corrigées",
+  eligibilite: "Suis-je éligible ? L'analyse de profil en 3 minutes",
   places: "Places limitées, date de clôture",
   emploi: "Compatible avec un emploi (soirs, mercredi lecture, week-ends)",
   associate: "Sans les 5 ans : le titre Associate of ISC²",
@@ -38,21 +40,39 @@ export const ART_DIRECTION = [
   "- Vidéo : plans lents et stables, caméra à l'épaule discrète, étalonnage froid dans les ombres et chaud sur la peau, texte à l'écran court en Inter Tight blanche, vert pour le mot clé.",
 ].join("\n");
 
+/**
+ * Where a post sends people (Ben, 29/09): the free practice test, playful and
+ * shareable, or the profile analysis, which qualifies. The test page then
+ * leads to the analysis, with the same tracking.
+ */
+export const DESTINATIONS = {
+  scanner: { label: "Analyse de profil", path: "/scanner", forModel: "l'analyse de profil gratuite (11 questions, 3 minutes) : éligibilité, délai estimé, voie conseillée" },
+  test: { label: "Test CISSP (5 questions)", path: "/test", forModel: "un test gratuit de 5 questions d'entraînement originales, au niveau et dans l'esprit du CISSP, corrigées, sans compte, en 10 minutes ; il mène ensuite à l'analyse de profil" },
+} as const;
+export type Destination = keyof typeof DESTINATIONS;
+
+/** The angle's natural destination: the test angle opens the test. */
+export function defaultDestination(angle: Angle): Destination {
+  return angle === "test" ? "test" : "scanner";
+}
+
+export const POST_CODE_PATTERN = /^[a-z]{2}-[a-f0-9]{6}$/;
+
 /** A short, unique code for utm_content: channel prefix and random letters. */
 export function newPostCode(channel: Channel, random = randomBytes(4)): string {
   const prefix = { linkedin: "li", whatsapp_status: "ws", whatsapp_group: "wg", tiktok: "tt" }[channel];
   return `${prefix}-${random.toString("hex").slice(0, 6)}`;
 }
 
-/** The link a post carries: the profile analysis, tagged so the cockpit can credit it. */
-export function trackedLink(appUrl: string, channel: Channel, cohortId: number | null, code: string): string {
+/** The link a post carries, tagged so the cockpit can credit it. */
+export function trackedLink(appUrl: string, channel: Channel, cohortId: number | null, code: string, destination: Destination = "scanner"): string {
   const params = new URLSearchParams({
     utm_source: CHANNELS[channel].utmSource,
     utm_medium: "social",
     utm_campaign: cohortId ? `cohorte-${cohortId}` : "cohorte",
     utm_content: code,
   });
-  return `${appUrl}/scanner?${params.toString()}`;
+  return `${appUrl}${DESTINATIONS[destination].path}?${params.toString()}`;
 }
 
 /** Replaces the [LIEN] placeholder the model writes with the tracked link. */
@@ -78,6 +98,7 @@ export type Signals = {
   callsWithoutSeat: number;
   daysSinceLastPost: number | null;
   scansLast7Days: number;
+  tests30?: number;
 };
 
 /** The day's short to-do, most useful first, at most three lines. */
@@ -89,5 +110,51 @@ export function recommendations(s: Signals): string[] {
   if (s.daysSinceLastPost === null || s.daysSinceLastPost >= 3) out.push(s.daysSinceLastPost === null ? "Aucune publication enregistrée pour cette cohorte : lancez un premier post LinkedIn." : `Pas de publication depuis ${s.daysSinceLastPost} jours : un post aujourd'hui.`);
   if (s.pace.daysLeft > 0 && s.pace.daysLeft <= 7) out.push(`Clôture dans ${s.pace.daysLeft} jour${s.pace.daysLeft > 1 ? "s" : ""} : angle « Places limitées » sur tous les canaux.`);
   if (s.scansLast7Days === 0) out.push("Aucune analyse de profil en 7 jours : partagez le lien de l'analyse (TikTok ou statut WhatsApp).");
+  if (s.tests30 === 0) out.push("Aucun test d'entraînement en 30 jours : un post « Testez-vous » vers le test (TikTok ou statut WhatsApp).");
   return out.slice(0, 3);
+}
+
+// --- Segments of the follow-ups (Ben, 29/09) ----------------------------
+
+/** Default of the adjustable score threshold, in percent: 3 good answers out of 5. */
+export const DEFAULT_TEST_THRESHOLD = 60;
+
+export type SegmentKey = "called" | "test_low" | "test_high" | "hot" | "associate" | "conseil" | "cc";
+
+export type LeadJourney = {
+  hadCall: boolean;
+  /** Latest practice test score, percent, if the lead took one. */
+  testPercent: number | null;
+  heatScore: number;
+  readiness: string | null;
+  /** From the analysis: the lead's own deadline is tighter than the estimate. */
+  goalIsTight: boolean;
+};
+
+/**
+ * One segment per lead, from what they actually did. The call comes first
+ * (closest to paying), then the test score against Ben's threshold, then the
+ * analysis. Tight deadlines and profiles not ready yet go to consulting or
+ * the CC rather than the cohort.
+ */
+export function segmentOf(j: LeadJourney, threshold: number, hotThreshold: number): SegmentKey | null {
+  if (j.hadCall) return "called";
+  if (j.readiness === "not_yet") return "cc";
+  if (j.testPercent !== null) return j.testPercent >= threshold ? "test_high" : "test_low";
+  if (j.goalIsTight) return "conseil";
+  if (j.heatScore >= hotThreshold) return "hot";
+  if (j.readiness === "conditional") return "associate";
+  return null; // ready but cold, no test, no call: nothing personal to say yet
+}
+
+/** Fewer than this many results and no figure is ever quoted: too fragile to publish. */
+export const MIN_SAMPLE_FOR_STATS = 30;
+
+export type TestStats = { count: number; averagePercent: number; threshold: number; atOrAbove: number };
+
+/** Real figures the content may quote, or null below the minimum sample. */
+export function publishableTestStats(percents: number[], threshold: number, minSample = MIN_SAMPLE_FOR_STATS): TestStats | null {
+  if (percents.length < minSample) return null;
+  const average = Math.round(percents.reduce((a, p) => a + p, 0) / percents.length);
+  return { count: percents.length, averagePercent: average, threshold, atOrAbove: Math.round((percents.filter((p) => p >= threshold).length / percents.length) * 100) };
 }

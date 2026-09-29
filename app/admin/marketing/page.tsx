@@ -3,11 +3,13 @@ import Link from "next/link";
 
 import { CopyButton, Studio } from "@/components/admin/marketing/Studio";
 import { FollowupRow } from "@/components/admin/marketing/FollowupRow";
+import { examBootEnabled } from "@/lib/examboot/client";
 import { cockpit, cohortFacts, followupSegments, libraryWithResults, marketingCohorts } from "@/lib/marketing/data";
-import { ANGLES, CHANNELS } from "@/lib/marketing/plan";
+import { ANGLES, CHANNELS, DESTINATIONS, MIN_SAMPLE_FOR_STATS } from "@/lib/marketing/plan";
+import { loadMarketingSettings } from "@/lib/marketing/settings";
 import { PROGRAMS } from "@/lib/programs";
 
-import { deletePost, togglePublished } from "./actions";
+import { deletePost, saveTestThreshold, togglePublished } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +29,11 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
     );
   }
 
-  const facts = (await cohortFacts(selected.id))!;
-  const [cp, segments, library] = await Promise.all([cockpit(facts), followupSegments(facts.program), libraryWithResults(facts.id)]);
+  const [facts, settings] = await Promise.all([cohortFacts(selected.id), loadMarketingSettings()]);
+  if (!facts) return null;
+  const threshold = settings.testThreshold;
+  const testOn = examBootEnabled();
+  const [cp, segments, library] = await Promise.all([cockpit(facts, threshold), followupSegments(facts.program, threshold), libraryWithResults(facts.id)]);
   const fmt = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" });
 
   return (
@@ -57,7 +62,14 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
           <Kpi value={String(cp.paid30)} label="inscriptions en 30 j" />
         </div>
         <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm font-semibold text-accent-ink">{facts.pace.label}</p>
-        <p className="mt-3 text-sm text-muted">30 derniers jours : {cp.scans30} analyses de profil ({cp.scans7} cette semaine) → {cp.calls30} appels réservés → {cp.paid30} inscriptions payées.</p>
+        <p className="mt-3 text-sm text-muted">30 derniers jours : {testOn ? `${cp.tests30} tests d’entraînement faits → ` : ""}{cp.scans30} analyses de profil ({cp.scans7} cette semaine) → {cp.calls30} appels réservés → {cp.paid30} inscriptions payées.</p>
+        {testOn && (
+          <p className="mt-1 text-sm text-muted">
+            {cp.testStats
+              ? `Chiffres publiables : score moyen ${cp.testStats.averagePercent} %, ${cp.testStats.atOrAbove} % à ${threshold} % ou plus, sur ${cp.testStats.count} tests. Le studio peut les citer.`
+              : `Chiffres du test non publiables : moins de ${MIN_SAMPLE_FOR_STATS} tests en 30 jours. Le studio n’en cite aucun.`}
+          </p>
+        )}
         {cp.todo.length > 0 && (
           <div className="mt-3">
             <p className="flex items-center gap-1.5 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><Lightbulb className="size-3.5" aria-hidden />Aujourd&apos;hui</p>
@@ -69,11 +81,12 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       {/* 2. Studio */}
       <section className="mt-6 rounded-xl border border-line bg-white p-4">
         <h2 className={h2}><Sparkles className="size-4 text-accent" aria-hidden />Studio de contenu</h2>
-        <p className="mt-1 mb-3 text-sm text-muted">LinkedIn, WhatsApp et TikTok. Chaque variante a son brief visuel (direction « Nuit et vert ») et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax.</p>
+        <p className="mt-1 mb-3 text-sm text-muted">LinkedIn, WhatsApp et TikTok. Le lien mène au test (ludique, pour attirer) ou à l’analyse de profil (pour qualifier) ; le test mène ensuite à l’analyse. Chaque variante a son brief visuel (direction « Nuit et vert ») et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax.</p>
         <Studio
           cohortId={facts.id}
           channels={Object.entries(CHANNELS).map(([value, c]) => ({ value, label: c.label }))}
-          angles={Object.entries(ANGLES).filter(([k]) => facts.program === "cc" || k !== "cc").map(([value, label]) => ({ value, label }))}
+          angles={Object.entries(ANGLES).filter(([k]) => (facts.program === "cc" || k !== "cc") && (testOn || k !== "test")).map(([value, label]) => ({ value, label }))}
+          destinations={Object.entries(DESTINATIONS).filter(([k]) => testOn || k !== "test").map(([value, d]) => ({ value, label: d.label }))}
         />
       </section>
 
@@ -87,8 +100,8 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
             {library.map((p) => (
               <li key={p.id} className="rounded-lg border border-line p-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {ANGLES[p.angle as keyof typeof ANGLES] ?? p.angle}</span>
-                  <span className="text-muted">{p.leads} analyse{p.leads > 1 ? "s" : ""} · {p.paid} inscription{p.paid > 1 ? "s" : ""} · {p.code}</span>
+                  <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {ANGLES[p.angle as keyof typeof ANGLES] ?? p.angle} · vers {p.destination === "test" ? "le test" : "l’analyse"}</span>
+                  <span className="text-muted">{p.destination === "test" || p.tests > 0 ? `${p.tests} test${p.tests > 1 ? "s" : ""} ouvert${p.tests > 1 ? "s" : ""} (${p.testsDone} fait${p.testsDone > 1 ? "s" : ""}) · ` : ""}{p.leads} analyse{p.leads > 1 ? "s" : ""} · {p.paid} inscription{p.paid > 1 ? "s" : ""} · {p.code}</span>
                 </div>
                 <p className="mt-1 line-clamp-3 whitespace-pre-line text-ink-2">{p.text}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -105,7 +118,15 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       {/* 4. Follow-ups */}
       <section className="mt-6 rounded-xl border border-line bg-white p-4">
         <h2 className={h2}><Users className="size-4 text-accent" aria-hidden />Relances ciblées</h2>
-        <p className="mt-1 text-sm text-muted">Seulement les personnes qui ont accepté d&apos;être recontactées, sans place payée, pas relancées d&apos;ici depuis 3 jours. Un message personnel chacun, envoyé par vous : jamais d&apos;envoi groupé.</p>
+        <p className="mt-1 text-sm text-muted">Seulement les personnes qui ont accepté d&apos;être recontactées, sans place payée, pas relancées d&apos;ici depuis 3 jours. Classées selon ce qu&apos;elles ont fait : appel, score au test, analyse. Un message personnel chacun, envoyé par vous : jamais d&apos;envoi groupé.</p>
+        {testOn && (
+          <form action={saveTestThreshold} className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+            <label htmlFor="testThreshold" className="font-medium">Seuil du test</label>
+            <input id="testThreshold" name="testThreshold" type="number" min={20} max={100} step={5} defaultValue={threshold} className="w-20 rounded-lg border border-line px-2 py-1 text-base" />
+            <span className="text-muted">% · à partir de ce score : « Test réussi » ; en dessous : « Test à consolider ».</span>
+            <button className={ghost}>Enregistrer</button>
+          </form>
+        )}
         <div className="mt-3 grid gap-4">
           {segments.map((s) => (
             <details key={s.key} open={s.leads.length > 0 && s.key === segments[0].key} className="rounded-lg border border-line p-3">
