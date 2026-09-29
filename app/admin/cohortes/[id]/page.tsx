@@ -86,7 +86,8 @@ export default async function CohortPage({
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Fin</span>
-          <input name="endsAt" type="date" defaultValue={toInputDate(cohort.endsAt)} required className={input} />
+          <input name="endsAt" type="date" defaultValue={toInputDate(cohort.endsAt)} className={input} />
+            <span className="text-xs text-[var(--color-muted)]">CISSP : calculée automatiquement (soirs 2 h, mercredi repos, week-ends 5 h 30).</span>
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Capacité</span>

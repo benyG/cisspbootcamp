@@ -157,7 +157,7 @@ h1,h2,h3{font-family:"Inter Tight","Inter",sans-serif;letter-spacing:-.03em;marg
 
  <nav class="tabs" role="tablist" aria-label="Vues du plan">
   <button class="tab" role="tab" data-tab="now"><svg class="i"><use href="#target"/></svg>Aujourd’hui</button>
-  <button class="tab" role="tab" data-tab="days"><svg class="i"><use href="#cal"/></svg>Les 15 jours</button>
+  <button class="tab" role="tab" data-tab="days"><svg class="i"><use href="#cal"/></svg>Les jours</button>
   <button class="tab" role="tab" data-tab="agenda"><svg class="i"><use href="#list"/></svg>Agenda de lecture</button>
   <button class="tab" role="tab" data-tab="domains"><svg class="i"><use href="#layers"/></svg>Les 8 domaines</button>
  </nav>
@@ -217,7 +217,8 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",
 
 // ---- dates
 const params = new URLSearchParams(location.search);
-const startStr = /^\d{4}-\d{2}-\d{2}$/.test(params.get("debut") || "") ? params.get("debut") : SAVED ? SAVED.start : DATA.defaultStart;
+// The calendar is built on the server for this start (weekday rules, Ben 29/09).
+const startStr = DATA.defaultStart;
 const start = new Date(startStr + "T12:00:00");
 const dayAt = (offset) => new Date(start.getTime() + offset * 86400000);
 const today = (() => { const t = params.get("aujourdhui"); const d = t ? new Date(t + "T12:00:00") : new Date(); d.setHours(12,0,0,0); return d; })();
@@ -228,8 +229,10 @@ const short = (d) => fmt(d, { weekday: "short", day: "numeric", month: "short" }
 const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
 const hrs = (h) => (h % 1 ? `${Math.floor(h)} h 30` : `${h} h`);
 const mins = (m) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? " " + String(m % 60).padStart(2, "0") : ""}` : `${m} min`);
-S.forEach((s) => { s.date = dayAt(s.n - 1); s.offset = s.n - 1; });
-$("#dates").textContent = `Du ${fmt(S[0].date, { day: "numeric", month: "long" })} au ${fmt(S[14].date, { day: "numeric", month: "long", year: "numeric" })}`;
+S.forEach((s) => { s.offset = s.n - 1; s.date = dayAt(s.offset); });
+const LAST = S.length - 1, END_OFF = S[LAST].offset;
+const mockExam = new Date(DATA.mockExam + "T12:00:00");
+$("#dates").textContent = `Du ${fmt(S[0].date, { day: "numeric", month: "long" })} au ${fmt(S[LAST].date, { day: "numeric", month: "long", year: "numeric" })} · examen blanc le ${fmt(mockExam, { day: "numeric", month: "long" })}`;
 
 // ---- progress (per-viewer, localStorage, never required)
 const KEY = "cb_plan_lecture_" + startStr;
@@ -237,7 +240,7 @@ const KEY = "cb_plan_lecture_" + startStr;
 let done = SAVED && SAVED.start === startStr ? { ...SAVED.done } : {};
 try { const stored = localStorage.getItem(KEY); if (stored !== null) done = JSON.parse(stored) || {}; } catch {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch {} };
-const id = (s, i) => `${s.n}-${i}`;
+const id = (s, i) => s.read[i].key;
 const allItems = S.flatMap((s) => s.read.map((r, i) => ({ s, r, i })));
 const totalMin = allItems.reduce((a, x) => a + x.r.min, 0);
 $("#readTotal").textContent = `≈ ${Math.round(totalMin / 60)} h de lecture`;
@@ -335,7 +338,7 @@ function replan() {
 replan();
 
 // ---- rendering helpers
-const domPills = (s) => s.blocks.map((b) => `<span class="pill"><span class="dot" style="background:${COLORS[b.d]}"></span>${b.d ? "Domaine " + b.d : "Bilan"} · ${hrs(b.h)}</span>`).join("");
+const domPills = (s) => s.blocks.map((b) => `<span class="pill"><span class="dot" style="background:${COLORS[b.d]}"></span>${b.d ? "Domaine " + b.d : "Synthèse"} · ${hrs(b.h)}</span>`).join("");
 const sessionDone = (s) => s.read.length > 0 && s.read.every((_, i) => done[id(s, i)]);
 function refreshProgress() {
   const n = allItems.filter((x) => done[id(x.s, x.i)]).length;
@@ -352,7 +355,7 @@ function show(tab) {
 }
 document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => show(t.dataset.tab)));
 
-// ---- 15 days
+// ---- the days
 let current = 0, filter = 0;
 function renderStrip() {
   $("#strip").innerHTML = S.map((s, k) => {
@@ -368,7 +371,7 @@ function renderStrip() {
 // The "Quand lire ?" card of a session: its reading days, from today on.
 function renderSide(s) {
   const plan = Object.entries(agenda).sort(([a], [b]) => a - b).filter(([, l]) => l.some((x) => x.s === s)).map(([o, l]) => `<div>${svg("book")}<span><b>${short(dayAt(+o))}</b> · ${l.filter((x) => x.s === s).map((x) => `ch. ${x.r.ch}, ${mins(x.min)}`).join(" · ")}</span></div>`).join("");
-  $("#side").innerHTML = `<h3>Quand lire ?</h3>${!s.read.length ? `<p class="muted" style="font-size:.86rem">Pas de lecture : cette session s’appuie sur votre examen blanc.</p>` : s.offset < TODAY_OFF ? `<p class="muted" style="font-size:.86rem;margin:6px 0 0">Cette session est passée. Les chapitres non cochés restent à lire : ils comptent pour l’examen.</p>` : s.startRead === null ? `<p class="muted" style="font-size:.86rem;margin:6px 0 0">Tout est lu pour cette session. Bravo.</p>` : `<p class="muted" style="font-size:.86rem;margin:6px 0 0">${s.startRead <= TODAY_OFF ? "Commencez <b style=\"color:var(--ink)\">aujourd’hui</b>." : `Commencez au plus tard le <b style="color:var(--ink)">${long(dayAt(s.startRead))}</b>.`}</p><div class="when">${plan}</div>`}<div class="when" style="border-top:1px dashed var(--line);padding-top:10px">${svg("video")}<span style="display:flex;gap:10px"><span>Session en ligne le <b>${long(s.date)}</b>. Horaires communiqués par Ben.</span></span></div>`;
+  $("#side").innerHTML = `<h3>Quand lire ?</h3>${!s.read.length ? `<p class="muted" style="font-size:.86rem">Pas de lecture : cette session relie ce que vous avez lu.</p>` : s.offset < TODAY_OFF ? `<p class="muted" style="font-size:.86rem;margin:6px 0 0">Cette session est passée. Les chapitres non cochés restent à lire : ils comptent pour l’examen.</p>` : s.startRead === null ? `<p class="muted" style="font-size:.86rem;margin:6px 0 0">Tout est lu pour cette session. Bravo.</p>` : `<p class="muted" style="font-size:.86rem;margin:6px 0 0">${s.startRead <= TODAY_OFF ? "Commencez <b style=\"color:var(--ink)\">aujourd’hui</b>." : `Commencez au plus tard le <b style="color:var(--ink)">${long(dayAt(s.startRead))}</b>.`}</p><div class="when">${plan}</div>`}<div class="when" style="border-top:1px dashed var(--line);padding-top:10px">${svg("video")}<span style="display:flex;gap:10px"><span>Session en ligne le <b>${long(s.date)}</b>. Horaires communiqués par Ben.</span></span></div>`;
 }
 function select(k) {
   current = k; const s = S[k];
@@ -386,7 +389,7 @@ function select(k) {
    <p class="goal">${esc(s.goal)}</p>
    ${s.read.length ? `<div class="sec-title" style="margin:16px 0 0"><span class="eyebrow">${svg("book")}À lire avant cette session</span><span class="muted" style="font-size:.84rem">≈ ${mins(readMin)} de lecture</span></div><ul class="list">${items}</ul>` : ""}
    ${s.todo ? `<div class="todo">${svg("pen")}<span>${esc(s.todo)}</span></div>` : ""}
-   <div class="nav"><button class="btn" id="prev" ${k === 0 ? "disabled" : ""}>${svg("left")}J${s.n - 1 || ""}</button><button class="btn primary" id="next" ${k === S.length - 1 ? "disabled" : ""}>J${s.n + 1 > 15 ? "" : s.n + 1}${svg("right")}</button></div>`;
+   <div class="nav"><button class="btn" id="prev" ${k === 0 ? "disabled" : ""}>${svg("left")}J${s.n - 1 || ""}</button><button class="btn primary" id="next" ${k === S.length - 1 ? "disabled" : ""}>J${k === S.length - 1 ? "" : s.n + 1}${svg("right")}</button></div>`;
   renderSide(s);
   $("#prev")?.addEventListener("click", () => select(k - 1));
   $("#next")?.addEventListener("click", () => select(k + 1));
@@ -413,7 +416,7 @@ function selectRest(k, s) {
 }
 document.addEventListener("keydown", (e) => {
   if (!$("#p-days").classList.contains("on")) return;
-  if (e.key === "ArrowRight" && current < 14) select(current + 1);
+  if (e.key === "ArrowRight" && current < LAST) select(current + 1);
   if (e.key === "ArrowLeft" && current > 0) select(current - 1);
 });
 
@@ -422,7 +425,7 @@ function renderAgenda() {
   const tOff = offsetOf(today);
   const days = [];
   const from = Math.max(TODAY_OFF, 0);
-  for (let o = Number.isFinite(firstReadOffset) ? Math.min(firstReadOffset, from) : from; o <= 14; o++) days.push(o);
+  for (let o = Number.isFinite(firstReadOffset) ? Math.min(firstReadOffset, from) : from; o <= END_OFF; o++) days.push(o);
   $("#paceText").textContent = paceLine();
   $("#agenda").innerHTML = days.map((o) => {
     const d = dayAt(o), reads = agenda[o] || [], sess = S.find((s) => s.offset === o);
@@ -434,7 +437,7 @@ function renderAgenda() {
 
 /** How much to read a day, in words, from the plan just computed. */
 function paceLine() {
-  if (!Number.isFinite(firstReadOffset)) return TODAY_OFF > 14 ? "Le bootcamp est terminé." : "Toutes les lectures prévues sont faites.";
+  if (!Number.isFinite(firstReadOffset)) return TODAY_OFF > END_OFF ? "Le bootcamp est terminé." : "Toutes les lectures prévues sont faites.";
   if (squeezed) return `Vous démarrez tard : l’agenda vous demande ${mins(pace)} de lecture par jour au plus, pour préparer d’abord les prochaines sessions. Ce qui ne tient pas est dans « À rattraper ».`;
   const when = TODAY_OFF < 0 ? `à ${-TODAY_OFF} jour${-TODAY_OFF > 1 ? "s" : ""} du J1` : "en cours de bootcamp";
   if (pace > DAILY) return `Vous démarrez ${when} : pour arriver prêt à chaque session, comptez environ ${mins(pace)} de lecture par jour, à partir d’aujourd’hui.`;
@@ -450,14 +453,14 @@ function renderNow() {
   let a;
   if (tOff < 0 && tOff < firstReadOffset) {
     a = `<span class="eyebrow">${svg("flag")}Avant de commencer</span><div class="big">Le bootcamp commence le ${long(start)}.</div><p class="muted">Votre première lecture commence le <b style="color:var(--ink)">${long(dayAt(firstReadOffset))}</b>, soit ${-firstReadOffset} jours avant le J1 : c’est ce qui allège les soirées de la première semaine.</p>`;
-  } else if (tOff > 14) {
-    a = `<span class="eyebrow">${svg("flag")}Bootcamp terminé</span><div class="big">Place au plan de révision jusqu’à votre examen.</div><p class="muted">Reprenez les chapitres que vous n’avez pas cochés.</p>`;
+  } else if (tOff > END_OFF) {
+    a = `<span class="eyebrow">${svg("flag")}Bootcamp terminé</span><div class="big">Place aux révisions.</div><p class="muted">Votre examen blanc arrive le <b style="color:var(--ink)">${long(mockExam)}</b>. D’ici là, reprenez les chapitres que vous n’avez pas cochés.</p>`;
   } else {
     const lis = todays.map((x) => `<li style="margin:4px 0"><b>Chapitre ${x.r.ch}</b> <span class="muted">pour J${x.s.n} · ${mins(x.min)}</span></li>`).join("");
     a = `<span class="eyebrow">${svg("book")}${restToday ? "Journée repos lecture" : "À lire aujourd’hui"} · ${long(today)}</span><div class="big">${todays.length ? mins(todays.reduce((t, x) => t + x.min, 0)) + " de lecture" : "Pas de lecture prévue"}</div>${lis ? `<ul style="padding-left:18px;margin:10px 0 0">${lis}</ul>` : `<p class="muted">Profitez-en pour relire vos notes et préparer vos questions.</p>`}`;
   }
   if (pace > DAILY || squeezed) a += `<p class="todo" style="margin-top:12px">${svg("clock")}<span>${esc(paceLine())}</span></p>`;
-  if (catchUp.length && tOff <= 14) a += `<div style="margin-top:12px"><span class="eyebrow">${svg("pen")}À rattraper</span><ul style="padding-left:18px;margin:6px 0 0">${catchUp.map((x) => `<li style="margin:3px 0"><b>Chapitre ${x.r.ch}</b> <span class="muted">${x.s.offset < TODAY_OFF ? `vu en J${x.s.n}` : `pour J${x.s.n}`} · ${mins(x.min)}</span></li>`).join("")}</ul><p class="muted" style="font-size:.84rem;margin:4px 0 0">Quand vous le pouvez, après les lectures du jour : ils comptent pour l’examen.</p></div>`;
+  if (catchUp.length && tOff <= END_OFF) a += `<div style="margin-top:12px"><span class="eyebrow">${svg("pen")}À rattraper</span><ul style="padding-left:18px;margin:6px 0 0">${catchUp.map((x) => `<li style="margin:3px 0"><b>Chapitre ${x.r.ch}</b> <span class="muted">${x.s.offset < TODAY_OFF ? `vu en J${x.s.n}` : `pour J${x.s.n}`} · ${mins(x.min)}</span></li>`).join("")}</ul><p class="muted" style="font-size:.84rem;margin:4px 0 0">Quand vous le pouvez, après les lectures du jour : ils comptent pour l’examen.</p></div>`;
   $("#nowCard").innerHTML = a + `<div class="nav"><button class="btn primary" data-go="agenda">${svg("list")}Voir l’agenda complet</button></div>`;
   $("#nextCard").innerHTML = next ? `<span class="eyebrow">${svg("video")}Prochaine session</span><div class="big">J${next.n} · ${long(next.date)}</div><p style="margin:6px 0 0;font-weight:700">${esc(next.title)}</p><div>${domPills(next)}</div><div class="nav"><button class="btn" data-open="${next.n - 1}">${svg("book")}Ce qu’il faut lire</button></div>` : `<span class="eyebrow">${svg("flag")}Toutes les sessions sont passées</span><div class="big">Bravo.</div>`;
   document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => show(b.dataset.go)));
@@ -471,7 +474,7 @@ function renderDomains() {
     const h = hours[n] || 0, pct = Math.round((h / 40) * 100);
     const sess = S.filter((s) => s.blocks.some((b) => b.d == n)).map((s) => "J" + s.n).join(", ");
     return `<button class="drow" data-d="${n}" aria-pressed="${filter == n}"><span class="dn" style="background:${COLORS[n]}">${n}</span><span><b>${esc(d.name)}</b><span class="muted" style="display:block;font-size:.82rem">${sess}</span></span><span class="bars"><span class="b">Examen<i><span style="width:${d.weight * 4}%;background:#b9c4cc"></span></i>${d.weight} %</span><span class="b">Bootcamp<i><span style="width:${pct * 4}%;background:${COLORS[n]}"></span></i>${hrs(h)}</span></span></button>`;
-  }).join("") + `<p class="muted" style="font-size:.84rem;margin:4px 2px">Le domaine 3 reçoit plus que son poids : la cryptographie et les modèles de sécurité sont les notions les plus denses. Les 2 heures restantes vont au bilan et à l’examen blanc.</p>`;
+  }).join("") + `<p class="muted" style="font-size:.84rem;margin:4px 2px">Le domaine 3 reçoit plus que son poids : la cryptographie et les modèles de sécurité sont les notions les plus denses. Les 2 heures restantes vont à la synthèse des 8 domaines, en dernière session. L’examen blanc arrive une semaine après, pour laisser le temps de réviser.</p>`;
   document.querySelectorAll(".drow").forEach((r) => r.addEventListener("click", () => {
     filter = filter == r.dataset.d ? 0 : +r.dataset.d;
     renderDomains(); renderStrip();
@@ -505,7 +508,7 @@ $("#saveCopy").addEventListener("click", saveCopy);
 
 renderStrip(); renderAgenda(); renderDomains(); renderNow();
 const tOff = offsetOf(today);
-select(Math.max(0, Math.min(14, S.findIndex((s) => s.offset >= tOff) === -1 ? 14 : S.findIndex((s) => s.offset >= tOff))));
+select(S.findIndex((s) => s.offset >= tOff) === -1 ? LAST : Math.max(0, S.findIndex((s) => s.offset >= tOff)));
 show(["now", "days", "agenda", "domains"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "now");
 </script>
 </body>
