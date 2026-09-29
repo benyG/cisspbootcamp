@@ -9,6 +9,7 @@ import { cohortDeletionProblem } from "@/lib/cohorts";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { sendOnboardingDocuments } from "@/lib/onboarding";
+import { cisspEndsAt } from "@/lib/reading-plan/page";
 
 async function requireAdmin() {
   const session = await auth();
@@ -20,11 +21,14 @@ const cohortSchema = z
     program: z.enum(["cissp", "cc"]).default("cissp"),
     name: z.string().trim().min(1, "Nom requis").max(120),
     startsAt: z.coerce.date(),
-    endsAt: z.coerce.date(),
+    // CISSP: computed from the reading plan's calendar, whatever was typed.
+    endsAt: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.coerce.date().optional()),
     capacity: z.coerce.number().int().min(1).max(100),
     status: z.enum(["planned", "open", "full", "running", "done"]),
   })
-  .refine((c) => c.endsAt > c.startsAt, { message: "La fin doit suivre le début", path: ["endsAt"] });
+  .transform((c) => ({ ...c, endsAt: c.program === "cissp" ? cisspEndsAt(c.startsAt) : c.endsAt }))
+  .refine((c): c is typeof c & { endsAt: Date } => !!c.endsAt, { message: "Date de fin requise", path: ["endsAt"] })
+  .refine((c) => c.endsAt! > c.startsAt, { message: "La fin doit suivre le début", path: ["endsAt"] });
 
 function parse(formData: FormData) {
   return cohortSchema.safeParse({
