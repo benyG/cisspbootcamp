@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-import { ANGLES, ART_DIRECTION, type Angle, CHANNELS, type Channel, DESTINATIONS, type Destination } from "./plan";
+import { ANGLES, ART_DIRECTION, type Angle, CHANNELS, type Channel, DESTINATIONS, type Destination, FORMATS, type Format, PILLARS, type Pillar } from "./plan";
 
 /**
  * The marketing studio's two calls to Claude (Ben, 28/09): three post
@@ -23,6 +23,7 @@ const HONESTY = [
 const STUDIO_SYSTEM = `Tu es le directeur marketing de Ben, coach CISSP certifié et francophone, qui vend des bootcamps de préparation en ligne à des professionnels d'Afrique francophone et de la diaspora. Tu écris des contenus qui donnent envie de faire le premier pas gratuit (le test d'entraînement ou l'analyse de profil, selon la destination du lien) puis de réserver sa place.
 
 ${HONESTY}
+- Dates, places, prix, chiffres et résultats ne viennent que des FAITS. Pour les posts de valeur (méthode, carrière, certifications), tu peux t'appuyer sur des connaissances professionnelles établies (CBK du CISSP, exigences publiques d'ISC², métiers de la cybersécurité), sans aucun chiffre de marché (salaires, nombre de postes, taux) qui ne soit pas fourni. Une actualité ne se cite que si elle est fournie avec sa source, et la source se mentionne.
 
 Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Sa destination est donnée avec chaque demande : le texte doit annoncer exactement ce que la personne trouvera en cliquant.
 
@@ -98,17 +99,33 @@ const VARIANTS_SCHEMA = {
 
 export type StudioResult = { ok: true; variants: Variant[] } | { ok: false; error: string };
 
-export async function generateVariants(input: { facts: string; channel: Channel; angle: Angle; destination?: Destination; brief: string }): Promise<StudioResult> {
+export type GenerateInput = {
+  facts: string;
+  channel: Channel;
+  /** Legacy selling angle; a pillar and a subject take over when given. */
+  angle?: Angle;
+  pillar?: Pillar;
+  format?: Format;
+  /** The subject, from the ideas or typed by Ben; may carry a news source. */
+  topic?: string;
+  destination?: Destination;
+  /** What Ben wants to say (an anecdote, an opinion) or an instruction. */
+  brief: string;
+};
+
+export async function generateVariants(input: GenerateInput): Promise<StudioResult> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
   const prompt = [
-    "FAITS (seule source autorisée) :",
+    "FAITS SUR L'OFFRE (seule source pour dates, places, prix et chiffres) :",
     input.facts,
     "",
     `Canal : ${CHANNELS[input.channel].label}. ${CHANNEL_RULES[input.channel]}`,
     `Format visuel : ${CHANNELS[input.channel].format}.`,
-    `Angle : ${ANGLES[input.angle]}.`,
+    input.pillar ? `Pilier éditorial : ${PILLARS[input.pillar].label}.${input.pillar === "offre" ? "" : " C'est un post de valeur : il aide d'abord, l'offre n'arrive qu'avec l'action finale, en une phrase."}` : null,
+    input.topic ? `Sujet : ${input.topic}` : input.angle ? `Angle : ${ANGLES[input.angle]}.` : null,
+    `Format : ${FORMATS[input.format ?? "standard"].label}. ${FORMATS[input.format ?? "standard"].rule}`,
     `Le lien [LIEN] mène à : ${DESTINATIONS[input.destination ?? "scanner"].forModel}.`,
-    input.brief ? `Consigne de Ben : ${input.brief}` : null,
+    input.brief ? `Ce que Ben veut dire, ou sa consigne (sa parole : tu peux la reprendre, sans rien y ajouter de factuel) : ${input.brief}` : null,
     "",
     "Écris trois variantes.",
   ].filter((l): l is string => l !== null).join("\n");
@@ -171,5 +188,151 @@ export async function draftFollowup(input: FollowupInput): Promise<{ ok: true; t
     }
     console.error("[marketing]", error);
     return { ok: false, error: "La rédaction a échoué. Réessayez." };
+  }
+}
+
+// --- Topic ideas (Ben, 29/09) ---------------------------------------------
+
+export type TopicIdea = { pillar: Pillar; format: Format; channel: Channel; destination: Destination; title: string; hook: string; why: string; source: string };
+
+const IDEAS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["ideas"],
+  properties: {
+    ideas: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["pillar", "format", "channel", "destination", "title", "hook", "why", "source"],
+        properties: {
+          pillar: { type: "string", enum: Object.keys(PILLARS) },
+          format: { type: "string", enum: Object.keys(FORMATS) },
+          channel: { type: "string", enum: Object.keys(CHANNELS) },
+          destination: { type: "string", enum: Object.keys(DESTINATIONS) },
+          title: { type: "string", description: "Le sujet en une phrase, 12 mots au plus." },
+          hook: { type: "string", description: "La première ligne du post, telle qu'elle serait écrite." },
+          why: { type: "string", description: "Pourquoi ce sujet maintenant, en une phrase, pour Ben : quelle donnée ou quelle actualité l'inspire." },
+          source: { type: "string", description: "L'URL de l'actualité utilisée, sinon une chaîne vide." },
+        },
+      },
+    },
+  },
+} as const;
+
+const IDEAS_SYSTEM = `Tu es le responsable éditorial de Ben, coach CISSP certifié et francophone. Tu proposes des sujets de posts pour LinkedIn, WhatsApp et TikTok, destinés à des professionnels de l'informatique et de la cybersécurité en Afrique francophone et dans la diaspora.
+
+${HONESTY}
+
+Règles des idées :
+- Environ quatre sujets de valeur (méthode, carrière, choix de certification, éligibilité, vie du candidat) pour un sujet de vente (pilier « offre »).
+- Varie les piliers, les formats et les canaux. Respecte les formats possibles par canal.
+- Chaque sujet a une seule destination pour son lien, la plus naturelle : méthode → test, carrière → conseil, choix et éligibilité → analyse, vie du candidat et offre → cohorte.
+- Pars de ce que les prospects disent et font (leurs objectifs, leurs questions, leurs verdicts) : c'est la meilleure source. Ne cite jamais leurs phrases, ne les reconnais jamais : reformule le besoin.
+- Évite les sujets déjà traités ce mois-ci.
+- Une actualité ne sert que si elle est fournie avec sa source ; ne rapporte que ce qu'elle dit.`;
+
+const FORMAT_CHANNELS = Object.entries(FORMATS).map(([k, f]) => `${k} (${f.label}) : ${f.channels.join(", ")}`).join("\n");
+
+export async function suggestTopics(input: { facts: string; insights: string; recent: string; news: string }): Promise<{ ok: true; ideas: TopicIdea[] } | { ok: false; error: string }> {
+  if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
+  const prompt = [
+    "FAITS SUR L'OFFRE :",
+    input.facts,
+    "",
+    "CE QUE DISENT ET FONT LES PROSPECTS :",
+    input.insights,
+    "",
+    "DÉJÀ PUBLIÉ OU PRÉPARÉ CE MOIS-CI :",
+    input.recent || "Rien encore.",
+    "",
+    "ACTUALITÉS (avec source) :",
+    input.news || "Aucune : n'en invente pas.",
+    "",
+    `Piliers : ${Object.entries(PILLARS).map(([k, p]) => `${k} (${p.label})`).join(", ")}.`,
+    `Formats possibles par canal :\n${FORMAT_CHANNELS}`,
+    "",
+    "Propose 10 sujets.",
+  ].join("\n");
+  try {
+    const client = new Anthropic();
+    const response = await client.beta.messages.create({
+      model: MARKETING_MODEL,
+      max_tokens: 8000,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      system: [{ type: "text", text: IDEAS_SYSTEM, cache_control: { type: "ephemeral" } }],
+      output_config: { effort: "medium", format: { type: "json_schema", schema: IDEAS_SCHEMA } },
+      messages: [{ role: "user", content: prompt }],
+    });
+    if (response.stop_reason === "refusal") return { ok: false, error: "Le modèle a refusé cette demande." };
+    if (response.stop_reason === "max_tokens") return { ok: false, error: "Réponse coupée. Réessayez." };
+    const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("");
+    const ideas = (JSON.parse(text) as { ideas: TopicIdea[] }).ideas.filter((i) => i.title && (FORMATS[i.format]?.channels as readonly string[] | undefined)?.includes(i.channel));
+    return ideas.length ? { ok: true, ideas: ideas.slice(0, 10) } : { ok: false, error: "Aucune idée exploitable. Réessayez." };
+  } catch (error) {
+    if (error instanceof Anthropic.APIError) {
+      console.error(`[marketing] Claude API ${error.status}: ${error.message}`);
+      return { ok: false, error: `Le service d'IA a répondu ${error.status}. Réessayez dans un instant.` };
+    }
+    console.error("[marketing]", error);
+    return { ok: false, error: "La recherche d'idées a échoué. Réessayez." };
+  }
+}
+
+export type NewsItem = { title: string; date: string; url: string; why: string };
+
+const NEWS_SYSTEM = `Tu fais une veille d'actualité pour Ben, coach CISSP francophone. Cherche sur le web des actualités des 30 derniers jours utiles pour des posts : cybersécurité en Afrique francophone (incidents publics, lois et régulateurs de protection des données, stratégies nationales, recrutements), et nouvelles d'ISC² sur le CISSP ou la CC. Sources fiables uniquement (médias reconnus, autorités, ISC²). Ne rapporte que ce que la source dit.
+
+Réponds uniquement par une ligne par actualité, 3 à 6 lignes, sans autre texte :
+TITRE || DATE (AAAA-MM-JJ) || URL || en quoi c'est utile pour un post, en une phrase`;
+
+/** Pure: reads the model's news lines; drops anything without an http(s) URL. */
+export function parseNews(text: string): NewsItem[] {
+  return text
+    .split("\n")
+    .map((line) => line.split("||").map((p) => p.trim()))
+    .filter((p) => p.length >= 4 && /^https?:\/\//.test(p[2]))
+    .map(([title, date, url, why]) => ({ title: title.replace(/^[-*•\d.\s]+/, "").slice(0, 200), date: date.slice(0, 10), url: url.slice(0, 500), why: why.slice(0, 300) }))
+    .slice(0, 6);
+}
+
+/**
+ * Recent news through Claude's web search (Ben, 30/09), each item with its
+ * source. A separate call from the ideas: search results come with
+ * citations, which structured outputs do not accept. A long search may
+ * pause; the paused turn is sent back so the server resumes it.
+ */
+export async function searchNews(): Promise<{ ok: true; items: NewsItem[] } | { ok: false; error: string }> {
+  if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
+  try {
+    const client = new Anthropic();
+    const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: `Nous sommes le ${new Date().toISOString().slice(0, 10)}. Fais la veille.` }];
+    let text = "";
+    for (let round = 0; round < 3; round++) {
+      const response = await client.beta.messages.create({
+        model: MARKETING_MODEL,
+        max_tokens: 6000,
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default",
+        system: NEWS_SYSTEM,
+        tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
+        output_config: { effort: "low" },
+        messages,
+      });
+      text += response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("");
+      if (response.stop_reason !== "pause_turn") break;
+      messages.push({ role: "assistant", content: response.content });
+    }
+    const items = parseNews(text);
+    return items.length ? { ok: true, items } : { ok: false, error: "Aucune actualité exploitable trouvée." };
+  } catch (error) {
+    if (error instanceof Anthropic.APIError) {
+      console.error(`[marketing] Claude API ${error.status}: ${error.message}`);
+      return { ok: false, error: `La recherche web a répondu ${error.status}.` };
+    }
+    console.error("[marketing]", error);
+    return { ok: false, error: "La recherche d'actualités a échoué." };
   }
 }

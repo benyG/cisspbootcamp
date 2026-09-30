@@ -5,7 +5,7 @@ import { formatUsdCents } from "@/lib/pricing";
 import { PROGRAMS, type ProgramCode } from "@/lib/programs";
 import { HOT_LEAD_THRESHOLD } from "@/lib/scoring";
 
-import { type Pace, type SegmentKey, type TestStats, paceFor, publishableTestStats, recommendations, segmentOf } from "./plan";
+import { type BalancePost, type Pace, type SegmentKey, type TestStats, anonymize, paceFor, publishableTestStats, recommendations, segmentOf } from "./plan";
 
 /** Reads for the admin marketing page (Ben, 28/09). Never sends anything. */
 
@@ -191,21 +191,58 @@ export async function followupSegments(program: ProgramCode, threshold: number, 
   return order.map((key) => ({ key, ...SEGMENT_TEXT[key](threshold), leads: buckets.get(key) ?? [] }));
 }
 
+/**
+ * What prospects say and do, for topic ideas (Ben, 29/09): their own words
+ * (the "objectifs" field, anonymized), the FAQ questions they open, the
+ * verdicts and test scores, where they come from. Aggregates only.
+ */
+export async function audienceInsights(now = new Date()): Promise<string> {
+  const since = new Date(now.getTime() - 90 * DAY);
+  const [goals, faq, verdicts, tests, countries] = await Promise.all([
+    prisma.lead.findMany({ where: { goals: { not: null }, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 60, select: { goals: true } }),
+    prisma.funnelEvent.groupBy({ by: ["label"], where: { name: "faq_open", createdAt: { gte: since }, label: { not: null } }, _count: { _all: true }, orderBy: { _count: { label: "desc" } }, take: 8 }),
+    prisma.lead.groupBy({ by: ["readiness"], where: { createdAt: { gte: since }, readiness: { not: null } }, _count: { _all: true } }),
+    prisma.practiceTest.findMany({ where: { status: "completed", percent: { not: null }, finishedAt: { gte: since } }, select: { percent: true }, take: 2000 }),
+    prisma.lead.groupBy({ by: ["country"], where: { createdAt: { gte: since } }, _count: { _all: true }, orderBy: { _count: { country: "desc" } }, take: 6 }),
+  ]);
+  const words = goals.map((g) => anonymize(g.goals ?? "")).filter((t) => t.length >= 12);
+  const verdictLabel: Record<string, string> = { ready: "prêts", conditional: "éligibles via Associate ou sous condition", not_yet: "pas encore prêts" };
+  const low = tests.filter((t) => (t.percent ?? 0) < 60).length;
+  return [
+    words.length ? `Ce que les prospects écrivent comme objectifs (90 jours, anonymisé, ne jamais citer) :\n${words.map((w) => `- ${w}`).join("\n")}` : "Aucun objectif écrit par des prospects pour l'instant.",
+    faq.length ? `Questions de la FAQ les plus ouvertes : ${faq.map((f) => `« ${f.label} » (${f._count._all})`).join(" ; ")}.` : null,
+    verdicts.length ? `Verdicts des analyses : ${verdicts.map((v) => `${v._count._all} ${verdictLabel[v.readiness ?? ""] ?? v.readiness}`).join(", ")}.` : null,
+    tests.length ? `Tests d'entraînement faits : ${tests.length}, dont ${low} sous 60 %.` : null,
+    countries.length ? `Pays des prospects : ${countries.map((c) => `${c.country} (${c._count._all})`).join(", ")}.` : null,
+  ].filter((l): l is string => l !== null).join("\n");
+}
+
+/** Posts of the last 30 days, for the editorial balance and to avoid repeating a subject. */
+export async function recentPosts(now = new Date()): Promise<Array<BalancePost & { topic: string | null; format: string | null; text: string }>> {
+  return prisma.marketingPost.findMany({
+    where: { createdAt: { gte: new Date(now.getTime() - 30 * DAY) } },
+    orderBy: { createdAt: "desc" },
+    take: 60,
+    select: { pillar: true, angle: true, destination: true, topic: true, format: true, text: true },
+  });
+}
+
 /** Saved posts with what their tracked link brought in. */
 export async function libraryWithResults(cohortId: number) {
   const posts = await prisma.marketingPost.findMany({ where: { cohortId }, orderBy: { createdAt: "desc" }, take: 40 });
   if (posts.length === 0) return [];
   const codes = posts.map((p) => p.code);
-  const [leads, tests] = await Promise.all([
+  const [leads, tests, visits] = await Promise.all([
     prisma.lead.findMany({
       where: { utmContent: { in: codes } },
       select: { utmContent: true, registrations: { where: { status: "paid" }, select: { id: true }, take: 1 } },
     }),
     prisma.practiceTest.findMany({ where: { campaignCode: { in: codes } }, select: { campaignCode: true, status: true } }),
+    prisma.funnelEvent.groupBy({ by: ["utmContent", "visitorId"], where: { utmContent: { in: codes }, visitorId: { not: null } } }),
   ]);
   return posts.map((p) => {
     const mine = leads.filter((l) => l.utmContent === p.code);
     const myTests = tests.filter((t) => t.campaignCode === p.code);
-    return { ...p, tests: myTests.length, testsDone: myTests.filter((t) => t.status === "completed").length, leads: mine.length, paid: mine.filter((l) => l.registrations.length > 0).length };
+    return { ...p, visitors: visits.filter((v) => v.utmContent === p.code).length, tests: myTests.length, testsDone: myTests.filter((t) => t.status === "completed").length, leads: mine.length, paid: mine.filter((l) => l.registrations.length > 0).length };
   });
 }

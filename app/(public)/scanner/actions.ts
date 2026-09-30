@@ -164,7 +164,7 @@ export async function submitScanner(raw: SubmissionInput): Promise<SubmissionRes
     leadId: lead.id,
     label: analysis.readiness,
     country: answers.country,
-    utm: utm ? { source: utm.source, medium: utm.medium, campaign: utm.campaign } : null,
+    utm: utm ? { source: utm.source, medium: utm.medium, campaign: utm.campaign, content: utm.content } : null,
   });
   // A test taken before the analysis (from a post) now belongs to this lead.
   await adoptVisitorTests(await currentVisitorId(), lead.id).catch((error) => console.warn("[scanner] rattachement du test", error));

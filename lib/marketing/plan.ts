@@ -48,12 +48,98 @@ export const ART_DIRECTION = [
 export const DESTINATIONS = {
   scanner: { label: "Analyse de profil", path: "/scanner", forModel: "l'analyse de profil gratuite (11 questions, 3 minutes) : éligibilité, délai estimé, voie conseillée" },
   test: { label: "Test CISSP (5 questions)", path: "/test", forModel: "un test gratuit de 5 questions d'entraînement originales, au niveau et dans l'esprit du CISSP, corrigées, sans compte, en 10 minutes ; il mène ensuite à l'analyse de profil" },
+  conseil: { label: "Conseil carrière", path: "/conseil", forModel: "les séances de conseil carrière de Ben (bilan de carrière, évolution vers le management ou le poste de RSSI, reconversion…), payantes, avec prise de rendez-vous en ligne" },
+  cohorte: { label: "Inscription à la cohorte", path: "/", forModel: "la page du bootcamp : programme, rythme, prix selon le pays et inscription à la prochaine cohorte" },
 } as const;
 export type Destination = keyof typeof DESTINATIONS;
 
 /** The angle's natural destination: the test angle opens the test. */
 export function defaultDestination(angle: Angle): Destination {
   return angle === "test" ? "test" : "scanner";
+}
+
+/**
+ * Editorial pillars (Ben, 29/09): most posts give value (method, career,
+ * choices), about one in five sells. Each pillar has a natural destination
+ * for its single call to action, and a few subject ideas to start from.
+ */
+export const PILLARS = {
+  methode: { label: "Méthode CISSP", destination: "test", examples: ["Raisonner en manager, pas en technicien", "Les pièges du format adaptatif", "Un domaine du CBK expliqué simplement"] },
+  carriere: { label: "Carrière cyber", destination: "conseil", examples: ["Devenir RSSI : ce qui manque souvent au profil", "Passer de la technique à la GRC", "Se reconvertir dans la cybersécurité"] },
+  certification: { label: "Choisir sa certification", destination: "scanner", examples: ["CISSP, CISM ou CC : par où commencer ?", "Ce que le CISSP change dans une carrière", "Certification ou expérience d'abord ?"] },
+  eligibilite: { label: "Éligibilité", destination: "scanner", examples: ["Les 5 ans d'expérience : ce qui compte vraiment", "Le titre Associate of ISC²", "Les domaines qui valident l'expérience"] },
+  candidat: { label: "Vie du candidat", destination: "cohorte", examples: ["Préparer le CISSP en travaillant", "Le mercredi lecture et les week-ends denses", "Gérer le stress du jour J"] },
+  offre: { label: "Offre et cohorte", destination: "cohorte", examples: ["Places limitées, date de clôture", "Paiement par carte ou mobile money", "Un coach qui tient le rythme avec vous"] },
+} as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
+export type Pillar = keyof typeof PILLARS;
+
+/** Post formats, with what the model must produce and where they fit. */
+export const FORMATS = {
+  standard: { label: "Post classique", channels: ["linkedin", "whatsapp_status", "whatsapp_group", "tiktok"], rule: "Accroche, développement court, une seule action." },
+  cas: { label: "Mini-cas « Que feriez-vous ? »", channels: ["linkedin", "whatsapp_group", "tiktok"], rule: "Une situation de manager sécurité en 3 à 5 phrases, une question à choix (A, B, C, D), invitation à répondre en commentaire ; la réponse commentée sera donnée plus tard. Pas de réponse dans le post." },
+  mythe: { label: "Mythe ou réalité", channels: ["linkedin", "whatsapp_status", "whatsapp_group", "tiktok"], rule: "Une idée reçue répandue, puis la réalité, expliquée simplement." },
+  erreur: { label: "Erreur fréquente", channels: ["linkedin", "whatsapp_group", "tiktok"], rule: "Une erreur fréquente des candidats ou des professionnels, pourquoi elle coûte, comment l'éviter." },
+  comparatif: { label: "Comparatif", channels: ["linkedin", "whatsapp_group"], rule: "Deux options côte à côte (certifications, parcours, méthodes) : pour qui, ce que ça demande, ce que ça apporte. Honnête, sans dénigrer." },
+  checklist: { label: "Checklist en 5 points", channels: ["linkedin", "whatsapp_status", "whatsapp_group"], rule: "Cinq points courts et concrets, numérotés." },
+  carrousel: { label: "Carrousel LinkedIn", channels: ["linkedin"], rule: "Le texte du post, puis le contenu de 6 à 8 diapositives dans le brief visuel (une idée par diapositive, titre de 6 mots au plus)." },
+  sondage: { label: "Sondage LinkedIn", channels: ["linkedin"], rule: "Une question et 4 réponses de 30 caractères au plus, écrites à la fin du texte sous « Options du sondage : », puis une phrase qui annonce le lien." },
+  coulisses: { label: "Coulisses du bootcamp", channels: ["linkedin", "whatsapp_status", "tiktok"], rule: "Ce qui se passe réellement dans une préparation avec Ben (méthode, rythme, outils), sans inventer d'élève, de chiffre ni de témoignage." },
+  face_camera: { label: "Face caméra « 3 conseils en 30 s »", channels: ["tiktok"], rule: "Script parlé par Ben face caméra : une accroche, trois conseils, une action. Le storyboard suit le script." },
+  pov: { label: "« POV » TikTok", channels: ["tiktok"], rule: "Format « POV : vous … » mis en scène, situation reconnaissable par un candidat ou un professionnel de la cyber." },
+} as const satisfies Record<string, { label: string; channels: readonly Channel[]; rule: string }>;
+export type Format = keyof typeof FORMATS;
+
+export function formatsFor(channel: Channel): Format[] {
+  return (Object.keys(FORMATS) as Format[]).filter((f) => (FORMATS[f].channels as readonly Channel[]).includes(channel));
+}
+
+/** Share of selling posts above which the balance warns: about one in five. */
+export const MAX_OFFER_SHARE = 0.25;
+
+export type BalancePost = { pillar: string | null; angle: string; destination: string };
+
+/** Old posts carry no pillar: their angle says what they were. */
+export function pillarOf(p: BalancePost): Pillar {
+  if (p.pillar && p.pillar in PILLARS) return p.pillar as Pillar;
+  if (p.angle === "conseil_du_jour" || p.angle === "test") return "methode";
+  if (p.angle === "associate" || p.angle === "eligibilite") return "eligibilite";
+  if (p.angle === "emploi") return "candidat";
+  return "offre";
+}
+
+/**
+ * The editorial balance of the last posts: counts by pillar and by
+ * destination, and one line of advice when it leans too much one way.
+ */
+export function editorialBalance(posts: BalancePost[]): { byPillar: Record<Pillar, number>; byDestination: Record<Destination, number>; advice: string | null } {
+  const byPillar = Object.fromEntries(Object.keys(PILLARS).map((k) => [k, 0])) as Record<Pillar, number>;
+  const byDestination = Object.fromEntries(Object.keys(DESTINATIONS).map((k) => [k, 0])) as Record<Destination, number>;
+  for (const p of posts) {
+    byPillar[pillarOf(p)]++;
+    if (p.destination in byDestination) byDestination[p.destination as Destination]++;
+  }
+  if (posts.length === 0) return { byPillar, byDestination, advice: "Aucun post sur 30 jours : commencez par un post de valeur (méthode ou carrière)." };
+  const missing = (Object.keys(PILLARS) as Pillar[]).filter((k) => k !== "offre" && byPillar[k] === 0);
+  let advice: string | null = null;
+  if (posts.length >= 3 && byPillar.offre / posts.length > MAX_OFFER_SHARE) advice = `${byPillar.offre} posts de vente sur ${posts.length} : place à la valeur, par exemple « ${PILLARS[missing[0] ?? "methode"].label} ».`;
+  else if (missing.length > 0 && posts.length >= 4) advice = `Pas encore de post « ${PILLARS[missing[0]].label} » ce mois-ci.`;
+  return { byPillar, byDestination, advice };
+}
+
+/**
+ * Prospects' own words, made safe to hand to the model for topic ideas:
+ * no e-mail, no phone number, no link, short. Names are never sent; a first
+ * name typed inside the text is the only thing this cannot catch, which is
+ * why the model is told never to quote these texts.
+ */
+export function anonymize(text: string, max = 220): string {
+  return text
+    .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[e-mail]")
+    .replace(/https?:\/\/\S+/g, "[lien]")
+    .replace(/\+?\d[\d\s().-]{6,}\d/g, "[numéro]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
 }
 
 export const POST_CODE_PATTERN = /^[a-z]{2}-[a-f0-9]{6}$/;

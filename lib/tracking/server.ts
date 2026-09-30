@@ -19,7 +19,7 @@ export type EventInput = {
   step?: number | null;
   label?: string | null;
   country?: string | null;
-  utm?: { source?: string | null; medium?: string | null; campaign?: string | null } | null;
+  utm?: { source?: string | null; medium?: string | null; campaign?: string | null; content?: string | null } | null;
 };
 
 const clip = (value: string | null | undefined, max: number) => (value ? value.slice(0, max) : null);
@@ -38,10 +38,10 @@ export async function recordEvent(input: EventInput): Promise<void> {
     if (input.leadId && (!utm || (!utm.source && !utm.medium && !utm.campaign) || !country)) {
       const lead = await prisma.lead.findUnique({
         where: { id: input.leadId },
-        select: { utmSource: true, utmMedium: true, utmCampaign: true, country: true },
+        select: { utmSource: true, utmMedium: true, utmCampaign: true, utmContent: true, country: true },
       });
       if (lead) {
-        if (!utm || (!utm.source && !utm.medium && !utm.campaign)) utm = { source: lead.utmSource, medium: lead.utmMedium, campaign: lead.utmCampaign };
+        if (!utm || (!utm.source && !utm.medium && !utm.campaign)) utm = { source: lead.utmSource, medium: lead.utmMedium, campaign: lead.utmCampaign, content: lead.utmContent };
         country = country ?? lead.country;
       }
     }
@@ -56,6 +56,7 @@ export async function recordEvent(input: EventInput): Promise<void> {
         utmSource: clip(utm?.source, 120),
         utmMedium: clip(utm?.medium, 120),
         utmCampaign: clip(utm?.campaign, 120),
+        utmContent: clip(utm?.content, 120),
       },
     });
   } catch (error) {

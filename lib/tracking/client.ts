@@ -9,7 +9,7 @@ import type { EventName } from "@/lib/tracking/events";
  */
 const UTM_KEY = "cb_utm";
 
-type Utm = { source?: string; medium?: string; campaign?: string };
+type Utm = { source?: string; medium?: string; campaign?: string; content?: string };
 
 export function rememberUtm(): Utm {
   try {
@@ -18,9 +18,11 @@ export function rememberUtm(): Utm {
     const source = params.get("utm_source");
     const medium = params.get("utm_medium");
     const campaign = params.get("utm_campaign");
+    const content = params.get("utm_content");
     if (source) fresh.source = source;
     if (medium) fresh.medium = medium;
     if (campaign) fresh.campaign = campaign;
+    if (content) fresh.content = content;
     const stored = JSON.parse(localStorage.getItem(UTM_KEY) ?? "null") as Utm | null;
     if (stored && Object.keys(stored).length > 0) return stored;
     if (Object.keys(fresh).length > 0) localStorage.setItem(UTM_KEY, JSON.stringify(fresh));
