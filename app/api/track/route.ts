@@ -13,7 +13,7 @@ const bodySchema = z.object({
   label: z.string().max(160).optional(),
   path: z.string().max(200).optional(),
   utm: z
-    .object({ source: z.string().max(120).optional(), medium: z.string().max(120).optional(), campaign: z.string().max(120).optional() })
+    .object({ source: z.string().max(120).optional(), medium: z.string().max(120).optional(), campaign: z.string().max(120).optional(), content: z.string().max(120).optional() })
     .optional(),
 });
 

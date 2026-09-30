@@ -6,10 +6,10 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
-import { draftFollowup, generateVariants, type Variant } from "@/lib/marketing/ai";
+import { type NewsItem, type TopicIdea, type Variant, draftFollowup, generateVariants, searchNews, suggestTopics } from "@/lib/marketing/ai";
 import { examBootEnabled } from "@/lib/examboot/client";
-import { cohortFacts, factsForModel, recentTestStats } from "@/lib/marketing/data";
-import { ANGLES, CHANNELS, DESTINATIONS, POST_CODE_PATTERN, type SegmentKey, newPostCode, trackedLink, withLink } from "@/lib/marketing/plan";
+import { audienceInsights, cohortFacts, factsForModel, recentPosts, recentTestStats } from "@/lib/marketing/data";
+import { CHANNELS, DESTINATIONS, FORMATS, PILLARS, POST_CODE_PATTERN, type SegmentKey, newPostCode, pillarOf, trackedLink, withLink } from "@/lib/marketing/plan";
 import { loadMarketingSettings, saveMarketingSettings } from "@/lib/marketing/settings";
 import { sendEmail } from "@/lib/messaging/email";
 import { recommendedService, serviceDefinition } from "@/lib/services";
@@ -20,29 +20,61 @@ async function requireAdmin() {
 }
 
 const channel = z.enum(Object.keys(CHANNELS) as [keyof typeof CHANNELS, ...Array<keyof typeof CHANNELS>]);
-const angle = z.enum(Object.keys(ANGLES) as [keyof typeof ANGLES, ...Array<keyof typeof ANGLES>]);
+const pillar = z.enum(Object.keys(PILLARS) as [keyof typeof PILLARS, ...Array<keyof typeof PILLARS>]);
+const format = z.enum(Object.keys(FORMATS) as [keyof typeof FORMATS, ...Array<keyof typeof FORMATS>]);
 const destination = z.enum(Object.keys(DESTINATIONS) as [keyof typeof DESTINATIONS, ...Array<keyof typeof DESTINATIONS>]);
 const id = z.coerce.number().int().positive();
 
 export type StudioVariant = Variant & { code: string; link: string; destination: keyof typeof DESTINATIONS };
 
-/** Three variants for a channel and an angle, each with its own tracked link. */
-export async function generatePosts(input: { cohortId: number; channel: string; angle: string; destination: string; brief: string }): Promise<{ ok: true; variants: StudioVariant[] } | { ok: false; error: string }> {
+/**
+ * Ten subject ideas (Ben, 29/09): from what prospects say and do, what was
+ * already published this month, and, when asked, the news found on the web.
+ */
+export async function suggestTopicIdeas(input: { cohortId: number; withNews: boolean }): Promise<{ ok: true; ideas: TopicIdea[]; news: NewsItem[]; newsError: string | null } | { ok: false; error: string }> {
   await requireAdmin();
-  const parsed = z.object({ cohortId: id, channel, angle, destination, brief: z.string().trim().max(600) }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Choisissez une cohorte, un canal, un angle et une destination." };
-  if (parsed.data.destination === "test" && !examBootEnabled()) return { ok: false, error: "Le test d'entraînement n'est pas activé sur le site : choisissez l'analyse de profil." };
+  const parsed = z.object({ cohortId: id, withNews: z.boolean() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Demande invalide." };
   const settings = await loadMarketingSettings();
-  const [facts, tests] = await Promise.all([cohortFacts(parsed.data.cohortId), recentTestStats(settings.testThreshold)]);
+  const [facts, tests, insights, recent, news] = await Promise.all([
+    cohortFacts(parsed.data.cohortId),
+    recentTestStats(settings.testThreshold),
+    audienceInsights(),
+    recentPosts(),
+    parsed.data.withNews ? searchNews() : Promise.resolve(null),
+  ]);
   if (!facts) return { ok: false, error: "Cohorte introuvable." };
-  const result = await generateVariants({ facts: factsForModel(facts, tests.stats), channel: parsed.data.channel, angle: parsed.data.angle, destination: parsed.data.destination, brief: parsed.data.brief });
+  const newsItems = news?.ok ? news.items : [];
+  const result = await suggestTopics({
+    facts: factsForModel(facts, tests.stats),
+    insights,
+    recent: recent.map((p) => `- ${PILLARS[pillarOf(p)].label} · ${p.format ?? "standard"} · ${p.topic ?? p.text.split("\n")[0].slice(0, 120)}`).join("\n"),
+    news: newsItems.map((n) => `- ${n.title} (${n.date}) — ${n.url} — ${n.why}`).join("\n"),
+  });
+  if (!result.ok) return result;
+  return { ok: true, ideas: result.ideas, news: newsItems, newsError: news && !news.ok ? news.error : null };
+}
+
+/** Three variants for a channel, a pillar, a format and a subject, each with its own tracked link. */
+export async function generatePosts(input: { cohortId: number; channel: string; pillar: string; format: string; topic: string; destination: string; brief: string }): Promise<{ ok: true; variants: StudioVariant[] } | { ok: false; error: string }> {
+  await requireAdmin();
+  const parsed = z.object({ cohortId: id, channel, pillar, format, topic: z.string().trim().max(600), destination, brief: z.string().trim().max(1200) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Choisissez un canal, un pilier, un format et une destination." };
+  const d = parsed.data;
+  if (!(FORMATS[d.format].channels as readonly string[]).includes(d.channel)) return { ok: false, error: `Le format « ${FORMATS[d.format].label} » ne convient pas à ${CHANNELS[d.channel].label}.` };
+  if (d.destination === "test" && !examBootEnabled()) return { ok: false, error: "Le test d'entraînement n'est pas activé sur le site : choisissez une autre destination." };
+  if (!d.topic && !d.brief) return { ok: false, error: "Donnez un sujet (ou choisissez une idée), ou écrivez ce que vous voulez dire." };
+  const settings = await loadMarketingSettings();
+  const [facts, tests] = await Promise.all([cohortFacts(d.cohortId), recentTestStats(settings.testThreshold)]);
+  if (!facts) return { ok: false, error: "Cohorte introuvable." };
+  const result = await generateVariants({ facts: factsForModel(facts, tests.stats), channel: d.channel, pillar: d.pillar, format: d.format, topic: d.topic, destination: d.destination, brief: d.brief });
   if (!result.ok) return result;
   return {
     ok: true,
     variants: result.variants.map((v) => {
-      const code = newPostCode(parsed.data.channel);
-      const link = trackedLink(env.NEXT_PUBLIC_APP_URL, parsed.data.channel, facts.id, code, parsed.data.destination);
-      return { ...v, code, link, destination: parsed.data.destination, text: withLink(v.text, link) };
+      const code = newPostCode(d.channel);
+      const link = trackedLink(env.NEXT_PUBLIC_APP_URL, d.channel, facts.id, code, d.destination);
+      return { ...v, code, link, destination: d.destination, text: withLink(v.text, link) };
     }),
   };
 }
@@ -50,7 +82,9 @@ export async function generatePosts(input: { cohortId: number; channel: string; 
 const saveSchema = z.object({
   cohortId: id,
   channel,
-  angle,
+  pillar,
+  format,
+  topic: z.string().trim().max(240),
   destination,
   code: z.string().regex(POST_CODE_PATTERN),
   text: z.string().trim().min(10).max(6000),
@@ -66,7 +100,7 @@ export async function savePost(input: z.input<typeof saveSchema>): Promise<{ ok:
   const d = parsed.data;
   await prisma.marketingPost.upsert({
     where: { code: d.code },
-    create: { cohortId: d.cohortId, channel: d.channel, angle: d.angle, destination: d.destination, code: d.code, text: d.text, visualBrief: JSON.stringify(d.visual), video: d.video && d.video.scenes.length ? JSON.stringify(d.video) : null },
+    create: { cohortId: d.cohortId, channel: d.channel, angle: d.pillar, pillar: d.pillar, format: d.format, topic: d.topic || null, destination: d.destination, code: d.code, text: d.text, visualBrief: JSON.stringify(d.visual), video: d.video && d.video.scenes.length ? JSON.stringify(d.video) : null },
     update: { text: d.text },
   });
   revalidatePath("/admin/marketing");

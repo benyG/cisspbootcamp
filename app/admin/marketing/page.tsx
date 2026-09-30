@@ -4,14 +4,16 @@ import Link from "next/link";
 import { CopyButton, Studio } from "@/components/admin/marketing/Studio";
 import { FollowupRow } from "@/components/admin/marketing/FollowupRow";
 import { examBootEnabled } from "@/lib/examboot/client";
-import { cockpit, cohortFacts, followupSegments, libraryWithResults, marketingCohorts } from "@/lib/marketing/data";
-import { ANGLES, CHANNELS, DESTINATIONS, MIN_SAMPLE_FOR_STATS } from "@/lib/marketing/plan";
+import { cockpit, cohortFacts, followupSegments, libraryWithResults, marketingCohorts, recentPosts } from "@/lib/marketing/data";
+import { CHANNELS, DESTINATIONS, FORMATS, MIN_SAMPLE_FOR_STATS, PILLARS, editorialBalance, pillarOf } from "@/lib/marketing/plan";
 import { loadMarketingSettings } from "@/lib/marketing/settings";
 import { PROGRAMS } from "@/lib/programs";
 
 import { deletePost, saveTestThreshold, togglePublished } from "./actions";
 
 export const dynamic = "force-dynamic";
+// The studio's web search can take a minute or two.
+export const maxDuration = 300;
 
 /** Cohort marketing (Ben, 28/09): where the cohort stands, content to publish, people to follow up. */
 export default async function MarketingPage({ searchParams }: { searchParams: Promise<{ cohorte?: string }> }) {
@@ -33,7 +35,8 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   if (!facts) return null;
   const threshold = settings.testThreshold;
   const testOn = examBootEnabled();
-  const [cp, segments, library] = await Promise.all([cockpit(facts, threshold), followupSegments(facts.program, threshold), libraryWithResults(facts.id)]);
+  const [cp, segments, library, recent] = await Promise.all([cockpit(facts, threshold), followupSegments(facts.program, threshold), libraryWithResults(facts.id), recentPosts()]);
+  const balance = editorialBalance(recent);
   const fmt = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" });
 
   return (
@@ -81,11 +84,12 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       {/* 2. Studio */}
       <section className="mt-6 rounded-xl border border-line bg-white p-4">
         <h2 className={h2}><Sparkles className="size-4 text-accent" aria-hidden />Studio de contenu</h2>
-        <p className="mt-1 mb-3 text-sm text-muted">LinkedIn, WhatsApp et TikTok. Le lien mène au test (ludique, pour attirer) ou à l’analyse de profil (pour qualifier) ; le test mène ensuite à l’analyse. Chaque variante a son brief visuel (direction « Nuit et vert ») et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax.</p>
+        <p className="mt-1 mb-3 text-sm text-muted">Environ quatre posts de valeur (méthode, carrière, certifications, éligibilité, vie du candidat) pour un post de vente. Chaque post a une seule action : test, analyse de profil, conseil carrière ou cohorte. Chaque variante a son brief visuel (direction « Nuit et vert ») et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax.</p>
         <Studio
           cohortId={facts.id}
           channels={Object.entries(CHANNELS).map(([value, c]) => ({ value, label: c.label }))}
-          angles={Object.entries(ANGLES).filter(([k]) => (facts.program === "cc" || k !== "cc") && (testOn || k !== "test")).map(([value, label]) => ({ value, label }))}
+          pillars={Object.entries(PILLARS).map(([value, p]) => ({ value, label: p.label, destination: p.destination, examples: p.examples }))}
+          formats={Object.entries(FORMATS).map(([value, f]) => ({ value, label: f.label, channels: f.channels }))}
           destinations={Object.entries(DESTINATIONS).filter(([k]) => testOn || k !== "test").map(([value, d]) => ({ value, label: d.label }))}
         />
       </section>
@@ -93,6 +97,12 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       {/* 3. Library and results */}
       <section className="mt-6 rounded-xl border border-line bg-white p-4">
         <h2 className={h2}><BookMarked className="size-4 text-accent" aria-hidden />Bibliothèque et résultats</h2>
+        <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+          <p className="font-semibold">Équilibre éditorial, 30 derniers jours ({recent.length} post{recent.length > 1 ? "s" : ""})</p>
+          <p className="mt-1 text-muted">{(Object.keys(PILLARS) as Array<keyof typeof PILLARS>).map((k) => `${PILLARS[k].label} ${balance.byPillar[k]}`).join(" · ")}</p>
+          <p className="text-muted">Liens : {(Object.keys(DESTINATIONS) as Array<keyof typeof DESTINATIONS>).map((k) => `${DESTINATIONS[k].label.toLowerCase()} ${balance.byDestination[k]}`).join(" · ")}</p>
+          {balance.advice && <p className="mt-1 font-semibold text-accent-ink">{balance.advice}</p>}
+        </div>
         {library.length === 0 ? (
           <p className="mt-2 text-sm text-muted">Gardez une variante du studio : elle apparaît ici avec ce que son lien a rapporté.</p>
         ) : (
@@ -100,9 +110,10 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
             {library.map((p) => (
               <li key={p.id} className="rounded-lg border border-line p-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {ANGLES[p.angle as keyof typeof ANGLES] ?? p.angle} · vers {p.destination === "test" ? "le test" : "l’analyse"}</span>
-                  <span className="text-muted">{p.destination === "test" || p.tests > 0 ? `${p.tests} test${p.tests > 1 ? "s" : ""} ouvert${p.tests > 1 ? "s" : ""} (${p.testsDone} fait${p.testsDone > 1 ? "s" : ""}) · ` : ""}{p.leads} analyse{p.leads > 1 ? "s" : ""} · {p.paid} inscription{p.paid > 1 ? "s" : ""} · {p.code}</span>
+                  <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {PILLARS[pillarOf(p)].label}{p.format && p.format !== "standard" ? ` · ${FORMATS[p.format as keyof typeof FORMATS]?.label ?? p.format}` : ""} · vers {DESTINATIONS[p.destination as keyof typeof DESTINATIONS]?.label.toLowerCase() ?? p.destination}</span>
+                  <span className="text-muted">{p.visitors} visiteur{p.visitors > 1 ? "s" : ""} · {p.destination === "test" || p.tests > 0 ? `${p.tests} test${p.tests > 1 ? "s" : ""} ouvert${p.tests > 1 ? "s" : ""} (${p.testsDone} fait${p.testsDone > 1 ? "s" : ""}) · ` : ""}{p.leads} analyse{p.leads > 1 ? "s" : ""} · {p.paid} inscription{p.paid > 1 ? "s" : ""} · {p.code}</span>
                 </div>
+                {p.topic && <p className="mt-1 text-xs text-muted">Sujet : {p.topic}</p>}
                 <p className="mt-1 line-clamp-3 whitespace-pre-line text-ink-2">{p.text}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <CopyButton value={p.text} label="Copier" />

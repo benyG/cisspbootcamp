@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_TEST_THRESHOLD, type LeadJourney, defaultDestination, newPostCode, paceFor, publishableTestStats, recommendations, segmentOf, trackedLink, withLink } from "@/lib/marketing/plan";
+import { DEFAULT_TEST_THRESHOLD, FORMATS, type LeadJourney, PILLARS, anonymize, editorialBalance, formatsFor, pillarOf, defaultDestination, newPostCode, paceFor, publishableTestStats, recommendations, segmentOf, trackedLink, withLink } from "@/lib/marketing/plan";
 
 const NOW = new Date("2026-12-01T12:00:00Z");
 
@@ -91,5 +91,44 @@ describe("chiffres réels du test", () => {
   it("propose un post « Testez-vous » quand personne n'a fait le test", () => {
     const r = recommendations({ pace: paceFor(4, new Date("2026-12-20T12:00:00Z"), NOW), hotUnpaid: 0, callsWithoutSeat: 0, daysSinceLastPost: 1, scansLast7Days: 5, tests30: 0 });
     expect(r.join(" ")).toMatch(/Testez-vous/);
+  });
+});
+
+describe("piliers, formats, équilibre (Ben, 30/09)", () => {
+  it("chaque pilier a sa destination naturelle", () => {
+    expect(PILLARS.methode.destination).toBe("test");
+    expect(PILLARS.carriere.destination).toBe("conseil");
+    expect(PILLARS.offre.destination).toBe("cohorte");
+    expect(trackedLink("https://x.test", "linkedin", 3, "li-abc123", "conseil")).toMatch(/^https:\/\/x\.test\/conseil\?utm_source=linkedin/);
+    expect(trackedLink("https://x.test", "linkedin", 3, "li-abc123", "cohorte")).toMatch(/^https:\/\/x\.test\/\?utm_source=linkedin/);
+  });
+
+  it("les formats suivent le canal", () => {
+    expect(formatsFor("tiktok")).toContain("face_camera");
+    expect(formatsFor("tiktok")).not.toContain("carrousel");
+    expect(formatsFor("linkedin")).toContain("sondage");
+    for (const f of Object.values(FORMATS)) expect(f.channels.length).toBeGreaterThan(0);
+  });
+
+  it("les anciens posts retrouvent leur pilier", () => {
+    expect(pillarOf({ pillar: null, angle: "conseil_du_jour", destination: "scanner" })).toBe("methode");
+    expect(pillarOf({ pillar: null, angle: "places", destination: "scanner" })).toBe("offre");
+    expect(pillarOf({ pillar: "carriere", angle: "carriere", destination: "conseil" })).toBe("carriere");
+  });
+
+  it("alerte quand la vente dépasse un post sur quatre", () => {
+    const sell = { pillar: "offre", angle: "offre", destination: "cohorte" };
+    const value = { pillar: "methode", angle: "methode", destination: "test" };
+    const b = editorialBalance([sell, sell, value, value]);
+    expect(b.byPillar.offre).toBe(2);
+    expect(b.byDestination.cohorte).toBe(2);
+    expect(b.advice).toMatch(/2 posts de vente sur 4/);
+    expect(editorialBalance([]).advice).toMatch(/Aucun post/);
+    expect(editorialBalance([value, value, value, { ...value, pillar: "carriere" }]).advice).toMatch(/Pas encore de post « Choisir sa certification »/);
+  });
+
+  it("anonymise les mots des prospects", () => {
+    expect(anonymize("Écrivez-moi à awa.diop@mail.com ou au +221 77 123 45 67, voir https://x.io/a")).toBe("Écrivez-moi à [e-mail] ou au [numéro], voir [lien]");
+    expect(anonymize("x".repeat(500))).toHaveLength(220);
   });
 });

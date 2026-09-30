@@ -408,10 +408,13 @@ model FunnelEvent {
   utmSource   String? @map("utm_source") @db.VarChar(120)
   utmMedium   String? @map("utm_medium") @db.VarChar(120)
   utmCampaign String? @map("utm_campaign") @db.VarChar(120)
+  /// utm_content: the marketing post code, so a post is credited for every visit it brings.
+  utmContent  String? @map("utm_content") @db.VarChar(120)
 
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([name, createdAt])
+  @@index([utmContent])
   @@index([visitorId, createdAt])
   @@index([leadId])
   @@map("funnel_events")
@@ -605,12 +608,17 @@ model MarketingPost {
   cohort   Cohort? @relation(fields: [cohortId], references: [id], onDelete: SetNull)
 
   /// linkedin | whatsapp_status | whatsapp_group | tiktok
-  channel     String @db.VarChar(32)
-  angle       String @db.VarChar(48)
+  channel     String  @db.VarChar(32)
+  angle       String  @db.VarChar(48)
   /// utm_content of the tracked link: leads that came through it carry it.
-  code        String @unique @db.VarChar(24)
+  code        String  @unique @db.VarChar(24)
   /// Where the link leads: scanner (profile analysis) | test (practice test page).
-  destination String @default("scanner") @db.VarChar(20)
+  destination String  @default("scanner") @db.VarChar(20)
+  /// Editorial pillar (lib/marketing/plan.ts PILLARS) and post format, for the editorial balance.
+  pillar      String? @db.VarChar(32)
+  format      String? @db.VarChar(32)
+  /// The subject the post was written on.
+  topic       String? @db.VarChar(240)
 
   text        String  @db.Text
   /// JSON: format, scene, on-screen text, art direction notes.
