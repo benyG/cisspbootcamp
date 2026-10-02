@@ -203,6 +203,52 @@ export async function createCallEvent(input: {
   return { eventId: event.id, meetUrl: meet };
 }
 
+/**
+ * A cohort session (Ben, 02/10): one event, every participant invited, a
+ * Meet link. Google sends each guest the invitation and keeps them updated.
+ */
+export async function createSessionEvent(input: {
+  summary: string;
+  description: string;
+  start: Date;
+  end: Date;
+  timeZone: string;
+  attendees: Array<{ email: string; name?: string }>;
+  requestId: string;
+}): Promise<CreatedEvent> {
+  if (calendarStubEnabled()) return stubEvent(input.requestId);
+  const { token, calendarId } = await accessToken();
+  const event = await call<{ id: string; hangoutLink?: string; conferenceData?: { entryPoints?: Array<{ entryPointType: string; uri: string }> } }>(
+    token,
+    `/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        summary: input.summary,
+        description: input.description,
+        start: { dateTime: input.start.toISOString(), timeZone: input.timeZone },
+        end: { dateTime: input.end.toISOString(), timeZone: input.timeZone },
+        attendees: input.attendees.map((a) => ({ email: a.email, displayName: a.name })),
+        guestsCanSeeOtherGuests: false,
+        conferenceData: { createRequest: { requestId: input.requestId, conferenceSolutionKey: { type: "hangoutsMeet" } } },
+        reminders: { useDefault: true },
+      }),
+    },
+  );
+  const meet = event.hangoutLink ?? event.conferenceData?.entryPoints?.find((entry) => entry.entryPointType === "video")?.uri ?? null;
+  return { eventId: event.id, meetUrl: meet };
+}
+
+/** Replaces the guest list of an event (a participant registered late); Google invites the new ones. */
+export async function setEventAttendees(eventId: string, attendees: Array<{ email: string; name?: string }>): Promise<void> {
+  if (calendarStubEnabled()) return;
+  const { token, calendarId } = await accessToken();
+  await call(token, `/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?sendUpdates=all`, {
+    method: "PATCH",
+    body: JSON.stringify({ attendees: attendees.map((a) => ({ email: a.email, displayName: a.name })) }),
+  });
+}
+
 export async function moveCallEvent(eventId: string, start: Date, end: Date): Promise<void> {
   if (calendarStubEnabled()) return;
   const { token, calendarId } = await accessToken();
