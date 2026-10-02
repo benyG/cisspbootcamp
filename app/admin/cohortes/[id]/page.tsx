@@ -1,4 +1,4 @@
-import { FileText, GraduationCap, Send, Trash2 } from "lucide-react";
+import { FileText, GraduationCap, Send, Trash2, Video } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -103,6 +103,13 @@ export default async function CohortPage({
           <button type="submit" className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 font-semibold text-white">Enregistrer</button>
         </div>
       </form>
+
+      {cohort.program === "cissp" && (
+        <Link href={`/admin/cohortes/${cohort.id}/sessions`} className="mt-8 flex items-center justify-between gap-3 rounded-xl border border-line bg-white p-4 text-sm hover:border-accent">
+          <span><span className="flex items-center gap-2 font-semibold"><Video className="size-4 text-accent" aria-hidden />Sessions en ligne (Google Meet)</span><span className="mt-0.5 block text-muted">Envoyer l&apos;invitation de chaque jour aux participants, avec le contenu de la session.</span></span>
+          <span className="font-semibold text-accent-ink">Ouvrir →</span>
+        </Link>
+      )}
 
       <section className="mt-8 rounded-xl border border-line bg-white p-4 text-sm">
         <h2 className="flex items-center gap-2 font-semibold"><FileText className="size-4 text-accent" aria-hidden />Documents de préparation</h2>

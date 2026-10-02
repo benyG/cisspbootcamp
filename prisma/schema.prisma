@@ -231,9 +231,44 @@ model Cohort {
   registrations  Registration[]
   seatHolds      SeatHold[]
   marketingPosts MarketingPost[]
+  sessions       CohortSession[]
 
   @@index([program, status, startsAt])
   @@map("cohorts")
+}
+
+/// One live session of a cohort, sent as a Google Calendar event with a Meet
+/// link (Ben, 02/10). The day comes from the reading plan's calendar.
+model CohortSession {
+  id       Int    @id @default(autoincrement())
+  cohortId Int    @map("cohort_id")
+  cohort   Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  /// Jn of the plan (calendar day number from the cohort's start).
+  day      Int
+
+  startsAt     DateTime @map("starts_at")
+  endsAt       DateTime @map("ends_at")
+  /// Reference time zone the hours were typed in.
+  timezone     String   @db.VarChar(64)
+  /// Break included in the slot, minutes (weekend days).
+  pauseMinutes Int      @default(0) @map("pause_minutes")
+
+  googleEventId String? @map("google_event_id") @db.VarChar(255)
+  meetUrl       String? @map("meet_url") @db.VarChar(255)
+  /// Extra guest (co-host…), besides the paid participants.
+  guestEmail    String? @map("guest_email") @db.VarChar(200)
+  /// E-mail reminder one hour before, with the link.
+  reminder      Boolean @default(true)
+  invitedCount  Int     @default(0) @map("invited_count")
+
+  sentAt     DateTime? @map("sent_at")
+  remindedAt DateTime? @map("reminded_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@unique([cohortId, day])
+  @@index([startsAt])
+  @@map("cohort_sessions")
 }
 
 model Registration {
