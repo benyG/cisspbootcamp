@@ -1,4 +1,4 @@
-import { BellRing, CalendarCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BellRing, CalendarCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -145,6 +145,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/parametres/gabarits", label: "Gabarits", icon: Mail },
   { href: "/admin/documents", label: "Documents", icon: FileText },
   { href: "/admin/parametres/google", label: "Agenda", icon: CalendarCheck },
+  { href: "/admin/parametres/linkedin", label: "LinkedIn", icon: Share2 },
 ];
 
 function Kpi({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {

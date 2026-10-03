@@ -3,9 +3,11 @@ import Link from "next/link";
 
 import { CopyButton, Studio } from "@/components/admin/marketing/Studio";
 import { FollowupRow } from "@/components/admin/marketing/FollowupRow";
+import { LinkedinPublish } from "@/components/admin/marketing/LinkedinPublish";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { cockpit, cohortFacts, followupSegments, libraryWithResults, marketingCohorts, recentPosts } from "@/lib/marketing/data";
 import { CHANNELS, DESTINATIONS, FORMATS, MIN_SAMPLE_FOR_STATS, PILLARS, editorialBalance, pillarOf } from "@/lib/marketing/plan";
+import { linkedinStatus } from "@/lib/linkedin";
 import { loadMarketingSettings } from "@/lib/marketing/settings";
 import { PROGRAMS } from "@/lib/programs";
 
@@ -35,7 +37,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   if (!facts) return null;
   const threshold = settings.testThreshold;
   const testOn = examBootEnabled();
-  const [cp, segments, library, recent] = await Promise.all([cockpit(facts, threshold), followupSegments(facts.program, threshold), libraryWithResults(facts.id), recentPosts()]);
+  const [cp, segments, library, recent, linkedin] = await Promise.all([cockpit(facts, threshold), followupSegments(facts.program, threshold), libraryWithResults(facts.id), recentPosts(), linkedinStatus()]);
   const balance = editorialBalance(recent);
   const fmt = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" });
 
@@ -97,6 +99,11 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       {/* 3. Library and results */}
       <section className="mt-6 rounded-xl border border-line bg-white p-4">
         <h2 className={h2}><BookMarked className="size-4 text-accent" aria-hidden />Bibliothèque et résultats</h2>
+        {linkedin.state !== "connected" ? (
+          <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">Publication LinkedIn directe : {linkedin.state === "expired" ? "connexion expirée, " : ""}<Link href="/admin/parametres/linkedin" className="underline">{linkedin.state === "not_configured" ? "à configurer" : "connecter LinkedIn"}</Link>.</p>
+        ) : linkedin.expiresSoon ? (
+          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">La connexion LinkedIn expire le {linkedin.expiresAt.toLocaleDateString("fr-FR")} : <Link href="/admin/parametres/linkedin" className="underline">reconnecter</Link>.</p>
+        ) : null}
         <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
           <p className="font-semibold">Équilibre éditorial, 30 derniers jours ({recent.length} post{recent.length > 1 ? "s" : ""})</p>
           <p className="mt-1 text-muted">{(Object.keys(PILLARS) as Array<keyof typeof PILLARS>).map((k) => `${PILLARS[k].label} ${balance.byPillar[k]}`).join(" · ")}</p>
@@ -117,6 +124,8 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
                 <p className="mt-1 line-clamp-3 whitespace-pre-line text-ink-2">{p.text}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <CopyButton value={p.text} label="Copier" />
+                  {p.channel === "linkedin" && linkedin.state === "connected" && !p.linkedinUrn && <LinkedinPublish postId={p.id} />}
+                  {p.linkedinUrn && <a href={`https://www.linkedin.com/feed/update/${p.linkedinUrn}/`} target="_blank" rel="noopener" className={ghost}>Voir sur LinkedIn</a>}
                   <form action={togglePublished}><input type="hidden" name="postId" value={p.id} /><button className={ghost}>{p.publishedAt ? `Publié le ${p.publishedAt.toLocaleDateString("fr-FR")}` : "Marquer publié"}</button></form>
                   <form action={deletePost}><input type="hidden" name="postId" value={p.id} /><button className={ghost} aria-label="Supprimer"><Trash2 className="size-4" aria-hidden /></button></form>
                 </div>

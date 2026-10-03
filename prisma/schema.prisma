@@ -372,6 +372,22 @@ model ActionLog {
 }
 
 /// The single Google account whose calendar takes discovery calls. One row.
+/// The LinkedIn account Ben publishes with (Ben, 03/10). One row. LinkedIn
+/// gives small apps no refresh token: the access token lasts 60 days, then
+/// Ben reconnects in one click.
+model LinkedinCredential {
+  id                Int      @id @default(1)
+  /// urn:li:person:… — the post author.
+  memberUrn         String   @map("member_urn") @db.VarChar(120)
+  name              String   @db.VarChar(180)
+  /// Access token, AES-256-GCM (lib/crypto.ts). Never stored in clear.
+  accessTokenSealed String   @map("access_token_sealed") @db.Text
+  expiresAt         DateTime @map("expires_at")
+  connectedAt       DateTime @default(now()) @map("connected_at")
+
+  @@map("linkedin_credentials")
+}
+
 model GoogleCredential {
   id                 Int    @id @default(1)
   /// Account that completed the OAuth consent — may differ from ADMIN_EMAIL.
@@ -654,6 +670,8 @@ model MarketingPost {
   format      String? @db.VarChar(32)
   /// The subject the post was written on.
   topic       String? @db.VarChar(240)
+  /// urn:li:share:… once published on LinkedIn from the admin.
+  linkedinUrn String? @map("linkedin_urn") @db.VarChar(120)
 
   text        String  @db.Text
   /// JSON: format, scene, on-screen text, art direction notes.
