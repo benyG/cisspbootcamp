@@ -3,14 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SendRemaining, SessionComposer } from "@/components/admin/sessions/SessionComposer";
-import { SESSION_TIMEZONE, isSessionOutdated, isWeekendDay, sessionDefaults, sessionSlot } from "@/lib/cohort-sessions";
+import { SESSION_TIMEZONE, clockIn, isSessionOutdated, isWeekendDay, sessionDefaults, sessionSlot } from "@/lib/cohort-sessions";
 import { cohortPlan, sessionParticipants } from "@/lib/cohort-sessions-send";
 
 export const dynamic = "force-dynamic";
 // Sending every remaining day creates up to 15 Google events.
 export const maxDuration = 300;
 
-const clock = (d: Date) => d.toLocaleTimeString("fr-FR", { timeZone: SESSION_TIMEZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const clock = (d: Date, timeZone: string = SESSION_TIMEZONE) => clockIn(d, timeZone);
 
 /** Live sessions of a cohort as Google Meet invitations (Ben, 02/10). */
 export default async function CohortSessionsPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ jour?: string }> }) {
@@ -84,7 +84,7 @@ export default async function CohortSessionsPage({ params, searchParams }: { par
             cohortId={cohort.id}
             session={selected}
             participants={participants.map((p) => ({ id: p.id, firstName: p.firstName, lastName: p.lastName, country: p.country }))}
-            sent={record ? { startsAt: record.startsAt.toISOString(), endsAt: record.endsAt.toISOString(), meetUrl: record.meetUrl, invitedCount: record.invitedCount, guestEmail: record.guestEmail, reminder: record.reminder, pause: record.pauseMinutes, start: clock(record.startsAt), sentAt: (record.sentAt ?? record.createdAt).toISOString(), outdated: isSessionOutdated(record, selected.date) } : null}
+            sent={record ? { startsAt: record.startsAt.toISOString(), endsAt: record.endsAt.toISOString(), meetUrl: record.meetUrl, invitedCount: record.invitedCount, guestEmail: record.guestEmail, reminder: record.reminder, pause: record.pauseMinutes, start: clock(record.startsAt, record.timezone), zone: record.timezone, sentAt: (record.sentAt ?? record.createdAt).toISOString(), outdated: isSessionOutdated(record, selected.date) } : null}
             planUrl={planUrl}
             defaults={sessionDefaults(selected.date)}
             weekend={isWeekendDay(selected.date)}

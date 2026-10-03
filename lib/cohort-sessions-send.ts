@@ -33,26 +33,28 @@ export async function sessionParticipants(cohortId: number) {
   return registrations.map((r) => r.lead).filter((l) => !seen.has(l.id) && seen.add(l.id));
 }
 
-type SendInput = { cohortId: number; day: number; start: string; pause: number; guestEmail: string | null; reminder: boolean; excludeLeadIds: number[] };
+/** timezone: the zone Ben typed the hours in (Dakar by default). */
+type SendInput = { cohortId: number; day: number; start: string; pause: number; timezone?: string; guestEmail: string | null; reminder: boolean; excludeLeadIds: number[] };
 
 async function createAndInvite(plan: NonNullable<Awaited<ReturnType<typeof cohortPlan>>>, session: Session, input: SendInput, participants: Awaited<ReturnType<typeof sessionParticipants>>, personalEmail: boolean, reissue = false) {
   const subjectOf = (startsAt: Date) => (reissue ? `Nouvelle invitation · ${sessionSubject(session, startsAt)}` : sessionSubject(session, startsAt));
   const textOf = (text: string) => (reissue ? reissuedMessage(text, session) : text);
-  const { startsAt, endsAt } = sessionSlot(session, input.start, input.pause, SESSION_TIMEZONE);
+  const timezone = input.timezone ?? SESSION_TIMEZONE;
+  const { startsAt, endsAt } = sessionSlot(session, input.start, input.pause, timezone);
   const attendees = [...participants.map((p) => ({ email: p.email, name: `${p.firstName} ${p.lastName}`.trim() })), ...(input.guestEmail ? [{ email: input.guestEmail }] : [])];
   const event = await createSessionEvent({
     summary: sessionSummary(session),
     description: sessionDescription({ session, startsAt, endsAt, meetUrl: null, planUrl: plan.planUrl }),
     start: startsAt,
     end: endsAt,
-    timeZone: SESSION_TIMEZONE,
+    timeZone: timezone,
     attendees,
     requestId: randomUUID(),
   });
   const record = await prisma.cohortSession.upsert({
     where: { cohortId_day: { cohortId: plan.cohort.id, day: session.n } },
-    create: { cohortId: plan.cohort.id, day: session.n, startsAt, endsAt, timezone: SESSION_TIMEZONE, pauseMinutes: input.pause, googleEventId: event.eventId, meetUrl: event.meetUrl, guestEmail: input.guestEmail, reminder: input.reminder, invitedCount: attendees.length, sentAt: new Date() },
-    update: { startsAt, endsAt, timezone: SESSION_TIMEZONE, pauseMinutes: input.pause, googleEventId: event.eventId, meetUrl: event.meetUrl, guestEmail: input.guestEmail, reminder: input.reminder, invitedCount: attendees.length, sentAt: new Date(), remindedAt: null },
+    create: { cohortId: plan.cohort.id, day: session.n, startsAt, endsAt, timezone, pauseMinutes: input.pause, googleEventId: event.eventId, meetUrl: event.meetUrl, guestEmail: input.guestEmail, reminder: input.reminder, invitedCount: attendees.length, sentAt: new Date() },
+    update: { startsAt, endsAt, timezone, pauseMinutes: input.pause, googleEventId: event.eventId, meetUrl: event.meetUrl, guestEmail: input.guestEmail, reminder: input.reminder, invitedCount: attendees.length, sentAt: new Date(), remindedAt: null },
   });
   let emailed = 0;
   if (personalEmail) {
@@ -122,19 +124,20 @@ export async function sendRemainingSessions(cohortId: number, now = new Date()):
 }
 
 /** New hours for a sent session: Google tells every guest; the reminder is re-armed. */
-export async function moveCohortSession(input: { cohortId: number; day: number; start: string; pause: number }): Promise<SessionResult> {
+export async function moveCohortSession(input: { cohortId: number; day: number; start: string; pause: number; timezone?: string }): Promise<SessionResult> {
   const plan = await cohortPlan(input.cohortId);
   const record = plan?.cohort.sessions.find((s) => s.day === input.day);
   const session = plan?.days.find((d) => d.n === input.day);
   if (!plan || !record?.googleEventId || !session) return { ok: false, error: "Session introuvable." };
-  const { startsAt, endsAt } = sessionSlot(session, input.start, input.pause, record.timezone);
+  const timezone = input.timezone ?? record.timezone;
+  const { startsAt, endsAt } = sessionSlot(session, input.start, input.pause, timezone);
   try {
     await moveCallEvent(record.googleEventId, startsAt, endsAt);
   } catch (error) {
     console.error("[sessions] déplacement", error);
     return { ok: false, error: "Google Agenda a refusé le déplacement." };
   }
-  await prisma.cohortSession.update({ where: { id: record.id }, data: { startsAt, endsAt, pauseMinutes: input.pause, remindedAt: null } });
+  await prisma.cohortSession.update({ where: { id: record.id }, data: { startsAt, endsAt, timezone, pauseMinutes: input.pause, remindedAt: null } });
   return { ok: true, message: `J${input.day} déplacée : Google Agenda prévient chaque invité, le lien Meet reste le même.` };
 }
 
@@ -145,7 +148,7 @@ export async function moveCohortSession(input: { cohortId: number; day: number; 
  * then the old event is cancelled, which Google removes from each
  * guest's calendar with a notice. New first, so nobody is left without.
  */
-export async function reissueCohortSession(input: { cohortId: number; day: number; start: string; pause: number }): Promise<SessionResult> {
+export async function reissueCohortSession(input: { cohortId: number; day: number; start: string; pause: number; timezone?: string }): Promise<SessionResult> {
   const plan = await cohortPlan(input.cohortId);
   const record = plan?.cohort.sessions.find((s) => s.day === input.day && s.sentAt);
   const session = plan?.days.find((d) => d.n === input.day);
@@ -213,7 +216,7 @@ export async function sendSessionReminders(now = new Date()): Promise<number> {
     const participants = await sessionParticipants(record.cohortId);
     for (const p of participants) {
       if (p.unsubscribedAt) continue;
-      const result = await sendEmail({ to: p.email, subject: `Dans une heure : J${session.n} · CISSP Bootcamp`, text: reminderMessage({ firstName: p.firstName, session, startsAt: record.startsAt, endsAt: record.endsAt, meetUrl: record.meetUrl, timeZone: record.timezone }) });
+      const result = await sendEmail({ to: p.email, subject: `Dans une heure : J${session.n} · CISSP Bootcamp`, text: reminderMessage({ firstName: p.firstName, session, startsAt: record.startsAt, endsAt: record.endsAt, meetUrl: record.meetUrl }) });
       if (result.sent) sent++;
     }
     await prisma.cohortSession.update({ where: { id: record.id }, data: { remindedAt: now } });

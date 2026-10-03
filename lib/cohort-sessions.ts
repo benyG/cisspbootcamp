@@ -9,6 +9,32 @@ import type { Session } from "@/lib/reading-plan/data";
 
 export const SESSION_TIMEZONE = "Africa/Dakar";
 export const SESSION_TIMEZONE_LABEL = "heure de Dakar";
+
+/**
+ * Zones Ben can plan in (Ben, 03/10): he types the hours in the one he
+ * thinks in, Dakar or Montréal; the instant is the same, Google shows it
+ * at each guest's local time, and the e-mails keep Dakar time. Montréal
+ * follows America/Toronto (same rules, the canonical IANA name).
+ */
+export const SESSION_ZONES = {
+  "Africa/Dakar": { label: "heure de Dakar", city: "Dakar" },
+  "America/Toronto": { label: "heure de Montréal", city: "Montréal" },
+} as const;
+export type SessionZone = keyof typeof SESSION_ZONES;
+
+export function isSessionZone(value: string): value is SessionZone {
+  return value in SESSION_ZONES;
+}
+
+/** "HH:MM" of an instant in a zone. */
+export function clockIn(at: Date, timeZone: string): string {
+  return at.toLocaleTimeString("fr-FR", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+}
+
+/** The same instant typed in another zone: 19:00 in Dakar is 15:00 in Montréal in October. */
+export function convertClock(date: string, clock: string, from: string, to: string): string {
+  return clockIn(zonedInstant(date, clock, from), to);
+}
 export const DEFAULT_EVENING_START = "19:00";
 export const DEFAULT_WEEKEND_START = "09:00";
 export const DEFAULT_WEEKEND_PAUSE_MINUTES = 60;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { calendarMessage, isClock, isSessionOutdated, reissuedMessage, reminderMessage, sessionDefaults, sessionDescription, sessionMessage, sessionSlot, sessionSubject, slotLabel, zonedInstant } from "@/lib/cohort-sessions";
+import { calendarMessage, convertClock, isClock, isSessionOutdated, isSessionZone, reissuedMessage, reminderMessage, sessionDefaults, sessionDescription, sessionMessage, sessionSlot, sessionSubject, slotLabel, zonedInstant } from "@/lib/cohort-sessions";
 import { buildSessions } from "@/lib/reading-plan/data";
 
 const days = buildSessions("2026-10-03"); // Saturday start, Ben's October cohort
@@ -80,5 +80,27 @@ describe("nouvelle invitation après un changement de date (Ben, 03/10)", () => 
     expect(text.split("\n")[2]).toMatch(/L’invitation précédente pour J1 est annulée/);
     expect(text.startsWith("Bonjour Awa,\n\n")).toBe(true);
     expect(text).toMatch(/Notre session J1 a lieu…$/);
+  });
+});
+
+describe("heures saisies à Dakar ou à Montréal (Ben, 03/10)", () => {
+  it("le même instant, quelle que soit la ville de saisie", () => {
+    const dakar = sessionSlot(j1, "14:00", 30, "Africa/Dakar");
+    const montreal = sessionSlot(j1, "10:00", 30, "America/Toronto");
+    expect(montreal.startsAt.toISOString()).toBe(dakar.startsAt.toISOString());
+    expect(montreal.startsAt.toISOString()).toBe("2026-10-03T14:00:00.000Z");
+  });
+
+  it("change de ville sans changer l'instant, heure d'été comprise", () => {
+    expect(convertClock("2026-10-05", "19:00", "Africa/Dakar", "America/Toronto")).toBe("15:00");
+    expect(convertClock("2026-10-05", "15:00", "America/Toronto", "Africa/Dakar")).toBe("19:00");
+    // After the switch to winter time in Montréal (1 November), the gap is 5 hours.
+    expect(convertClock("2026-11-09", "19:00", "Africa/Dakar", "America/Toronto")).toBe("14:00");
+  });
+
+  it("n'accepte que Dakar et Montréal", () => {
+    expect(isSessionZone("Africa/Dakar")).toBe(true);
+    expect(isSessionZone("America/Toronto")).toBe(true);
+    expect(isSessionZone("Europe/Paris")).toBe(false);
   });
 });
