@@ -11,6 +11,8 @@ import { examBootEnabled } from "@/lib/examboot/client";
 import { audienceInsights, cohortFacts, factsForModel, recentPosts, recentTestStats } from "@/lib/marketing/data";
 import { CHANNELS, DESTINATIONS, FORMATS, PILLARS, POST_CODE_PATTERN, type SegmentKey, newPostCode, pillarOf, trackedLink, withLink } from "@/lib/marketing/plan";
 import { loadMarketingSettings, saveMarketingSettings } from "@/lib/marketing/settings";
+import { MAX_IMAGE_BYTES, publishOnLinkedin } from "@/lib/linkedin";
+import { startVideo, syncVideo } from "@/lib/minimax";
 import { sendEmail } from "@/lib/messaging/email";
 import { recommendedService, serviceDefinition } from "@/lib/services";
 
@@ -227,4 +229,63 @@ export async function markFollowupSent(input: { leadId: number }): Promise<void>
   const leadId = id.parse(input.leadId);
   await prisma.actionLog.create({ data: { leadId, type: "marketing_followup_sent", channel: "whatsapp" } });
   revalidatePath("/admin/marketing");
+}
+
+/**
+ * Publishes a kept post on Ben's LinkedIn profile (Ben, 03/10), with an
+ * optional image (the visual made from the brief). The post is marked
+ * published and keeps its tracked link.
+ */
+export async function publishPostOnLinkedin(formData: FormData): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  await requireAdmin();
+  const postId = id.safeParse(formData.get("postId"));
+  if (!postId.success) return { ok: false, error: "Post introuvable." };
+  const post = await prisma.marketingPost.findUnique({ where: { id: postId.data } });
+  if (!post) return { ok: false, error: "Post introuvable." };
+  if (post.linkedinUrn) return { ok: false, error: "Ce post est déjà publié sur LinkedIn." };
+  const file = formData.get("image");
+  let image: { bytes: Uint8Array; type: string; alt: string } | null = null;
+  if (file instanceof File && file.size > 0) {
+    if (!["image/jpeg", "image/png"].includes(file.type)) return { ok: false, error: "Image en JPG ou PNG seulement." };
+    if (file.size > MAX_IMAGE_BYTES) return { ok: false, error: "Image trop lourde : 4 Mo au plus." };
+    const brief = (() => { try { return (JSON.parse(post.visualBrief) as { onScreenText?: string }).onScreenText ?? ""; } catch { return ""; } })();
+    image = { bytes: new Uint8Array(await file.arrayBuffer()), type: file.type, alt: brief || "Visuel CISSP Bootcamp" };
+  }
+  try {
+    const published = await publishOnLinkedin({ text: post.text, image });
+    await prisma.marketingPost.update({ where: { id: post.id }, data: { linkedinUrn: published.urn || null, publishedAt: new Date() } });
+    revalidatePath("/admin/marketing");
+    return { ok: true, url: published.url };
+  } catch (error) {
+    console.error("[linkedin] publication", error);
+    return { ok: false, error: error instanceof Error ? error.message : "Publication refusée par LinkedIn." };
+  }
+}
+
+export type VideoRow = { id: number; status: string; error: string | null; prompt: string; ready: boolean; createdAt: string };
+
+async function videosOf(postId: number): Promise<VideoRow[]> {
+  const rows = await prisma.marketingVideo.findMany({ where: { postId }, orderBy: { createdAt: "desc" }, take: 12 });
+  return rows.map((v) => ({ id: v.id, status: v.status, error: v.error, prompt: v.prompt, ready: Boolean(v.blobPathname), createdAt: v.createdAt.toISOString() }));
+}
+
+/** Starts one 6-second MiniMax clip for a TikTok post (Ben, 03/10). */
+export async function generateVideo(input: { postId: number; prompt: string }): Promise<{ ok: true; videos: VideoRow[] } | { ok: false; error: string }> {
+  await requireAdmin();
+  const parsed = z.object({ postId: id, prompt: z.string().trim().min(20, "Prompt trop court.").max(2000) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Prompt invalide." };
+  const post = await prisma.marketingPost.findUnique({ where: { id: parsed.data.postId }, select: { id: true } });
+  if (!post) return { ok: false, error: "Post introuvable." };
+  const started = await startVideo(post.id, parsed.data.prompt);
+  if (!started.ok) return started;
+  return { ok: true, videos: await videosOf(post.id) };
+}
+
+/** Checks the pending clips of a post; the page calls it while a clip is being made. */
+export async function refreshVideos(input: { postId: number }): Promise<VideoRow[]> {
+  await requireAdmin();
+  const postId = id.parse(input.postId);
+  const pending = await prisma.marketingVideo.findMany({ where: { postId, status: { in: ["queued", "processing"] } }, select: { id: true } });
+  for (const v of pending) await syncVideo(v.id);
+  return videosOf(postId);
 }

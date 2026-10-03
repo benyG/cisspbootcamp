@@ -372,6 +372,22 @@ model ActionLog {
 }
 
 /// The single Google account whose calendar takes discovery calls. One row.
+/// The LinkedIn account Ben publishes with (Ben, 03/10). One row. LinkedIn
+/// gives small apps no refresh token: the access token lasts 60 days, then
+/// Ben reconnects in one click.
+model LinkedinCredential {
+  id                Int      @id @default(1)
+  /// urn:li:person:… — the post author.
+  memberUrn         String   @map("member_urn") @db.VarChar(120)
+  name              String   @db.VarChar(180)
+  /// Access token, AES-256-GCM (lib/crypto.ts). Never stored in clear.
+  accessTokenSealed String   @map("access_token_sealed") @db.Text
+  expiresAt         DateTime @map("expires_at")
+  connectedAt       DateTime @default(now()) @map("connected_at")
+
+  @@map("linkedin_credentials")
+}
+
 model GoogleCredential {
   id                 Int    @id @default(1)
   /// Account that completed the OAuth consent — may differ from ADMIN_EMAIL.
@@ -637,23 +653,53 @@ model Document {
 
 /// Marketing content Ben keeps from the AI studio (Ben, 28/09): one post per
 /// channel, with its visual brief and the tracked link that measures it.
+/// One MiniMax clip generated from a TikTok post's prompt (Ben, 03/10).
+/// Generation is asynchronous: the task is polled by the page and the cron,
+/// then the file is copied to private Blob storage (MiniMax links expire).
+model MarketingVideo {
+  id     Int           @id @default(autoincrement())
+  postId Int           @map("post_id")
+  post   MarketingPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  prompt       String  @db.Text
+  model        String  @db.VarChar(60)
+  duration     Int     @default(6)
+  /// MiniMax task id.
+  taskId       String  @map("task_id") @db.VarChar(80)
+  /// queued | processing | done | failed
+  status       String  @default("queued") @db.VarChar(20)
+  error        String? @db.VarChar(300)
+  /// Private Blob pathname of the MP4 once done.
+  blobPathname String? @map("blob_pathname") @db.VarChar(255)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@index([postId])
+  @@map("marketing_videos")
+}
+
 model MarketingPost {
   id       Int     @id @default(autoincrement())
   cohortId Int?    @map("cohort_id")
   cohort   Cohort? @relation(fields: [cohortId], references: [id], onDelete: SetNull)
 
   /// linkedin | whatsapp_status | whatsapp_group | tiktok
-  channel     String  @db.VarChar(32)
-  angle       String  @db.VarChar(48)
+  channel     String           @db.VarChar(32)
+  angle       String           @db.VarChar(48)
   /// utm_content of the tracked link: leads that came through it carry it.
-  code        String  @unique @db.VarChar(24)
+  code        String           @unique @db.VarChar(24)
   /// Where the link leads: scanner (profile analysis) | test (practice test page).
-  destination String  @default("scanner") @db.VarChar(20)
+  destination String           @default("scanner") @db.VarChar(20)
   /// Editorial pillar (lib/marketing/plan.ts PILLARS) and post format, for the editorial balance.
-  pillar      String? @db.VarChar(32)
-  format      String? @db.VarChar(32)
+  pillar      String?          @db.VarChar(32)
+  format      String?          @db.VarChar(32)
   /// The subject the post was written on.
-  topic       String? @db.VarChar(240)
+  topic       String?          @db.VarChar(240)
+  /// urn:li:share:… once published on LinkedIn from the admin.
+  linkedinUrn String?          @map("linkedin_urn") @db.VarChar(120)
+  videos      MarketingVideo[]
 
   text        String  @db.Text
   /// JSON: format, scene, on-screen text, art direction notes.

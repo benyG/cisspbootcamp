@@ -17,6 +17,11 @@ const schema = z.object({
   /** 32 bytes, base64. Required once Google Calendar is connected. */
   GOOGLE_TOKEN_ENCRYPTION_KEY: z.string().default(""),
   CRON_SECRET: z.string().default(""),
+  /** LinkedIn app (developer.linkedin.com), "Share on LinkedIn" product. */
+  LINKEDIN_CLIENT_ID: z.string().default(""),
+  LINKEDIN_CLIENT_SECRET: z.string().default(""),
+  /** Posts API version, YYYYMM; LinkedIn retires versions after about a year. */
+  LINKEDIN_API_VERSION: z.string().default("202608"),
 });
 
 export type Env = z.infer<typeof schema>;

@@ -229,7 +229,7 @@ export async function recentPosts(now = new Date()): Promise<Array<BalancePost &
 
 /** Saved posts with what their tracked link brought in. */
 export async function libraryWithResults(cohortId: number) {
-  const posts = await prisma.marketingPost.findMany({ where: { cohortId }, orderBy: { createdAt: "desc" }, take: 40 });
+  const posts = await prisma.marketingPost.findMany({ where: { cohortId }, orderBy: { createdAt: "desc" }, take: 40, include: { videos: { orderBy: { createdAt: "desc" }, take: 12 } } });
   if (posts.length === 0) return [];
   const codes = posts.map((p) => p.code);
   const [leads, tests, visits] = await Promise.all([
