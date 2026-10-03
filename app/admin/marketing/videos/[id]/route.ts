@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { readVideo } from "@/lib/minimax";
+import { readStored } from "@/lib/minimax";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const video = await prisma.marketingVideo.findUnique({ where: { id: Number(id) || 0 } });
   if (!video?.blobPathname) return new NextResponse("Vidéo introuvable", { status: 404 });
-  const stream = await readVideo(video.blobPathname);
+  const stream = await readStored(video.blobPathname);
   if (!stream) return new NextResponse("Vidéo introuvable", { status: 404 });
   const download = request.nextUrl.searchParams.has("telecharger");
   return new NextResponse(stream, {

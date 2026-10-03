@@ -12,7 +12,11 @@ import { audienceInsights, cohortFacts, factsForModel, recentPosts, recentTestSt
 import { CHANNELS, DESTINATIONS, FORMATS, PILLARS, POST_CODE_PATTERN, type SegmentKey, newPostCode, pillarOf, trackedLink, withLink } from "@/lib/marketing/plan";
 import { loadMarketingSettings, saveMarketingSettings } from "@/lib/marketing/settings";
 import { MAX_IMAGE_BYTES, publishOnLinkedin } from "@/lib/linkedin";
-import { startVideo, syncVideo } from "@/lib/minimax";
+import { put } from "@vercel/blob";
+
+import { CANVAS, HEADLINE_MAX } from "@/lib/marketing/brand";
+import { composeVisual } from "@/lib/marketing/compose";
+import { generatePhoto, readBytes, startVideo, syncVideo } from "@/lib/minimax";
 import { sendEmail } from "@/lib/messaging/email";
 import { recommendedService, serviceDefinition } from "@/lib/services";
 
@@ -90,7 +94,7 @@ const saveSchema = z.object({
   destination,
   code: z.string().regex(POST_CODE_PATTERN),
   text: z.string().trim().min(10).max(6000),
-  visual: z.object({ format: z.string(), scene: z.string(), onScreenText: z.string(), direction: z.string() }),
+  visual: z.object({ format: z.string(), scene: z.string(), onScreenText: z.string(), direction: z.string(), imagePrompt: z.string().max(2000).optional() }),
   video: z.object({ scenes: z.array(z.object({ seconds: z.number(), image: z.string(), voiceover: z.string(), onScreen: z.string() })), minimaxPrompt: z.string() }).nullable(),
 });
 
@@ -244,12 +248,18 @@ export async function publishPostOnLinkedin(formData: FormData): Promise<{ ok: t
   if (!post) return { ok: false, error: "Post introuvable." };
   if (post.linkedinUrn) return { ok: false, error: "Ce post est déjà publié sur LinkedIn." };
   const file = formData.get("image");
+  const generated = id.safeParse(formData.get("imageId"));
+  const brief = (() => { try { return (JSON.parse(post.visualBrief) as { onScreenText?: string }).onScreenText ?? ""; } catch { return ""; } })();
   let image: { bytes: Uint8Array; type: string; alt: string } | null = null;
   if (file instanceof File && file.size > 0) {
     if (!["image/jpeg", "image/png"].includes(file.type)) return { ok: false, error: "Image en JPG ou PNG seulement." };
     if (file.size > MAX_IMAGE_BYTES) return { ok: false, error: "Image trop lourde : 4 Mo au plus." };
-    const brief = (() => { try { return (JSON.parse(post.visualBrief) as { onScreenText?: string }).onScreenText ?? ""; } catch { return ""; } })();
     image = { bytes: new Uint8Array(await file.arrayBuffer()), type: file.type, alt: brief || "Visuel CISSP Bootcamp" };
+  } else if (generated.success) {
+    const row = await prisma.marketingImage.findFirst({ where: { id: generated.data, postId: post.id } });
+    const bytes = row ? await readBytes(row.imagePathname) : null;
+    if (!row || !bytes) return { ok: false, error: "Image générée introuvable." };
+    image = { bytes, type: "image/png", alt: row.headline || brief || "Visuel CISSP Bootcamp" };
   }
   try {
     const published = await publishOnLinkedin({ text: post.text, image });
@@ -269,14 +279,24 @@ async function videosOf(postId: number): Promise<VideoRow[]> {
   return rows.map((v) => ({ id: v.id, status: v.status, error: v.error, prompt: v.prompt, ready: Boolean(v.blobPathname), createdAt: v.createdAt.toISOString() }));
 }
 
-/** Starts one 6-second MiniMax clip for a TikTok post (Ben, 03/10). */
-export async function generateVideo(input: { postId: number; prompt: string }): Promise<{ ok: true; videos: VideoRow[] } | { ok: false; error: string }> {
+/**
+ * Starts one 6-second MiniMax clip for a TikTok post (Ben, 03/10),
+ * optionally opening on one of the post's generated photographs.
+ */
+export async function generateVideo(input: { postId: number; prompt: string; imageId?: number | null }): Promise<{ ok: true; videos: VideoRow[] } | { ok: false; error: string }> {
   await requireAdmin();
-  const parsed = z.object({ postId: id, prompt: z.string().trim().min(20, "Prompt trop court.").max(2000) }).safeParse(input);
+  const parsed = z.object({ postId: id, prompt: z.string().trim().min(20, "Prompt trop court.").max(1200), imageId: id.nullish() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Prompt invalide." };
   const post = await prisma.marketingPost.findUnique({ where: { id: parsed.data.postId }, select: { id: true } });
   if (!post) return { ok: false, error: "Post introuvable." };
-  const started = await startVideo(post.id, parsed.data.prompt);
+  let firstFrame: { bytes: Uint8Array; type: string } | null = null;
+  if (parsed.data.imageId) {
+    const image = await prisma.marketingImage.findFirst({ where: { id: parsed.data.imageId, postId: post.id } });
+    const bytes = image ? await readBytes(image.photoPathname) : null;
+    if (!bytes) return { ok: false, error: "Image de départ introuvable." };
+    firstFrame = { bytes, type: bytes[0] === 0x89 ? "image/png" : "image/jpeg" };
+  }
+  const started = await startVideo(post.id, parsed.data.prompt, firstFrame);
   if (!started.ok) return started;
   return { ok: true, videos: await videosOf(post.id) };
 }
@@ -288,4 +308,51 @@ export async function refreshVideos(input: { postId: number }): Promise<VideoRow
   const pending = await prisma.marketingVideo.findMany({ where: { postId, status: { in: ["queued", "processing"] } }, select: { id: true } });
   for (const v of pending) await syncVideo(v.id);
   return videosOf(postId);
+}
+
+export type ImageRow = { id: number; headline: string; createdAt: string };
+
+/**
+ * One brand visual for a post (Ben, 03/10): MiniMax draws the photograph
+ * from the scene, inside the brand's photography rules; the app adds the
+ * headline, the green keyword and the signature with the site's fonts and
+ * colours, at the channel's size. Both files go to private storage.
+ */
+export async function generateVisual(input: { postId: number; scene: string; headline: string; keyword: string }): Promise<{ ok: true; images: ImageRow[] } | { ok: false; error: string }> {
+  await requireAdmin();
+  const parsed = z
+    .object({
+      postId: id,
+      scene: z.string().trim().min(15, "Décrivez la scène en une ou deux phrases.").max(650, "Scène trop longue : 650 caractères au plus."),
+      headline: z.string().trim().max(HEADLINE_MAX, `Titre trop long : ${HEADLINE_MAX} caractères au plus.`),
+      keyword: z.string().trim().max(60),
+    })
+    .safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Demande invalide." };
+  const post = await prisma.marketingPost.findUnique({ where: { id: parsed.data.postId }, select: { id: true, channel: true } });
+  if (!post) return { ok: false, error: "Post introuvable." };
+  const channel = (post.channel in CANVAS ? post.channel : "linkedin") as keyof typeof CANVAS;
+  const photo = await generatePhoto(parsed.data.scene, CANVAS[channel].aspectRatio);
+  if (!photo.ok) return photo;
+  try {
+    const visual = await composeVisual({ photo: photo.bytes, photoType: photo.type, channel, headline: parsed.data.headline, keyword: parsed.data.keyword });
+    const ext = photo.type === "image/png" ? "png" : "jpg";
+    const [raw, final] = await Promise.all([
+      put(`marketing-images/post-${post.id}-photo.${ext}`, Buffer.from(photo.bytes), { access: "private", contentType: photo.type, addRandomSuffix: true }),
+      put(`marketing-images/post-${post.id}-visuel.png`, Buffer.from(visual), { access: "private", contentType: "image/png", addRandomSuffix: true }),
+    ]);
+    await prisma.marketingImage.create({
+      data: { postId: post.id, scene: parsed.data.scene, headline: parsed.data.headline, keyword: parsed.data.keyword, model: photo.model, photoPathname: raw.pathname, imagePathname: final.pathname },
+    });
+  } catch (error) {
+    console.error("[marketing] visuel", error);
+    return { ok: false, error: "La photo est faite, mais la mise en page ou l'enregistrement a échoué : réessayez." };
+  }
+  revalidatePath("/admin/marketing");
+  return { ok: true, images: await imagesOf(post.id) };
+}
+
+async function imagesOf(postId: number): Promise<ImageRow[]> {
+  const rows = await prisma.marketingImage.findMany({ where: { postId }, orderBy: { createdAt: "desc" }, take: 12 });
+  return rows.map((i) => ({ id: i.id, headline: i.headline, createdAt: i.createdAt.toISOString() }));
 }
