@@ -42,14 +42,16 @@ describe("messages des sessions", () => {
   it("le message de chacun : prénom, horaire, programme, lectures, Meet, plan", () => {
     const text = sessionMessage({ firstName: "Awa", session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/abc-defg-hij", planUrl });
     expect(text).toMatch(/^Bonjour Awa,/);
-    expect(text).toContain("Notre session J3 a lieu le lundi 5 octobre, de 19 h à 21 h (heure de Dakar)");
+    expect(text).toContain("Notre session J3 a lieu le lundi 5 octobre. L’heure figure dans l’invitation Google Agenda");
+    // Ben, 03/10: no clock time in the e-mails, the invitation carries it.
+    expect(text).not.toMatch(/\d+ h/);
     expect(text).toContain(`Au programme : ${j3.title}.`);
     expect(text).toContain("À avoir lu avant la session :");
     for (const r of j3.read) expect(text).toContain(`Chapitre ${r.ch}`);
     expect(text).toContain("Rejoindre la session : https://meet.google.com/abc-defg-hij");
     expect(text).toContain(`Votre plan de lecture : ${planUrl}`);
     expect(text.match(/Plan de lecture|plan de lecture :/g)?.length).toBe(1);
-    expect(sessionSubject(j3, startsAt)).toBe("J3 · lundi 5 octobre, 19 h · CISSP Bootcamp");
+    expect(sessionSubject(j3)).toBe("J3 · lundi 5 octobre · CISSP Bootcamp");
   });
 
   it("la dernière session annonce l'examen blanc", () => {
@@ -59,9 +61,10 @@ describe("messages des sessions", () => {
   });
 
   it("rappel et calendrier complet", () => {
-    expect(reminderMessage({ firstName: "Awa", session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/x" })).toContain("commence dans une heure : lundi 5 octobre, de 19 h à 21 h");
+    expect(reminderMessage({ firstName: "Awa", session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/x" })).toContain("Notre session J3 commence dans une heure.");
     const cal = calendarMessage({ firstName: "Awa", items: [{ session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/x" }], planUrl });
-    expect(cal).toContain("J3 · lundi 5 octobre, de 19 h à 21 h");
+    expect(cal).toContain("J3 · lundi 5 octobre\n");
+    expect(cal).not.toMatch(/\d+ h/);
     expect(cal).toContain("Lien : https://meet.google.com/x");
   });
 });

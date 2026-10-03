@@ -37,7 +37,7 @@ export async function sessionParticipants(cohortId: number) {
 type SendInput = { cohortId: number; day: number; start: string; pause: number; timezone?: string; guestEmail: string | null; reminder: boolean; excludeLeadIds: number[] };
 
 async function createAndInvite(plan: NonNullable<Awaited<ReturnType<typeof cohortPlan>>>, session: Session, input: SendInput, participants: Awaited<ReturnType<typeof sessionParticipants>>, personalEmail: boolean, reissue = false) {
-  const subjectOf = (startsAt: Date) => (reissue ? `Nouvelle invitation · ${sessionSubject(session, startsAt)}` : sessionSubject(session, startsAt));
+  const subjectOf = () => (reissue ? `Nouvelle invitation · ${sessionSubject(session)}` : sessionSubject(session));
   const textOf = (text: string) => (reissue ? reissuedMessage(text, session) : text);
   const timezone = input.timezone ?? SESSION_TIMEZONE;
   const { startsAt, endsAt } = sessionSlot(session, input.start, input.pause, timezone);
@@ -61,13 +61,13 @@ async function createAndInvite(plan: NonNullable<Awaited<ReturnType<typeof cohor
     for (const p of participants) {
       const result = await sendEmail({
         to: p.email,
-        subject: subjectOf(startsAt),
+        subject: subjectOf(),
         text: textOf(sessionMessage({ firstName: p.firstName, session, startsAt, endsAt, meetUrl: event.meetUrl, planUrl: plan.planUrl })),
       });
       if (result.sent) emailed++;
     }
     if (input.guestEmail) {
-      await sendEmail({ to: input.guestEmail, subject: subjectOf(startsAt), text: textOf(sessionMessage({ firstName: "", session, startsAt, endsAt, meetUrl: event.meetUrl, planUrl: plan.planUrl }).replace("Bonjour ,", "Bonjour,")) });
+      await sendEmail({ to: input.guestEmail, subject: subjectOf(), text: textOf(sessionMessage({ firstName: "", session, startsAt, endsAt, meetUrl: event.meetUrl, planUrl: plan.planUrl }).replace("Bonjour ,", "Bonjour,")) });
     }
   }
   if (participants.length) {
@@ -196,7 +196,7 @@ export async function resendCohortSession(input: { cohortId: number; day: number
   }
   let emailed = 0;
   for (const p of participants) {
-    const result = await sendEmail({ to: p.email, subject: sessionSubject(session, record.startsAt), text: sessionMessage({ firstName: p.firstName, session, startsAt: record.startsAt, endsAt: record.endsAt, meetUrl: record.meetUrl, planUrl: plan.planUrl }) });
+    const result = await sendEmail({ to: p.email, subject: sessionSubject(session), text: sessionMessage({ firstName: p.firstName, session, startsAt: record.startsAt, endsAt: record.endsAt, meetUrl: record.meetUrl, planUrl: plan.planUrl }) });
     if (result.sent) emailed++;
   }
   await prisma.cohortSession.update({ where: { id: record.id }, data: { invitedCount: attendees.length } });

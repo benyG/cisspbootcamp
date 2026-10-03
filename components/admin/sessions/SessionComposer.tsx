@@ -116,7 +116,7 @@ export function SessionComposer({ cohortId, session, participants, sent, planUrl
 
           <div className="rounded-lg border border-line p-3 text-sm">
             <p className="text-xs font-extrabold tracking-[.06em] text-muted uppercase">Le message, au prénom de chacun</p>
-            <p className="mt-2 font-semibold">{sessionSubject(session, slot.startsAt)}</p>
+            <p className="mt-2 font-semibold">{sessionSubject(session)}</p>
             <p className="mt-1 whitespace-pre-line rounded bg-slate-50 p-3">{sessionMessage({ firstName: first, session, startsAt: slot.startsAt, endsAt: slot.endsAt, meetUrl: "https://meet.google.com/… (créé à l’envoi)", planUrl })}</p>
           </div>
 

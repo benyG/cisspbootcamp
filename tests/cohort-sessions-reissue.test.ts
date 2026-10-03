@@ -40,7 +40,7 @@ describe("nouvelle invitation d'une session (Ben, 03/10)", () => {
     expect(calendar.createSessionEvent.mock.calls[0][0].start.toISOString()).toBe("2026-10-04T14:00:00.000Z");
     expect(db.cohortSession.upsert.mock.calls[0][0].update).toMatchObject({ googleEventId: "new-event", meetUrl: "https://meet.google.com/new" });
     const email = mail.sendEmail.mock.calls[0][0];
-    expect(email.subject).toMatch(/^Nouvelle invitation · J1 · dimanche 4 octobre/);
+    expect(email.subject).toBe("Nouvelle invitation · J1 · dimanche 4 octobre · CISSP Bootcamp");
     expect(email.text).toMatch(/invitation précédente pour J1 est annulée/);
   });
 
