@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 import { publishPostOnLinkedin } from "@/app/admin/marketing/actions";
 
 /** "Publier sur LinkedIn", with an optional image and a confirmation (Ben, 03/10). */
-export function LinkedinPublish({ postId }: { postId: number }) {
+export function LinkedinPublish({ postId, images = [] }: { postId: number; images?: Array<{ id: number; headline: string }> }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string; url?: string } | null>(null);
@@ -29,7 +29,14 @@ export function LinkedinPublish({ postId }: { postId: number }) {
       }}
     >
       <input type="hidden" name="postId" value={postId} />
-      <label className="flex flex-col gap-1">Image, facultative (JPG ou PNG, 4 Mo au plus)
+      {images.length > 0 && (
+        <label className="flex flex-col gap-1">Visuel généré
+          <select name="imageId" defaultValue={images[0].id} className="rounded-lg border border-line bg-white px-3 py-2 text-base">
+            <option value="">Aucun</option>
+            {images.map((i) => <option key={i.id} value={i.id}>Visuel n° {i.id}{i.headline ? ` · ${i.headline}` : ""}</option>)}
+          </select></label>
+      )}
+      <label className="flex flex-col gap-1">{images.length > 0 ? "Ou votre propre image (elle remplace le visuel généré)" : "Image, facultative"} (JPG ou PNG, 4 Mo au plus)
         <input type="file" name="image" accept="image/jpeg,image/png" className="text-sm" /></label>
       <p className="text-muted">Le texte part tel qu&apos;il est dans la bibliothèque, avec son lien suivi, sur votre profil, en public.</p>
       <div className="flex flex-wrap gap-2">

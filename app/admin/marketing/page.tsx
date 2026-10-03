@@ -3,10 +3,12 @@ import Link from "next/link";
 
 import { CopyButton, Studio } from "@/components/admin/marketing/Studio";
 import { FollowupRow } from "@/components/admin/marketing/FollowupRow";
+import { ImagePanel } from "@/components/admin/marketing/ImagePanel";
 import { LinkedinPublish } from "@/components/admin/marketing/LinkedinPublish";
 import { VideoPanel } from "@/components/admin/marketing/VideoPanel";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { cockpit, cohortFacts, followupSegments, libraryWithResults, marketingCohorts, recentPosts } from "@/lib/marketing/data";
+import { CANVAS, defaultKeyword } from "@/lib/marketing/brand";
 import { CHANNELS, DESTINATIONS, FORMATS, MIN_SAMPLE_FOR_STATS, PILLARS, editorialBalance, pillarOf } from "@/lib/marketing/plan";
 import { linkedinStatus } from "@/lib/linkedin";
 import { minimaxEnabled } from "@/lib/minimax";
@@ -126,12 +128,13 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
                 <p className="mt-1 line-clamp-3 whitespace-pre-line text-ink-2">{p.text}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <CopyButton value={p.text} label="Copier" />
-                  {p.channel === "linkedin" && linkedin.state === "connected" && !p.linkedinUrn && <LinkedinPublish postId={p.id} />}
+                  {p.channel === "linkedin" && linkedin.state === "connected" && !p.linkedinUrn && <LinkedinPublish postId={p.id} images={p.images.map((i) => ({ id: i.id, headline: i.headline }))} />}
                   {p.linkedinUrn && <a href={`https://www.linkedin.com/feed/update/${p.linkedinUrn}/`} target="_blank" rel="noopener" className={ghost}>Voir sur LinkedIn</a>}
                   <form action={togglePublished}><input type="hidden" name="postId" value={p.id} /><button className={ghost}>{p.publishedAt ? `Publié le ${p.publishedAt.toLocaleDateString("fr-FR")}` : "Marquer publié"}</button></form>
                   <form action={deletePost}><input type="hidden" name="postId" value={p.id} /><button className={ghost} aria-label="Supprimer"><Trash2 className="size-4" aria-hidden /></button></form>
                 </div>
-                {p.channel === "tiktok" && minimaxEnabled() && <VideoPanel postId={p.id} defaultPrompt={openingPrompt(p.video)} initial={p.videos.map((v) => ({ id: v.id, status: v.status, error: v.error, prompt: v.prompt, ready: Boolean(v.blobPathname), createdAt: v.createdAt.toISOString() }))} />}
+                {minimaxEnabled() && <ImagePanel postId={p.id} size={canvasLabel(p.channel)} defaults={imageDefaults(p.visualBrief)} initial={p.images.map((i) => ({ id: i.id, headline: i.headline, createdAt: i.createdAt.toISOString() }))} />}
+                {p.channel === "tiktok" && minimaxEnabled() && <VideoPanel postId={p.id} defaultPrompt={openingPrompt(p.video)} images={p.images.map((i) => ({ id: i.id, headline: i.headline }))} initial={p.videos.map((v) => ({ id: v.id, status: v.status, error: v.error, prompt: v.prompt, ready: Boolean(v.blobPathname), createdAt: v.createdAt.toISOString() }))} />}
               </li>
             ))}
           </ul>
@@ -184,3 +187,19 @@ function Kpi({ value, label }: { value: string; label: string }) {
 
 const h2 = "flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase";
 const ghost = "inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold";
+
+/** The image panel's starting values, from the post's visual brief. */
+function imageDefaults(visualBrief: string): { scene: string; headline: string; keyword: string } {
+  try {
+    const v = JSON.parse(visualBrief) as { scene?: string; onScreenText?: string; imagePrompt?: string };
+    const headline = (v.onScreenText ?? "").replace(/^[«"“]\s*|\s*[»"”]$/g, "").slice(0, 70);
+    return { scene: v.imagePrompt || v.scene || "", headline, keyword: defaultKeyword(headline) };
+  } catch {
+    return { scene: "", headline: "", keyword: "" };
+  }
+}
+
+function canvasLabel(channel: string): string {
+  const c = CANVAS[channel as keyof typeof CANVAS] ?? CANVAS.linkedin;
+  return `${c.width} × ${c.height}`;
+}

@@ -1,6 +1,7 @@
 import { get, put } from "@vercel/blob";
 
 import { prisma } from "@/lib/db";
+import { brandedImagePrompt, brandedVideoPrompt } from "@/lib/marketing/brand";
 
 /**
  * MiniMax text-to-video for the TikTok posts (Ben, 03/10), over plain
@@ -17,6 +18,7 @@ const config = () => ({
   baseUrl: (process.env.MINIMAX_BASE_URL ?? "https://api.minimax.io").replace(/\/$/, ""),
   model: process.env.MINIMAX_VIDEO_MODEL ?? "MiniMax-Hailuo-02",
   resolution: process.env.MINIMAX_VIDEO_RESOLUTION ?? "768P",
+  imageModel: process.env.MINIMAX_IMAGE_MODEL ?? "image-01",
 });
 
 export const CLIP_SECONDS = 6;
@@ -31,12 +33,12 @@ type BaseResp = { status_code?: number; status_msg?: string };
 
 class MinimaxError extends Error {}
 
-async function call<T extends { base_resp?: BaseResp }>(path: string, init: RequestInit = {}): Promise<T> {
+async function call<T extends { base_resp?: BaseResp }>(path: string, init: RequestInit = {}, timeoutMs = 20_000): Promise<T> {
   const { apiKey, baseUrl } = config();
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
-    signal: AbortSignal.timeout(20_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   const text = await response.text();
   let data: T;
@@ -67,14 +69,24 @@ export function mapStatus(status: string | undefined): "queued" | "processing" |
   }
 }
 
-/** Starts one clip for a post. */
-export async function startVideo(postId: number, prompt: string): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+/**
+ * Starts one clip for a post. The brand's film rules are added to Ben's
+ * prompt (lib/marketing/brand.ts); a first frame, when given, is one of the
+ * post's generated photographs, so the clip opens on the brand's image.
+ */
+export async function startVideo(postId: number, prompt: string, firstFrame?: { bytes: Uint8Array; type: string } | null): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
   if (!minimaxEnabled()) return { ok: false, error: "La clé MINIMAX_API_KEY n'est pas configurée sur Vercel." };
   const { model, resolution } = config();
   try {
     const task = await call<{ task_id: string; base_resp?: BaseResp }>("/v1/video_generation", {
       method: "POST",
-      body: JSON.stringify({ model, prompt, duration: CLIP_SECONDS, resolution }),
+      body: JSON.stringify({
+        model,
+        prompt: brandedVideoPrompt(prompt),
+        duration: CLIP_SECONDS,
+        resolution,
+        ...(firstFrame ? { first_frame_image: `data:${firstFrame.type};base64,${Buffer.from(firstFrame.bytes).toString("base64")}` } : {}),
+      }),
     });
     const row = await prisma.marketingVideo.create({ data: { postId, prompt, model, duration: CLIP_SECONDS, taskId: task.task_id } });
     return { ok: true, id: row.id };
@@ -127,8 +139,39 @@ export async function syncPendingVideos(now = new Date()): Promise<number> {
   return pending.length;
 }
 
-/** The MP4 bytes of a finished clip, for the admin-only download route. */
-export async function readVideo(pathname: string): Promise<ReadableStream<Uint8Array> | null> {
+/** The bytes of a stored file (clip or image), for the admin-only routes. */
+export async function readStored(pathname: string): Promise<ReadableStream<Uint8Array> | null> {
   const result = await get(pathname, { access: "private" });
   return result && result.statusCode === 200 ? result.stream : null;
+}
+
+export async function readBytes(pathname: string): Promise<Uint8Array | null> {
+  const stream = await readStored(pathname);
+  return stream ? new Uint8Array(await new Response(stream).arrayBuffer()) : null;
+}
+
+/**
+ * One photograph (Ben, 03/10): the scene wrapped in the brand's photography
+ * rules, no text drawn by the model. Synchronous on MiniMax's side (a few
+ * seconds to a minute). MiniMax's own prompt rewriting stays off, so the
+ * brand rules reach the model as written.
+ */
+export async function generatePhoto(scene: string, aspectRatio: string): Promise<{ ok: true; bytes: Uint8Array; type: string; prompt: string; model: string } | { ok: false; error: string }> {
+  if (!minimaxEnabled()) return { ok: false, error: "La clé MINIMAX_API_KEY n'est pas configurée sur Vercel." };
+  const { imageModel } = config();
+  const prompt = brandedImagePrompt(scene);
+  try {
+    const result = await call<{ data?: { image_base64?: string[] }; metadata?: { failed_count?: string | number }; base_resp?: BaseResp }>(
+      "/v1/image_generation",
+      { method: "POST", body: JSON.stringify({ model: imageModel, prompt, aspect_ratio: aspectRatio, response_format: "base64", n: 1, prompt_optimizer: false }) },
+      90_000,
+    );
+    const b64 = result.data?.image_base64?.[0];
+    if (!b64) return { ok: false, error: "MiniMax n'a pas rendu d'image (scène refusée par son filtre ?) : reformulez la scène." };
+    const bytes = new Uint8Array(Buffer.from(b64, "base64"));
+    return { ok: true, bytes, type: bytes[0] === 0x89 ? "image/png" : "image/jpeg", prompt, model: imageModel };
+  } catch (error) {
+    console.error("[minimax] image", error);
+    return { ok: false, error: error instanceof Error ? error.message : "La génération de l'image a échoué." };
+  }
 }

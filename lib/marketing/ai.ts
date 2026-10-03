@@ -29,7 +29,7 @@ Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien
 
 ${ART_DIRECTION}
 
-Pour chaque variante, donne un brief visuel court et concret qui respecte strictement cette direction artistique : ce qu'on voit, le texte à l'écran (5 à 8 mots), le cadrage.
+Pour chaque variante, donne un brief visuel court et concret qui respecte strictement cette direction artistique : ce qu'on voit, le texte à l'écran (5 à 8 mots, un mot ou un chiffre fort à mettre en vert), le cadrage, et la description en anglais de la photographie seule pour le générateur d'images (personnes fictives : jamais Ben, jamais un élève présenté comme réel).
 Pour TikTok : un storyboard de 3 à 6 plans (durée, image, voix off, texte à l'écran) pour 15 à 30 secondes, et un prompt texte-vers-vidéo en anglais pour MiniMax (un seul plan de 6 secondes, le plan d'ouverture, avec les mouvements de caméra entre crochets comme [Push in] ou [Tracking shot], sans texte à l'écran, sans logo). Pour les autres canaux : storyboard vide et prompt vide.
 Les trois variantes doivent être vraiment différentes (accroche, structure, ton), pas trois reformulations.`;
 
@@ -44,7 +44,8 @@ export type Variant = {
   title: string;
   text: string;
   hashtags: string[];
-  visual: { format: string; scene: string; onScreenText: string; direction: string };
+  /** imagePrompt: the photograph alone, in English, for MiniMax (absent on posts kept before 03/10). */
+  visual: { format: string; scene: string; onScreenText: string; direction: string; imagePrompt?: string };
   video: { scenes: Array<{ seconds: number; image: string; voiceover: string; onScreen: string }>; minimaxPrompt: string };
 };
 
@@ -66,12 +67,13 @@ const VARIANTS_SCHEMA = {
           visual: {
             type: "object",
             additionalProperties: false,
-            required: ["format", "scene", "onScreenText", "direction"],
+            required: ["format", "scene", "onScreenText", "direction", "imagePrompt"],
             properties: {
               format: { type: "string" },
               scene: { type: "string" },
               onScreenText: { type: "string" },
               direction: { type: "string", description: "Rappel en une phrase des choix de la direction artistique appliqués." },
+              imagePrompt: { type: "string", description: "La photographie seule, en anglais, pour le générateur d'images : qui (âge, genre, tenue), ce qu'il fait, où, cadrage, lumière. 40 à 80 mots. Aucun texte, logo ni écran lisible : le titre est ajouté ensuite par l'application." },
             },
           },
           video: {

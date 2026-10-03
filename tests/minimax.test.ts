@@ -7,7 +7,7 @@ vi.mock("@/lib/db", () => ({ prisma: db }));
 const blob = vi.hoisted(() => ({ put: vi.fn(), get: vi.fn() }));
 vi.mock("@vercel/blob", () => blob);
 
-import { GIVE_UP_MINUTES, mapStatus, startVideo, syncVideo } from "@/lib/minimax";
+import { GIVE_UP_MINUTES, generatePhoto, mapStatus, startVideo, syncVideo } from "@/lib/minimax";
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 const ok = { base_resp: { status_code: 0, status_msg: "success" } };
@@ -39,7 +39,13 @@ describe("MiniMax (Ben, 03/10)", () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("https://api.minimax.io/v1/video_generation");
     expect(init.headers.Authorization).toBe("Bearer test-key");
-    expect(JSON.parse(init.body)).toEqual({ model: "MiniMax-Hailuo-02", prompt: "Slow push in on a security manager", duration: 6, resolution: "768P" });
+    const body = JSON.parse(init.body);
+    expect(body).toMatchObject({ model: "MiniMax-Hailuo-02", duration: 6, resolution: "768P" });
+    // Ben's prompt first, then the brand's film rules.
+    expect(body.prompt).toMatch(/^Slow push in on a security manager\n\n/);
+    expect(body.prompt).toMatch(/night-blue/);
+    expect(body.prompt).toMatch(/no text/);
+    expect(body.first_frame_image).toBeUndefined();
     expect(db.marketingVideo.create).toHaveBeenCalledWith({ data: expect.objectContaining({ postId: 3, taskId: "t1" }) });
   });
 
@@ -70,5 +76,28 @@ describe("MiniMax (Ben, 03/10)", () => {
     await syncVideo(9);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(db.marketingVideo.update).toHaveBeenCalledWith({ where: { id: 9 }, data: expect.objectContaining({ status: "failed" }) });
+  });
+  it("une image de départ ouvre le plan sur la photo du visuel", async () => {
+    fetchMock.mockResolvedValueOnce(json({ task_id: "t2", ...ok }));
+    db.marketingVideo.create.mockResolvedValueOnce({ id: 10 });
+    await startVideo(3, "Slow push in on a security manager", { bytes: new Uint8Array([0xff, 0xd8, 1]), type: "image/jpeg" });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).first_frame_image).toBe("data:image/jpeg;base64,/9gB");
+  });
+
+  it("génère une photo dans la charte, sans texte, au bon format", async () => {
+    fetchMock.mockResolvedValueOnce(json({ data: { image_base64: [Buffer.from([0xff, 0xd8, 0xff]).toString("base64")] }, ...ok }));
+    const result = await generatePhoto("A security manager reviews a risk register with her team", "3:4");
+    expect(result).toMatchObject({ ok: true, type: "image/jpeg", model: "image-01" });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.minimax.io/v1/image_generation");
+    const body = JSON.parse(init.body);
+    expect(body).toMatchObject({ model: "image-01", aspect_ratio: "3:4", response_format: "base64", n: 1, prompt_optimizer: false });
+    expect(body.prompt).toMatch(/^A security manager reviews a risk register/);
+    expect(body.prompt).toMatch(/Strictly no text/);
+  });
+
+  it("une image refusée par MiniMax donne un message clair", async () => {
+    fetchMock.mockResolvedValueOnce(json({ data: { image_base64: [] }, metadata: { failed_count: "1" }, ...ok }));
+    expect(await generatePhoto("A scene long enough", "1:1")).toMatchObject({ ok: false, error: expect.stringMatching(/reformulez/) });
   });
 });
