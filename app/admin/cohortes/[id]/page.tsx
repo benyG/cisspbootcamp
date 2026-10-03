@@ -20,10 +20,10 @@ export default async function CohortPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; erreur?: string; envoi?: string }>;
+  searchParams: Promise<{ ok?: string; erreur?: string; envoi?: string; arenvoyer?: string }>;
 }) {
   const { id } = await params;
-  const { ok, erreur, envoi } = await searchParams;
+  const { ok, erreur, envoi, arenvoyer } = await searchParams;
   await syncCohortStatuses();
   const cohort = await prisma.cohort.findUnique({
     where: { id: Number(id) },
@@ -67,6 +67,7 @@ export default async function CohortPage({
       <Link href="/admin/cohortes" className="text-sm text-[var(--color-muted)]">← Cohortes</Link>
       <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><GraduationCap className="size-6 shrink-0 text-accent" aria-hidden />{cohort.name}</h1>
       {ok && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Enregistré.</p>}
+      {arenvoyer && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Nouvelle date de début : {arenvoyer} invitation{Number(arenvoyer) > 1 ? "s" : ""} Meet déjà envoyée{Number(arenvoyer) > 1 ? "s sont" : " est"} encore à l&apos;ancienne date. Ouvrez <Link href={`/admin/cohortes/${id}/sessions`} className="underline">Sessions en ligne</Link> et envoyez une nouvelle invitation pour chaque jour marqué « À renvoyer » : l&apos;ancienne sera annulée.</p>}
       {erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{erreur}</p>}
       {envoi && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{envoi}</p>}
 

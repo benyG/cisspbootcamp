@@ -67,6 +67,7 @@ export async function updateCohort(formData: FormData): Promise<void> {
   });
   if (!existing) redirect("/admin/cohortes");
 
+  let moved = 0;
   // Started (Ben, 03/10): only the name can change; the reading plan, the
   // Meet sessions and the e-mails already sent depend on the rest.
   if (cohortHasStarted(existing, now)) {
@@ -76,16 +77,16 @@ export async function updateCohort(formData: FormData): Promise<void> {
   } else {
     if (!parsed.success) fail(parsed.error.issues[0]?.message ?? "Données invalides");
     const data = parsed.data!;
-    if (data.startsAt.getTime() !== existing.startsAt.getTime() && existing._count.sessions > 0) {
-      fail("Des invitations Meet sont déjà parties pour ces dates : la date de début ne peut plus changer.");
-    }
+    // Invitations already sent stay on the old days: the sessions page flags
+    // them, and Ben replaces each one (new event, old one cancelled).
+    if (data.startsAt.getTime() !== existing.startsAt.getTime() && existing._count.sessions > 0) moved = existing._count.sessions;
     const status = automaticCohortStatus({ ...data, paid: existing._count.registrations }, now);
     await prisma.cohort.update({ where: { id: id.data }, data: { ...data, status: status as never } });
   }
   revalidatePath("/admin/cohortes");
   revalidatePath(`/admin/cohortes/${id.data}`);
   revalidateTag(COHORTS_CACHE_TAG);
-  redirect(`/admin/cohortes/${id.data}?ok=1`);
+  redirect(`/admin/cohortes/${id.data}?ok=1${moved ? `&arenvoyer=${moved}` : ""}`);
 }
 
 /**

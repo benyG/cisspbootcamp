@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SendRemaining, SessionComposer } from "@/components/admin/sessions/SessionComposer";
-import { SESSION_TIMEZONE, isWeekendDay, sessionDefaults, sessionSlot } from "@/lib/cohort-sessions";
+import { SESSION_TIMEZONE, isSessionOutdated, isWeekendDay, sessionDefaults, sessionSlot } from "@/lib/cohort-sessions";
 import { cohortPlan, sessionParticipants } from "@/lib/cohort-sessions-send";
 
 export const dynamic = "force-dynamic";
@@ -50,8 +50,9 @@ export default async function CohortSessionsPage({ params, searchParams }: { par
           <ul className="grid gap-1">
             {days.map((d) => {
               const sent = sentByDay.get(d.n);
-              const state = d.rest ? "Repos" : sent ? "Envoyée" : d.date === today ? "Aujourd’hui" : d.date < today ? "Passée" : "À préparer";
-              const tone = d.rest ? "bg-amber-50 text-amber-800" : sent ? "bg-accent-soft text-accent-ink" : d.date === today ? "bg-ink text-white" : "bg-slate-100 text-muted";
+              const outdated = sent ? isSessionOutdated(sent, d.date) : false;
+              const state = d.rest ? "Repos" : outdated ? "À renvoyer" : sent ? "Envoyée" : d.date === today ? "Aujourd’hui" : d.date < today ? "Passée" : "À préparer";
+              const tone = d.rest ? "bg-amber-50 text-amber-800" : outdated ? "bg-amber-100 text-amber-900" : sent ? "bg-accent-soft text-accent-ink" : d.date === today ? "bg-ink text-white" : "bg-slate-100 text-muted";
               const row = (
                 <span className="grid grid-cols-[38px_minmax(0,1fr)_auto] items-center gap-2">
                   <span className="text-base font-extrabold">J{d.n}</span>
@@ -83,7 +84,7 @@ export default async function CohortSessionsPage({ params, searchParams }: { par
             cohortId={cohort.id}
             session={selected}
             participants={participants.map((p) => ({ id: p.id, firstName: p.firstName, lastName: p.lastName, country: p.country }))}
-            sent={record ? { startsAt: record.startsAt.toISOString(), endsAt: record.endsAt.toISOString(), meetUrl: record.meetUrl, invitedCount: record.invitedCount, guestEmail: record.guestEmail, reminder: record.reminder, pause: record.pauseMinutes, start: clock(record.startsAt), sentAt: (record.sentAt ?? record.createdAt).toISOString() } : null}
+            sent={record ? { startsAt: record.startsAt.toISOString(), endsAt: record.endsAt.toISOString(), meetUrl: record.meetUrl, invitedCount: record.invitedCount, guestEmail: record.guestEmail, reminder: record.reminder, pause: record.pauseMinutes, start: clock(record.startsAt), sentAt: (record.sentAt ?? record.createdAt).toISOString(), outdated: isSessionOutdated(record, selected.date) } : null}
             planUrl={planUrl}
             defaults={sessionDefaults(selected.date)}
             weekend={isWeekendDay(selected.date)}

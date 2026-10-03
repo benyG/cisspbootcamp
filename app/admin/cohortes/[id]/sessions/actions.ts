@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { isClock } from "@/lib/cohort-sessions";
-import { type SessionResult, moveCohortSession, resendCohortSession, sendCohortSession, sendRemainingSessions } from "@/lib/cohort-sessions-send";
+import { type SessionResult, moveCohortSession, reissueCohortSession, resendCohortSession, sendCohortSession, sendRemainingSessions } from "@/lib/cohort-sessions-send";
 
 async function requireAdmin() {
   const session = await auth();
@@ -52,6 +52,15 @@ export async function sendRemainingAction(input: { cohortId: number }): Promise<
   const parsed = z.object({ cohortId: id }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "Demande invalide." };
   const result = await sendRemainingSessions(parsed.data.cohortId);
+  refresh(parsed.data.cohortId);
+  return result;
+}
+
+export async function reissueSessionAction(input: { cohortId: number; day: number; start: string; pause: number }): Promise<SessionResult> {
+  await requireAdmin();
+  const parsed = z.object({ cohortId: id, day: id, start: clock, pause }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Heure de début invalide." };
+  const result = await reissueCohortSession(parsed.data);
   refresh(parsed.data.cohortId);
   return result;
 }
