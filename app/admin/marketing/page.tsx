@@ -4,10 +4,12 @@ import Link from "next/link";
 import { CopyButton, Studio } from "@/components/admin/marketing/Studio";
 import { FollowupRow } from "@/components/admin/marketing/FollowupRow";
 import { LinkedinPublish } from "@/components/admin/marketing/LinkedinPublish";
+import { VideoPanel } from "@/components/admin/marketing/VideoPanel";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { cockpit, cohortFacts, followupSegments, libraryWithResults, marketingCohorts, recentPosts } from "@/lib/marketing/data";
 import { CHANNELS, DESTINATIONS, FORMATS, MIN_SAMPLE_FOR_STATS, PILLARS, editorialBalance, pillarOf } from "@/lib/marketing/plan";
 import { linkedinStatus } from "@/lib/linkedin";
+import { minimaxEnabled } from "@/lib/minimax";
 import { loadMarketingSettings } from "@/lib/marketing/settings";
 import { PROGRAMS } from "@/lib/programs";
 
@@ -129,6 +131,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
                   <form action={togglePublished}><input type="hidden" name="postId" value={p.id} /><button className={ghost}>{p.publishedAt ? `Publié le ${p.publishedAt.toLocaleDateString("fr-FR")}` : "Marquer publié"}</button></form>
                   <form action={deletePost}><input type="hidden" name="postId" value={p.id} /><button className={ghost} aria-label="Supprimer"><Trash2 className="size-4" aria-hidden /></button></form>
                 </div>
+                {p.channel === "tiktok" && minimaxEnabled() && <VideoPanel postId={p.id} defaultPrompt={openingPrompt(p.video)} initial={p.videos.map((v) => ({ id: v.id, status: v.status, error: v.error, prompt: v.prompt, ready: Boolean(v.blobPathname), createdAt: v.createdAt.toISOString() }))} />}
               </li>
             ))}
           </ul>
@@ -164,6 +167,15 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       </section>
     </main>
   );
+}
+
+/** The MiniMax prompt the studio wrote for the opening shot. */
+function openingPrompt(video: string | null): string {
+  try {
+    return (JSON.parse(video ?? "{}") as { minimaxPrompt?: string }).minimaxPrompt ?? "";
+  } catch {
+    return "";
+  }
 }
 
 function Kpi({ value, label }: { value: string; label: string }) {

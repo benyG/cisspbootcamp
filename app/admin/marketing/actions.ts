@@ -12,6 +12,7 @@ import { audienceInsights, cohortFacts, factsForModel, recentPosts, recentTestSt
 import { CHANNELS, DESTINATIONS, FORMATS, PILLARS, POST_CODE_PATTERN, type SegmentKey, newPostCode, pillarOf, trackedLink, withLink } from "@/lib/marketing/plan";
 import { loadMarketingSettings, saveMarketingSettings } from "@/lib/marketing/settings";
 import { MAX_IMAGE_BYTES, publishOnLinkedin } from "@/lib/linkedin";
+import { startVideo, syncVideo } from "@/lib/minimax";
 import { sendEmail } from "@/lib/messaging/email";
 import { recommendedService, serviceDefinition } from "@/lib/services";
 
@@ -259,4 +260,32 @@ export async function publishPostOnLinkedin(formData: FormData): Promise<{ ok: t
     console.error("[linkedin] publication", error);
     return { ok: false, error: error instanceof Error ? error.message : "Publication refusée par LinkedIn." };
   }
+}
+
+export type VideoRow = { id: number; status: string; error: string | null; prompt: string; ready: boolean; createdAt: string };
+
+async function videosOf(postId: number): Promise<VideoRow[]> {
+  const rows = await prisma.marketingVideo.findMany({ where: { postId }, orderBy: { createdAt: "desc" }, take: 12 });
+  return rows.map((v) => ({ id: v.id, status: v.status, error: v.error, prompt: v.prompt, ready: Boolean(v.blobPathname), createdAt: v.createdAt.toISOString() }));
+}
+
+/** Starts one 6-second MiniMax clip for a TikTok post (Ben, 03/10). */
+export async function generateVideo(input: { postId: number; prompt: string }): Promise<{ ok: true; videos: VideoRow[] } | { ok: false; error: string }> {
+  await requireAdmin();
+  const parsed = z.object({ postId: id, prompt: z.string().trim().min(20, "Prompt trop court.").max(2000) }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Prompt invalide." };
+  const post = await prisma.marketingPost.findUnique({ where: { id: parsed.data.postId }, select: { id: true } });
+  if (!post) return { ok: false, error: "Post introuvable." };
+  const started = await startVideo(post.id, parsed.data.prompt);
+  if (!started.ok) return started;
+  return { ok: true, videos: await videosOf(post.id) };
+}
+
+/** Checks the pending clips of a post; the page calls it while a clip is being made. */
+export async function refreshVideos(input: { postId: number }): Promise<VideoRow[]> {
+  await requireAdmin();
+  const postId = id.parse(input.postId);
+  const pending = await prisma.marketingVideo.findMany({ where: { postId, status: { in: ["queued", "processing"] } }, select: { id: true } });
+  for (const v of pending) await syncVideo(v.id);
+  return videosOf(postId);
 }
