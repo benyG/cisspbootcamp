@@ -139,3 +139,18 @@ export function calendarMessage(input: { firstName: string; items: Array<{ sessi
     "Ben",
   ].join("\n");
 }
+
+/**
+ * A sent invitation no longer on its plan day (Ben, 03/10: the cohort's
+ * start moved after sending). Compares calendar days in the session's zone.
+ */
+export function isSessionOutdated(sent: { startsAt: Date; timezone: string }, planDate: string): boolean {
+  return sent.startsAt.toLocaleDateString("en-CA", { timeZone: sent.timezone }) !== planDate;
+}
+
+/** The e-mail of a re-issued invitation: says the old one is cancelled. */
+export function reissuedMessage(message: string, session: Session): string {
+  const lines = message.split("\n");
+  lines.splice(2, 0, `L’invitation précédente pour J${session.n} est annulée et retirée de votre agenda : voici la nouvelle, avec un nouveau lien Meet. Seul ce lien compte.`, "");
+  return lines.join("\n");
+}

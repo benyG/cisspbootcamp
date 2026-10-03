@@ -1,6 +1,6 @@
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 
-import { type Gauge, admissionClosesAt, buildGauge, isAdmissionOpen } from "@/lib/cohorts";
+import { type Gauge, admissionClosesAt, automaticCohortStatus, buildGauge, isAdmissionOpen } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 
 /**
@@ -88,4 +88,26 @@ export async function publicCohortSummary(program: "cissp" | "cc" = "cissp"): Pr
   if (!cached) return null;
   const startsAt = new Date(cached.startsAt);
   return { ...cached, startsAt, admissionClosesAt: admissionClosesAt(startsAt) };
+}
+
+/**
+ * Moves every cohort to the status its dates and seats call for (Ben,
+ * 03/10): running on its first day, done after its last, full when the
+ * last seat is paid. Run by the cron every 15 minutes and when Ben opens
+ * the cohorts; a page render cannot revalidate, the cron and actions do.
+ */
+export async function syncCohortStatuses(now = new Date(), opts: { revalidate?: boolean } = {}): Promise<number> {
+  const cohorts = await prisma.cohort.findMany({
+    where: { status: { not: "done" } },
+    select: { id: true, status: true, startsAt: true, endsAt: true, capacity: true, _count: { select: { registrations: { where: { status: "paid" } } } } },
+  });
+  let changed = 0;
+  for (const c of cohorts) {
+    const status = automaticCohortStatus({ ...c, paid: c._count.registrations }, now);
+    if (status === c.status) continue;
+    await prisma.cohort.update({ where: { id: c.id }, data: { status: status as never } });
+    changed++;
+  }
+  if (changed && opts.revalidate) revalidateTag(COHORTS_CACHE_TAG);
+  return changed;
 }

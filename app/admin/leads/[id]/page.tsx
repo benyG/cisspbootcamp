@@ -42,7 +42,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
     include: {
       scannerResponses: { orderBy: { createdAt: "desc" }, take: 1 },
       bookings: { orderBy: { startsAt: "desc" }, take: 5 },
-      registrations: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { name: true, program: true, startsAt: true } } } },
+      registrations: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { id: true, name: true, program: true, startsAt: true } } } },
       serviceOrders: { orderBy: { createdAt: "desc" }, include: { service: { select: { name: true } }, bookings: { where: { status: { in: ["scheduled", "done"] } }, select: { id: true } } } },
       actions: { orderBy: { createdAt: "desc" }, take: 40 },
       practiceTests: { orderBy: { createdAt: "desc" }, take: 5 },
@@ -155,7 +155,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
             <form action={sendOnboarding} className="mt-2 grid gap-2">
               <input type="hidden" name="leadId" value={lead.id} />
               {paidRegistration.cohort.program === "cissp" && (
-                <p className="flex items-center gap-2"><input type="checkbox" checked disabled aria-label="Toujours inclus" /> Plan de lecture interactif <span className="text-muted">(lien, toujours inclus)</span> <a href={`/plan-de-lecture?debut=${planStart(paidRegistration.cohort.startsAt)}`} target="_blank" rel="noopener" className="underline">voir</a></p>
+                <p className="flex items-center gap-2"><input type="checkbox" checked disabled aria-label="Toujours inclus" /> Plan de lecture interactif <span className="text-muted">(lien, toujours inclus)</span> <a href={`/plan-de-lecture?debut=${planStart(paidRegistration.cohort.startsAt)}&cohorte=${paidRegistration.cohort.id}`} target="_blank" rel="noopener" className="underline">voir</a></p>
               )}
               {documents.map((d) => (
                 <label key={d.id} className="flex items-center gap-2"><input type="checkbox" name="documentId" value={d.id} defaultChecked /> {d.name} <span className="text-muted">({formatBytes(d.size)})</span></label>

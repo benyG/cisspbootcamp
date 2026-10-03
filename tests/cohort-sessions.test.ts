@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { calendarMessage, isClock, reminderMessage, sessionDefaults, sessionDescription, sessionMessage, sessionSlot, sessionSubject, slotLabel, zonedInstant } from "@/lib/cohort-sessions";
+import { calendarMessage, isClock, isSessionOutdated, reissuedMessage, reminderMessage, sessionDefaults, sessionDescription, sessionMessage, sessionSlot, sessionSubject, slotLabel, zonedInstant } from "@/lib/cohort-sessions";
 import { buildSessions } from "@/lib/reading-plan/data";
 
 const days = buildSessions("2026-10-03"); // Saturday start, Ben's October cohort
@@ -63,5 +63,22 @@ describe("messages des sessions", () => {
     const cal = calendarMessage({ firstName: "Awa", items: [{ session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/x" }], planUrl });
     expect(cal).toContain("J3 · lundi 5 octobre, de 19 h à 21 h");
     expect(cal).toContain("Lien : https://meet.google.com/x");
+  });
+});
+
+describe("nouvelle invitation après un changement de date (Ben, 03/10)", () => {
+  it("repère une invitation qui n'est plus au jour du plan", () => {
+    const sent = { startsAt: new Date("2026-10-03T14:00:00Z"), timezone: "Africa/Dakar" };
+    expect(isSessionOutdated(sent, "2026-10-03")).toBe(false);
+    expect(isSessionOutdated(sent, "2026-10-04")).toBe(true);
+    // Late evening in Dakar stays on the same day.
+    expect(isSessionOutdated({ startsAt: new Date("2026-10-05T19:00:00Z"), timezone: "Africa/Dakar" }, "2026-10-05")).toBe(false);
+  });
+
+  it("l'e-mail annonce que l'ancienne invitation est annulée", () => {
+    const text = reissuedMessage("Bonjour Awa,\n\nNotre session J1 a lieu…", { n: 1 } as never);
+    expect(text.split("\n")[2]).toMatch(/L’invitation précédente pour J1 est annulée/);
+    expect(text.startsWith("Bonjour Awa,\n\n")).toBe(true);
+    expect(text).toMatch(/Notre session J1 a lieu…$/);
   });
 });

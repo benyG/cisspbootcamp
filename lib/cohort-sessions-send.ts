@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
-import { createSessionEvent, moveCallEvent, setEventAttendees } from "@/lib/calendar/google";
-import { calendarMessage, reminderMessage, SESSION_REMINDER_MINUTES, SESSION_TIMEZONE, sessionDefaults, sessionDescription, sessionMessage, sessionSlot, sessionSubject, sessionSummary } from "@/lib/cohort-sessions";
+import { cancelCallEvent, createSessionEvent, moveCallEvent, setEventAttendees } from "@/lib/calendar/google";
+import { calendarMessage, reissuedMessage, reminderMessage, SESSION_REMINDER_MINUTES, SESSION_TIMEZONE, sessionDefaults, sessionDescription, sessionMessage, sessionSlot, sessionSubject, sessionSummary } from "@/lib/cohort-sessions";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
@@ -19,7 +19,7 @@ export type SessionResult = { ok: true; message: string } | { ok: false; error: 
 export async function cohortPlan(cohortId: number) {
   const cohort = await prisma.cohort.findUnique({ where: { id: cohortId }, include: { sessions: true } });
   if (!cohort) return null;
-  return { cohort, days: buildSessions(planStart(cohort.startsAt)), planUrl: readingPlanUrl(env.NEXT_PUBLIC_APP_URL, cohort.startsAt) };
+  return { cohort, days: buildSessions(planStart(cohort.startsAt)), planUrl: readingPlanUrl(env.NEXT_PUBLIC_APP_URL, cohort.startsAt, cohort.id) };
 }
 
 /** Paid participants, one per person. */
@@ -35,7 +35,9 @@ export async function sessionParticipants(cohortId: number) {
 
 type SendInput = { cohortId: number; day: number; start: string; pause: number; guestEmail: string | null; reminder: boolean; excludeLeadIds: number[] };
 
-async function createAndInvite(plan: NonNullable<Awaited<ReturnType<typeof cohortPlan>>>, session: Session, input: SendInput, participants: Awaited<ReturnType<typeof sessionParticipants>>, personalEmail: boolean) {
+async function createAndInvite(plan: NonNullable<Awaited<ReturnType<typeof cohortPlan>>>, session: Session, input: SendInput, participants: Awaited<ReturnType<typeof sessionParticipants>>, personalEmail: boolean, reissue = false) {
+  const subjectOf = (startsAt: Date) => (reissue ? `Nouvelle invitation · ${sessionSubject(session, startsAt)}` : sessionSubject(session, startsAt));
+  const textOf = (text: string) => (reissue ? reissuedMessage(text, session) : text);
   const { startsAt, endsAt } = sessionSlot(session, input.start, input.pause, SESSION_TIMEZONE);
   const attendees = [...participants.map((p) => ({ email: p.email, name: `${p.firstName} ${p.lastName}`.trim() })), ...(input.guestEmail ? [{ email: input.guestEmail }] : [])];
   const event = await createSessionEvent({
@@ -57,13 +59,13 @@ async function createAndInvite(plan: NonNullable<Awaited<ReturnType<typeof cohor
     for (const p of participants) {
       const result = await sendEmail({
         to: p.email,
-        subject: sessionSubject(session, startsAt),
-        text: sessionMessage({ firstName: p.firstName, session, startsAt, endsAt, meetUrl: event.meetUrl, planUrl: plan.planUrl }),
+        subject: subjectOf(startsAt),
+        text: textOf(sessionMessage({ firstName: p.firstName, session, startsAt, endsAt, meetUrl: event.meetUrl, planUrl: plan.planUrl })),
       });
       if (result.sent) emailed++;
     }
     if (input.guestEmail) {
-      await sendEmail({ to: input.guestEmail, subject: sessionSubject(session, startsAt), text: sessionMessage({ firstName: "", session, startsAt, endsAt, meetUrl: event.meetUrl, planUrl: plan.planUrl }).replace("Bonjour ,", "Bonjour,") });
+      await sendEmail({ to: input.guestEmail, subject: subjectOf(startsAt), text: textOf(sessionMessage({ firstName: "", session, startsAt, endsAt, meetUrl: event.meetUrl, planUrl: plan.planUrl }).replace("Bonjour ,", "Bonjour,")) });
     }
   }
   if (participants.length) {
@@ -134,6 +136,45 @@ export async function moveCohortSession(input: { cohortId: number; day: number; 
   }
   await prisma.cohortSession.update({ where: { id: record.id }, data: { startsAt, endsAt, pauseMinutes: input.pause, remindedAt: null } });
   return { ok: true, message: `J${input.day} déplacée : Google Agenda prévient chaque invité, le lien Meet reste le même.` };
+}
+
+/**
+ * A new invitation for a sent day (Ben, 03/10), typically after the
+ * cohort's start moved: a new event and Meet link on the plan's current
+ * day, at the hours given, to every paid participant (and the guest);
+ * then the old event is cancelled, which Google removes from each
+ * guest's calendar with a notice. New first, so nobody is left without.
+ */
+export async function reissueCohortSession(input: { cohortId: number; day: number; start: string; pause: number }): Promise<SessionResult> {
+  const plan = await cohortPlan(input.cohortId);
+  const record = plan?.cohort.sessions.find((s) => s.day === input.day && s.sentAt);
+  const session = plan?.days.find((d) => d.n === input.day);
+  if (!plan || !record || !session || session.rest) return { ok: false, error: "Session introuvable." };
+  const participants = await sessionParticipants(input.cohortId);
+  if (participants.length === 0 && !record.guestEmail) return { ok: false, error: "Personne à inviter : aucun participant payé." };
+  const oldEventId = record.googleEventId;
+  let sent: Awaited<ReturnType<typeof createAndInvite>>;
+  try {
+    sent = await createAndInvite(plan, session, { ...input, guestEmail: record.guestEmail, reminder: record.reminder, excludeLeadIds: [] }, participants, true, true);
+  } catch (error) {
+    console.error("[sessions] réémission", error);
+    return { ok: false, error: `Google Agenda a refusé la nouvelle invitation : ${error instanceof Error ? error.message : "erreur inconnue"}. L'ancienne est intacte.` };
+  }
+  let cancelled = true;
+  if (oldEventId) {
+    try {
+      await cancelCallEvent(oldEventId);
+    } catch (error) {
+      // Already deleted by hand (404/410) is fine; anything else is reported.
+      cancelled = /→ (404|410)/.test(error instanceof Error ? error.message : "");
+      if (!cancelled) console.error("[sessions] annulation de l'ancienne invitation", error);
+    }
+  }
+  const who = participants.length + (record.guestEmail ? 1 : 0);
+  return {
+    ok: true,
+    message: `Nouvelle invitation J${session.n} envoyée à ${who} personne(s)${sent.meetUrl ? ` · ${sent.meetUrl}` : ""}. ${cancelled ? "L'ancienne est annulée et retirée de leur agenda." : "L'ancienne n'a pas pu être annulée : supprimez-la dans Google Agenda."}`,
+  };
 }
 
 /** Re-sends the e-mail, and invites participants who paid since the first sending. */

@@ -4,12 +4,12 @@ import { CalendarCheck, Send, Video } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { moveSessionAction, resendSessionAction, sendRemainingAction, sendSessionAction } from "@/app/admin/cohortes/[id]/sessions/actions";
+import { moveSessionAction, reissueSessionAction, resendSessionAction, sendRemainingAction, sendSessionAction } from "@/app/admin/cohortes/[id]/sessions/actions";
 import { SESSION_TIMEZONE_LABEL, sessionMessage, sessionSlot, sessionSubject, slotLabel } from "@/lib/cohort-sessions";
 import type { Session } from "@/lib/reading-plan/data";
 
 type Participant = { id: number; firstName: string; lastName: string; country: string };
-type Sent = { startsAt: string; endsAt: string; meetUrl: string | null; invitedCount: number; guestEmail: string | null; reminder: boolean; pause: number; start: string; sentAt: string };
+type Sent = { startsAt: string; endsAt: string; meetUrl: string | null; invitedCount: number; guestEmail: string | null; reminder: boolean; pause: number; start: string; sentAt: string; outdated: boolean };
 
 /**
  * One day of the cohort (Ben, 02/10): hours, guests, the message as each
@@ -24,6 +24,7 @@ export function SessionComposer({ cohortId, session, participants, sent, planUrl
   const [reminder, setReminder] = useState(true);
   const [excluded, setExcluded] = useState<number[]>([]);
   const [confirming, setConfirming] = useState(false);
+  const [reissuing, setReissuing] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, run] = useTransition();
 
@@ -37,6 +38,7 @@ export function SessionComposer({ cohortId, session, participants, sent, planUrl
       const r = await fn();
       setResult(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.error });
       setConfirming(false);
+      setReissuing(false);
       if (r.ok) router.refresh();
     });
 
@@ -53,15 +55,28 @@ export function SessionComposer({ cohortId, session, participants, sent, planUrl
       </div>
 
       {sent ? (
-        <div className="rounded-lg bg-accent-soft p-3 text-sm">
+        <div className={"rounded-lg p-3 text-sm " + (sent.outdated ? "bg-amber-50" : "bg-accent-soft")}>
+          {sent.outdated && <p className="mb-2 font-semibold text-amber-900">Cette invitation n&apos;est plus à la bonne date : la cohorte a changé de date de début, J{session.n} tombe maintenant le {slotLabel(slot.startsAt, slot.endsAt).split(",")[0]}. Envoyez une nouvelle invitation ci-dessous.</p>}
           <p className="flex items-center gap-1.5 font-semibold text-accent-ink"><CalendarCheck className="size-4" aria-hidden />Invitation envoyée le {new Date(sent.sentAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} à {sent.invitedCount} personne{sent.invitedCount > 1 ? "s" : ""}</p>
           <p className="mt-1">{slotLabel(new Date(sent.startsAt), new Date(sent.endsAt))}{sent.reminder ? " · rappel 1 h avant" : ""}{sent.guestEmail ? ` · invité : ${sent.guestEmail}` : ""}</p>
           {sent.meetUrl && <p className="mt-1 flex items-center gap-1.5"><Video className="size-4" aria-hidden /><a href={sent.meetUrl} target="_blank" rel="noopener" className="font-mono underline">{sent.meetUrl.replace("https://", "")}</a></p>}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" disabled={pending} onClick={() => act(() => moveSessionAction({ cohortId, day: session.n, start, pause }))} className={ghost}>Déplacer à l&apos;heure ci-dessus</button>
-            <button type="button" disabled={pending} onClick={() => act(() => resendSessionAction({ cohortId, day: session.n }))} className={ghost}>Renvoyer le lien</button>
-          </div>
-          <p className="mt-2 text-xs text-muted">Déplacer : Google Agenda prévient chaque invité, le lien Meet ne change pas. Renvoyer : l&apos;e-mail repart, et les inscrits arrivés depuis sont ajoutés à l&apos;invitation.</p>
+          {reissuing ? (
+            <div className="mt-3 rounded-lg bg-amber-100 p-3 text-amber-950">
+              <p className="font-semibold">Envoyer une nouvelle invitation J{session.n} pour le {slotLabel(slot.startsAt, slot.endsAt)} ?</p>
+              <p>Un nouvel événement et un nouveau lien Meet partent à chaque participant payé{sent.guestEmail ? " et à l’invité" : ""}, avec un e-mail qui l&apos;annonce. Puis l&apos;ancienne invitation est annulée : elle disparaît de leur agenda.</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button type="button" disabled={pending} onClick={() => act(() => reissueSessionAction({ cohortId, day: session.n, start, pause }))} className={primary}><Send className="size-4" aria-hidden />{pending ? "Envoi…" : "Oui, remplacer l’invitation"}</button>
+                <button type="button" disabled={pending} onClick={() => setReissuing(false)} className={ghost}>Annuler</button>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" disabled={pending} onClick={() => setReissuing(true)} className={sent.outdated ? primary : ghost}><Send className="size-4" aria-hidden />Nouvelle invitation{sent.outdated ? " à la bonne date" : ""}</button>
+              {!sent.outdated && <button type="button" disabled={pending} onClick={() => act(() => moveSessionAction({ cohortId, day: session.n, start, pause }))} className={ghost}>Déplacer à l&apos;heure ci-dessus</button>}
+              <button type="button" disabled={pending} onClick={() => act(() => resendSessionAction({ cohortId, day: session.n }))} className={ghost}>Renvoyer le lien</button>
+            </div>
+          )}
+          <p className="mt-2 text-xs text-muted">Nouvelle invitation : nouvel événement et nouveau lien Meet au jour du plan et à l&apos;heure ci-dessus ; l&apos;ancienne est annulée et retirée des agendas. Déplacer : même lien, autre heure le même jour. Renvoyer : l&apos;e-mail repart, et les inscrits arrivés depuis sont ajoutés.</p>
         </div>
       ) : (
         <>

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
-import { COHORT_STATUS_LABEL as STATUS_LABEL, buildGauge } from "@/lib/cohorts";
+import { COHORT_STATUS_LABEL as STATUS_LABEL, MANUAL_COHORT_STATUSES, buildGauge, cohortHasStarted } from "@/lib/cohorts";
+import { syncCohortStatuses } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { PROGRAMS } from "@/lib/programs";
 import { formatUsdCents } from "@/lib/pricing";
@@ -19,10 +20,11 @@ export default async function CohortPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; erreur?: string; envoi?: string }>;
+  searchParams: Promise<{ ok?: string; erreur?: string; envoi?: string; arenvoyer?: string }>;
 }) {
   const { id } = await params;
-  const { ok, erreur, envoi } = await searchParams;
+  const { ok, erreur, envoi, arenvoyer } = await searchParams;
+  await syncCohortStatuses();
   const cohort = await prisma.cohort.findUnique({
     where: { id: Number(id) },
     include: {
@@ -58,11 +60,14 @@ export default async function CohortPage({
     select: { id: true, name: true, startsAt: true, capacity: true, _count: { select: { registrations: { where: { status: "paid" } } } } },
   });
 
+  const locked = cohortHasStarted(cohort, new Date());
+
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin/cohortes" className="text-sm text-[var(--color-muted)]">← Cohortes</Link>
       <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><GraduationCap className="size-6 shrink-0 text-accent" aria-hidden />{cohort.name}</h1>
       {ok && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Enregistré.</p>}
+      {arenvoyer && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Nouvelle date de début : {arenvoyer} invitation{Number(arenvoyer) > 1 ? "s" : ""} Meet déjà envoyée{Number(arenvoyer) > 1 ? "s sont" : " est"} encore à l&apos;ancienne date. Ouvrez <Link href={`/admin/cohortes/${id}/sessions`} className="underline">Sessions en ligne</Link> et envoyez une nouvelle invitation pour chaque jour marqué « À renvoyer » : l&apos;ancienne sera annulée.</p>}
       {erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{erreur}</p>}
       {envoi && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{envoi}</p>}
 
@@ -70,9 +75,14 @@ export default async function CohortPage({
 
       <form action={updateCohort} className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-4">
         <input type="hidden" name="id" value={cohort.id} />
+        {locked && (
+          <p className="col-span-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-ink-2">
+            Cohorte {cohort.status === "done" ? "terminée" : "commencée"} : dates, programme, capacité et statut sont verrouillés (le plan de lecture, les sessions Meet et les e-mails envoyés en dépendent). Seul le nom reste modifiable.
+          </p>
+        )}
         <label className="col-span-2 flex flex-col gap-1 text-sm">
           <span className="font-medium">Programme</span>
-          <select name="program" defaultValue={cohort.program} className={input}>
+          <select name="program" defaultValue={cohort.program} disabled={locked} className={input}>
             {Object.values(PROGRAMS).map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
           </select>
         </label>
@@ -82,22 +92,33 @@ export default async function CohortPage({
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Début</span>
-          <input name="startsAt" type="date" defaultValue={toInputDate(cohort.startsAt)} required className={input} />
+          <input name="startsAt" type="date" defaultValue={toInputDate(cohort.startsAt)} required disabled={locked} className={input} />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Fin</span>
-          <input name="endsAt" type="date" defaultValue={toInputDate(cohort.endsAt)} className={input} />
+          <input name="endsAt" type="date" defaultValue={toInputDate(cohort.endsAt)} disabled={locked} className={input} />
             <span className="text-xs text-[var(--color-muted)]">CISSP : calculée automatiquement (soirs 2 h, mercredi repos, week-ends 5 h 30).</span>
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Capacité</span>
-          <input name="capacity" type="number" min={1} max={100} defaultValue={cohort.capacity} className={input} />
+          <input name="capacity" type="number" min={1} max={100} defaultValue={cohort.capacity} disabled={locked} className={input} />
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Statut</span>
-          <select name="status" defaultValue={cohort.status} className={input}>
-            {Object.entries(STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
+          {locked || cohort.status === "full" ? (
+            <>
+              <input type="hidden" name="status" value="open" />
+              <span className={`${input} bg-slate-50 font-semibold`}>{STATUS_LABEL[cohort.status]}</span>
+              <span className="text-xs text-[var(--color-muted)]">Automatique : {cohort.status === "full" ? "toutes les places sont payées ; repasse en « Inscriptions ouvertes » si une place se libère." : cohort.status === "done" ? "dernier jour passé." : "le premier jour est arrivé ; « Terminée » après le dernier jour."}</span>
+            </>
+          ) : (
+            <>
+              <select name="status" defaultValue={cohort.status} className={input}>
+                {MANUAL_COHORT_STATUSES.map((value) => <option key={value} value={value}>{STATUS_LABEL[value]}</option>)}
+              </select>
+              <span className="text-xs text-[var(--color-muted)]">Ensuite automatique : « Complète » quand la capacité est payée, « En cours » le premier jour, « Terminée » après le dernier.</span>
+            </>
+          )}
         </label>
         <div className="col-span-2 flex justify-end">
           <button type="submit" className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 font-semibold text-white">Enregistrer</button>

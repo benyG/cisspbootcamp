@@ -57,7 +57,7 @@ export async function sendOnboardingDocuments(input: { leadId: number; documentI
     nom: lead.lastName,
     cohorte: registration.cohort.name,
     mois_cohorte: formatCohortMonth(registration.cohort.startsAt),
-    liste_documents: [withReadingPlan ? readingPlanLine(readingPlanUrl(env.NEXT_PUBLIC_APP_URL, registration.cohort.startsAt)) : "", documentList(plan.documents, links)].filter(Boolean).join("\n"),
+    liste_documents: [withReadingPlan ? readingPlanLine(readingPlanUrl(env.NEXT_PUBLIC_APP_URL, registration.cohort.startsAt, registration.cohort.id)) : "", documentList(plan.documents, links)].filter(Boolean).join("\n"),
   };
   const subject = renderTemplate(template?.subject ?? "Bienvenue dans la {{cohorte}} : vos documents de préparation", vars);
   const body =

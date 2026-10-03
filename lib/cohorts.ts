@@ -188,3 +188,31 @@ export function cohortDeletionProblem(input: {
   if (input.target.status === "done") return "La cohorte de destination est terminée.";
   return null;
 }
+
+// --- Automatic status (Ben, 03/10) -----------------------------------------
+
+/** Ben picks only these; "full", "running" and "done" follow from seats and dates. */
+export const MANUAL_COHORT_STATUSES = ["planned", "open"] as const;
+
+/**
+ * A cohort has started from 00:00 UTC of its first day (00:00 in Dakar):
+ * from then on its dates, programme, capacity and status are locked, since
+ * the reading plan, the Meet sessions and the e-mails already sent hang on them.
+ */
+export function cohortHasStarted(cohort: { startsAt: Date; status: string }, now: Date): boolean {
+  return cohort.status === "running" || cohort.status === "done" || now.getTime() >= cohort.startsAt.getTime();
+}
+
+/**
+ * The status a cohort should have now: done once its last day is over,
+ * running from its first day, full when the paid seats reach the capacity
+ * (and open again if a seat frees up before the start). Planned stays
+ * planned until the start: Ben opens sales himself.
+ */
+export function automaticCohortStatus(cohort: { status: string; startsAt: Date; endsAt: Date; capacity: number; paid: number }, now: Date): string {
+  if (now.getTime() >= cohort.endsAt.getTime() + DAY_MS) return "done";
+  if (now.getTime() >= cohort.startsAt.getTime()) return "running";
+  if (cohort.status === "open" && cohort.paid >= cohort.capacity) return "full";
+  if (cohort.status === "full" && cohort.paid < cohort.capacity) return "open";
+  return cohort.status;
+}

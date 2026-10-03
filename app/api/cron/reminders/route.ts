@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { sendDueReminders } from "@/lib/booking";
 import { sendSessionReminders } from "@/lib/cohort-sessions-send";
+import { syncCohortStatuses } from "@/lib/cohorts-admin";
 import { syncPendingVideos } from "@/lib/minimax";
 import { env } from "@/lib/env";
 import { sweepPendingTests } from "@/lib/examboot/service";
@@ -18,6 +19,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [reminders, holds, tests, resultReminders, sessionReminders, videos] = await Promise.all([sendDueReminders(), processSeatHolds(), sweepPendingTests(), sendResultReminders(), sendSessionReminders(), syncPendingVideos()]);
-  return NextResponse.json({ ...reminders, holds, tests, resultReminders, sessionReminders, videos });
+  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts] = await Promise.all([sendDueReminders(), processSeatHolds(), sweepPendingTests(), sendResultReminders(), sendSessionReminders(), syncPendingVideos(), syncCohortStatuses(new Date(), { revalidate: true })]);
+  return NextResponse.json({ ...reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts });
 }
