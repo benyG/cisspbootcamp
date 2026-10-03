@@ -19,7 +19,7 @@ export type SessionResult = { ok: true; message: string } | { ok: false; error: 
 export async function cohortPlan(cohortId: number) {
   const cohort = await prisma.cohort.findUnique({ where: { id: cohortId }, include: { sessions: true } });
   if (!cohort) return null;
-  return { cohort, days: buildSessions(planStart(cohort.startsAt)), planUrl: readingPlanUrl(env.NEXT_PUBLIC_APP_URL, cohort.startsAt) };
+  return { cohort, days: buildSessions(planStart(cohort.startsAt)), planUrl: readingPlanUrl(env.NEXT_PUBLIC_APP_URL, cohort.startsAt, cohort.id) };
 }
 
 /** Paid participants, one per person. */

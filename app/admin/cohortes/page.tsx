@@ -2,8 +2,8 @@ import { GraduationCap } from "lucide-react";
 import Link from "next/link";
 
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
-import { COHORT_STATUS_LABEL as STATUS_LABEL, formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
-import { listCohortsWithGauge } from "@/lib/cohorts-admin";
+import { MANUAL_COHORT_STATUSES, COHORT_STATUS_LABEL as STATUS_LABEL, formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
+import { listCohortsWithGauge, syncCohortStatuses } from "@/lib/cohorts-admin";
 import { PROGRAMS } from "@/lib/programs";
 
 import { createCohort } from "./actions";
@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CohortsPage({ searchParams }: { searchParams: Promise<{ erreur?: string; supprime?: string; vers?: string; n?: string }> }) {
   const { erreur, supprime, vers, n } = await searchParams;
+  await syncCohortStatuses();
   const cohorts = await listCohortsWithGauge();
 
   return (
@@ -70,7 +71,7 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Statut</span>
             <select name="status" defaultValue="planned" className={input}>
-              {Object.entries(STATUS_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              {MANUAL_COHORT_STATUSES.map((value) => <option key={value} value={value}>{STATUS_LABEL[value]}</option>)}
             </select>
           </label>
           <div className="col-span-2 flex justify-end">

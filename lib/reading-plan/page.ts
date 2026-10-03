@@ -37,8 +37,13 @@ export function planStart(startsAt: Date): string {
   return startsAt.toISOString().slice(0, 10);
 }
 
-export function readingPlanUrl(appUrl: string, startsAt: Date): string {
-  return `${appUrl}/plan-de-lecture?debut=${planStart(startsAt)}`;
+/**
+ * The participant's link. With the cohort id, the page reads the cohort's
+ * current start (Ben, 03/10: a start moved after the e-mail went out must
+ * move the plan too); the date stays as the fallback.
+ */
+export function readingPlanUrl(appUrl: string, startsAt: Date, cohortId?: number): string {
+  return `${appUrl}/plan-de-lecture?debut=${planStart(startsAt)}${cohortId ? `&cohorte=${cohortId}` : ""}`;
 }
 
 /**
