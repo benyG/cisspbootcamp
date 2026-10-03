@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { moveSessionAction, reissueSessionAction, resendSessionAction, sendRemainingAction, sendSessionAction } from "@/app/admin/cohortes/[id]/sessions/actions";
-import { SESSION_TIMEZONE_LABEL, sessionMessage, sessionSlot, sessionSubject, slotLabel } from "@/lib/cohort-sessions";
+import { SESSION_TIMEZONE, SESSION_ZONES, convertClock, isSessionZone, sessionMessage, sessionSlot, sessionSubject, slotLabel } from "@/lib/cohort-sessions";
 import type { Session } from "@/lib/reading-plan/data";
 
 type Participant = { id: number; firstName: string; lastName: string; country: string };
-type Sent = { startsAt: string; endsAt: string; meetUrl: string | null; invitedCount: number; guestEmail: string | null; reminder: boolean; pause: number; start: string; sentAt: string; outdated: boolean };
+type Sent = { startsAt: string; endsAt: string; meetUrl: string | null; invitedCount: number; guestEmail: string | null; reminder: boolean; pause: number; start: string; zone: string; sentAt: string; outdated: boolean };
 
 /**
  * One day of the cohort (Ben, 02/10): hours, guests, the message as each
@@ -19,6 +19,14 @@ type Sent = { startsAt: string; endsAt: string; meetUrl: string | null; invitedC
 export function SessionComposer({ cohortId, session, participants, sent, planUrl, defaults, weekend }: { cohortId: number; session: Session; participants: Participant[]; sent: Sent | null; planUrl: string; defaults: { start: string; pause: number }; weekend: boolean }) {
   const router = useRouter();
   const [start, setStart] = useState(sent?.start ?? defaults.start);
+  const [zone, setZone] = useState<string>(sent && isSessionZone(sent.zone) ? sent.zone : SESSION_TIMEZONE);
+  const other = Object.keys(SESSION_ZONES).find((z) => z !== zone) ?? SESSION_TIMEZONE;
+  const zoneLabel = (z: string) => (isSessionZone(z) ? SESSION_ZONES[z].label : z);
+  // Switching zone keeps the same instant: the hour field is converted.
+  const switchZone = (next: string) => {
+    if (/^\d\d:\d\d$/.test(start)) setStart(convertClock(session.date, start, zone, next));
+    setZone(next);
+  };
   const [pause, setPause] = useState(sent?.pause ?? defaults.pause);
   const [guest, setGuest] = useState("");
   const [reminder, setReminder] = useState(true);
@@ -28,7 +36,7 @@ export function SessionComposer({ cohortId, session, participants, sent, planUrl
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, run] = useTransition();
 
-  const slot = sessionSlot(session, /^\d\d:\d\d$/.test(start) ? start : defaults.start, pause);
+  const slot = sessionSlot(session, /^\d\d:\d\d$/.test(start) ? start : defaults.start, pause, zone);
   const invited = participants.filter((p) => !excluded.includes(p.id));
   const count = invited.length + (guest.includes("@") ? 1 : 0);
   const first = invited[0]?.firstName ?? "Prénom";
@@ -45,34 +53,38 @@ export function SessionComposer({ cohortId, session, participants, sent, planUrl
   return (
     <div className="grid gap-4">
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="flex flex-col gap-1 text-sm font-medium">Début ({SESSION_TIMEZONE_LABEL})
+        <label className="flex flex-col gap-1 text-sm font-medium">Heures saisies en
+          <select value={zone} onChange={(e) => switchZone(e.target.value)} className={input}>
+            {Object.entries(SESSION_ZONES).map(([value, z]) => <option key={value} value={value}>{z.label}</option>)}
+          </select></label>
+        <label className="flex flex-col gap-1 text-sm font-medium">Début ({zoneLabel(zone)})
           <input type="time" value={start} onChange={(e) => setStart(e.target.value)} className={input} /></label>
         {weekend && (
           <label className="flex flex-col gap-1 text-sm font-medium">Pause
             <select value={pause} onChange={(e) => setPause(Number(e.target.value))} className={input}>{[0, 30, 45, 60, 90].map((m) => <option key={m} value={m}>{m ? `${m} min` : "aucune"}</option>)}</select></label>
         )}
-        <p className="self-end text-sm text-muted">{slotLabel(slot.startsAt, slot.endsAt)}<br />{session.hours % 1 ? `${Math.floor(session.hours)} h 30` : `${session.hours} h`} de cours{pause ? `, pause ${pause} min` : ""}</p>
+        <p className="text-sm text-muted sm:col-span-3">{slotLabel(slot.startsAt, slot.endsAt, zone)} ({zoneLabel(zone)}) · soit {slotLabel(slot.startsAt, slot.endsAt, other)} ({zoneLabel(other)})<br />{session.hours % 1 ? `${Math.floor(session.hours)} h 30` : `${session.hours} h`} de cours{pause ? `, pause ${pause} min` : ""}</p>
       </div>
 
       {sent ? (
         <div className={"rounded-lg p-3 text-sm " + (sent.outdated ? "bg-amber-50" : "bg-accent-soft")}>
-          {sent.outdated && <p className="mb-2 font-semibold text-amber-900">Cette invitation n&apos;est plus à la bonne date : la cohorte a changé de date de début, J{session.n} tombe maintenant le {slotLabel(slot.startsAt, slot.endsAt).split(",")[0]}. Envoyez une nouvelle invitation ci-dessous.</p>}
+          {sent.outdated && <p className="mb-2 font-semibold text-amber-900">Cette invitation n&apos;est plus à la bonne date : la cohorte a changé de date de début, J{session.n} tombe maintenant le {slotLabel(slot.startsAt, slot.endsAt, zone).split(",")[0]}. Envoyez une nouvelle invitation ci-dessous.</p>}
           <p className="flex items-center gap-1.5 font-semibold text-accent-ink"><CalendarCheck className="size-4" aria-hidden />Invitation envoyée le {new Date(sent.sentAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} à {sent.invitedCount} personne{sent.invitedCount > 1 ? "s" : ""}</p>
-          <p className="mt-1">{slotLabel(new Date(sent.startsAt), new Date(sent.endsAt))}{sent.reminder ? " · rappel 1 h avant" : ""}{sent.guestEmail ? ` · invité : ${sent.guestEmail}` : ""}</p>
+          <p className="mt-1">{slotLabel(new Date(sent.startsAt), new Date(sent.endsAt), sent.zone)} ({zoneLabel(sent.zone)}){sent.reminder ? " · rappel 1 h avant" : ""}{sent.guestEmail ? ` · invité : ${sent.guestEmail}` : ""}</p>
           {sent.meetUrl && <p className="mt-1 flex items-center gap-1.5"><Video className="size-4" aria-hidden /><a href={sent.meetUrl} target="_blank" rel="noopener" className="font-mono underline">{sent.meetUrl.replace("https://", "")}</a></p>}
           {reissuing ? (
             <div className="mt-3 rounded-lg bg-amber-100 p-3 text-amber-950">
-              <p className="font-semibold">Envoyer une nouvelle invitation J{session.n} pour le {slotLabel(slot.startsAt, slot.endsAt)} ?</p>
+              <p className="font-semibold">Envoyer une nouvelle invitation J{session.n} pour le {slotLabel(slot.startsAt, slot.endsAt, zone)} ({zoneLabel(zone)}) ?</p>
               <p>Un nouvel événement et un nouveau lien Meet partent à chaque participant payé{sent.guestEmail ? " et à l’invité" : ""}, avec un e-mail qui l&apos;annonce. Puis l&apos;ancienne invitation est annulée : elle disparaît de leur agenda.</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <button type="button" disabled={pending} onClick={() => act(() => reissueSessionAction({ cohortId, day: session.n, start, pause }))} className={primary}><Send className="size-4" aria-hidden />{pending ? "Envoi…" : "Oui, remplacer l’invitation"}</button>
+                <button type="button" disabled={pending} onClick={() => act(() => reissueSessionAction({ cohortId, day: session.n, start, pause, timezone: zone }))} className={primary}><Send className="size-4" aria-hidden />{pending ? "Envoi…" : "Oui, remplacer l’invitation"}</button>
                 <button type="button" disabled={pending} onClick={() => setReissuing(false)} className={ghost}>Annuler</button>
               </div>
             </div>
           ) : (
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" disabled={pending} onClick={() => setReissuing(true)} className={sent.outdated ? primary : ghost}><Send className="size-4" aria-hidden />Nouvelle invitation{sent.outdated ? " à la bonne date" : ""}</button>
-              {!sent.outdated && <button type="button" disabled={pending} onClick={() => act(() => moveSessionAction({ cohortId, day: session.n, start, pause }))} className={ghost}>Déplacer à l&apos;heure ci-dessus</button>}
+              {!sent.outdated && <button type="button" disabled={pending} onClick={() => act(() => moveSessionAction({ cohortId, day: session.n, start, pause, timezone: zone }))} className={ghost}>Déplacer à l&apos;heure ci-dessus</button>}
               <button type="button" disabled={pending} onClick={() => act(() => resendSessionAction({ cohortId, day: session.n }))} className={ghost}>Renvoyer le lien</button>
             </div>
           )}
@@ -97,14 +109,14 @@ export function SessionComposer({ cohortId, session, participants, sent, planUrl
             <div className="rounded-lg border border-line p-3 text-sm">
               <p className="text-xs font-extrabold tracking-[.06em] text-muted uppercase">Dans leur agenda</p>
               <p className="mt-2 font-semibold">CISSP Bootcamp · J{session.n}</p>
-              <p className="text-muted">{slotLabel(slot.startsAt, slot.endsAt)} ({SESSION_TIMEZONE_LABEL}), affiché à l&apos;heure locale de chacun</p>
+              <p className="text-muted">{slotLabel(slot.startsAt, slot.endsAt, zone)} ({zoneLabel(zone)}), affiché à l&apos;heure locale de chacun</p>
               <p className="mt-1 text-muted">Lien Google Meet créé à l&apos;envoi · les invités ne voient pas la liste des autres</p>
             </div>
           </div>
 
           <div className="rounded-lg border border-line p-3 text-sm">
             <p className="text-xs font-extrabold tracking-[.06em] text-muted uppercase">Le message, au prénom de chacun</p>
-            <p className="mt-2 font-semibold">{sessionSubject(session, slot.startsAt)}</p>
+            <p className="mt-2 font-semibold">{sessionSubject(session)}</p>
             <p className="mt-1 whitespace-pre-line rounded bg-slate-50 p-3">{sessionMessage({ firstName: first, session, startsAt: slot.startsAt, endsAt: slot.endsAt, meetUrl: "https://meet.google.com/… (créé à l’envoi)", planUrl })}</p>
           </div>
 
@@ -113,7 +125,7 @@ export function SessionComposer({ cohortId, session, participants, sent, planUrl
               <p className="font-semibold">Envoyer l&apos;invitation J{session.n} à {count} personne{count > 1 ? "s" : ""} ?</p>
               <p>Google Agenda crée l&apos;événement et le lien Meet ; chacun reçoit l&apos;invitation et ce message.</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <button type="button" disabled={pending} onClick={() => act(() => sendSessionAction({ cohortId, day: session.n, start, pause, guestEmail: guest.trim(), reminder, excludeLeadIds: excluded }))} className={primary}><Send className="size-4" aria-hidden />{pending ? "Envoi…" : "Oui, envoyer"}</button>
+                <button type="button" disabled={pending} onClick={() => act(() => sendSessionAction({ cohortId, day: session.n, start, pause, timezone: zone, guestEmail: guest.trim(), reminder, excludeLeadIds: excluded }))} className={primary}><Send className="size-4" aria-hidden />{pending ? "Envoi…" : "Oui, envoyer"}</button>
                 <button type="button" disabled={pending} onClick={() => setConfirming(false)} className={ghost}>Annuler</button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { calendarMessage, isClock, isSessionOutdated, reissuedMessage, reminderMessage, sessionDefaults, sessionDescription, sessionMessage, sessionSlot, sessionSubject, slotLabel, zonedInstant } from "@/lib/cohort-sessions";
+import { calendarMessage, convertClock, isClock, isSessionOutdated, isSessionZone, reissuedMessage, reminderMessage, sessionDefaults, sessionDescription, sessionMessage, sessionSlot, sessionSubject, slotLabel, zonedInstant } from "@/lib/cohort-sessions";
 import { buildSessions } from "@/lib/reading-plan/data";
 
 const days = buildSessions("2026-10-03"); // Saturday start, Ben's October cohort
@@ -42,14 +42,16 @@ describe("messages des sessions", () => {
   it("le message de chacun : prénom, horaire, programme, lectures, Meet, plan", () => {
     const text = sessionMessage({ firstName: "Awa", session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/abc-defg-hij", planUrl });
     expect(text).toMatch(/^Bonjour Awa,/);
-    expect(text).toContain("Notre session J3 a lieu le lundi 5 octobre, de 19 h à 21 h (heure de Dakar)");
+    expect(text).toContain("Notre session J3 a lieu le lundi 5 octobre. L’heure figure dans l’invitation Google Agenda");
+    // Ben, 03/10: no clock time in the e-mails, the invitation carries it.
+    expect(text).not.toMatch(/\d+ h/);
     expect(text).toContain(`Au programme : ${j3.title}.`);
     expect(text).toContain("À avoir lu avant la session :");
     for (const r of j3.read) expect(text).toContain(`Chapitre ${r.ch}`);
     expect(text).toContain("Rejoindre la session : https://meet.google.com/abc-defg-hij");
     expect(text).toContain(`Votre plan de lecture : ${planUrl}`);
     expect(text.match(/Plan de lecture|plan de lecture :/g)?.length).toBe(1);
-    expect(sessionSubject(j3, startsAt)).toBe("J3 · lundi 5 octobre, 19 h · CISSP Bootcamp");
+    expect(sessionSubject(j3)).toBe("J3 · lundi 5 octobre · CISSP Bootcamp");
   });
 
   it("la dernière session annonce l'examen blanc", () => {
@@ -59,9 +61,10 @@ describe("messages des sessions", () => {
   });
 
   it("rappel et calendrier complet", () => {
-    expect(reminderMessage({ firstName: "Awa", session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/x" })).toContain("commence dans une heure : lundi 5 octobre, de 19 h à 21 h");
+    expect(reminderMessage({ firstName: "Awa", session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/x" })).toContain("Notre session J3 commence dans une heure.");
     const cal = calendarMessage({ firstName: "Awa", items: [{ session: j3, startsAt, endsAt, meetUrl: "https://meet.google.com/x" }], planUrl });
-    expect(cal).toContain("J3 · lundi 5 octobre, de 19 h à 21 h");
+    expect(cal).toContain("J3 · lundi 5 octobre\n");
+    expect(cal).not.toMatch(/\d+ h/);
     expect(cal).toContain("Lien : https://meet.google.com/x");
   });
 });
@@ -80,5 +83,27 @@ describe("nouvelle invitation après un changement de date (Ben, 03/10)", () => 
     expect(text.split("\n")[2]).toMatch(/L’invitation précédente pour J1 est annulée/);
     expect(text.startsWith("Bonjour Awa,\n\n")).toBe(true);
     expect(text).toMatch(/Notre session J1 a lieu…$/);
+  });
+});
+
+describe("heures saisies à Dakar ou à Montréal (Ben, 03/10)", () => {
+  it("le même instant, quelle que soit la ville de saisie", () => {
+    const dakar = sessionSlot(j1, "14:00", 30, "Africa/Dakar");
+    const montreal = sessionSlot(j1, "10:00", 30, "America/Toronto");
+    expect(montreal.startsAt.toISOString()).toBe(dakar.startsAt.toISOString());
+    expect(montreal.startsAt.toISOString()).toBe("2026-10-03T14:00:00.000Z");
+  });
+
+  it("change de ville sans changer l'instant, heure d'été comprise", () => {
+    expect(convertClock("2026-10-05", "19:00", "Africa/Dakar", "America/Toronto")).toBe("15:00");
+    expect(convertClock("2026-10-05", "15:00", "America/Toronto", "Africa/Dakar")).toBe("19:00");
+    // After the switch to winter time in Montréal (1 November), the gap is 5 hours.
+    expect(convertClock("2026-11-09", "19:00", "Africa/Dakar", "America/Toronto")).toBe("14:00");
+  });
+
+  it("n'accepte que Dakar et Montréal", () => {
+    expect(isSessionZone("Africa/Dakar")).toBe(true);
+    expect(isSessionZone("America/Toronto")).toBe(true);
+    expect(isSessionZone("Europe/Paris")).toBe(false);
   });
 });

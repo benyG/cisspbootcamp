@@ -9,6 +9,32 @@ import type { Session } from "@/lib/reading-plan/data";
 
 export const SESSION_TIMEZONE = "Africa/Dakar";
 export const SESSION_TIMEZONE_LABEL = "heure de Dakar";
+
+/**
+ * Zones Ben can plan in (Ben, 03/10): he types the hours in the one he
+ * thinks in, Dakar or Montréal; the instant is the same, Google shows it
+ * at each guest's local time, and the e-mails keep Dakar time. Montréal
+ * follows America/Toronto (same rules, the canonical IANA name).
+ */
+export const SESSION_ZONES = {
+  "Africa/Dakar": { label: "heure de Dakar", city: "Dakar" },
+  "America/Toronto": { label: "heure de Montréal", city: "Montréal" },
+} as const;
+export type SessionZone = keyof typeof SESSION_ZONES;
+
+export function isSessionZone(value: string): value is SessionZone {
+  return value in SESSION_ZONES;
+}
+
+/** "HH:MM" of an instant in a zone. */
+export function clockIn(at: Date, timeZone: string): string {
+  return at.toLocaleTimeString("fr-FR", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+}
+
+/** The same instant typed in another zone: 19:00 in Dakar is 15:00 in Montréal in October. */
+export function convertClock(date: string, clock: string, from: string, to: string): string {
+  return clockIn(zonedInstant(date, clock, from), to);
+}
 export const DEFAULT_EVENING_START = "19:00";
 export const DEFAULT_WEEKEND_START = "09:00";
 export const DEFAULT_WEEKEND_PAUSE_MINUTES = 60;
@@ -68,9 +94,17 @@ export function sessionSummary(session: Session): string {
   return `CISSP Bootcamp · J${session.n}`;
 }
 
-export function sessionSubject(session: Session, startsAt: Date, timeZone = SESSION_TIMEZONE): string {
-  const day = startsAt.toLocaleDateString("fr-FR", { timeZone, weekday: "long", day: "numeric", month: "long" });
-  return `J${session.n} · ${day}, ${clockLabel(startsAt, timeZone)} · CISSP Bootcamp`;
+/**
+ * "dimanche 4 octobre": the session's day, from the plan. E-mails name the
+ * day only (Ben, 03/10): the hours live in the Google invitation, which
+ * shows them at each person's local time.
+ */
+export function sessionDay(session: Pick<Session, "date">): string {
+  return new Date(`${session.date}T12:00:00Z`).toLocaleDateString("fr-FR", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
+}
+
+export function sessionSubject(session: Session): string {
+  return `J${session.n} · ${sessionDay(session)} · CISSP Bootcamp`;
 }
 
 type MessageInput = { session: Session; startsAt: Date; endsAt: Date; meetUrl: string | null; planUrl: string; timeZone?: string };
@@ -92,11 +126,10 @@ export function sessionDescription(input: MessageInput): string {
 
 /** The e-mail each participant receives, with their first name. */
 export function sessionMessage(input: MessageInput & { firstName: string }): string {
-  const tz = input.timeZone ?? SESSION_TIMEZONE;
   return [
     `Bonjour ${input.firstName},`,
     "",
-    `Notre session J${input.session.n} a lieu le ${slotLabel(input.startsAt, input.endsAt, tz)} (${SESSION_TIMEZONE_LABEL}). L’invitation Google Agenda l’inscrit dans votre agenda à votre heure locale.`,
+    `Notre session J${input.session.n} a lieu le ${sessionDay(input.session)}. L’heure figure dans l’invitation Google Agenda, qui l’inscrit dans votre agenda à votre heure locale.`,
     "",
     sessionDescription(input).replace(`\nPlan de lecture : ${input.planUrl}`, ""),
     "",
@@ -110,11 +143,10 @@ export function sessionMessage(input: MessageInput & { firstName: string }): str
 
 /** The reminder an hour before. */
 export function reminderMessage(input: { firstName: string; session: Session; startsAt: Date; endsAt: Date; meetUrl: string | null; timeZone?: string }): string {
-  const tz = input.timeZone ?? SESSION_TIMEZONE;
   return [
     `Bonjour ${input.firstName},`,
     "",
-    `Notre session J${input.session.n} commence dans une heure : ${slotLabel(input.startsAt, input.endsAt, tz)} (${SESSION_TIMEZONE_LABEL}).`,
+    `Notre session J${input.session.n} commence dans une heure.`,
     `Au programme : ${input.session.title}.`,
     "",
     `Rejoindre la session : ${input.meetUrl ?? "le lien est dans l’invitation Google Agenda"}`,
@@ -126,13 +158,12 @@ export function reminderMessage(input: { firstName: string; session: Session; st
 
 /** One e-mail with the whole calendar, when Ben sends every remaining day at once. */
 export function calendarMessage(input: { firstName: string; items: Array<{ session: Session; startsAt: Date; endsAt: Date; meetUrl: string | null }>; planUrl: string; timeZone?: string }): string {
-  const tz = input.timeZone ?? SESSION_TIMEZONE;
   return [
     `Bonjour ${input.firstName},`,
     "",
-    `Voici le calendrier de nos prochaines sessions (${SESSION_TIMEZONE_LABEL}). Chacune vous arrive aussi en invitation Google Agenda, à votre heure locale.`,
+    "Voici le calendrier de nos prochaines sessions. Chacune vous arrive aussi en invitation Google Agenda, avec son heure, à votre heure locale.",
     "",
-    ...input.items.map((i) => `J${i.session.n} · ${slotLabel(i.startsAt, i.endsAt, tz)}\n${i.session.title}\nLien : ${i.meetUrl ?? "dans l’invitation"}\n`),
+    ...input.items.map((i) => `J${i.session.n} · ${sessionDay(i.session)}\n${i.session.title}\nLien : ${i.meetUrl ?? "dans l’invitation"}\n`),
     `Ce qu’il faut lire avant chaque session est dans votre plan de lecture : ${input.planUrl}`,
     "",
     "À bientôt,",
