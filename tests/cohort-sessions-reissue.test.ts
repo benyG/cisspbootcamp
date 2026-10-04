@@ -5,9 +5,10 @@ const db = vi.hoisted(() => ({
   registration: { findMany: vi.fn() },
   cohortSession: { upsert: vi.fn() },
   actionLog: { createMany: vi.fn() },
+  personalSchedule: { findMany: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ prisma: db }));
-const calendar = vi.hoisted(() => ({ createSessionEvent: vi.fn(), cancelCallEvent: vi.fn(), moveCallEvent: vi.fn(), setEventAttendees: vi.fn() }));
+const calendar = vi.hoisted(() => ({ fetchBusy: vi.fn(), createSessionEvent: vi.fn(), cancelCallEvent: vi.fn(), moveCallEvent: vi.fn(), setEventAttendees: vi.fn() }));
 vi.mock("@/lib/calendar/google", () => calendar);
 const mail = vi.hoisted(() => ({ sendEmail: vi.fn() }));
 vi.mock("@/lib/messaging/email", () => mail);
@@ -26,6 +27,7 @@ describe("nouvelle invitation d'une session (Ben, 03/10)", () => {
     });
     db.registration.findMany.mockResolvedValue([{ lead: { id: 3, firstName: "Awa", lastName: "Diop", email: "awa@x.test", country: "SN", unsubscribedAt: null } }]);
     db.cohortSession.upsert.mockResolvedValue({ id: 1 });
+    db.personalSchedule.findMany.mockResolvedValue([]);
     mail.sendEmail.mockResolvedValue({ sent: true });
   });
 
