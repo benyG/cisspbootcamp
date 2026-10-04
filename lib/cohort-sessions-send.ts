@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
 import { type Session, buildSessions } from "@/lib/reading-plan/data";
+import { groupParticipants } from "@/lib/personal-schedule-send";
 import { planStart, readingPlanUrl } from "@/lib/reading-plan/page";
 
 /**
@@ -22,15 +23,12 @@ export async function cohortPlan(cohortId: number) {
   return { cohort, days: buildSessions(planStart(cohort.startsAt)), planUrl: readingPlanUrl(env.NEXT_PUBLIC_APP_URL, cohort.startsAt, cohort.id) };
 }
 
-/** Paid participants, one per person. */
+/**
+ * Paid participants who follow the group sessions, one per person; those
+ * with a confirmed personal calendar have their own (Ben, 04/10).
+ */
 export async function sessionParticipants(cohortId: number) {
-  const registrations = await prisma.registration.findMany({
-    where: { cohortId, status: "paid" },
-    include: { lead: { select: { id: true, firstName: true, lastName: true, email: true, country: true, unsubscribedAt: true } } },
-    orderBy: { createdAt: "asc" },
-  });
-  const seen = new Set<number>();
-  return registrations.map((r) => r.lead).filter((l) => !seen.has(l.id) && seen.add(l.id));
+  return groupParticipants(cohortId);
 }
 
 /** timezone: the zone Ben typed the hours in (Dakar by default). */

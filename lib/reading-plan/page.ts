@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { DEFAULT_START, DOMAINS, buildSessions, planDates } from "./data";
+import { DEFAULT_START, DOMAINS, type Session, buildSessions, planDates } from "./data";
 
 /**
  * The reading plan page: the static template with its data inlined. `start`
@@ -21,15 +21,21 @@ export function scriptJson(value: unknown): string {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }
 
-export function renderReadingPlan(html: string, start: string): string {
-  const from = isPlanDate(start) ? start : DEFAULT_START;
-  const data = { domains: DOMAINS, sessions: buildSessions(from), defaultStart: from, mockExam: planDates(from).mockExam };
+/**
+ * `personal`: a participant's own calendar (Ben, 04/10), its sessions on the
+ * days they chose instead of the cohort's run of days.
+ */
+export function renderReadingPlan(html: string, start: string, personal?: { sessions: Session[]; mockExam: string }): string {
+  const from = personal?.sessions[0]?.date ?? (isPlanDate(start) ? start : DEFAULT_START);
+  const data = personal
+    ? { domains: DOMAINS, sessions: personal.sessions, defaultStart: from, mockExam: personal.mockExam, personal: true }
+    : { domains: DOMAINS, sessions: buildSessions(from), defaultStart: from, mockExam: planDates(from).mockExam, personal: false };
   return html.replace("__DATA__", () => scriptJson(data));
 }
 
-export async function readingPlanPage(start: string): Promise<string> {
+export async function readingPlanPage(start: string, personal?: { sessions: Session[]; mockExam: string }): Promise<string> {
   template ??= readFile(TEMPLATE_PATH, "utf8");
-  return renderReadingPlan(await template, start);
+  return renderReadingPlan(await template, start, personal);
 }
 
 /** The cohort's first day as the page expects it. Cohorts start in the evening, UTC. */

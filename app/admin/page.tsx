@@ -25,6 +25,7 @@ export default async function AdminHomePage() {
     payment: items.filter((i) => i.kind === "payment"),
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
+    personal: items.filter((i) => i.kind === "personal"),
     session: items.filter((i) => i.kind === "session"),
   };
 
@@ -101,6 +102,14 @@ export default async function AdminHomePage() {
               <input name="transactionId" placeholder="N° transaction" className="w-32 rounded-lg border border-line px-2 py-1.5 text-sm" />
               <button className={primary}>Confirmer</button>
             </form>
+          </Row>
+        ))}
+      </Group>
+
+      <Group icon={CalendarCheck} title="Calendriers personnels à confirmer" count={groups.personal.length}>
+        {groups.personal.map((i) => i.kind === "personal" && (
+          <Row key={`p${i.scheduleId}`} name={i.name} meta={`${i.cohortName} · proposé il y a ${i.hoursWaiting} h`} leadId={i.leadId}>
+            <Link href={`/admin/cohortes/${i.cohortId}/calendriers/${i.scheduleId}`} className={primary}>Voir et confirmer</Link>
           </Row>
         ))}
       </Group>

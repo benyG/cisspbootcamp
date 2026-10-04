@@ -6,10 +6,13 @@ import { CohortGauge } from "@/components/cohorts/CohortGauge";
 import { COHORT_STATUS_LABEL as STATUS_LABEL, MANUAL_COHORT_STATUSES, buildGauge, cohortHasStarted } from "@/lib/cohorts";
 import { syncCohortStatuses } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
+import { clockLabel } from "@/lib/personal-schedule";
+import { loadLimits, plannerUrl } from "@/lib/personal-schedule-send";
 import { PROGRAMS } from "@/lib/programs";
 import { formatUsdCents } from "@/lib/pricing";
 
 import { deleteCohort, sendCohortOnboarding, updateCohort } from "../actions";
+import { invitePersonalAction, saveLimitsAction } from "./calendriers/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +57,11 @@ export default async function CohortPage({
     if (typeof registrationId === "number" && !onboardedAt.has(registrationId)) onboardedAt.set(registrationId, log.createdAt);
   }
   const notOnboarded = paid.filter((r) => !onboardedAt.has(r.id)).length;
+  const [personal, limits] = await Promise.all([
+    prisma.personalSchedule.findMany({ where: { cohortId: cohort.id }, select: { id: true, leadId: true, status: true, token: true, sentAt: true } }),
+    loadLimits(),
+  ]);
+  const personalOf = new Map(personal.map((p) => [p.leadId, p]));
   const destinations = await prisma.cohort.findMany({
     where: { program: cohort.program, status: { not: "done" }, id: { not: cohort.id } },
     orderBy: { startsAt: "asc" },
@@ -165,12 +173,29 @@ export default async function CohortPage({
                     <Send className="size-3" aria-hidden />{onboardedAt.has(r.id) ? `Envoyé le ${onboardedAt.get(r.id)?.toLocaleDateString("fr-FR")}` : "Envoyer les documents"}
                   </button>
                 </form>
+                {cohort.program === "cissp" && <PersonalControl cohortId={cohort.id} leadId={r.lead.id} firstName={r.lead.firstName} schedule={personalOf.get(r.lead.id) ?? null} />}
               </span>
             </li>
           ))}
           {paid.length === 0 && <li className="px-4 py-3 text-sm text-[var(--color-muted)]">Aucune place payée pour l&apos;instant.</li>}
         </ul>
       </section>
+
+      {cohort.program === "cissp" && (
+        <section className="mt-6 rounded-xl border border-line bg-white p-4 text-sm">
+          <h2 className="font-semibold">Calendriers personnels</h2>
+          <p className="mt-1 text-muted">Pour un inscrit qui ne peut pas suivre le calendrier de la cohorte : « Calendrier perso » lui envoie un lien pour choisir ses jours sur un mois (semaine dès 16 h, week-end dès 10 h, heure de Montréal ; vos jours pris sont fermés). Vous confirmez ensuite sa proposition.</p>
+          <form action={saveLimitsAction} className="mt-3 flex flex-wrap items-end gap-3">
+            <input type="hidden" name="cohortId" value={cohort.id} />
+            <label className="flex flex-col gap-1 font-medium">Fin au plus tard, en semaine
+              <select name="latestEndWeekday" defaultValue={limits.latestEndWeekday} className={input}>{range(18 * 60, 24 * 60).map((m) => <option key={m} value={m}>{clockLabel(m)}</option>)}</select></label>
+            <label className="flex flex-col gap-1 font-medium">Fin au plus tard, le week-end
+              <select name="latestEndWeekend" defaultValue={limits.latestEndWeekend} className={input}>{range(16 * 60 + 30, 24 * 60).map((m) => <option key={m} value={m}>{clockLabel(m)}</option>)}</select></label>
+            <span className="pb-2 text-xs text-muted">heure de Montréal</span>
+            <button className="rounded-lg border border-line bg-white px-3 py-2 font-semibold">Enregistrer</button>
+          </form>
+        </section>
+      )}
 
       {pending.length > 0 && (
         <section className="mt-6">
@@ -216,3 +241,25 @@ export default async function CohortPage({
 }
 
 const input = "rounded-lg border border-slate-300 px-3 py-2 text-base";
+
+const range = (from: number, to: number) => Array.from({ length: Math.floor((to - from) / 30) + 1 }, (_, i) => from + i * 30);
+
+/** A paid participant's personal calendar: send the link, or open the proposal (Ben, 04/10). */
+function PersonalControl({ cohortId, leadId, firstName, schedule }: { cohortId: number; leadId: number; firstName: string; schedule: { id: number; status: string; token: string; sentAt: Date } | null }) {
+  const chip = "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold";
+  if (schedule && (schedule.status === "proposed" || schedule.status === "confirmed")) {
+    return <Link href={`/admin/cohortes/${cohortId}/calendriers/${schedule.id}`} className={`${chip} ${schedule.status === "proposed" ? "border-amber-500 bg-amber-50 text-amber-900" : "border-accent text-accent-ink"}`}>{schedule.status === "proposed" ? "Calendrier à confirmer →" : "Calendrier perso ✓"}</Link>;
+  }
+  return (
+    <details className="relative">
+      <summary className={`${chip} cursor-pointer list-none border-line text-muted`}>{schedule ? (schedule.status === "refused" ? "Calendrier refusé" : `Calendrier perso · lien du ${schedule.sentAt.toLocaleDateString("fr-FR")}`) : "Calendrier perso"}</summary>
+      <form action={invitePersonalAction} className="absolute right-0 z-10 mt-1 grid w-72 gap-2 rounded-lg border border-line bg-white p-3 text-xs text-ink shadow-lg">
+        <input type="hidden" name="cohortId" value={cohortId} />
+        <input type="hidden" name="leadId" value={leadId} />
+        <p>{schedule ? `Renvoyer le lien à ${firstName} ? Le mois repart d'aujourd'hui.` : `Envoyer à ${firstName} le lien pour choisir ses propres jours sur un mois ?`}</p>
+        {schedule && <p className="break-all text-muted">{plannerUrl(schedule.token)}</p>}
+        <button className="rounded-md bg-accent px-3 py-1.5 font-semibold text-white">{schedule ? "Renvoyer le lien" : "Envoyer le lien"}</button>
+      </form>
+    </details>
+  );
+}

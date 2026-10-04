@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+import { mockExamDate, personalSessions } from "@/lib/personal-schedule";
+import { scheduleByToken, storedDays } from "@/lib/personal-schedule-send";
 import { DEFAULT_START } from "@/lib/reading-plan/data";
 import { isPlanDate, planStart, readingPlanPage } from "@/lib/reading-plan/page";
 
@@ -13,6 +15,12 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: Request): Promise<Response> {
   const params = new URL(request.url).searchParams;
+  const personal = await personalPlan(params.get("calendrier"));
+  if (personal) {
+    return new Response(await readingPlanPage(personal.sessions[0].date, personal), {
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex" },
+    });
+  }
   const debut = params.get("debut");
   const start = (await cohortStart(params.get("cohorte"))) ?? (isPlanDate(debut) ? debut : await nextCohortStart());
   return new Response(await readingPlanPage(start), {
@@ -42,6 +50,21 @@ async function cohortStart(raw: string | null): Promise<string | null> {
     return cohort ? planStart(cohort.startsAt) : null;
   } catch (error) {
     console.error("[plan-de-lecture] cohorte", error);
+    return null;
+  }
+}
+
+/** A participant's own calendar (Ben, 04/10), once proposed or confirmed. */
+async function personalPlan(token: string | null) {
+  if (!token) return null;
+  try {
+    const schedule = await scheduleByToken(token);
+    if (!schedule || (schedule.status !== "confirmed" && schedule.status !== "proposed")) return null;
+    const sessions = personalSessions(storedDays(schedule.days));
+    const mockExam = mockExamDate(sessions);
+    return sessions.length && mockExam ? { sessions, mockExam } : null;
+  } catch (error) {
+    console.error("[plan-de-lecture] calendrier personnel", error);
     return null;
   }
 }

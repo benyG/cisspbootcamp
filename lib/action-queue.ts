@@ -19,7 +19,8 @@ export type QueueItem =
   | { kind: "followup"; leadId: number; name: string; heat: number; stage: string; waLink: string | null; emailSubject: string; emailBody: string; email: string; overdueDays: number }
   | { kind: "payment"; registrationId: number; leadId: number; name: string; reference: string; amountUsd: number; cohortName: string; ageHours: number }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
-  | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean };
+  | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
+  | { kind: "personal"; scheduleId: number; cohortId: number; leadId: number; name: string; cohortName: string; hoursWaiting: number };
 
 export type Kpis = { leadsThisWeek: number; callsThisWeek: number; confirmed: number; capacity: number; cohortName: string | null };
 
@@ -121,6 +122,16 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
   });
   for (const h of holds) {
     items.push({ kind: "hold", holdId: h.id, leadId: h.lead.id, name: `${h.lead.firstName} ${h.lead.lastName}`, cohortName: h.cohort.name, hoursLeft: Math.max(0, Math.round((h.expiresAt.getTime() - now.getTime()) / 3_600_000)), reminded: h.reminderSentAt !== null });
+  }
+
+  // Personal calendars waiting for Ben's confirmation (Ben, 04/10).
+  const proposals = await prisma.personalSchedule.findMany({
+    where: { status: "proposed" },
+    orderBy: { proposedAt: "asc" },
+    include: { lead: { select: { id: true, firstName: true, lastName: true } }, cohort: { select: { id: true, name: true } } },
+  });
+  for (const p of proposals) {
+    items.push({ kind: "personal", scheduleId: p.id, cohortId: p.cohort.id, leadId: p.lead.id, name: `${p.lead.firstName} ${p.lead.lastName}`, cohortName: p.cohort.name, hoursWaiting: hoursSince(p.proposedAt ?? p.updatedAt, now) });
   }
 
   return {

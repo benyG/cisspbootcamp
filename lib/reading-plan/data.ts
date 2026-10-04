@@ -179,57 +179,90 @@ function isoDay(start: string, offset: number): string {
  * each reading is due on the day its part of the module is taught.
  */
 export function buildSessions(start: string): Session[] {
-  const left = MODULES.map((m) => m.h);
+  const cursor = newCursor();
   const out: Session[] = [];
-  let m = 0;
-  for (let offset = 0; m < MODULES.length; offset++) {
+  for (let offset = 0; !cursor.done(); offset++) {
     const date = isoDay(start, offset);
-    let room = SESSION_HOURS_BY_WEEKDAY[new Date(`${date}T12:00:00Z`).getUTCDay()];
-    if (room === 0) {
-      out.push(restDay(offset + 1, date));
-      continue;
-    }
-    const parts: Array<{ mod: Module; h: number; from: number; to: number }> = [];
-    while (room > 0 && m < MODULES.length) {
-      const mod = MODULES[m];
-      const h = Math.min(room, left[m]);
-      const from = mod.h - left[m];
-      parts.push({ mod, h, from, to: from + h });
-      left[m] -= h;
-      room -= h;
-      if (left[m] === 0) m++;
-    }
-    const read = parts.flatMap(({ mod, from, to }) => {
-      const total = mod.read.reduce((sum, r) => sum + r.min, 0);
-      let before = 0;
-      return mod.read.filter((r) => {
-        const at = total ? (before / total) * mod.h : 0; // where this reading's matter starts in the module
-        before += r.min;
-        return at >= from && (at < to || (to === mod.h && at <= to));
-      });
-    });
-    const titles = parts.map((p, i) => (p.from > 0 ? `${i ? "suite : " : "Suite : "}${lowerFirst(p.mod.title)}` : i ? lowerFirst(p.mod.title) : p.mod.title));
-    const goals = parts.map((p, i) => (i ? lowerFirst(p.mod.goal) : p.mod.goal).replace(/\.$/, ""));
-    const todo = parts.map((p) => (p.to === p.mod.h ? p.mod.todo : undefined)).find(Boolean);
-    const blocks: Session["blocks"] = [];
-    for (const p of parts) {
-      const last = blocks[blocks.length - 1];
-      if (last && last.d === p.mod.d) last.h += p.h;
-      else blocks.push({ d: p.mod.d, h: p.h });
-    }
-    out.push({
-      n: offset + 1,
-      date,
-      hours: parts.reduce((sum, p) => sum + p.h, 0),
-      blocks,
-      title: titles.join(", puis "),
-      goal: `${goals.join(" ; puis ")}.`,
-      read,
-      ...(todo ? { todo } : {}),
-    });
+    const room = SESSION_HOURS_BY_WEEKDAY[new Date(`${date}T12:00:00Z`).getUTCDay()];
+    out.push(room === 0 ? restDay(offset + 1, date) : sessionOf(offset + 1, date, cursor.take(room)));
   }
   return out;
 }
+
+/**
+ * A personal calendar (Ben, 04/10): the course packed in order into the days
+ * a participant chose, each with its own room in hours. Numbered J1, J2… in
+ * date order; days left once the course is done are not used.
+ */
+export function packSessions(days: ReadonlyArray<{ date: string; room: number }>): Session[] {
+  const cursor = newCursor();
+  const out: Session[] = [];
+  for (const day of [...days].sort((a, b) => a.date.localeCompare(b.date))) {
+    if (cursor.done()) break;
+    out.push(sessionOf(out.length + 1, day.date, cursor.take(day.room)));
+  }
+  return out;
+}
+
+/** Total hours of the course (40). */
+export const COURSE_HOURS = MODULES.reduce((sum, m) => sum + m.h, 0);
+
+type Part = { mod: Module; h: number; from: number; to: number };
+
+/** Walks the modules in order; take(room) hands out up to `room` hours, a module running over to the next day. */
+function newCursor() {
+  const left = MODULES.map((m) => m.h);
+  let m = 0;
+  return {
+    done: () => m >= MODULES.length,
+    take(room: number): Part[] {
+      const parts: Part[] = [];
+      while (room > 0 && m < MODULES.length) {
+        const mod = MODULES[m];
+        const h = Math.min(room, left[m]);
+        const from = mod.h - left[m];
+        parts.push({ mod, h, from, to: from + h });
+        left[m] -= h;
+        room -= h;
+        if (left[m] === 0) m++;
+      }
+      return parts;
+    },
+  };
+}
+
+function sessionOf(n: number, date: string, parts: Part[]): Session {
+  const read = parts.flatMap(({ mod, from, to }) => {
+    const total = mod.read.reduce((sum, r) => sum + r.min, 0);
+    let before = 0;
+    return mod.read.filter((r) => {
+      const at = total ? (before / total) * mod.h : 0; // where this reading's matter starts in the module
+      before += r.min;
+      return at >= from && (at < to || (to === mod.h && at <= to));
+    });
+  });
+  const titles = parts.map((p, i) => (p.from > 0 ? `${i ? "suite : " : "Suite : "}${lowerFirst(p.mod.title)}` : i ? lowerFirst(p.mod.title) : p.mod.title));
+  const goals = parts.map((p, i) => (i ? lowerFirst(p.mod.goal) : p.mod.goal).replace(/\.$/, ""));
+  const todo = parts.map((p) => (p.to === p.mod.h ? p.mod.todo : undefined)).find(Boolean);
+  const blocks: Session["blocks"] = [];
+  for (const p of parts) {
+    const last = blocks[blocks.length - 1];
+    if (last && last.d === p.mod.d) last.h += p.h;
+    else blocks.push({ d: p.mod.d, h: p.h });
+  }
+  return {
+    n,
+    date,
+    hours: parts.reduce((sum, p) => sum + p.h, 0),
+    blocks,
+    title: titles.join(", puis "),
+    goal: `${goals.join(" ; puis ")}.`,
+    read,
+    ...(todo ? { todo } : {}),
+  };
+}
+
+export { isoDay };
 
 /** Day of the last session, and of the mock exam a week later (YYYY-MM-DD). */
 export function planDates(start: string): { end: string; mockExam: string } {

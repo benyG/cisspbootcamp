@@ -229,7 +229,8 @@ const short = (d) => fmt(d, { weekday: "short", day: "numeric", month: "short" }
 const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
 const hrs = (h) => (h % 1 ? `${Math.floor(h)} h 30` : `${h} h`);
 const mins = (m) => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? " " + String(m % 60).padStart(2, "0") : ""}` : `${m} min`);
-S.forEach((s) => { s.offset = s.n - 1; s.date = dayAt(s.offset); });
+// Offsets come from each session's own date: a personal calendar (Ben, 04/10) has gaps between sessions.
+S.forEach((s) => { s.offset = Math.round((Date.parse(s.date + "T12:00:00") - start.getTime()) / 86400000); s.date = dayAt(s.offset); });
 const LAST = S.length - 1, END_OFF = S[LAST].offset;
 const mockExam = new Date(DATA.mockExam + "T12:00:00");
 $("#dates").textContent = `Du ${fmt(S[0].date, { day: "numeric", month: "long" })} au ${fmt(S[LAST].date, { day: "numeric", month: "long", year: "numeric" })} · examen blanc le ${fmt(mockExam, { day: "numeric", month: "long" })}`;
@@ -430,7 +431,7 @@ function renderAgenda() {
   $("#agenda").innerHTML = days.map((o) => {
     const d = dayAt(o), reads = agenda[o] || [], sess = S.find((s) => s.offset === o);
     const lis = reads.map((x) => `<li><span style="display:inline-flex;align-items:center;gap:5px">${done[id(x.s, x.i)] ? `<svg class="i" style="width:14px;height:14px;color:var(--accent)"><use href="#check"/></svg>` : ""}Chapitre ${x.r.ch}${x.r.kind !== "full" ? ` <span class="muted">(${KIND[x.r.kind][0].toLowerCase()}${x.r.text && x.r.kind !== "except" ? " : " + esc(x.r.text.split(" · ")[0]) + (x.r.text.includes(" · ") ? "…" : "") : ""})</span>` : ""}</span><span class="for">pour J${x.s.n}</span><span class="muted">${mins(x.min)}</span></li>`).join("");
-    const label = o < 0 ? `Avant le bootcamp` : `J${o + 1}`;
+    const label = o < 0 ? `Avant le bootcamp` : DATA.personal ? (sess ? `J${sess.n}` : "Pas de session") : `J${o + 1}`;
     return `<div class="aday${o === tOff ? " is-today" : ""}"><div class="date">${short(d)}<small>${label}${o === tOff ? " · aujourd’hui" : ""}</small></div><div>${lis ? `<ul>${lis}</ul>` : `<span class="muted" style="font-size:.9rem">Pas de lecture prévue : relisez vos notes.</span>`}${sess ? (sess.rest ? `<div class="sess" style="margin-top:${lis ? 8 : 6}px;color:var(--warn-ink)">${svg("moon")}Mercredi, journée de repos, pas de session. Profitez-en pour avancer dans vos lectures et réviser.</div>` : `<div class="sess" style="margin-top:${lis ? 8 : 6}px">${svg("video")}Session J${sess.n} · ${esc(sess.title)} · ${hrs(sess.hours)}</div>`) : ""}</div></div>`;
   }).join("");
 }

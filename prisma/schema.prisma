@@ -134,15 +134,16 @@ model Lead {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  scannerResponses ScannerResponse[]
-  funnelEvents     FunnelEvent[]
-  seatHolds        SeatHold[]
-  practiceTests    PracticeTest[]
-  bookings         Booking[]
-  registrations    Registration[]
-  serviceOrders    ServiceOrder[]
-  actions          ActionLog[]
-  pricingTier      PricingTier       @relation(fields: [tier], references: [code])
+  scannerResponses  ScannerResponse[]
+  funnelEvents      FunnelEvent[]
+  seatHolds         SeatHold[]
+  practiceTests     PracticeTest[]
+  bookings          Booking[]
+  registrations     Registration[]
+  serviceOrders     ServiceOrder[]
+  actions           ActionLog[]
+  personalSchedules PersonalSchedule[]
+  pricingTier       PricingTier        @relation(fields: [tier], references: [code])
 
   @@index([status, heatScore])
   @@index([nextFollowupAt])
@@ -228,13 +229,48 @@ model Cohort {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  registrations  Registration[]
-  seatHolds      SeatHold[]
-  marketingPosts MarketingPost[]
-  sessions       CohortSession[]
+  registrations     Registration[]
+  seatHolds         SeatHold[]
+  marketingPosts    MarketingPost[]
+  sessions          CohortSession[]
+  personalSchedules PersonalSchedule[]
 
   @@index([program, status, startsAt])
   @@map("cohorts")
+}
+
+/// A participant's own calendar inside a cohort (Ben, 04/10): Ben sends a
+/// link, the participant picks days over one month, Ben confirms, and the
+/// sessions go out as personal Google invitations. The person stays in the
+/// cohort, but leaves its group sessions. No re-planning once confirmed.
+model PersonalSchedule {
+  id       Int    @id @default(autoincrement())
+  cohortId Int    @map("cohort_id")
+  cohort   Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  leadId   Int    @map("lead_id")
+  lead     Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  /// The participant's page: /calendrier/<token>.
+  token       String    @unique @db.VarChar(64)
+  /// invited | proposed | confirmed | refused
+  status      String    @default("invited") @db.VarChar(20)
+  /// The link's month runs from this day (Montréal); reset when Ben re-sends or refuses.
+  sentAt      DateTime  @map("sent_at")
+  /// [{ date, start, extend }]: start in minutes, Montréal time.
+  days        Json?
+  proposedAt  DateTime? @map("proposed_at")
+  confirmedAt DateTime? @map("confirmed_at")
+  refusedAt   DateTime? @map("refused_at")
+  refusalNote String?   @map("refusal_note") @db.Text
+  /// Once confirmed: [{ n, date, startsAt, endsAt, eventId, meetUrl }].
+  events      Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([cohortId, leadId])
+  @@index([status])
+  @@map("personal_schedules")
 }
 
 /// One live session of a cohort, sent as a Google Calendar event with a Meet
