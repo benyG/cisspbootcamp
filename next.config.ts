@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/plan-de-lecture": ["./lib/reading-plan/template.html"],
     "/admin/marketing": ["./lib/marketing/fonts/**"],
+    /* The share image reads the same fonts and Ben's photo (lib/og/share-image.tsx). */
+    "/opengraph-image": ["./lib/marketing/fonts/**", "./lib/og/**"],
+    "/twitter-image": ["./lib/marketing/fonts/**", "./lib/og/**"],
   },
   /* A LinkedIn post may carry an image of up to 4 MB (lib/linkedin.ts); the default is 1 MB. */
   experimental: { serverActions: { bodySizeLimit: "5mb" } },
