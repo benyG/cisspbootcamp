@@ -26,11 +26,28 @@ const interTight = localFont({
   variable: "--font-inter-tight",
 });
 
+const DESCRIPTION =
+  "Préparez le CISSP en français : 40 h de sessions live sur 15 jours, 8 domaines, questions d’entraînement " +
+  "et accompagnement jusqu’à l’examen. Analysez votre profil gratuitement.";
+
+/**
+ * Share card and icons (Ben, 04/10): app/opengraph-image.tsx, twitter-image,
+ * icon.svg, apple-icon.png and favicon.ico are picked up by Next; the base
+ * URL makes their links absolute for the networks.
+ */
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://www.cisspbootcamp.online"),
   title: "Bootcamp CISSP en français | Préparation intensive CISSP",
-  description:
-    "Préparez le CISSP en français : 40 h de sessions live sur 15 jours, 8 domaines, questions d’entraînement " +
-    "et accompagnement jusqu’à l’examen. Analysez votre profil gratuitement.",
+  description: DESCRIPTION,
+  applicationName: "CISSP Bootcamp",
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    siteName: "CISSP Bootcamp",
+    title: "Bootcamp CISSP en français, avec un coach",
+    description: DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image", title: "Bootcamp CISSP en français, avec un coach", description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {
