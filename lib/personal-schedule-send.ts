@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { createSessionEvent, fetchBusy, setEventAttendees } from "@/lib/calendar/google";
-import { sessionDay, sessionDescription } from "@/lib/cohort-sessions";
+import { SESSION_REMINDER_MINUTES, reminderMessage, sessionDay, sessionDescription } from "@/lib/cohort-sessions";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
@@ -63,7 +63,8 @@ export function storedDays(value: unknown): PersonalDay[] {
   return parsed.success ? parsed.data : [];
 }
 
-export type StoredEvent = { n: number; date: string; startsAt: string; endsAt: string; eventId: string; meetUrl: string | null };
+/** remindedAt: when the e-mail an hour before left (ISO), once. */
+export type StoredEvent = { n: number; date: string; startsAt: string; endsAt: string; eventId: string; meetUrl: string | null; remindedAt?: string };
 
 // ---- Ben sends the link
 
@@ -263,3 +264,32 @@ export function confirmedMessage(firstName: string, sessions: Session[], planUrl
   ].join("\n");
 }
 
+
+/**
+ * Cron, every 15 minutes (Ben, 04/10): the e-mail an hour before each
+ * personal session, as for the cohort's sessions, once per session.
+ */
+export async function sendPersonalReminders(now = new Date()): Promise<number> {
+  const schedules = await prisma.personalSchedule.findMany({ where: { status: "confirmed" }, include: { lead: { select: { firstName: true, email: true, unsubscribedAt: true } } } });
+  const horizon = now.getTime() + SESSION_REMINDER_MINUTES * 60_000;
+  let sent = 0;
+  for (const schedule of schedules) {
+    const events = Array.isArray(schedule.events) ? (schedule.events as StoredEvent[]) : [];
+    const due = events.filter((e) => !e.remindedAt && Date.parse(e.startsAt) >= now.getTime() && Date.parse(e.startsAt) <= horizon);
+    if (!due.length) continue;
+    const sessions = personalSessions(storedDays(schedule.days));
+    for (const event of due) {
+      const session = sessions.find((s) => s.n === event.n);
+      if (!session) continue;
+      const result = await sendEmail({
+        to: schedule.lead.email,
+        subject: `Dans une heure : J${session.n} · CISSP Bootcamp`,
+        text: reminderMessage({ firstName: schedule.lead.firstName, session, startsAt: new Date(event.startsAt), endsAt: new Date(event.endsAt), meetUrl: event.meetUrl }),
+      });
+      if (result.sent) sent++;
+      event.remindedAt = now.toISOString();
+    }
+    await prisma.personalSchedule.update({ where: { id: schedule.id }, data: { events } });
+  }
+  return sent;
+}

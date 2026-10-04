@@ -90,3 +90,28 @@ describe("calendrier personnel, envois (Ben, 04/10)", () => {
     expect(mail.sendEmail.mock.calls[0][0].text).toContain(`/calendrier/${TOKEN}`);
   });
 });
+
+describe("rappel 1 h avant une session personnelle (Ben, 04/10)", () => {
+  it("part une fois, dans l'heure qui précède, avec le lien Meet et sans horaire", async () => {
+    const { sendPersonalReminders } = await import("@/lib/personal-schedule-send");
+    mail.sendEmail.mockReset().mockResolvedValue({ sent: true, id: null });
+    db.personalSchedule.update.mockReset();
+    const proposed = days.slice(0, 6);
+    const at = new Date(`${proposed[1].date}T13:20:00Z`); // 40 min before J2 (10 h Montréal = 14:00Z)
+    db.personalSchedule.findMany.mockReset().mockResolvedValue([{
+      id: 9, days: proposed, lead: { firstName: "Awa", email: "awa@x.test", unsubscribedAt: null },
+      events: [
+        { n: 1, date: proposed[0].date, startsAt: `${proposed[0].date}T14:00:00.000Z`, endsAt: "", eventId: "e1", meetUrl: "https://meet.google.com/a", remindedAt: "x" },
+        { n: 2, date: proposed[1].date, startsAt: `${proposed[1].date}T14:00:00.000Z`, endsAt: `${proposed[1].date}T21:00:00.000Z`, eventId: "e2", meetUrl: "https://meet.google.com/b" },
+        { n: 3, date: proposed[2].date, startsAt: `${proposed[2].date}T14:00:00.000Z`, endsAt: "", eventId: "e3", meetUrl: null },
+      ],
+    }]);
+    expect(await sendPersonalReminders(at)).toBe(1);
+    const email = mail.sendEmail.mock.calls[0][0];
+    expect(email).toMatchObject({ to: "awa@x.test", subject: "Dans une heure : J2 · CISSP Bootcamp" });
+    expect(email.text).toContain("https://meet.google.com/b");
+    const saved = db.personalSchedule.update.mock.calls[0][0].data.events;
+    expect(saved[1].remindedAt).toBe(at.toISOString());
+    expect(saved[2].remindedAt).toBeUndefined();
+  });
+});
