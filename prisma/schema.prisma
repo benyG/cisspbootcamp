@@ -236,22 +236,24 @@ model Cohort {
   marketingPosts    MarketingPost[]
   sessions          CohortSession[]
   personalSchedules PersonalSchedule[]
-  replays           CohortReplay[]
+  replayGrants      ReplayGrant[]
   replayAccesses    ReplayAccess[]
 
   @@index([program, status, startsAt])
   @@map("cohorts")
 }
 
-/// A recorded session of a cohort and its lab (Ben, 12/10): the video sits
-/// on Cloudflare Stream (signed playback only, no download), the lab ZIP in
-/// private Blob storage. Published per person through ReplayGrant.
-model CohortReplay {
-  id       Int    @id @default(autoincrement())
-  cohortId Int    @map("cohort_id")
-  cohort   Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
-  /// Jn of the cohort's plan.
-  day      Int
+/// One recording of the replay library and its lab (Ben, 12/10): filed by
+/// program and by the course modules it covers, not by cohort, so the same
+/// recording serves every cohort. The video sits on Cloudflare Stream
+/// (signed playback only, no download), the lab ZIP in private Blob storage.
+model ReplayItem {
+  id      Int     @id @default(autoincrement())
+  /// cissp | cc
+  program Program @default(cissp)
+  title   String  @db.VarChar(200)
+  /// Module numbers (1-19, course order) the recording covers.
+  modules Json?
 
   /// Cloudflare Stream video uid.
   streamUid      String? @map("stream_uid") @db.VarChar(64)
@@ -272,29 +274,29 @@ model CohortReplay {
   labName     String? @map("lab_name") @db.VarChar(255)
   labSize     Int?    @map("lab_size")
 
-  publishedAt DateTime?     @map("published_at")
-  grants      ReplayGrant[]
+  grants ReplayGrant[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@unique([cohortId, day])
-  @@index([videoStatus])
-  @@map("cohort_replays")
+  @@index([program, videoStatus])
+  @@map("replay_items")
 }
 
-/// Who may watch a replay (and download its lab).
+/// Who may watch a recording, and in which cohort's space it shows.
 model ReplayGrant {
-  id       Int          @id @default(autoincrement())
-  replayId Int          @map("replay_id")
-  replay   CohortReplay @relation(fields: [replayId], references: [id], onDelete: Cascade)
-  leadId   Int          @map("lead_id")
-  lead     Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  id       Int        @id @default(autoincrement())
+  itemId   Int        @map("item_id")
+  item     ReplayItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  cohortId Int        @map("cohort_id")
+  cohort   Cohort     @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  leadId   Int        @map("lead_id")
+  lead     Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@unique([replayId, leadId])
-  @@index([leadId])
+  @@unique([itemId, cohortId, leadId])
+  @@index([cohortId, leadId])
   @@map("replay_grants")
 }
 

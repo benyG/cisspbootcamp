@@ -118,7 +118,7 @@ export default async function AdminHomePage() {
       <Group icon={Clapperboard} title="Demandes d’accès aux replays" count={groups.replay.length}>
         {groups.replay.map((i) => i.kind === "replay" && (
           <Row key={`r${i.accessId}`} name={i.name} meta={i.cohortName} leadId={i.leadId} note={i.note}>
-            <Link href={`/admin/cohortes/${i.cohortId}/replays`} className={primary}>Rouvrir ou refuser</Link>
+            <Link href={`/admin/replays?cohorte=${i.cohortId}`} className={primary}>Rouvrir ou refuser</Link>
           </Row>
         ))}
       </Group>
@@ -155,6 +155,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/leads", label: "Tous les leads", icon: Users },
   { href: "/admin/tunnel", label: "Tunnel", icon: Filter },
   { href: "/admin/cohortes", label: "Cohortes", icon: GraduationCap },
+  { href: "/admin/replays", label: "Vidéothèque", icon: Clapperboard },
   { href: "/admin/marketing", label: "Marketing", icon: Megaphone },
   { href: "/admin/conseil", label: "Conseil", icon: Compass },
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquareQuote },

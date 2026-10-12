@@ -14,7 +14,8 @@ export type ReadingKind = "full" | "only" | "except" | "range" | "review";
 /** key: stable id of the reading, used for the participant's ticks (kept from the first version of the plan). */
 export type Reading = { key: string; ch: number; kind: ReadingKind; text: string; min: number };
 /** d: the domain (0 for the closing synthesis), h: hours spent on it in the session. */
-export type Session = { n: number; date: string; hours: number; blocks: Array<{ d: number; h: number }>; title: string; goal: string; read: Reading[]; todo?: string; rest?: boolean };
+/** modules: numbers (1-19, course order) of the modules taught that day; the replay library is filed by module (Ben, 12/10). */
+export type Session = { n: number; date: string; hours: number; blocks: Array<{ d: number; h: number }>; title: string; goal: string; read: Reading[]; todo?: string; rest?: boolean; modules?: number[] };
 /** One teaching unit, in course order. A module may run over two days. */
 export type Module = { d: number; h: number; title: string; goal: string; read: Reading[]; todo?: string };
 
@@ -259,6 +260,7 @@ function sessionOf(n: number, date: string, parts: Part[]): Session {
     goal: `${goals.join(" ; puis ")}.`,
     read,
     ...(todo ? { todo } : {}),
+    modules: [...new Set(parts.map((p) => MODULES.indexOf(p.mod) + 1))],
   };
 }
 
@@ -273,3 +275,16 @@ export function planDates(start: string): { end: string; mockExam: string } {
 
 /** Used when no cohort date is known. */
 export const DEFAULT_START = "2027-01-11";
+
+/** The course's modules, numbered 1 to 19 in course order: the replay library's filing (Ben, 12/10). */
+export function courseModules(): Array<{ n: number; title: string; domain: number; hours: number }> {
+  return MODULES.map((m, i) => ({ n: i + 1, title: m.title, domain: m.d, hours: m.h }));
+}
+
+/** Pure: "J3" or "J3–J4", the days of a calendar where the given modules are taught; "" if none. */
+export function daysForModules(sessions: ReadonlyArray<Session>, modules: ReadonlyArray<number>): string {
+  const days = sessions.filter((s) => s.modules?.some((m) => modules.includes(m))).map((s) => s.n);
+  if (!days.length) return "";
+  const first = Math.min(...days), last = Math.max(...days);
+  return first === last ? `J${first}` : `J${first}–J${last}`;
+}
