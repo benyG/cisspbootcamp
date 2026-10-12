@@ -143,6 +143,8 @@ model Lead {
   serviceOrders     ServiceOrder[]
   actions           ActionLog[]
   personalSchedules PersonalSchedule[]
+  replayAccesses    ReplayAccess[]
+  replayGrants      ReplayGrant[]
   pricingTier       PricingTier        @relation(fields: [tier], references: [code])
 
   @@index([status, heatScore])
@@ -234,9 +236,90 @@ model Cohort {
   marketingPosts    MarketingPost[]
   sessions          CohortSession[]
   personalSchedules PersonalSchedule[]
+  replays           CohortReplay[]
+  replayAccesses    ReplayAccess[]
 
   @@index([program, status, startsAt])
   @@map("cohorts")
+}
+
+/// A recorded session of a cohort and its lab (Ben, 12/10): the video sits
+/// on Cloudflare Stream (signed playback only, no download), the lab ZIP in
+/// private Blob storage. Published per person through ReplayGrant.
+model CohortReplay {
+  id       Int    @id @default(autoincrement())
+  cohortId Int    @map("cohort_id")
+  cohort   Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  /// Jn of the cohort's plan.
+  day      Int
+
+  /// Cloudflare Stream video uid.
+  streamUid      String? @map("stream_uid") @db.VarChar(64)
+  /// none | uploading | processing | ready | error
+  videoStatus    String  @default("none") @map("video_status") @db.VarChar(20)
+  videoName      String? @map("video_name") @db.VarChar(255)
+  videoError     String? @map("video_error") @db.VarChar(300)
+  durationSec    Int?    @map("duration_sec")
+  /// upload (from Ben's computer) | drive (copied from his Google Drive)
+  source         String? @db.VarChar(10)
+  driveFileId    String? @map("drive_file_id") @db.VarChar(120)
+  /// Resumable upload URL on Cloudflare and how far the Drive copy got.
+  tusUrl         String? @map("tus_url") @db.Text
+  sourceSize     BigInt? @map("source_size")
+  transferOffset BigInt? @map("transfer_offset")
+
+  labPathname String? @map("lab_pathname") @db.VarChar(255)
+  labName     String? @map("lab_name") @db.VarChar(255)
+  labSize     Int?    @map("lab_size")
+
+  publishedAt DateTime?     @map("published_at")
+  grants      ReplayGrant[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([cohortId, day])
+  @@index([videoStatus])
+  @@map("cohort_replays")
+}
+
+/// Who may watch a replay (and download its lab).
+model ReplayGrant {
+  id       Int          @id @default(autoincrement())
+  replayId Int          @map("replay_id")
+  replay   CohortReplay @relation(fields: [replayId], references: [id], onDelete: Cascade)
+  leadId   Int          @map("lead_id")
+  lead     Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([replayId, leadId])
+  @@index([leadId])
+  @@map("replay_grants")
+}
+
+/// A participant's replay space for a cohort: the private link, and until
+/// when it opens (4 months after the cohort, Ben 12/10; Ben can reopen).
+model ReplayAccess {
+  id       Int    @id @default(autoincrement())
+  cohortId Int    @map("cohort_id")
+  cohort   Cohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  leadId   Int    @map("lead_id")
+  lead     Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  /// The participant's page: /replays/<token>.
+  token        String    @unique @db.VarChar(64)
+  expiresAt    DateTime  @map("expires_at")
+  /// A request to reopen once expired, until Ben answers.
+  requestedAt  DateTime? @map("requested_at")
+  requestNote  String?   @map("request_note") @db.Text
+  lastViewedAt DateTime? @map("last_viewed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([cohortId, leadId])
+  @@map("replay_accesses")
 }
 
 /// A participant's own calendar inside a cohort (Ben, 04/10): Ben sends a

@@ -13,6 +13,8 @@ import { env } from "@/lib/env";
  * calendar may differ from the one that signs into /admin.
  */
 const SCOPES = ["https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar.freebusy", "openid", "email"];
+/** Read access to Ben's Drive, asked only when he connects it for the replays (Ben, 12/10). */
+export const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const API = "https://www.googleapis.com/calendar/v3";
 
@@ -26,12 +28,12 @@ export function redirectUri(): string {
 }
 
 /** Consent URL; `state` is checked on return to bind the flow to the admin session. */
-export function consentUrl(state: string): string {
+export function consentUrl(state: string, options: { drive?: boolean } = {}): string {
   const params = new URLSearchParams({
     client_id: env.AUTH_GOOGLE_ID,
     redirect_uri: redirectUri(),
     response_type: "code",
-    scope: SCOPES.join(" "),
+    scope: [...SCOPES, ...(options.drive ? [DRIVE_SCOPE] : [])].join(" "),
     access_type: "offline",
     // Force the consent screen so Google returns a refresh token even when
     // the account already authorised us once.
@@ -95,8 +97,8 @@ export async function getCredential() {
   return prisma.googleCredential.findUnique({ where: { id: 1 } });
 }
 
-/** Short-lived access token from the stored refresh token. */
-async function accessToken(): Promise<{ token: string; calendarId: string; timeZone: string }> {
+/** Short-lived access token from the stored refresh token (also used for Drive, lib/drive.ts). */
+export async function accessToken(): Promise<{ token: string; calendarId: string; timeZone: string }> {
   const credential = await getCredential();
   if (!credential) throw new CalendarNotConnectedError();
 
