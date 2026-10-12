@@ -20,7 +20,8 @@ export type QueueItem =
   | { kind: "payment"; registrationId: number; leadId: number; name: string; reference: string; amountUsd: number; cohortName: string; ageHours: number }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
   | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
-  | { kind: "personal"; scheduleId: number; cohortId: number; leadId: number; name: string; cohortName: string; hoursWaiting: number };
+  | { kind: "personal"; scheduleId: number; cohortId: number; leadId: number; name: string; cohortName: string; hoursWaiting: number }
+  | { kind: "replay"; accessId: number; cohortId: number; leadId: number; name: string; cohortName: string; note: string };
 
 export type Kpis = { leadsThisWeek: number; callsThisWeek: number; confirmed: number; capacity: number; cohortName: string | null };
 
@@ -132,6 +133,16 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
   });
   for (const p of proposals) {
     items.push({ kind: "personal", scheduleId: p.id, cohortId: p.cohort.id, leadId: p.lead.id, name: `${p.lead.firstName} ${p.lead.lastName}`, cohortName: p.cohort.name, hoursWaiting: hoursSince(p.proposedAt ?? p.updatedAt, now) });
+  }
+
+  // Requests to reopen expired replays (Ben, 12/10).
+  const replayRequests = await prisma.replayAccess.findMany({
+    where: { requestedAt: { not: null } },
+    orderBy: { requestedAt: "asc" },
+    include: { lead: { select: { id: true, firstName: true, lastName: true } }, cohort: { select: { id: true, name: true } } },
+  });
+  for (const r of replayRequests) {
+    items.push({ kind: "replay", accessId: r.id, cohortId: r.cohort.id, leadId: r.lead.id, name: `${r.lead.firstName} ${r.lead.lastName}`, cohortName: r.cohort.name, note: r.requestNote ?? "" });
   }
 
   return {

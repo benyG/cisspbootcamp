@@ -24,6 +24,15 @@ export async function startGoogleConnect(): Promise<never> {
   redirect(consentUrl(state));
 }
 
+/** Same consent, with read access to Drive added: the replays are copied from it (Ben, 12/10). */
+export async function startGoogleDriveConnect(): Promise<never> {
+  await requireAdmin();
+  const state = createToken();
+  const jar = await cookies();
+  jar.set(STATE_COOKIE, state, { httpOnly: true, sameSite: "lax", secure: true, maxAge: 600, path: "/" });
+  redirect(consentUrl(state, { drive: true }));
+}
+
 export async function disconnectGoogle(): Promise<void> {
   await requireAdmin();
   await prisma.googleCredential.deleteMany({ where: { id: 1 } });

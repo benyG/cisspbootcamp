@@ -5,6 +5,7 @@ import { getCredential } from "@/lib/calendar/google";
 import { prisma } from "@/lib/db";
 
 import {
+  startGoogleDriveConnect,
   addAvailabilityRule,
   disconnectGoogle,
   removeAvailabilityRule,
@@ -72,6 +73,18 @@ export default async function GoogleSettingsPage({
             </form>
           </>
         )}
+      </section>
+
+      <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+        <h2 className="font-semibold">Google Drive (replays)</h2>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          Pour publier un enregistrement directement depuis votre Drive (dossier « Meet Recordings »…), ajoutez la lecture de vos fichiers Drive
+          à la connexion Google. Google affiche un avertissement « application non vérifiée » : cliquez sur « Paramètres avancés », puis continuez.
+          L&apos;agenda reste connecté.
+        </p>
+        <form action={startGoogleDriveConnect} className="mt-4">
+          <button type="submit" className={primary}>{credential ? "Ajouter l’accès Google Drive" : "Connecter Google Calendar et Drive"}</button>
+        </form>
       </section>
 
       {(["discovery", "consulting"] as const).map((kind) => (

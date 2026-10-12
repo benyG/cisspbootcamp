@@ -1,4 +1,4 @@
-import { BellRing, CalendarCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BellRing, CalendarCheck, Clapperboard, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -26,6 +26,7 @@ export default async function AdminHomePage() {
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
     personal: items.filter((i) => i.kind === "personal"),
+    replay: items.filter((i) => i.kind === "replay"),
     session: items.filter((i) => i.kind === "session"),
   };
 
@@ -110,6 +111,14 @@ export default async function AdminHomePage() {
         {groups.personal.map((i) => i.kind === "personal" && (
           <Row key={`p${i.scheduleId}`} name={i.name} meta={`${i.cohortName} · proposé il y a ${i.hoursWaiting} h`} leadId={i.leadId}>
             <Link href={`/admin/cohortes/${i.cohortId}/calendriers/${i.scheduleId}`} className={primary}>Voir et confirmer</Link>
+          </Row>
+        ))}
+      </Group>
+
+      <Group icon={Clapperboard} title="Demandes d’accès aux replays" count={groups.replay.length}>
+        {groups.replay.map((i) => i.kind === "replay" && (
+          <Row key={`r${i.accessId}`} name={i.name} meta={i.cohortName} leadId={i.leadId} note={i.note}>
+            <Link href={`/admin/cohortes/${i.cohortId}/replays`} className={primary}>Rouvrir ou refuser</Link>
           </Row>
         ))}
       </Group>
