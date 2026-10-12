@@ -140,8 +140,8 @@ export default async function CohortPage({
         </Link>
       )}
       {cohort.program === "cissp" && (
-        <Link href={`/admin/cohortes/${cohort.id}/replays`} className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line bg-white p-4 text-sm hover:border-accent">
-          <span><span className="flex items-center gap-2 font-semibold"><Clapperboard className="size-4 text-accent" aria-hidden />Replays et labs</span><span className="mt-0.5 block text-muted">Publier l&apos;enregistrement de chaque jour (lecture seule, au nom de la personne) et son lab ZIP, pour tous ou une sélection.</span></span>
+        <Link href={`/admin/replays?cohorte=${cohort.id}`} className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-line bg-white p-4 text-sm hover:border-accent">
+          <span><span className="flex items-center gap-2 font-semibold"><Clapperboard className="size-4 text-accent" aria-hidden />Vidéothèque</span><span className="mt-0.5 block text-muted">Publier aux inscrits de cette cohorte les enregistrements de la vidéothèque (rangés par module) et leurs labs ZIP, pour tous ou une sélection.</span></span>
           <span className="font-semibold text-accent-ink">Ouvrir →</span>
         </Link>
       )}

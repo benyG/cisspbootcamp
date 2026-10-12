@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_START, DOMAINS, MODULES, buildSessions, planDates } from "@/lib/reading-plan/data";
+import { DEFAULT_START, DOMAINS, MODULES, buildSessions, courseModules, daysForModules, planDates } from "@/lib/reading-plan/data";
 import { cisspEndsAt, isPlanDate, planStart, readingPlanUrl, renderReadingPlan, scriptJson } from "@/lib/reading-plan/page";
 import { planAttachments } from "@/lib/documents";
 import { readingPlanLine } from "@/lib/onboarding";
@@ -116,5 +116,26 @@ describe("fin de cohorte CISSP", () => {
   it("se cale sur le calendrier du plan, à la même heure que le début", () => {
     expect(cisspEndsAt(new Date("2027-01-11T17:00:00.000Z")).toISOString()).toBe("2027-01-25T17:00:00.000Z");
     expect(cisspEndsAt(new Date("2026-10-03T17:00:00.000Z")).toISOString()).toBe("2026-10-17T17:00:00.000Z");
+  });
+});
+
+describe("vidéothèque par module (Ben, 12/10)", () => {
+  it("liste les 19 modules du programme, numérotés dans l'ordre", () => {
+    const modules = courseModules();
+    expect(modules).toHaveLength(MODULES.length);
+    expect(modules.map((m) => m.n)).toEqual(MODULES.map((_, i) => i + 1));
+  });
+
+  it("place les modules d'un enregistrement dans le calendrier de chacun", () => {
+    const sessions = buildSessions("2026-10-04");
+    expect(daysForModules(sessions, [1])).toBe("J1");
+    const last = sessions[sessions.length - 1];
+    const lastModule = Math.max(...(last.modules ?? []));
+    expect(daysForModules(sessions, [lastModule])).toBe(`J${last.n}`);
+    expect(daysForModules(sessions, [1, lastModule])).toBe(`J1–J${last.n}`);
+    expect(daysForModules(sessions, [])).toBe("");
+    // A module spread over two days gives a range.
+    const split = sessions.flatMap((s) => s.modules ?? []).find((m, i, all) => all.indexOf(m) !== i);
+    if (split) expect(daysForModules(sessions, [split])).toMatch(/^J\d+–J\d+$/);
   });
 });

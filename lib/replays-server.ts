@@ -6,17 +6,18 @@ import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
 import { personalSessions } from "@/lib/personal-schedule";
 import { storedDays } from "@/lib/personal-schedule-send";
-import { buildSessions } from "@/lib/reading-plan/data";
+import { buildSessions, daysForModules } from "@/lib/reading-plan/data";
 import { planStart } from "@/lib/reading-plan/page";
 import { accessEndsAt, isAccessOpen, nextRange, reopenedUntil } from "@/lib/replays";
 import { TUS_CHUNK_BYTES, createUpload, deleteVideo, getVideo, playbackToken, secureVideo, sendChunk, streamEnabled, uploadOffset } from "@/lib/stream";
 import { createToken } from "@/lib/tokens";
 
 /**
- * Replays and labs, the I/O side (Ben, 12/10): uploads to Cloudflare Stream
- * (from Ben's browser or copied from his Drive), publication to chosen
- * participants, their private space, playback tokens, lab links, and
- * requests to reopen an expired access.
+ * Replays and labs, the I/O side (Ben, 12/10): a library of recordings per
+ * program, filed by course module and shared by every cohort; uploads to
+ * Cloudflare Stream (from Ben's browser or copied from his Drive),
+ * publication to chosen participants of any cohort, their private space,
+ * playback tokens, lab links, and requests to reopen an expired access.
  */
 
 export type Result = { ok: true; message: string } | { ok: false; error: string };
@@ -30,8 +31,31 @@ export function cohortDays(startsAt: Date) {
   return buildSessions(planStart(startsAt)).filter((d) => !d.rest);
 }
 
-async function replayFor(cohortId: number, day: number) {
-  return prisma.cohortReplay.upsert({ where: { cohortId_day: { cohortId, day } }, create: { cohortId, day }, update: {} });
+async function itemById(id: number) {
+  return prisma.replayItem.findUnique({ where: { id } });
+}
+
+// ---- the library
+
+const modulesSchema = (value: unknown): number[] => (Array.isArray(value) ? value.filter((m): m is number => Number.isInteger(m) && m >= 1 && m <= 40) : []);
+export const itemModules = modulesSchema;
+
+export async function createItem(input: { program: "cissp" | "cc"; title: string; modules: number[] }): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+  const item = await prisma.replayItem.create({ data: { program: input.program, title: input.title, modules: [...new Set(input.modules)].sort((a, b) => a - b) } });
+  return { ok: true, id: item.id };
+}
+
+export async function updateItem(id: number, input: { title: string; modules: number[] }): Promise<void> {
+  await prisma.replayItem.update({ where: { id }, data: { title: input.title, modules: [...new Set(input.modules)].sort((a, b) => a - b) } });
+}
+
+/** Removes a recording from the library: its video, its lab and every access to it. */
+export async function deleteItem(id: number): Promise<void> {
+  const item = await itemById(id);
+  if (!item) return;
+  await dropVideo(item);
+  if (item.labPathname) await del(item.labPathname).catch(() => undefined);
+  await prisma.replayItem.delete({ where: { id } });
 }
 
 /** Replacing a recording removes the previous one from Cloudflare. */
@@ -42,13 +66,14 @@ async function dropVideo(replay: { id: number; streamUid: string | null }) {
 // ---- uploads
 
 /** From Ben's computer: opens a resumable upload the browser fills itself. */
-export async function startComputerUpload(cohortId: number, day: number, file: { name: string; size: number }): Promise<{ ok: true; replayId: number; uploadUrl: string } | { ok: false; error: string }> {
+export async function startComputerUpload(itemId: number, file: { name: string; size: number }): Promise<{ ok: true; replayId: number; uploadUrl: string } | { ok: false; error: string }> {
   if (!streamEnabled()) return NOT_CONFIGURED;
-  const replay = await replayFor(cohortId, day);
+  const replay = await itemById(itemId);
+  if (!replay) return { ok: false, error: "Enregistrement introuvable." };
   try {
-    const { uploadUrl, uid } = await createUpload({ name: `Cohorte ${cohortId} · J${day} · ${file.name}`, size: file.size, appUrl: appUrl() });
+    const { uploadUrl, uid } = await createUpload({ name: `${replay.title} · ${file.name}`, size: file.size, appUrl: appUrl() });
     await dropVideo(replay);
-    await prisma.cohortReplay.update({
+    await prisma.replayItem.update({
       where: { id: replay.id },
       data: { streamUid: uid, videoStatus: "uploading", videoName: file.name.slice(0, 255), videoError: null, durationSec: null, source: "upload", driveFileId: null, tusUrl: uploadUrl, sourceSize: BigInt(file.size), transferOffset: BigInt(0) },
     });
@@ -61,19 +86,20 @@ export async function startComputerUpload(cohortId: number, day: number, file: {
 
 /** The browser sent the last piece: Cloudflare now prepares the video. */
 export async function finishComputerUpload(replayId: number): Promise<void> {
-  await prisma.cohortReplay.updateMany({ where: { id: replayId, videoStatus: "uploading", source: "upload" }, data: { videoStatus: "processing", tusUrl: null } });
+  await prisma.replayItem.updateMany({ where: { id: replayId, videoStatus: "uploading", source: "upload" }, data: { videoStatus: "processing", tusUrl: null } });
 }
 
 /** From Ben's Drive: the server copies the file to Cloudflare piece by piece (driveCopyStep). */
-export async function startDriveCopy(cohortId: number, day: number, fileId: string): Promise<Result & { replayId?: number }> {
+export async function startDriveCopy(itemId: number, fileId: string): Promise<Result & { replayId?: number }> {
   if (!streamEnabled()) return NOT_CONFIGURED;
   try {
     const file = await driveFile(fileId);
     if (!file.mimeType.startsWith("video/") || !file.size) return { ok: false, error: "Ce fichier Drive n'est pas une vidéo." };
-    const replay = await replayFor(cohortId, day);
-    const { uploadUrl, uid } = await createUpload({ name: `Cohorte ${cohortId} · J${day} · ${file.name}`, size: file.size, appUrl: appUrl() });
+    const replay = await itemById(itemId);
+    if (!replay) return { ok: false, error: "Enregistrement introuvable." };
+    const { uploadUrl, uid } = await createUpload({ name: `${replay.title} · ${file.name}`, size: file.size, appUrl: appUrl() });
     await dropVideo(replay);
-    await prisma.cohortReplay.update({
+    await prisma.replayItem.update({
       where: { id: replay.id },
       data: { streamUid: uid, videoStatus: "uploading", videoName: file.name.slice(0, 255), videoError: null, durationSec: null, source: "drive", driveFileId: fileId, tusUrl: uploadUrl, sourceSize: BigInt(file.size), transferOffset: BigInt(0) },
     });
@@ -91,7 +117,7 @@ export async function startDriveCopy(cohortId: number, day: number, fileId: stri
  */
 export async function driveCopyStep(replayId: number, budgetMs = 40_000): Promise<{ status: string; offset: number; size: number; error: string | null }> {
   const started = Date.now();
-  const replay = await prisma.cohortReplay.findUnique({ where: { id: replayId } });
+  const replay = await prisma.replayItem.findUnique({ where: { id: replayId } });
   if (!replay || replay.videoStatus !== "uploading" || replay.source !== "drive" || !replay.tusUrl || !replay.driveFileId || replay.sourceSize === null) {
     return { status: replay?.videoStatus ?? "none", offset: Number(replay?.transferOffset ?? 0), size: Number(replay?.sourceSize ?? 0), error: replay?.videoError ?? null };
   }
@@ -104,10 +130,10 @@ export async function driveCopyStep(replayId: number, budgetMs = 40_000): Promis
     for (let range = nextRange(offset, size, TUS_CHUNK_BYTES); range && Date.now() - started < budgetMs; range = nextRange(offset, size, TUS_CHUNK_BYTES)) {
       const bytes = await readDriveRange(replay.driveFileId, range.from, range.to);
       offset = await sendChunk(replay.tusUrl, range.from, bytes);
-      await prisma.cohortReplay.update({ where: { id: replayId }, data: { transferOffset: BigInt(offset), videoError: null } });
+      await prisma.replayItem.update({ where: { id: replayId }, data: { transferOffset: BigInt(offset), videoError: null } });
     }
     if (offset >= size) {
-      await prisma.cohortReplay.update({ where: { id: replayId }, data: { videoStatus: "processing", tusUrl: null, transferOffset: BigInt(size) } });
+      await prisma.replayItem.update({ where: { id: replayId }, data: { videoStatus: "processing", tusUrl: null, transferOffset: BigInt(size) } });
       return { status: "processing", offset: size, size, error: null };
     }
     return { status: "uploading", offset, size, error: null };
@@ -115,7 +141,7 @@ export async function driveCopyStep(replayId: number, budgetMs = 40_000): Promis
     console.error("[replays] copie drive", replayId, error);
     const message = (error instanceof Error ? error.message : "Copie interrompue").slice(0, 300);
     // An access problem will not fix itself; anything else is retried at the next step.
-    await prisma.cohortReplay.update({ where: { id: replayId }, data: error instanceof DriveAccessError ? { videoStatus: "error", videoError: message } : { videoError: message } });
+    await prisma.replayItem.update({ where: { id: replayId }, data: error instanceof DriveAccessError ? { videoStatus: "error", videoError: message } : { videoError: message } });
     return { status: error instanceof DriveAccessError ? "error" : "uploading", offset, size, error: message };
   }
 }
@@ -126,7 +152,7 @@ export async function driveCopyStep(replayId: number, budgetMs = 40_000): Promis
  */
 export async function syncReplays(now = new Date()): Promise<number> {
   if (!streamEnabled()) return 0;
-  const rows = await prisma.cohortReplay.findMany({ where: { videoStatus: { in: ["uploading", "processing"] } }, select: { id: true, videoStatus: true, source: true, streamUid: true, updatedAt: true } });
+  const rows = await prisma.replayItem.findMany({ where: { videoStatus: { in: ["uploading", "processing"] } }, select: { id: true, videoStatus: true, source: true, streamUid: true, updatedAt: true } });
   let changed = 0;
   const started = Date.now();
   for (const r of rows) {
@@ -135,7 +161,7 @@ export async function syncReplays(now = new Date()): Promise<number> {
       continue;
     }
     if (r.videoStatus === "uploading" && now.getTime() - r.updatedAt.getTime() > 24 * 3_600_000) {
-      await prisma.cohortReplay.update({ where: { id: r.id }, data: { videoStatus: "error", videoError: "Envoi interrompu : renvoyez la vidéo." } });
+      await prisma.replayItem.update({ where: { id: r.id }, data: { videoStatus: "error", videoError: "Envoi interrompu : renvoyez la vidéo." } });
       changed++;
       continue;
     }
@@ -150,11 +176,11 @@ export async function refreshVideo(replayId: number, uid: string): Promise<boole
     const state = await getVideo(uid);
     if (state.ready) {
       await secureVideo(uid, appUrl());
-      await prisma.cohortReplay.update({ where: { id: replayId }, data: { videoStatus: "ready", durationSec: state.duration, videoError: null } });
+      await prisma.replayItem.update({ where: { id: replayId }, data: { videoStatus: "ready", durationSec: state.duration, videoError: null } });
       return true;
     }
     if (state.error) {
-      await prisma.cohortReplay.update({ where: { id: replayId }, data: { videoStatus: "error", videoError: state.error.slice(0, 300) } });
+      await prisma.replayItem.update({ where: { id: replayId }, data: { videoStatus: "error", videoError: state.error.slice(0, 300) } });
       return true;
     }
   } catch (error) {
@@ -163,30 +189,31 @@ export async function refreshVideo(replayId: number, uid: string): Promise<boole
   return false;
 }
 
-export async function removeVideo(cohortId: number, day: number): Promise<void> {
-  const replay = await prisma.cohortReplay.findUnique({ where: { cohortId_day: { cohortId, day } } });
+export async function removeVideo(itemId: number): Promise<void> {
+  const replay = await itemById(itemId);
   if (!replay) return;
   await dropVideo(replay);
-  await prisma.cohortReplay.update({ where: { id: replay.id }, data: { streamUid: null, videoStatus: "none", videoName: null, videoError: null, durationSec: null, source: null, driveFileId: null, tusUrl: null, sourceSize: null, transferOffset: null } });
+  await prisma.replayItem.update({ where: { id: replay.id }, data: { streamUid: null, videoStatus: "none", videoName: null, videoError: null, durationSec: null, source: null, driveFileId: null, tusUrl: null, sourceSize: null, transferOffset: null } });
 }
 
 // ---- labs
 
-export async function attachLab(cohortId: number, day: number, input: { pathname: string; name: string }): Promise<Result> {
-  if (!input.pathname.startsWith(`replays/labs/${cohortId}/`)) return { ok: false, error: "Fichier refusé." };
+export async function attachLab(itemId: number, input: { pathname: string; name: string }): Promise<Result> {
+  if (!input.pathname.startsWith(`replays/labs/item-${itemId}/`)) return { ok: false, error: "Fichier refusé." };
   const blob = await head(input.pathname).catch(() => null);
   if (!blob) return { ok: false, error: "Le fichier n'est pas arrivé : renvoyez-le." };
-  const replay = await replayFor(cohortId, day);
+  const replay = await itemById(itemId);
+  if (!replay) return { ok: false, error: "Enregistrement introuvable." };
   if (replay.labPathname && replay.labPathname !== input.pathname) await del(replay.labPathname).catch(() => undefined);
-  await prisma.cohortReplay.update({ where: { id: replay.id }, data: { labPathname: input.pathname, labName: input.name.slice(0, 255), labSize: blob.size } });
-  return { ok: true, message: `Lab ajouté à J${day}.` };
+  await prisma.replayItem.update({ where: { id: replay.id }, data: { labPathname: input.pathname, labName: input.name.slice(0, 255), labSize: blob.size } });
+  return { ok: true, message: "Lab ajouté." };
 }
 
-export async function removeLab(cohortId: number, day: number): Promise<void> {
-  const replay = await prisma.cohortReplay.findUnique({ where: { cohortId_day: { cohortId, day } } });
+export async function removeLab(itemId: number): Promise<void> {
+  const replay = await itemById(itemId);
   if (!replay?.labPathname) return;
   await del(replay.labPathname).catch(() => undefined);
-  await prisma.cohortReplay.update({ where: { id: replay.id }, data: { labPathname: null, labName: null, labSize: null } });
+  await prisma.replayItem.update({ where: { id: replay.id }, data: { labPathname: null, labName: null, labSize: null } });
 }
 
 // ---- participants
@@ -213,41 +240,45 @@ async function ensureAccess(cohort: { id: number; endsAt: Date }, lead: { id: nu
 }
 
 /**
- * Publishes a day's replay to the chosen participants (all paid ones when
- * `leadIds` is "all"); each new one gets an e-mail with the link to their
- * space. Publishing again adds people; nobody is e-mailed twice.
+ * Publishes a library recording to participants of one cohort (all its
+ * paid participants when `leadIds` is "all"); each new one gets an e-mail
+ * with the link to their space for that cohort. Publishing again adds
+ * people; nobody is e-mailed twice for the same cohort.
  */
-export async function publishReplay(cohortId: number, day: number, leadIds: number[] | "all"): Promise<Result> {
-  const [cohort, replay, people] = await Promise.all([
-    prisma.cohort.findUnique({ where: { id: cohortId }, select: { id: true, name: true, startsAt: true, endsAt: true } }),
-    prisma.cohortReplay.findUnique({ where: { cohortId_day: { cohortId, day } }, include: { grants: { select: { leadId: true } } } }),
+export async function publishItem(itemId: number, cohortId: number, leadIds: number[] | "all"): Promise<Result> {
+  const [cohort, item, people] = await Promise.all([
+    prisma.cohort.findUnique({ where: { id: cohortId }, select: { id: true, name: true, program: true, startsAt: true, endsAt: true } }),
+    prisma.replayItem.findUnique({ where: { id: itemId }, include: { grants: { where: { cohortId }, select: { leadId: true } } } }),
     cohortParticipants(cohortId),
   ]);
-  if (!cohort || !replay) return { ok: false, error: "Rien à publier pour ce jour." };
-  if (replay.videoStatus !== "ready" && !replay.labPathname) return { ok: false, error: "Ajoutez d'abord la vidéo (prête) ou le lab." };
-  if (replay.videoStatus !== "ready" && replay.videoStatus !== "none") return { ok: false, error: "La vidéo n'est pas encore prête : attendez la fin du traitement." };
+  if (!cohort || !item) return { ok: false, error: "Enregistrement ou cohorte introuvable." };
+  if (cohort.program !== item.program) return { ok: false, error: "Cet enregistrement n'est pas du programme de cette cohorte." };
+  if (item.videoStatus !== "ready" && !item.labPathname) return { ok: false, error: "Ajoutez d'abord la vidéo (prête) ou le lab." };
+  if (item.videoStatus !== "ready" && item.videoStatus !== "none") return { ok: false, error: "La vidéo n'est pas encore prête : attendez la fin du traitement." };
   const chosen = leadIds === "all" ? people : people.filter((p) => leadIds.includes(p.id));
   if (chosen.length === 0) return { ok: false, error: "Choisissez au moins une personne inscrite." };
-  const already = new Set(replay.grants.map((g) => g.leadId));
+  const already = new Set(item.grants.map((g) => g.leadId));
   const fresh = chosen.filter((p) => !already.has(p.id));
   if (fresh.length === 0) return { ok: false, error: "Ces personnes y ont déjà accès." };
 
-  const session = cohortDays(cohort.startsAt).find((d) => d.n === day);
+  const days = cohortDays(cohort.startsAt);
+  const modules = itemModules(item.modules);
+  const what = [item.videoStatus === "ready" ? "le replay" : null, item.labPathname ? "le lab" : null].filter(Boolean).join(" et ");
   let emailed = 0;
   for (const person of fresh) {
     const access = await ensureAccess(cohort, person);
-    await prisma.replayGrant.create({ data: { replayId: replay.id, leadId: person.id } });
-    const what = [replay.videoStatus === "ready" ? "le replay" : null, replay.labPathname ? "le lab" : null].filter(Boolean).join(" et ");
+    await prisma.replayGrant.create({ data: { itemId: item.id, cohortId: cohort.id, leadId: person.id } });
+    const when = person.personalLastDate ? "" : daysForModules(days, modules);
     const result = await sendEmail({
       to: person.email,
-      subject: `J${day} disponible : ${what} · CISSP Bootcamp`,
+      subject: `Nouveau dans votre espace : ${what} · CISSP Bootcamp`,
       text: [
         `Bonjour ${person.firstName},`,
         "",
-        `${what.charAt(0).toUpperCase() + what.slice(1)} de la session J${day}${session ? ` (${session.title})` : ""} ${what.includes(" et ") ? "sont disponibles" : "est disponible"} dans votre espace :`,
+        `${what.charAt(0).toUpperCase() + what.slice(1)} « ${item.title} »${when ? ` (${when})` : ""} ${what.includes(" et ") ? "sont disponibles" : "est disponible"} dans votre espace :`,
         spaceUrl(access.token),
         "",
-        replay.videoStatus === "ready" ? "La vidéo se regarde en ligne, sur cette page uniquement ; elle vous est personnelle." : "",
+        item.videoStatus === "ready" ? "La vidéo se regarde en ligne, sur cette page uniquement ; elle vous est personnelle." : "",
         `Votre accès est ouvert jusqu’au ${access.expiresAt.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}.`,
         "",
         "Bonne révision,",
@@ -255,10 +286,9 @@ export async function publishReplay(cohortId: number, day: number, leadIds: numb
       ].filter((l, i, all) => l !== "" || all[i - 1] !== "").join("\n"),
     });
     if (result.sent) emailed++;
-    await prisma.actionLog.create({ data: { leadId: person.id, type: "replay_published", channel: "email", payload: { cohortId, day } } });
+    await prisma.actionLog.create({ data: { leadId: person.id, type: "replay_published", channel: "email", payload: { cohortId, itemId } } });
   }
-  await prisma.cohortReplay.update({ where: { id: replay.id }, data: { publishedAt: replay.publishedAt ?? new Date() } });
-  return { ok: true, message: `J${day} publié pour ${fresh.length} personne(s) ; ${emailed} e-mail(s) envoyé(s).` };
+  return { ok: true, message: `« ${item.title} » publié pour ${fresh.length} personne(s) de ${cohort.name} ; ${emailed} e-mail(s) envoyé(s).` };
 }
 
 // ---- the participant's space
@@ -268,39 +298,46 @@ export async function accessByToken(token: string) {
   return prisma.replayAccess.findUnique({ where: { token }, include: { lead: { select: { id: true, firstName: true, lastName: true, email: true } }, cohort: { select: { id: true, name: true, startsAt: true } } } });
 }
 
-/** The days published to this person, in plan order. */
-export async function grantedReplays(access: { cohortId: number; leadId: number }) {
-  return prisma.cohortReplay.findMany({
-    where: { cohortId: access.cohortId, grants: { some: { leadId: access.leadId } } },
-    orderBy: { day: "asc" },
-    select: { id: true, day: true, videoStatus: true, streamUid: true, durationSec: true, labPathname: true, labName: true, labSize: true },
+/** The recordings published to this person in this cohort, in course order (first module covered). */
+export async function grantedItems(access: { cohortId: number; leadId: number }) {
+  const items = await prisma.replayItem.findMany({
+    where: { grants: { some: { cohortId: access.cohortId, leadId: access.leadId } } },
+    select: { id: true, title: true, modules: true, videoStatus: true, durationSec: true, labPathname: true, labName: true, labSize: true, createdAt: true },
   });
+  const first = (m: unknown) => Math.min(...itemModules(m), 999);
+  return items.sort((a, b) => first(a.modules) - first(b.modules) || a.createdAt.getTime() - b.createdAt.getTime());
+}
+
+/** The participant's own calendar: the cohort's, or their confirmed personal one (for "J3" labels). */
+export async function calendarFor(access: { cohortId: number; leadId: number }, cohortStartsAt: Date) {
+  const personal = await prisma.personalSchedule.findFirst({ where: { cohortId: access.cohortId, leadId: access.leadId, status: "confirmed" }, select: { days: true } });
+  return personal ? personalSessions(storedDays(personal.days)) : cohortDays(cohortStartsAt);
 }
 
 /** A playback token for one day, if this person may watch it now; each viewing is logged. */
-export async function playbackFor(access: { id: number; cohortId: number; leadId: number; expiresAt: Date }, day: number, now = new Date(), options: { log?: boolean } = {}): Promise<string | null> {
+export async function playbackFor(access: { id: number; cohortId: number; leadId: number; expiresAt: Date }, itemId: number, now = new Date(), options: { log?: boolean } = {}): Promise<string | null> {
   if (!isAccessOpen(access.expiresAt, now) || !streamEnabled()) return null;
-  const replay = await prisma.cohortReplay.findFirst({ where: { cohortId: access.cohortId, day, videoStatus: "ready", grants: { some: { leadId: access.leadId } } }, select: { streamUid: true } });
+  const replay = await prisma.replayItem.findFirst({ where: { id: itemId, videoStatus: "ready", grants: { some: { cohortId: access.cohortId, leadId: access.leadId } } }, select: { streamUid: true } });
   if (!replay?.streamUid) return null;
   const token = await playbackToken(replay.streamUid, now.getTime());
   // Ben checking a participant's space is not a viewing.
   if (options.log !== false) {
     await prisma.replayAccess.update({ where: { id: access.id }, data: { lastViewedAt: now } });
-    await prisma.actionLog.create({ data: { leadId: access.leadId, type: "replay_viewed", payload: { cohortId: access.cohortId, day } } });
+    await prisma.actionLog.create({ data: { leadId: access.leadId, type: "replay_viewed", payload: { cohortId: access.cohortId, itemId } } });
   }
   return token;
 }
 
 /** A ten-minute link to the lab ZIP, if this person may have it now. */
-export async function labLinkFor(token: string, day: number, now = new Date()): Promise<string | null> {
+export async function labLinkFor(token: string, itemId: number, now = new Date()): Promise<string | null> {
   const access = await accessByToken(token);
   if (!access || !isAccessOpen(access.expiresAt, now)) return null;
-  const replay = await prisma.cohortReplay.findFirst({ where: { cohortId: access.cohortId, day, grants: { some: { leadId: access.leadId } } }, select: { labPathname: true } });
+  const replay = await prisma.replayItem.findFirst({ where: { id: itemId, grants: { some: { cohortId: access.cohortId, leadId: access.leadId } } }, select: { labPathname: true } });
   if (!replay?.labPathname) return null;
   const validUntil = now.getTime() + 10 * 60_000;
   const signed = await issueSignedToken({ pathname: replay.labPathname, operations: ["get"], validUntil });
   const { presignedUrl } = await presignUrl(signed, { operation: "get", pathname: replay.labPathname, access: "private", validUntil });
-  await prisma.actionLog.create({ data: { leadId: access.leadId, type: "lab_downloaded", payload: { cohortId: access.cohortId, day } } });
+  await prisma.actionLog.create({ data: { leadId: access.leadId, type: "lab_downloaded", payload: { cohortId: access.cohortId, itemId } } });
   return presignedUrl;
 }
 
@@ -315,7 +352,7 @@ export async function requestReopen(token: string, note: string, now = new Date(
   await sendEmail({
     to: env.ADMIN_EMAIL,
     subject: `Demande d'accès aux replays : ${access.lead.firstName} ${access.lead.lastName}`,
-    text: [`${access.lead.firstName} ${access.lead.lastName} (${access.cohort.name}) demande à revoir les replays :`, "", note, "", `Rouvrir ou refuser : ${appUrl()}/admin/cohortes/${access.cohortId}/replays`].join("\n"),
+    text: [`${access.lead.firstName} ${access.lead.lastName} (${access.cohort.name}) demande à revoir les replays :`, "", note, "", `Rouvrir ou refuser : ${appUrl()}/admin/replays`].join("\n"),
   });
   return { ok: true, message: "Demande envoyée." };
 }

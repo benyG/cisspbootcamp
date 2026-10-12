@@ -17,7 +17,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       body,
       request,
       onBeforeGenerateToken: async (pathname) => {
-        if (!/^replays\/labs\/\d+\//.test(pathname)) throw new Error("Chemin refusé");
+        if (!/^replays\/labs\/item-\d+\//.test(pathname)) throw new Error("Chemin refusé");
         return { allowedContentTypes: LAB_CONTENT_TYPES, maximumSizeInBytes: LAB_MAX_BYTES, addRandomSuffix: true, validUntil: Date.now() + 60 * 60_000 };
       },
     });
