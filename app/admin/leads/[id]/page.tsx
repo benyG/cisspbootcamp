@@ -1,4 +1,4 @@
-import { FileText, FlaskConical, History, UserCheck } from "lucide-react";
+import { ClipboardCheck, FileText, FlaskConical, History, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -28,6 +28,7 @@ const LOG: Record<string, string> = {
   registration_started: "Inscription commencée", registration_manual_opened: "Inscription manuelle ouverte", registered_by_admin: "Inscrit directement par Ben", moved_to_cohort: "Déplacé vers une autre cohorte", payment_confirmed: "Paiement confirmé", payment_confirmed_manually: "Paiement confirmé à la main", payment_amount_mismatch: "Montant inattendu",
   unsubscribed: "Désinscrit", marked_lost: "Marqué perdu",
   after_call_email: "Lien de paiement envoyé après l'appel", result_reminder: "Rappel J+1 envoyé", onboarding_sent: "Documents de préparation envoyés", onboarding_failed: "Documents de préparation : e-mail non parti",
+  evaluation_sent: "Évaluation envoyée", evaluation_reminded: "Évaluation : relance envoyée", evaluation_completed: "Évaluation terminée",
   service_order_started: "Commande de conseil ouverte", service_paid: "Séance de conseil payée", session_booked: "Séance réservée", session_cancelled: "Séance annulée", session_outcome: "Séance faite / absent", session_booking_reminded: "Lien de réservation renvoyé",
 };
 
@@ -46,6 +47,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       serviceOrders: { orderBy: { createdAt: "desc" }, include: { service: { select: { name: true } }, bookings: { where: { status: { in: ["scheduled", "done"] } }, select: { id: true } } } },
       actions: { orderBy: { createdAt: "desc" }, take: 40 },
       practiceTests: { orderBy: { createdAt: "desc" }, take: 5 },
+      evaluationRecipients: { orderBy: { createdAt: "desc" }, take: 10, include: { evaluation: { select: { id: true, title: true, kind: true, questions: true, domains: true } } } },
       pricingTier: true,
     },
   });
@@ -198,6 +200,26 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
                 {" "}<a href={t.url} target="_blank" rel="noopener" className="underline">ouvrir</a>
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {lead.evaluationRecipients.length > 0 && (
+        <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
+          <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><ClipboardCheck className="size-4 text-accent" aria-hidden />Évaluations</h2>
+          <ul className="mt-2 grid gap-1">
+            {lead.evaluationRecipients.map((r) => {
+              const doms = (Array.isArray(r.domains) ? r.domains : []) as Array<{ id: number; percent: number }>;
+              const names = (Array.isArray(r.evaluation.domains) ? r.evaluation.domains : []) as Array<{ id: number; n: number | null; name: string }>;
+              const weakest = doms.length > 1 ? doms.reduce((a, b) => (b.percent < a.percent ? b : a)) : null;
+              const w = weakest ? names.find((d) => d.id === weakest.id) : null;
+              return (
+                <li key={r.id}>
+                  <a href={`/admin/evaluations?id=${r.evaluation.id}`} className="underline">{r.evaluation.title}</a> · {r.evaluation.kind === "exam" ? "examen blanc" : "test"} de {r.evaluation.questions} q. · {r.status === "completed" ? <b>{r.percent} %</b> : <span className="text-muted">{r.status === "started" ? "en cours" : "pas encore fait"}</span>}
+                  {weakest && <span className="text-muted"> · plus faible : {w?.n ? `D${w.n}` : w?.name ?? "?"} {weakest.percent} %</span>}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

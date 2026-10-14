@@ -288,6 +288,19 @@ que comme argument secondaire, jamais à la place de l'analyse de profil.
   (4). Sans clé, aucun bouton n'apparaît : le site reste tel quel.
 - `CLAUDE.md` réservait l'API ExamBoot à la V2 (B6) ; Ben l'a avancée.
 
+### Évaluations des inscrits (API v1, 14/10/2026)
+- Admin › Évaluations : Ben compose un test (corrigé) ou un examen blanc
+  (chronométré, sans correction) sur les domaines CISSP choisis, réparti
+  selon le poids à l'examen, à parts égales ou à la main, et l'envoie à tout
+  ou partie d'une cohorte. `POST /api/v1/tests` avec `send_email: false` :
+  ExamBoot rend un lien personnel par inscrit, le site envoie l'e-mail
+  (français, sans heure, désinscription). Tout le monde a les mêmes questions.
+- Scores : alerte `test.completed` sur `/api/webhooks/examboot` (HMAC-SHA256,
+  `EXAMBOOT_WEBHOOK_SECRET`), et le cron relit les évaluations ouvertes en
+  secours. Relance des retardataires 2 jours avant la date limite.
+- Suivi par personne et par domaine dans la page et dans la fiche lead.
+  Pas de classe ExamBoot : le lien sans compte suffit.
+
 ## 9. Parcours après l'analyse (brainstorm du 24/09/2026)
 
 Décidé avec Ben le 24/09 :
