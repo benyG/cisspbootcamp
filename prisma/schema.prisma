@@ -134,18 +134,19 @@ model Lead {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  scannerResponses  ScannerResponse[]
-  funnelEvents      FunnelEvent[]
-  seatHolds         SeatHold[]
-  practiceTests     PracticeTest[]
-  bookings          Booking[]
-  registrations     Registration[]
-  serviceOrders     ServiceOrder[]
-  actions           ActionLog[]
-  personalSchedules PersonalSchedule[]
-  replayAccesses    ReplayAccess[]
-  replayGrants      ReplayGrant[]
-  pricingTier       PricingTier        @relation(fields: [tier], references: [code])
+  scannerResponses     ScannerResponse[]
+  funnelEvents         FunnelEvent[]
+  seatHolds            SeatHold[]
+  practiceTests        PracticeTest[]
+  bookings             Booking[]
+  registrations        Registration[]
+  serviceOrders        ServiceOrder[]
+  actions              ActionLog[]
+  personalSchedules    PersonalSchedule[]
+  replayAccesses       ReplayAccess[]
+  replayGrants         ReplayGrant[]
+  evaluationRecipients EvaluationRecipient[]
+  pricingTier          PricingTier           @relation(fields: [tier], references: [code])
 
   @@index([status, heatScore])
   @@index([nextFollowupAt])
@@ -238,6 +239,7 @@ model Cohort {
   personalSchedules PersonalSchedule[]
   replayGrants      ReplayGrant[]
   replayAccesses    ReplayAccess[]
+  evaluations       Evaluation[]
 
   @@index([program, status, startsAt])
   @@map("cohorts")
@@ -857,4 +859,55 @@ model MarketingPost {
 
   @@index([cohortId, createdAt])
   @@map("marketing_posts")
+}
+
+/// A test or mock exam built on ExamBoot (API v1) from chosen CISSP domains,
+/// sent to participants of one cohort; the e-mail leaves from this site.
+model Evaluation {
+  id         Int       @id @default(autoincrement())
+  cohortId   Int       @map("cohort_id")
+  cohort     Cohort    @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  title      String    @db.VarChar(120)
+  kind       String    @db.VarChar(10) // test | exam
+  questions  Int
+  timer      Int       @default(0)
+  /// [{ n, id, name, questions }] : CISSP domain number, ExamBoot domain id.
+  domains    Json
+  message    String?   @db.Text
+  dueAt      DateTime  @map("due_at")
+  remind     Boolean   @default(true)
+  remindedAt DateTime? @map("reminded_at")
+  code       String    @unique @db.VarChar(64)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  recipients EvaluationRecipient[]
+
+  @@index([cohortId])
+  @@index([dueAt])
+  @@map("evaluations")
+}
+
+model EvaluationRecipient {
+  id           Int        @id @default(autoincrement())
+  evaluationId Int        @map("evaluation_id")
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  leadId       Int        @map("lead_id")
+  lead         Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  /// ExamBoot's recipient id and personal link (the link is the person's identity: never shown publicly).
+  externalId   Int        @map("external_id")
+  link         String     @db.Text
+  status       String     @default("created") @db.VarChar(12) // created | sent | started | completed
+  emailedAt    DateTime?  @map("emailed_at")
+  completedAt  DateTime?  @map("completed_at")
+  percent      Int?
+  correct      Int?
+  domains      Json? // [{ id, name, questions, correct, percent }]
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@unique([evaluationId, leadId])
+  @@index([externalId])
+  @@index([leadId])
+  @@map("evaluation_recipients")
 }

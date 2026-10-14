@@ -28,7 +28,7 @@ export class ExamBootError extends Error {
 }
 
 /** Both header forms the documentation accepts, plus a real User-Agent: some front proxies refuse anonymous clients with a 403. */
-function headers(apiKey: string, withBody: boolean): Record<string, string> {
+export function headers(apiKey: string, withBody: boolean): Record<string, string> {
   return {
     "X-API-KEY": apiKey,
     Authorization: `Bearer ${apiKey}`,
@@ -38,14 +38,14 @@ function headers(apiKey: string, withBody: boolean): Record<string, string> {
   };
 }
 
-async function failure(prefix: string, response: Response): Promise<ExamBootError> {
+export async function failure(prefix: string, response: Response): Promise<ExamBootError> {
   const body = await response.text().catch(() => "");
   // Cloudflare names the product that challenged the request in cf-mitigated; cf-ray identifies the event in its logs.
   const edge = ["cf-mitigated", "cf-ray", "server"].map((h) => `${h}=${response.headers.get(h) ?? "-"}`).join(" ");
   return new ExamBootError(`${prefix} → ${response.status} [${edge}]${body ? ` ${body.replace(/\s+/g, " ").slice(0, 160)}` : ""}`, response.status);
 }
 
-function config() {
+export function config() {
   const apiKey = process.env.EXAMBOOT_API_KEY ?? "";
   const baseUrl = (process.env.EXAMBOOT_BASE_URL ?? "https://examboot.net").replace(/\/$/, "");
   const certification = Number(process.env.EXAMBOOT_CISSP_ID ?? "4");
