@@ -53,6 +53,21 @@ export function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
         { name: "referenceCheckedOn", label: "Date de vérification de ce prix (ex. septembre 2026)" },
         { name: "directRegistrationForReady", label: "Laisser un profil « prêt » s'inscrire avant la validation du message de relance", checkbox: true },
       ]} />
+      <Section title="Entreprise émettrice des offres de service (ExamBoot)" section="company" initial={initial.company} fields={[
+        { name: "name", label: "Raison sociale" },
+        { name: "legalForm", label: "Forme juridique et capital (ex. SARL au capital de …)" },
+        { name: "registration", label: "Immatriculation (RCCM, SIREN, NEQ…)" },
+        { name: "taxId", label: "Identifiant fiscal (NIU, TVA…)" },
+        { name: "address", label: "Adresse du siège", rows: 2 },
+        { name: "phone", label: "Téléphone" },
+        { name: "email", label: "E-mail" },
+        { name: "website", label: "Site web" },
+        { name: "presentation", label: "Présentation de l'entreprise (dans l'offre)", rows: 3 },
+        { name: "signatory", label: "Signataire" },
+        { name: "signatoryTitle", label: "Fonction du signataire" },
+        { name: "paymentTerms", label: "Conditions de paiement par défaut", rows: 2 },
+        { name: "onsiteTerms", label: "Conditions pour une formation sur site", rows: 2 },
+      ]} />
       <Section title="FAQ" section="faq" initial={initial.faq} fields={[
         { name: "", label: "Une question par bloc : question | réponse", rows: 12, list: ["q", "a"], root: true },
       ]} />

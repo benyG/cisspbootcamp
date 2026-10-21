@@ -1,4 +1,4 @@
-import { Building2 } from "lucide-react";
+import { Building2, FileText } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
@@ -20,7 +20,10 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
-      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Building2 className="size-6 text-accent" aria-hidden />Devis entreprises</h1>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="flex items-center gap-2 text-2xl font-bold"><Building2 className="size-6 text-accent" aria-hidden />Devis entreprises</h1>
+        <Link href="/admin/devis/offre" className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold"><FileText className="size-4 text-accent" aria-hidden />Offre libre (sans demande)</Link>
+      </div>
       <p className="mt-1 text-sm text-muted">{quotes.length === 0 ? "Aucune demande pour l'instant. Le formulaire est sur /entreprises." : `${quotes.length} demande${quotes.length > 1 ? "s" : ""}, ${pending} à traiter. Vous envoyez le devis vous-même, puis vous changez l'état ici.`}</p>
       {sp.ok && <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent-ink">{sp.ok}</p>}
       {sp.erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{sp.erreur}</p>}
@@ -44,6 +47,7 @@ export default async function QuotesPage({ searchParams }: { searchParams: Promi
             <dt className="text-muted">Période</dt><dd>{TIMINGS[open.timing as keyof typeof TIMINGS] ?? open.timing}</dd>
           </dl>
           {open.need && <p className="whitespace-pre-line rounded-lg bg-paper p-3">{open.need}</p>}
+          <div><Link href={`/admin/devis/offre?id=${open.id}`} className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3 py-2 font-semibold text-white"><FileText className="size-4" aria-hidden />{open.offer ? "Reprendre l'offre de service" : "Préparer l'offre de service"}</Link></div>
           <form action={updateQuoteAction} className="grid gap-2">
             <input type="hidden" name="id" value={open.id} />
             <label className="grid gap-1 font-medium">Note interne

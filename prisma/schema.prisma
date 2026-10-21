@@ -930,6 +930,8 @@ model QuoteRequest {
   consentAt     DateTime @map("consent_at")
   status        String   @default("new") @db.VarChar(10) // new | sent | won | lost
   note          String?  @db.Text
+  /// The service offer Ben prepared for this request (lib/offer.ts), kept to print it again.
+  offer         Json?
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
