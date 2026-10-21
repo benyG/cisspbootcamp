@@ -1,4 +1,4 @@
-import { BellRing, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BellRing, Building2, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -27,6 +27,7 @@ export default async function AdminHomePage() {
     hold: items.filter((i) => i.kind === "hold"),
     personal: items.filter((i) => i.kind === "personal"),
     replay: items.filter((i) => i.kind === "replay"),
+    quote: items.filter((i) => i.kind === "quote"),
     session: items.filter((i) => i.kind === "session"),
   };
 
@@ -123,6 +124,14 @@ export default async function AdminHomePage() {
         ))}
       </Group>
 
+      <Group icon={Building2} title="Demandes de devis entreprises" count={groups.quote.length}>
+        {groups.quote.map((i) => i.kind === "quote" && (
+          <Row key={`q${i.quoteId}`} name={i.organization} meta={`${i.contact} · ${i.summary}`} href={`/admin/devis?id=${i.quoteId}`} note={i.note}>
+            <Link href={`/admin/devis?id=${i.quoteId}`} className={primary}>Voir la demande</Link>
+          </Row>
+        ))}
+      </Group>
+
       <Group icon={Timer} title="Places tenues" count={groups.hold.length}>
         {groups.hold.map((i) => i.kind === "hold" && (
           <Row key={`h${i.holdId}`} name={i.name} meta={`${i.cohortName} · libérée dans ${i.hoursLeft} h${i.reminded ? " · rappel envoyé" : ""}`} leadId={i.leadId}>
@@ -157,6 +166,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/cohortes", label: "Cohortes", icon: GraduationCap },
   { href: "/admin/replays", label: "Vidéothèque", icon: Clapperboard },
   { href: "/admin/evaluations", label: "Évaluations", icon: ClipboardCheck },
+  { href: "/admin/devis", label: "Devis entreprises", icon: Building2 },
   { href: "/admin/marketing", label: "Marketing", icon: Megaphone },
   { href: "/admin/conseil", label: "Conseil", icon: Compass },
   { href: "/admin/temoignages", label: "Témoignages", icon: MessageSquareQuote },
@@ -177,12 +187,12 @@ function Group({ icon: Icon, title, count, children }: { icon: LucideIcon; title
   return <section className="mt-7"><h2 className="mb-2 flex items-center justify-between text-sm font-extrabold tracking-[.06em] text-muted uppercase"><span className="flex items-center gap-2"><Icon className="size-4 text-accent" aria-hidden />{title}</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs">{count}</span></h2><ul className="grid gap-2">{children}</ul></section>;
 }
 
-function Row({ name, meta, heat, late, leadId, note, children }: { name: string; meta: string; heat?: number; late?: boolean; leadId: number; note?: string | null; children: React.ReactNode }) {
+function Row({ name, meta, heat, late, leadId, href, note, children }: { name: string; meta: string; heat?: number; late?: boolean; leadId?: number; href?: string; note?: string | null; children: React.ReactNode }) {
   return (
     <li className={`rounded-xl border bg-white p-3.5 ${late ? "border-red-300 bg-red-50" : "border-line"}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Link href={`/admin/leads/${leadId}`} className="font-bold hover:underline">{name}</Link>
+          <Link href={href ?? `/admin/leads/${leadId}`} className="font-bold hover:underline">{name}</Link>
           <p className="text-sm text-muted">{meta}</p>
         </div>
         {heat !== undefined && <span className="shrink-0 rounded-full px-2.5 py-0.5 text-sm font-black text-white" style={{ background: heat >= 60 ? "#b91c1c" : heat >= 30 ? "#c2410c" : "#64748b" }}>{heat}</span>}

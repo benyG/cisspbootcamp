@@ -68,6 +68,22 @@ export const siteSettingsSchema = z.object({
     legalName: short(120),
     legalText: line(600),
   }),
+  /** The company that issues the service offers to companies (Ben, 21/10): ExamBoot. */
+  company: z.object({
+    name: short(120),
+    legalForm: z.string().trim().max(120),
+    registration: z.string().trim().max(120),
+    taxId: z.string().trim().max(120),
+    address: z.string().trim().max(300),
+    phone: z.string().trim().max(40),
+    email: z.string().trim().max(180),
+    website: z.string().trim().max(180),
+    presentation: line(800),
+    signatory: short(120),
+    signatoryTitle: z.string().trim().max(120),
+    paymentTerms: line(400),
+    onsiteTerms: line(400),
+  }),
 });
 
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;
@@ -152,6 +168,21 @@ export const SITE_DEFAULTS: SiteSettings = {
     whatsapp: "",
     legalName: "CISSP Bootcamp",
     legalText: "",
+  },
+  company: {
+    name: "ExamBoot",
+    legalForm: "",
+    registration: "",
+    taxId: "",
+    address: "",
+    phone: "",
+    email: "",
+    website: "https://examboot.net",
+    presentation: "ExamBoot est une plateforme de préparation aux certifications professionnelles. CISSP Bootcamp est son programme de formation en français aux certifications CISSP et CC d’ISC², animé par un coach certifié, en sessions live.",
+    signatory: "Ben",
+    signatoryTitle: "Coach CISSP, responsable pédagogique",
+    paymentTerms: "50 % à la signature du bon de commande, 50 % au démarrage de la formation. Paiement par virement ou carte bancaire.",
+    onsiteTerms: "Pour une formation sur site, les frais de déplacement et d’hébergement du formateur sont facturés en sus, sur justificatifs, sauf mention contraire.",
   },
 };
 

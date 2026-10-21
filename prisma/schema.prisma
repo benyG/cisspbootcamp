@@ -911,3 +911,30 @@ model EvaluationRecipient {
   @@index([leadId])
   @@map("evaluation_recipients")
 }
+
+/// A company asking for a quote to train a team (Ben, 21/10): Ben answers
+/// himself; no public price. Not a Lead: a B2B contact, deleted on request.
+model QuoteRequest {
+  id            Int      @id @default(autoincrement())
+  organization  String   @db.VarChar(160)
+  country       String   @db.VarChar(80)
+  contactName   String   @map("contact_name") @db.VarChar(120)
+  jobTitle      String?  @map("job_title") @db.VarChar(120)
+  email         String   @db.VarChar(180)
+  phone         String?  @db.VarChar(40)
+  certification String   @db.VarChar(12) // cissp | cc | both
+  format        String   @db.VarChar(10) // onsite | online | mixed
+  headcount     String   @db.VarChar(10) // 3-5 | 6-10 | 11-20 | 20+
+  timing        String   @db.VarChar(10) // 3m | 6m | later
+  need          String?  @db.Text
+  consentAt     DateTime @map("consent_at")
+  status        String   @default("new") @db.VarChar(10) // new | sent | won | lost
+  note          String?  @db.Text
+  /// The service offer Ben prepared for this request (lib/offer.ts), kept to print it again.
+  offer         Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("quote_requests")
+}

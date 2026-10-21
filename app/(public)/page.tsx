@@ -1,6 +1,6 @@
 import { PriceSection } from "@/components/landing/PriceSection";
 import { StickyCta } from "@/components/landing/StickyCta";
-import { Coach, Domains, Faq, FinalCta, Footer, Hero, LadderStrip, Method, Planning, PracticeTest, Proof, Testimonials, Topbar, Video, eyebrow, shell } from "@/components/landing/sections";
+import { Coach, Faq, FinalCta, Footer, Hero, HowItWorks, LadderStrip, PracticeTest, Testimonials, Topbar, Video, eyebrow, shell } from "@/components/landing/sections";
 import { ScannerWizard } from "@/components/scanner/ScannerWizard";
 import { TrackView } from "@/components/tracking/TrackView";
 import { publicCohortSummary } from "@/lib/cohorts-admin";
@@ -15,8 +15,9 @@ export const dynamic = "force-dynamic";
 /**
  * The landing (docs/LANDING.md): one funnel, visitor → diagnostic → result →
  * registration. The questionnaire sits right under the hero so the visitor
- * acts before changing screens; the two steps before the bootcamp (CC,
- * consulting) stay visible in one slim band after the price.
+ * acts before changing screens; the other offers (CC, consulting, companies)
+ * stay visible in one slim band after the price. Each fact is said once in
+ * the hero and once at the price, no more (Ben, 21/10).
  */
 export default async function HomePage() {
   // Every read degrades to a sensible default: the landing never goes down
@@ -51,19 +52,16 @@ export default async function HomePage() {
                   <li key={l} className="relative py-2 pl-7 font-bold text-ink before:absolute before:left-0 before:font-black before:text-accent before:content-['✓']">{l}</li>
                 ))}
               </ul>
-              <p className="mt-4 text-[.9rem] text-muted">Résultat immédiat. Puis la prochaine étape qui vous convient.</p>
+              <p className="mt-4 text-[.9rem] text-muted">Puis la prochaine étape qui vous convient.</p>
             </div>
             <ScannerWizard context={{ tiers, availabilityLabel: context.availabilityLabel }} />
           </div>
         </section>
 
-        <Proof settings={settings} />
-        <Method settings={settings} />
-        <Planning settings={settings} />
+        <HowItWorks settings={settings} />
         <Coach settings={settings} />
         <Testimonials items={testimonials} />
         <Video settings={settings} />
-        <Domains />
         <PracticeTest />
         <PriceSection settings={settings} tiers={tiers} rates={rates} cohort={cohortIso} />
         <LadderStrip services={services} ccCohort={ccCohort} />

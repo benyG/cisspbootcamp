@@ -99,7 +99,8 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
           <select id="price-country" value={country} onChange={(e) => { setCountry(e.target.value); try { localStorage.setItem("cb_country", e.target.value); } catch { /* ignore */ } track("price_country_change", { label: e.target.value }); }} className="mt-1.5 w-full max-w-sm rounded-xl border border-line bg-white px-3.5 py-3 text-base">
             {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
-          {cohort && <div className="mt-4 max-w-sm"><SeatsGauge gauge={cohort.gauge} /></div>}
+          {/* The plain capacity is already in the line above; the gauge only once seats are taken. */}
+          {cohort && cohort.gauge.confirmed + cohort.gauge.held > 0 && <div className="mt-4 max-w-sm"><SeatsGauge gauge={cohort.gauge} /></div>}
         </div>
         <div className="border-t border-line pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
           <h2 className="display text-[1.4rem] leading-tight font-black">{offer.title}</h2>
