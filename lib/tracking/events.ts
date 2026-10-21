@@ -28,6 +28,8 @@ export const EVENT_NAMES = [
   "program_view",
   "pricing_view",
   "test_page_view",
+  "company_view",
+  "quote_requested",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];

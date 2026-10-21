@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { HOT_LEAD_THRESHOLD, REVIEW_SLA_HOURS, hoursSince } from "@/lib/followups";
 import { leadVars, loadTemplate, renderTemplate, waMeLink } from "@/lib/messaging/templates";
+import { countryLabel, quoteSummary } from "@/lib/quotes";
 
 /**
  * The coach's daily queue — SPECS A6. Ben opens /admin, sees what to do, does
@@ -21,7 +22,8 @@ export type QueueItem =
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
   | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
   | { kind: "personal"; scheduleId: number; cohortId: number; leadId: number; name: string; cohortName: string; hoursWaiting: number }
-  | { kind: "replay"; accessId: number; cohortId: number; leadId: number; name: string; cohortName: string; note: string };
+  | { kind: "replay"; accessId: number; cohortId: number; leadId: number; name: string; cohortName: string; note: string }
+  | { kind: "quote"; quoteId: number; organization: string; summary: string; contact: string; note: string };
 
 export type Kpis = { leadsThisWeek: number; callsThisWeek: number; confirmed: number; capacity: number; cohortName: string | null };
 
@@ -143,6 +145,12 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
   });
   for (const r of replayRequests) {
     items.push({ kind: "replay", accessId: r.id, cohortId: r.cohort.id, leadId: r.lead.id, name: `${r.lead.firstName} ${r.lead.lastName}`, cohortName: r.cohort.name, note: r.requestNote ?? "" });
+  }
+
+  // Company quote requests not answered yet (Ben, 21/10).
+  const quotes = await prisma.quoteRequest.findMany({ where: { status: "new" }, orderBy: { createdAt: "asc" } });
+  for (const q of quotes) {
+    items.push({ kind: "quote", quoteId: q.id, organization: q.organization, summary: quoteSummary(q as Parameters<typeof quoteSummary>[0]), contact: `${q.contactName} · ${countryLabel(q.country)}`, note: q.need ?? "" });
   }
 
   return {
