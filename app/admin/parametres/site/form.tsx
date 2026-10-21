@@ -20,12 +20,10 @@ export function SiteSettingsForm({ initial }: { initial: SiteSettings }) {
         { name: "promises", label: "3 preuves — une par ligne : titre (le texte est facultatif)", rows: 3, list: ["title", "text"] },
         { name: "microcopy", label: "Ligne sous les boutons" },
       ]} />
-      <Section title="Chiffres de preuve" section="proof" initial={initial.proof} fields={[
-        { name: "title", label: "Titre", rows: 2 },
-        { name: "numbers", label: "3 chiffres — une par ligne : valeur | texte", rows: 3, list: ["value", "text"] },
+      <Section title="Comment ça marche : titre" section="proof" initial={initial.proof} fields={[
+        { name: "title", label: "Titre de la section (méthode, rythme, domaines)", rows: 2 },
       ]} />
-      <Section title="Méthode" section="method" initial={initial.method} fields={[
-        { name: "title", label: "Titre", rows: 2 },
+      <Section title="Méthode et rythme" section="method" initial={initial.method} fields={[
         { name: "steps", label: "4 étapes — une par ligne : verbe | titre | texte", rows: 4, list: ["kicker", "title", "text"] },
         { name: "rhythm", label: "Rythme — 3 lignes : titre | texte (semaine, mercredi, week-ends)", rows: 3, list: ["title", "text"] },
       ]} />

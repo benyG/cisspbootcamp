@@ -1,4 +1,4 @@
-import { Activity, BadgeCheck, BookOpen, Brain, Briefcase, Building2, CalendarCheck, CalendarClock, CalendarDays, CalendarRange, Check, ChevronDown, CircleHelp, CirclePlay, ClipboardCheck, Clock, CodeXml, Compass, Database, Flag, GraduationCap, KeyRound, Layers, type LucideIcon, MessageSquareQuote, Moon, Network, ScanSearch, ShieldAlert, ShieldCheck, Target, Timer, Users } from "lucide-react";
+import { Activity, BadgeCheck, Brain, Briefcase, Building2, CalendarCheck, CalendarClock, Check, ChevronDown, CircleHelp, CirclePlay, ClipboardCheck, CodeXml, Compass, Database, Flag, GraduationCap, KeyRound, Layers, type LucideIcon, MessageSquareQuote, Network, ScanSearch, ShieldAlert, ShieldCheck, Target, Timer, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -27,9 +27,7 @@ export const btnPrimary = "inline-flex items-center justify-center gap-2 rounded
 export const btnGhost = "inline-flex items-center justify-center gap-2 rounded-[14px] border border-line bg-white px-5.5 py-4 font-extrabold";
 /** Icons (Ben, 25/09): lucide line icons, never emojis, in the accent colour. */
 const eyebrowIcon = "size-4 shrink-0 text-accent";
-const PROOF_ICONS: LucideIcon[] = [Clock, CalendarDays, Users];
 const STEP_ICONS: LucideIcon[] = [Network, Brain, Target, Flag];
-const RHYTHM_ICONS: LucideIcon[] = [Moon, BookOpen, CalendarRange];
 const DOMAIN_ICONS: Record<(typeof CISSP_DOMAINS)[number], LucideIcon> = {
   security_risk_management: ShieldAlert,
   asset_security: Database,
@@ -58,8 +56,9 @@ export function Topbar() {
   return (
     <header className={shell}>
       <div className="flex items-center justify-between py-5">
-        <Link href="/" className="display text-[1.18rem] font-black tracking-[-.04em]">CISSP <span className="text-accent">Bootcamp</span></Link>
+        <Link href="/" className="display flex items-center gap-2 text-[1.18rem] font-black tracking-[-.04em]"><Image src="/images/logo.svg" alt="" width={30} height={30} unoptimized className="size-[30px]" />CISSP <span className="-ml-1.5 text-accent">Bootcamp</span></Link>
         <nav className="flex items-center gap-2 sm:gap-3">
+          <TrackLink href="/entreprises" label="topbar-entreprises" className="hidden items-center gap-1.5 px-2 py-2.5 text-[.92rem] font-bold text-ink-2 underline-offset-4 hover:underline md:inline-flex"><Building2 className="size-4 text-accent" aria-hidden />Entreprises</TrackLink>
           <TrackLink href="/conseil" label="topbar-conseil" className="hidden items-center gap-1.5 px-2 py-2.5 text-[.92rem] font-bold text-ink-2 underline-offset-4 hover:underline sm:inline-flex"><Briefcase className="size-4 text-accent" aria-hidden />Conseil carrière</TrackLink>
           <TrackLink href="/rdv" label="topbar-rdv" className="inline-flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold"><CalendarCheck className="size-4 text-accent" aria-hidden />Rendez-vous gratuit</TrackLink>
         </nav>
@@ -76,7 +75,7 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
     <section className={shell + " grid items-center gap-10 pt-4 pb-12 lg:grid-cols-[1.1fr_.9fr]"}>
       <div>
         <p className="text-[.76rem] font-extrabold tracking-[.1em] text-accent-ink uppercase">
-          {cohort ? `Cohorte formation CISSP · ${formatCohortMonth(cohort.startsAt)} · ${cohort.gauge.capacity} places · admissions jusqu’au ${formatAdmissionDeadline(cohort.startsAt)}` : "Prochaine cohorte formation CISSP"} · 100 % en français
+          {cohort ? `Formation CISSP · cohorte de ${formatCohortMonth(cohort.startsAt)}` : "Formation CISSP · prochaine cohorte"} · 100 % en français
         </p>
         <h1 className={`display my-5 max-w-[840px] font-black tracking-[-.06em] ${hero.title.replace(/[{}]/g, "").length > 44 ? "text-[clamp(2.3rem,4.4vw,4.4rem)] leading-[1]" : "text-[clamp(3rem,6vw,5.9rem)] leading-[.94]"}`}>
           {title.before}{title.highlight && <span className="text-accent">{title.highlight}</span>}{title.after}
@@ -103,18 +102,12 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
         {/* Cohort facts over the jacket, bottom-left (Ben, 24/09): seats and the admission countdown.
             On phones the cards take 62 % of the width so the coach stays visible; the identity card moves under the portrait. */}
         <div className="absolute bottom-4 left-3 flex w-[62%] flex-col gap-2 sm:bottom-6 sm:left-0 sm:w-[280px] sm:gap-3">
-          {cohort && (
-            <div className="flex items-center gap-4 rounded-2xl bg-ink px-3 py-2 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)] sm:px-4 sm:py-3">
-              <div>
-                <div className="flex items-center gap-1.5 text-[.62rem] font-extrabold tracking-[.1em] whitespace-nowrap text-[#7be0c8] uppercase sm:text-[.7rem]"><Users className="size-3.5" aria-hidden />{cohort.gauge.confirmed + cohort.gauge.held > 0 ? "Places restantes" : "Cohorte formation CISSP"}</div>
-                <div className="display text-[1.3rem] leading-none font-black sm:text-[1.6rem]">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? cohort.gauge.remaining : cohort.gauge.capacity} <small className="text-[.8rem] font-semibold tracking-normal text-[#cbd5df] sm:text-sm">{cohort.gauge.confirmed + cohort.gauge.held > 0 ? `sur ${cohort.gauge.capacity}` : "participants max."}</small></div>
-              </div>
-              {cohort.gauge.confirmed + cohort.gauge.held > 0 && <div className="hidden flex-1 sm:block"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>}
-            </div>
-          )}
+          {/* One cohort card (Ben, 21/10): the seats and the admission deadline, said once here and once at the price. */}
           {cohort && (
             <div className="rounded-2xl bg-ink px-3 py-2 text-white shadow-[0_20px_50px_rgba(7,26,51,.25)] sm:px-4 sm:py-3">
-              <div className="flex items-center gap-1.5 text-[.62rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase sm:text-[.7rem]"><Timer className="size-3.5 shrink-0" aria-hidden />Admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)}</div>
+              <div className="flex items-center gap-1.5 text-[.62rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase sm:text-[.7rem]"><Users className="size-3.5 shrink-0" aria-hidden />{cohort.gauge.confirmed + cohort.gauge.held > 0 ? `${cohort.gauge.remaining} places sur ${cohort.gauge.capacity}` : `${cohort.gauge.capacity} places`}</div>
+              {cohort.gauge.confirmed + cohort.gauge.held > 0 && <div className="mt-1.5 hidden sm:block"><CohortGauge gauge={cohort.gauge} showLabel={false} dark /></div>}
+              <div className="mt-1.5 flex items-center gap-1.5 text-[.62rem] font-extrabold tracking-[.1em] text-[#7be0c8] uppercase sm:text-[.7rem]"><Timer className="size-3.5 shrink-0" aria-hidden />Admissions jusqu’au {formatAdmissionDeadline(cohort.startsAt)}</div>
               <div className="mt-1"><AdmissionCountdown closesAt={admissionClosesAt(cohort.startsAt).toISOString()} dark compact /></div>
             </div>
           )}
@@ -132,38 +125,17 @@ export function Hero({ settings, cohort }: { settings: SiteSettings; cohort: Her
   );
 }
 
-/** Three numbers, then the sentence that installs the problem. */
-export function Proof({ settings }: { settings: SiteSettings }) {
-  return (
-    <section className="bg-ink py-14 text-white sm:py-16">
-      <div className={shell}>
-        <div className="grid gap-3.5 sm:grid-cols-3">
-          {settings.proof.numbers.slice(0, 3).map((n, i) => {
-            const Icon = PROOF_ICONS[i] ?? Check;
-            return (
-            <div key={n.value + n.text} className="rounded-[18px] border border-white/10 bg-white/[.06] p-5">
-              <Icon className="mb-3 size-6 text-[#7be0c8]" aria-hidden />
-              <div className="display text-[2.8rem] leading-none font-black tracking-[-.05em] text-[#7be0c8]">{n.value}</div>
-              <p className="mt-2 text-[#cbd5df]">{n.text}</p>
-            </div>
-            );
-          })}
-        </div>
-        <h2 className="display mt-10 max-w-[860px] text-[clamp(1.8rem,3.4vw,3.2rem)] leading-[1] font-black tracking-[-.05em]">{settings.proof.title}</h2>
-        <p className="mt-3 max-w-[720px] text-[#cbd5df]">Votre niveau. Votre trajectoire.</p>
-      </div>
-    </section>
-  );
-}
-
-/** Four steps, one line each. */
-export function Method({ settings }: { settings: SiteSettings }) {
+/**
+ * How it works (Ben, 21/10): the method, the rhythm and the eight domains in
+ * one section, each said once. The proof numbers were already in the hero.
+ */
+export function HowItWorks({ settings }: { settings: SiteSettings }) {
   const { method } = settings;
   return (
     <section id="methode" className="py-14 sm:py-16">
       <div className={shell}>
-        <div className={eyebrow}><Compass className={eyebrowIcon} aria-hidden />Une méthode claire.</div>
-        <h2 className={sectionTitle}>{method.title}</h2>
+        <div className={eyebrow}><Compass className={eyebrowIcon} aria-hidden />Comment ça marche</div>
+        <h2 className={sectionTitle}>{settings.proof.title}</h2>
         <ol className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
           {method.steps.map((s, i) => {
             const Icon = STEP_ICONS[i] ?? Check;
@@ -177,34 +149,29 @@ export function Method({ settings }: { settings: SiteSettings }) {
             );
           })}
         </ol>
-      </div>
-    </section>
-  );
-}
-
-/** The time objection: what the fifteen days look like next to a job. */
-export function Planning({ settings }: { settings: SiteSettings }) {
-  const { method } = settings;
-  return (
-    <section id="planning" className="pb-14 sm:pb-16">
-      <div className={shell}>
-        <div className={eyebrow}><CalendarClock className={eyebrowIcon} aria-hidden />Le planning</div>
-        <h2 className={sectionTitle}>15 jours. Sans arrêter de travailler.</h2>
-        <div className="grid gap-3.5 sm:grid-cols-3">
-          {method.rhythm.map((r, i) => {
-            const Icon = RHYTHM_ICONS[i] ?? CalendarDays;
-            return (
-            <div key={r.title} className="flex items-start gap-4 rounded-[18px] border border-line bg-white p-5">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-ink"><Icon className="size-5" aria-hidden /></span>
-              <div>
-                <strong className="display block text-[1.6rem] tracking-[-.04em]">{r.title}</strong>
-                <p className="text-[.95rem] text-muted">{r.text}</p>
-              </div>
-            </div>
-            );
-          })}
+        <div className="mt-4 flex items-start gap-3 rounded-[18px] border border-line bg-white p-5">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-ink"><CalendarClock className="size-5" aria-hidden /></span>
+          <div>
+            <b className="display block text-[1.1rem]">Sans arrêter de travailler.</b>
+            <ul className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-[.95rem] text-ink-2">
+              {method.rhythm.map((r) => <li key={r.title}><b>{r.title}</b> : {lowerFirst(r.text)}</li>)}
+            </ul>
+          </div>
         </div>
-        <p className="mt-4 font-bold text-ink">Un rythme soutenu. Gérable.</p>
+        <details className="group mt-3 rounded-[18px] border border-line bg-white px-5">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-4 font-bold [&::-webkit-details-marker]:hidden"><span className="flex items-center gap-2"><Layers className="size-5 text-accent" aria-hidden />Les 8 domaines du CISSP, tous couverts</span><ChevronDown className="size-5 shrink-0 text-accent transition-transform group-open:rotate-180" aria-hidden /></summary>
+          <ol className="grid gap-2 pb-5 sm:grid-cols-2 lg:grid-cols-4">
+            {CISSP_DOMAINS.map((d, i) => {
+              const Icon = DOMAIN_ICONS[d];
+              return (
+              <li key={d} className="flex items-center gap-3 rounded-[14px] border border-line px-3.5 py-2.5 text-[.92rem] font-bold">
+                <Icon className="size-[18px] shrink-0 text-accent" aria-hidden />
+                <span><span className="display mr-1.5 text-accent">{i + 1}.</span>{DOMAIN_LABELS[d]}</span>
+              </li>
+              );
+            })}
+          </ol>
+        </details>
       </div>
     </section>
   );
@@ -256,29 +223,6 @@ export function Testimonials({ items }: { items: PublicTestimonial[] }) {
   );
 }
 
-/** The eight domains, named once, so the coverage is never in doubt. */
-export function Domains() {
-  return (
-    <section id="domaines" className="pb-14 sm:pb-16">
-      <div className={shell}>
-        <div className={eyebrow}><Layers className={eyebrowIcon} aria-hidden />Les 8 domaines</div>
-        <h2 className={sectionTitle}>Tout le blueprint CISSP, relié.</h2>
-        <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {CISSP_DOMAINS.map((d, i) => {
-            const Icon = DOMAIN_ICONS[d];
-            return (
-            <li key={d} className="flex items-center gap-3 rounded-[14px] border border-line bg-white px-4 py-3 text-[.95rem] font-bold">
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent-ink"><Icon className="size-[18px]" aria-hidden /></span>
-              <span><span className="display mr-1.5 text-accent">{i + 1}.</span>{DOMAIN_LABELS[d]}</span>
-            </li>
-            );
-          })}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
 /** The five-question practice test, as a demonstration of the method, late in the page. */
 export function PracticeTest() {
   if (!examBootEnabled()) return null;
@@ -312,27 +256,33 @@ export function Video({ settings }: { settings: SiteSettings }) {
 }
 
 /**
- * The two other ways to work with Ben, in one slim band (Ben, 24/09):
- * the CC course to start, and career consulting at every stage. Neither is
- * framed as a step before the bootcamp.
+ * The other ways to work with Ben, in one slim band (Ben, 24/09 and 21/10):
+ * the CC course to start, career consulting, and team training for companies.
  */
 export function LadderStrip({ services, ccCohort }: { services: Array<{ code: string; name: string; durationLabel: string }>; ccCohort: { startsAt: Date } | null }) {
-  if (services.length === 0) return null;
+  const card = "group rounded-[14px] border border-line px-4 py-3 hover:border-ink";
+  const kicker = "flex items-center gap-1.5 text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase";
   return (
     <section id="parcours" className="pb-14 sm:pb-16">
       <div className={shell}>
-        <div className="grid gap-3 rounded-[22px] border border-line bg-white p-5 sm:grid-cols-[auto_1fr_1fr] sm:items-center sm:gap-6 sm:p-6">
-          <div className="sm:max-w-[220px]">
+        <div className="grid gap-3 rounded-[22px] border border-line bg-white p-5 sm:p-6 lg:grid-cols-[minmax(0,200px)_repeat(3,minmax(0,1fr))] lg:items-center lg:gap-5">
+          <div>
             <div className="text-[.72rem] font-extrabold tracking-[.1em] text-accent uppercase">Avec Ben, aussi</div>
-            <p className="display mt-1 text-[1.25rem] leading-tight font-black">Deux autres façons d’avancer.</p>
+            <p className="display mt-1 text-[1.25rem] leading-tight font-black">D’autres façons d’avancer.</p>
           </div>
-          <TrackLink href="/demarrer" label="parcours-cc" className="group rounded-[14px] border border-line px-4 py-3 hover:border-ink">
-            <span className="flex items-center gap-1.5 text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase"><GraduationCap className="size-4 text-accent" aria-hidden />Débuter · certification CC d’ISC²</span>
+          <TrackLink href="/demarrer" label="parcours-cc" className={card}>
+            <span className={kicker}><GraduationCap className="size-4 text-accent" aria-hidden />Débuter · certification CC</span>
             <span className="mt-0.5 block font-bold">15 jours pour votre première certification{ccCohort ? `, session ${formatCohortMonth(ccCohort.startsAt)}` : ""} <span className="text-accent-ink">→</span></span>
           </TrackLink>
-          <TrackLink href="/conseil" label="parcours-conseil" className="group rounded-[14px] border border-line px-4 py-3 hover:border-ink">
-            <span className="flex items-center gap-1.5 text-[.72rem] font-extrabold tracking-[.08em] text-muted uppercase"><Compass className="size-4 text-accent" aria-hidden />Conseil carrière · à toutes les étapes</span>
-            <span className="mt-0.5 block font-bold">Débuter, évoluer vers le RSSI, se repositionner : des séances d’une heure avec Ben <span className="text-accent-ink">→</span></span>
+          {services.length > 0 && (
+            <TrackLink href="/conseil" label="parcours-conseil" className={card}>
+              <span className={kicker}><Compass className="size-4 text-accent" aria-hidden />Conseil carrière</span>
+              <span className="mt-0.5 block font-bold">Débuter, évoluer vers le RSSI, se repositionner : des séances d’une heure <span className="text-accent-ink">→</span></span>
+            </TrackLink>
+          )}
+          <TrackLink href="/entreprises" label="parcours-entreprises" className={card + " border-accent bg-accent-soft"}>
+            <span className={kicker}><Building2 className="size-4 text-accent" aria-hidden />Entreprises</span>
+            <span className="mt-0.5 block font-bold">Former une équipe, sur site ou en ligne : demandez un devis <span className="text-accent-ink">→</span></span>
           </TrackLink>
         </div>
       </div>
@@ -368,7 +318,7 @@ export function FinalCta({ cohort }: { cohort: HeroCohort }) {
       <div className={shell}>
         <div className="rounded-[28px] bg-ink px-6 py-10 text-center text-white sm:py-14">
           <h2 className="display text-[clamp(1.9rem,3.8vw,3.4rem)] leading-[1] font-black tracking-[-.05em]">Êtes-vous prêt pour le CISSP ?</h2>
-          <p className="mx-auto mt-3 max-w-[560px] text-[#cbd5df]">Trois minutes pour le savoir{cohort ? `, avant la cohorte formation CISSP de ${formatCohortMonth(cohort.startsAt)}` : ""}. Résultat immédiat, gratuit, sans engagement.</p>
+          <p className="mx-auto mt-3 max-w-[560px] text-[#cbd5df]">Trois minutes pour le savoir{cohort ? `, avant la cohorte de ${formatCohortMonth(cohort.startsAt)}` : ""}.</p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <TrackLink href="#evaluation" label="final" className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-accent-bright px-6 py-4 font-extrabold text-ink"><ScanSearch className="size-5" aria-hidden />Analyser mon profil →</TrackLink>
             <TrackLink href="/rdv" label="final-rdv" className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-white/30 px-6 py-4 font-extrabold text-white"><CalendarCheck className="size-5" aria-hidden />Rendez-vous gratuit avec Ben</TrackLink>
@@ -388,6 +338,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         <span className="flex flex-wrap gap-x-3">
           <Link href="/demarrer" className="underline underline-offset-4">Formation CC</Link>
           <Link href="/conseil" className="underline underline-offset-4">Conseil carrière</Link>
+          <Link href="/entreprises" className="underline underline-offset-4">Entreprises</Link>
           {contact.whatsapp && <a href={`https://wa.me/${contact.whatsapp.replace("+", "")}`} className="underline underline-offset-4">WhatsApp</a>}
           {coach.linkedinUrl && <a href={coach.linkedinUrl} target="_blank" rel="noopener" className="underline underline-offset-4">LinkedIn</a>}
           <Link href="/confidentialite" className="underline underline-offset-4">Confidentialité</Link>
@@ -402,6 +353,10 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 export function SeatsGauge({ gauge, dark = false }: { gauge: Gauge; dark?: boolean }) {
   if (gauge.confirmed + gauge.held === 0) return <p className={"text-sm font-semibold " + (dark ? "text-[#cbd5df]" : "text-ink-2")}>{seatsLine(gauge)}</p>;
   return <CohortGauge gauge={gauge} dark={dark} />;
+}
+
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
 function initials(name: string): string {
