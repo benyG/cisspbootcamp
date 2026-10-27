@@ -113,11 +113,33 @@ export async function accessToken(): Promise<{ token: string; calendarId: string
   });
   const response = await fetch(TOKEN_URL, { method: "POST", body });
   if (!response.ok) {
-    throw new Error(`Rafraîchissement du token Google refusé (${response.status}) — reconnecter l'agenda depuis l'admin.`);
+    // 400/401 = the authorisation was revoked or expired: only Ben reconnecting fixes it.
+    if (response.status === 400 || response.status === 401) throw new CalendarAuthError(response.status);
+    throw new Error(`Google n'a pas renouvelé l'accès à l'agenda (${response.status}).`);
   }
   const data = (await response.json()) as TokenResponse;
 
   return { token: data.access_token, calendarId: credential.calendarId, timeZone: credential.timeZone };
+}
+
+/** Google refused the stored refresh token (revoked, expired, or the app still in "Testing" mode). */
+export class CalendarAuthError extends Error {
+  constructor(readonly status: number) {
+    super(`Rafraîchissement du token Google refusé (${status}) — reconnecter l'agenda depuis l'admin.`);
+    this.name = "CalendarAuthError";
+  }
+}
+
+/** For the admin: is the agenda usable right now? One token refresh, no calendar read. */
+export async function calendarHealth(): Promise<"ok" | "not_connected" | "revoked" | "unreachable"> {
+  if (calendarStubEnabled()) return "ok";
+  if (!(await getCredential())) return "not_connected";
+  try {
+    await accessToken();
+    return "ok";
+  } catch (error) {
+    return error instanceof CalendarAuthError ? "revoked" : "unreachable";
+  }
 }
 
 export class CalendarNotConnectedError extends Error {
