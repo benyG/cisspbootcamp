@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { loadQueue } from "@/lib/action-queue";
+import { calendarHealth } from "@/lib/calendar/google";
 import { formatUsdCents } from "@/lib/pricing";
 
 import { confirmManualPayment, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
@@ -17,7 +18,7 @@ const READINESS: Record<string, string> = { ready: "Éligible", conditional: "As
  * priority order, each with its button. Nothing else to open to run the day.
  */
 export default async function AdminHomePage() {
-  const [session, { items, kpis }] = await Promise.all([auth(), loadQueue()]);
+  const [session, { items, kpis }, agenda] = await Promise.all([auth(), loadQueue(), calendarHealth()]);
   const groups = {
     review: items.filter((i) => i.kind === "review"),
     call: items.filter((i) => i.kind === "call"),
@@ -37,6 +38,14 @@ export default async function AdminHomePage() {
         <h1 className="flex items-center gap-2 text-2xl font-bold"><LayoutDashboard className="size-6 text-accent" aria-hidden />Aujourd&apos;hui</h1>
         <span className="text-xs text-muted">{session?.user?.email}</span>
       </div>
+
+      {agenda !== "ok" && (
+        <p role="alert" className="mt-4 rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-900">
+          <b>{agenda === "revoked" ? "Google a déconnecté votre agenda." : agenda === "not_connected" ? "L'agenda Google n'est pas connecté." : "L'agenda Google ne répond pas."}</b>{" "}
+          La prise de rendez-vous est fermée sur le site tant que ce n&apos;est pas réglé.{" "}
+          <Link href="/admin/parametres/google" className="font-semibold underline">{agenda === "unreachable" ? "Vérifier la connexion" : "Reconnecter l'agenda"}</Link>
+        </p>
+      )}
 
       <div className="mt-4 grid grid-cols-3 gap-2">
         <Kpi icon={Users} label="Leads cette semaine" value={String(kpis.leadsThisWeek)} />

@@ -27,7 +27,7 @@ import { recordServerEvent } from "@/lib/tracking/server";
 
 export type SlotListing =
   | { available: true; slots: Date[]; coachTimeZone: string }
-  | { available: false; reason: "not_connected" | "no_rules" };
+  | { available: false; reason: "not_connected" | "no_rules" | "calendar_error" };
 
 export type BookingKind = "discovery" | "consulting";
 
@@ -62,10 +62,14 @@ export async function listSlots(now = new Date(), family: SlotFamily = DISCOVERY
   if (rules.length === 0) return { available: false, reason: "no_rules" };
 
   const shape = shapeFor(family);
-  const busy = await fetchBusy({
-    start: now,
-    end: addMinutes(now, (shape.maxDaysAhead + 1) * 24 * 60),
-  });
+  // A disconnected or unreachable agenda closes booking; it never breaks the page (Ben, 27/10).
+  let busy: Awaited<ReturnType<typeof fetchBusy>>;
+  try {
+    busy = await fetchBusy({ start: now, end: addMinutes(now, (shape.maxDaysAhead + 1) * 24 * 60) });
+  } catch (error) {
+    console.error("[booking] agenda indisponible", error instanceof Error ? error.message : error);
+    return { available: false, reason: "calendar_error" };
+  }
 
   let slots = computeSlots({ rules, coachTimeZone: credential.timeZone, busy, now, shape });
 

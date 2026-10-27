@@ -155,7 +155,12 @@ async function PaidSteps({ format, token, known }: { format?: string; token?: st
 }
 
 function Closed() {
-  return <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">La réservation est momentanément fermée. Réessayez un peu plus tard.</p>;
+  return (
+    <div className="grid gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+      <p>La réservation est momentanément fermée. Réessayez un peu plus tard.</p>
+      <p className="text-sm">En attendant, <Link href="/#evaluation" className="font-semibold underline">faites l’analyse de votre profil</Link> (3 minutes) : Ben la reçoit et vous recontacte.</p>
+    </div>
+  );
 }
 
 const option = "block rounded-[18px] border border-line px-4 py-3.5 shadow-[var(--shadow-card)] transition";
