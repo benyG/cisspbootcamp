@@ -47,6 +47,17 @@ describe("diagnostic IA, enregistrement (Ben, 03/11)", () => {
     expect(toBen.text).toContain("https://x.test/admin/leads/5");
   });
 
+  it("keeps the first-touch campaign on a new lead, so the studio counts it (Ben, 04/11)", async () => {
+    await submitIaDiagnostic({ answers, contact, utm: { source: "tiktok", medium: "social", campaign: "cohorte-9", content: "tt-abc123" } }, now);
+    const upsert = db.lead.upsert.mock.calls[0][0];
+    expect(upsert.create).toMatchObject({ utmSource: "tiktok", utmMedium: "social", utmCampaign: "cohorte-9", utmContent: "tt-abc123" });
+    expect(upsert.update).not.toHaveProperty("utmContent");
+    // A malformed campaign never blocks the result.
+    db.lead.upsert.mockClear();
+    expect((await submitIaDiagnostic({ answers, contact, utm: { content: "x".repeat(500) } }, now)).ok).toBe(true);
+    expect(db.lead.upsert.mock.calls[0][0].create.utmContent).toBeNull();
+  });
+
   it("refuses without consent, with a robot field, or with incomplete answers", async () => {
     expect(await submitIaDiagnostic({ answers, contact: { ...contact, consent: false } }, now)).toEqual({ ok: false, error: "Votre accord est nécessaire pour recevoir votre résultat." });
     expect(await submitIaDiagnostic({ answers, contact: { ...contact, website: "spam" } }, now)).toMatchObject({ ok: false });

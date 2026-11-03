@@ -9,7 +9,7 @@ import { VideoPanel } from "@/components/admin/marketing/VideoPanel";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { cockpit, cohortFacts, followupSegments, libraryWithResults, marketingCohorts, recentPosts } from "@/lib/marketing/data";
 import { CANVAS, defaultKeyword } from "@/lib/marketing/brand";
-import { CHANNELS, DESTINATIONS, FORMATS, MIN_SAMPLE_FOR_STATS, PILLARS, editorialBalance, pillarOf } from "@/lib/marketing/plan";
+import { ALL_DESTINATIONS, ALL_PILLARS, CHANNELS, FORMATS, MIN_SAMPLE_FOR_STATS, destinationsFor, editorialBalance, marketingKind, pillarOf, pillarsFor } from "@/lib/marketing/plan";
 import { linkedinStatus } from "@/lib/linkedin";
 import { minimaxEnabled } from "@/lib/minimax";
 import { loadMarketingSettings } from "@/lib/marketing/settings";
@@ -40,15 +40,20 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   const [facts, settings] = await Promise.all([cohortFacts(selected.id), loadMarketingSettings()]);
   if (!facts) return null;
   const threshold = settings.testThreshold;
-  const testOn = examBootEnabled();
-  const [cp, segments, library, recent, linkedin] = await Promise.all([cockpit(facts, threshold), followupSegments(facts.program, threshold), libraryWithResults(facts.id), recentPosts(), linkedinStatus()]);
-  const balance = editorialBalance(recent);
+  const kind = marketingKind(facts.program);
+  const ia = kind === "ia";
+  // The practice test belongs to the certifications; an IA entry never shows it.
+  const testOn = examBootEnabled() && !ia;
+  const pillars = pillarsFor(kind);
+  const destinations = destinationsFor(kind);
+  const [cp, segments, library, recent, linkedin] = await Promise.all([cockpit(facts, threshold), followupSegments(facts.program, threshold), libraryWithResults(facts.id), recentPosts(new Date(), kind), linkedinStatus()]);
+  const balance = editorialBalance(recent, kind);
   const fmt = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" });
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
-      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Megaphone className="size-6 text-accent" aria-hidden />Marketing de la cohorte</h1>
+      <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Megaphone className="size-6 text-accent" aria-hidden />{ia ? "Marketing du Bâtisseur IA" : "Marketing de la cohorte"}</h1>
 
       {cohorts.length > 1 && (
         <nav className="mt-3 flex flex-wrap gap-2 text-sm">
@@ -62,7 +67,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
 
       {/* 1. Cockpit */}
       <section className="mt-5 rounded-xl border border-line bg-white p-4">
-        <h2 className={h2}><BarChart3 className="size-4 text-accent" aria-hidden />Où en est la cohorte</h2>
+        <h2 className={h2}><BarChart3 className="size-4 text-accent" aria-hidden />{ia ? "Où en est l’entrée" : "Où en est la cohorte"}</h2>
         <p className="mt-2 text-sm text-muted">{facts.name} · démarre le {fmt(facts.startsAt)} · admissions jusqu&apos;au {fmt(facts.admissionClosesAt)}</p>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Kpi value={`${facts.paid}/${facts.capacity}`} label="places payées" />
@@ -71,7 +76,11 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
           <Kpi value={String(cp.paid30)} label="inscriptions en 30 j" />
         </div>
         <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm font-semibold text-accent-ink">{facts.pace.label}</p>
-        <p className="mt-3 text-sm text-muted">30 derniers jours : {testOn ? `${cp.tests30} tests d’entraînement faits → ` : ""}{cp.scans30} analyses de profil ({cp.scans7} cette semaine) → {cp.calls30} appels réservés → {cp.paid30} inscriptions payées.</p>
+        <p className="mt-3 text-sm text-muted">
+          {ia
+            ? `30 derniers jours : ${cp.scans30} diagnostic${cp.scans30 > 1 ? "s" : ""} d’automatisation (${cp.scans7} cette semaine) → ${cp.paid30} inscription${cp.paid30 > 1 ? "s" : ""} payée${cp.paid30 > 1 ? "s" : ""} au Bâtisseur IA.`
+            : `30 derniers jours : ${testOn ? `${cp.tests30} tests d’entraînement faits → ` : ""}${cp.scans30} analyses de profil (${cp.scans7} cette semaine) → ${cp.calls30} appels réservés → ${cp.paid30} inscriptions payées.`}
+        </p>
         {testOn && (
           <p className="mt-1 text-sm text-muted">
             {cp.testStats
@@ -90,13 +99,19 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       {/* 2. Studio */}
       <section className="mt-6 rounded-xl border border-line bg-white p-4">
         <h2 className={h2}><Sparkles className="size-4 text-accent" aria-hidden />Studio de contenu</h2>
-        <p className="mt-1 mb-3 text-sm text-muted">Environ quatre posts de valeur (méthode, carrière, certifications, éligibilité, vie du candidat) pour un post de vente. Chaque post a une seule action : test, analyse de profil, conseil carrière ou cohorte. Chaque variante a son brief visuel (direction « Nuit et vert ») et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax.</p>
+        <p className="mt-1 mb-3 text-sm text-muted">
+          {ia
+            ? "Pour des chefs d’entreprise, pas des informaticiens. Environ quatre posts de valeur (cas d’usage, construire avec Claude Code, outils expliqués, garde-fous, vie d’entrepreneur) pour un post de vente. Chaque post a une seule action : diagnostic, page du Bâtisseur IA ou inscription. Chaque variante a son brief visuel (« Nuit et vert », signature Bâtisseur IA) et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax."
+            : "Environ quatre posts de valeur (méthode, carrière, certifications, éligibilité, vie du candidat) pour un post de vente. Chaque post a une seule action : test, analyse de profil, conseil carrière ou cohorte. Chaque variante a son brief visuel (direction « Nuit et vert ») et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax."}
+        </p>
         <Studio
+          key={facts.id}
+          ia={ia}
           cohortId={facts.id}
           channels={Object.entries(CHANNELS).map(([value, c]) => ({ value, label: c.label }))}
-          pillars={Object.entries(PILLARS).map(([value, p]) => ({ value, label: p.label, destination: p.destination, examples: p.examples }))}
+          pillars={Object.entries(pillars).map(([value, p]) => ({ value, label: p.label, destination: p.destination, examples: p.examples }))}
           formats={Object.entries(FORMATS).map(([value, f]) => ({ value, label: f.label, channels: f.channels }))}
-          destinations={Object.entries(DESTINATIONS).filter(([k]) => testOn || k !== "test").map(([value, d]) => ({ value, label: d.label }))}
+          destinations={Object.entries(destinations).filter(([k]) => testOn || k !== "test").map(([value, d]) => ({ value, label: d.label }))}
         />
       </section>
 
@@ -110,8 +125,8 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
         ) : null}
         <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
           <p className="font-semibold">Équilibre éditorial, 30 derniers jours ({recent.length} post{recent.length > 1 ? "s" : ""})</p>
-          <p className="mt-1 text-muted">{(Object.keys(PILLARS) as Array<keyof typeof PILLARS>).map((k) => `${PILLARS[k].label} ${balance.byPillar[k]}`).join(" · ")}</p>
-          <p className="text-muted">Liens : {(Object.keys(DESTINATIONS) as Array<keyof typeof DESTINATIONS>).map((k) => `${DESTINATIONS[k].label.toLowerCase()} ${balance.byDestination[k]}`).join(" · ")}</p>
+          <p className="mt-1 text-muted">{(Object.keys(pillars) as Array<keyof typeof ALL_PILLARS>).map((k) => `${ALL_PILLARS[k].label} ${balance.byPillar[k]}`).join(" · ")}</p>
+          <p className="text-muted">Liens : {(Object.keys(destinations) as Array<keyof typeof ALL_DESTINATIONS>).map((k) => `${ALL_DESTINATIONS[k].label.toLowerCase()} ${balance.byDestination[k]}`).join(" · ")}</p>
           {balance.advice && <p className="mt-1 font-semibold text-accent-ink">{balance.advice}</p>}
         </div>
         {library.length === 0 ? (
@@ -121,8 +136,8 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
             {library.map((p) => (
               <li key={p.id} className="rounded-lg border border-line p-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {PILLARS[pillarOf(p)].label}{p.format && p.format !== "standard" ? ` · ${FORMATS[p.format as keyof typeof FORMATS]?.label ?? p.format}` : ""} · vers {DESTINATIONS[p.destination as keyof typeof DESTINATIONS]?.label.toLowerCase() ?? p.destination}</span>
-                  <span className="text-muted">{p.visitors} visiteur{p.visitors > 1 ? "s" : ""} · {p.destination === "test" || p.tests > 0 ? `${p.tests} test${p.tests > 1 ? "s" : ""} ouvert${p.tests > 1 ? "s" : ""} (${p.testsDone} fait${p.testsDone > 1 ? "s" : ""}) · ` : ""}{p.leads} analyse{p.leads > 1 ? "s" : ""} · {p.paid} inscription{p.paid > 1 ? "s" : ""} · {p.code}</span>
+                  <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {ALL_PILLARS[pillarOf(p, kind)].label}{p.format && p.format !== "standard" ? ` · ${FORMATS[p.format as keyof typeof FORMATS]?.label ?? p.format}` : ""} · vers {ALL_DESTINATIONS[p.destination as keyof typeof ALL_DESTINATIONS]?.label.toLowerCase() ?? p.destination}</span>
+                  <span className="text-muted">{p.visitors} visiteur{p.visitors > 1 ? "s" : ""} · {p.destination === "test" || p.tests > 0 ? `${p.tests} test${p.tests > 1 ? "s" : ""} ouvert${p.tests > 1 ? "s" : ""} (${p.testsDone} fait${p.testsDone > 1 ? "s" : ""}) · ` : ""}{p.leads} {ia ? "contact" : "analyse"}{p.leads > 1 ? "s" : ""} · {p.paid} inscription{p.paid > 1 ? "s" : ""} · {p.code}</span>
                 </div>
                 {p.topic && <p className="mt-1 text-xs text-muted">Sujet : {p.topic}</p>}
                 <p className="mt-1 line-clamp-3 whitespace-pre-line text-ink-2">{p.text}</p>
@@ -144,7 +159,11 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       {/* 4. Follow-ups */}
       <section className="mt-6 rounded-xl border border-line bg-white p-4">
         <h2 className={h2}><Users className="size-4 text-accent" aria-hidden />Relances ciblées</h2>
-        <p className="mt-1 text-sm text-muted">Seulement les personnes qui ont accepté d&apos;être recontactées, sans place payée, pas relancées d&apos;ici depuis 3 jours. Classées selon ce qu&apos;elles ont fait : appel, score au test, analyse. Un message personnel chacun, envoyé par vous : jamais d&apos;envoi groupé.</p>
+        <p className="mt-1 text-sm text-muted">
+          {ia
+            ? "Seulement les personnes qui ont fait le diagnostic d’automatisation et accepté d’être recontactées, sans place payée au Bâtisseur IA, pas relancées d’ici depuis 3 jours. Classées selon leur aisance avec l’ordinateur. Un message personnel chacun, envoyé par vous : jamais d’envoi groupé."
+            : "Seulement les personnes qui ont accepté d’être recontactées, sans place payée, pas relancées d’ici depuis 3 jours. Classées selon ce qu’elles ont fait : appel, score au test, analyse. Un message personnel chacun, envoyé par vous : jamais d’envoi groupé."}
+        </p>
         {testOn && (
           <form action={saveTestThreshold} className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
             <label htmlFor="testThreshold" className="font-medium">Seuil du test</label>

@@ -9,7 +9,8 @@ import { env } from "@/lib/env";
 import { type NewsItem, type TopicIdea, type Variant, draftFollowup, generateVariants, searchNews, suggestTopics } from "@/lib/marketing/ai";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { audienceInsights, cohortFacts, factsForModel, recentPosts, recentTestStats } from "@/lib/marketing/data";
-import { CHANNELS, DESTINATIONS, FORMATS, PILLARS, POST_CODE_PATTERN, type SegmentKey, newPostCode, pillarOf, trackedLink, withLink } from "@/lib/marketing/plan";
+import { ALL_DESTINATIONS, ALL_PILLARS, CHANNELS, FORMATS, IA_SEGMENTS, type MarketingKind, POST_CODE_PATTERN, type SegmentKey, destinationsFor, marketingKind, newPostCode, pillarOf, pillarsFor, trackedLink, withLink } from "@/lib/marketing/plan";
+import { ACTIVITIES, HOURS, type IaDiagnosis, TASKS, TOOLS } from "@/lib/ia-diagnostic";
 import { loadMarketingSettings, saveMarketingSettings } from "@/lib/marketing/settings";
 import { MAX_IMAGE_BYTES, publishOnLinkedin } from "@/lib/linkedin";
 import { put } from "@vercel/blob";
@@ -26,12 +27,19 @@ async function requireAdmin() {
 }
 
 const channel = z.enum(Object.keys(CHANNELS) as [keyof typeof CHANNELS, ...Array<keyof typeof CHANNELS>]);
-const pillar = z.enum(Object.keys(PILLARS) as [keyof typeof PILLARS, ...Array<keyof typeof PILLARS>]);
+const pillar = z.enum(Object.keys(ALL_PILLARS) as [keyof typeof ALL_PILLARS, ...Array<keyof typeof ALL_PILLARS>]);
 const format = z.enum(Object.keys(FORMATS) as [keyof typeof FORMATS, ...Array<keyof typeof FORMATS>]);
-const destination = z.enum(Object.keys(DESTINATIONS) as [keyof typeof DESTINATIONS, ...Array<keyof typeof DESTINATIONS>]);
+const destination = z.enum(Object.keys(ALL_DESTINATIONS) as [keyof typeof ALL_DESTINATIONS, ...Array<keyof typeof ALL_DESTINATIONS>]);
 const id = z.coerce.number().int().positive();
 
-export type StudioVariant = Variant & { code: string; link: string; destination: keyof typeof DESTINATIONS };
+export type StudioVariant = Variant & { code: string; link: string; destination: keyof typeof ALL_DESTINATIONS };
+
+/** A pillar and a destination belong to one audience: an IA post never links to the CISSP scanner. */
+function audienceError(kind: MarketingKind, p: string, dest: string): string | null {
+  if (!(p in pillarsFor(kind))) return "Ce pilier ne correspond pas à ce programme : rechargez la page.";
+  if (!(dest in destinationsFor(kind))) return "Cette destination ne correspond pas à ce programme : rechargez la page.";
+  return null;
+}
 
 /**
  * Ten subject ideas (Ben, 29/09): from what prospects say and do, what was
@@ -42,19 +50,23 @@ export async function suggestTopicIdeas(input: { cohortId: number; withNews: boo
   const parsed = z.object({ cohortId: id, withNews: z.boolean() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "Demande invalide." };
   const settings = await loadMarketingSettings();
+  const cohort = await prisma.cohort.findUnique({ where: { id: parsed.data.cohortId }, select: { program: true } });
+  if (!cohort) return { ok: false, error: "Cohorte introuvable." };
+  const kind = marketingKind(cohort.program);
   const [facts, tests, insights, recent, news] = await Promise.all([
     cohortFacts(parsed.data.cohortId),
     recentTestStats(settings.testThreshold),
-    audienceInsights(),
-    recentPosts(),
-    parsed.data.withNews ? searchNews() : Promise.resolve(null),
+    audienceInsights(new Date(), kind),
+    recentPosts(new Date(), kind),
+    parsed.data.withNews ? searchNews(kind) : Promise.resolve(null),
   ]);
   if (!facts) return { ok: false, error: "Cohorte introuvable." };
   const newsItems = news?.ok ? news.items : [];
   const result = await suggestTopics({
+    kind,
     facts: factsForModel(facts, tests.stats),
     insights,
-    recent: recent.map((p) => `- ${PILLARS[pillarOf(p)].label} · ${p.format ?? "standard"} · ${p.topic ?? p.text.split("\n")[0].slice(0, 120)}`).join("\n"),
+    recent: recent.map((p) => `- ${ALL_PILLARS[pillarOf(p, kind)].label} · ${p.format ?? "standard"} · ${p.topic ?? p.text.split("\n")[0].slice(0, 120)}`).join("\n"),
     news: newsItems.map((n) => `- ${n.title} (${n.date}) — ${n.url} — ${n.why}`).join("\n"),
   });
   if (!result.ok) return result;
@@ -73,7 +85,10 @@ export async function generatePosts(input: { cohortId: number; channel: string; 
   const settings = await loadMarketingSettings();
   const [facts, tests] = await Promise.all([cohortFacts(d.cohortId), recentTestStats(settings.testThreshold)]);
   if (!facts) return { ok: false, error: "Cohorte introuvable." };
-  const result = await generateVariants({ facts: factsForModel(facts, tests.stats), channel: d.channel, pillar: d.pillar, format: d.format, topic: d.topic, destination: d.destination, brief: d.brief });
+  const kind = marketingKind(facts.program);
+  const mismatch = audienceError(kind, d.pillar, d.destination);
+  if (mismatch) return { ok: false, error: mismatch };
+  const result = await generateVariants({ kind, facts: factsForModel(facts, kind === "ia" ? null : tests.stats), channel: d.channel, pillar: d.pillar, format: d.format, topic: d.topic, destination: d.destination, brief: d.brief });
   if (!result.ok) return result;
   return {
     ok: true,
@@ -104,6 +119,10 @@ export async function savePost(input: z.input<typeof saveSchema>): Promise<{ ok:
   const parsed = saveSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Contenu invalide." };
   const d = parsed.data;
+  const cohort = await prisma.cohort.findUnique({ where: { id: d.cohortId }, select: { program: true } });
+  if (!cohort) return { ok: false, error: "Cohorte introuvable." };
+  const mismatch = audienceError(marketingKind(cohort.program), d.pillar, d.destination);
+  if (mismatch) return { ok: false, error: mismatch };
   await prisma.marketingPost.upsert({
     where: { code: d.code },
     create: { cohortId: d.cohortId, channel: d.channel, angle: d.pillar, pillar: d.pillar, format: d.format, topic: d.topic || null, destination: d.destination, code: d.code, text: d.text, visualBrief: JSON.stringify(d.visual), video: d.video && d.video.scenes.length ? JSON.stringify(d.video) : null },
@@ -135,15 +154,19 @@ const SEGMENT_REASON: Record<SegmentKey, string> = {
   associate: "Profil éligible via le titre Associate of ISC² : elle peut passer l'examen dès maintenant.",
   conseil: "Son échéance est plus courte que le délai estimé par l'analyse : un échange de conseil d'abord, pour bâtir un plan réaliste.",
   cc: "Profil qui débute : la bonne première marche est la certification CC d'ISC², ou un bilan de carrière.",
+  ia_ready: "Elle a fait le diagnostic d'automatisation et se dit à l'aise avec l'ordinateur, sans s'inscrire : elle peut démarrer directement à la J1.",
+  ia_prepare: "Elle a fait le diagnostic d'automatisation sans s'inscrire et a besoin d'aide avec l'ordinateur : une séance d'accueil d'une heure avant la J1 installe les outils avec elle.",
 };
 
-const segmentKey = z.enum(["called", "test_high", "test_low", "hot", "associate", "conseil", "cc"]);
+const segmentKey = z.enum(["called", "test_high", "test_low", "hot", "associate", "conseil", "cc", "ia_ready", "ia_prepare"]);
+const isIaSegment = (s: SegmentKey) => (IA_SEGMENTS as readonly string[]).includes(s);
 
 /** A personal follow-up for one consenting prospect. Nothing is sent here. */
 export async function draftFollowupFor(input: { leadId: number; cohortId: number; channel: "whatsapp" | "email"; segment: string }): Promise<{ ok: true; text: string; subject: string | null } | { ok: false; error: string }> {
   await requireAdmin();
   const parsed = z.object({ leadId: id, cohortId: id, channel: z.enum(["whatsapp", "email"]), segment: segmentKey }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "Demande invalide." };
+  if (isIaSegment(parsed.data.segment)) return draftIaFollowup(parsed.data as { leadId: number; cohortId: number; channel: "whatsapp" | "email"; segment: SegmentKey });
   const [lead, facts] = await Promise.all([
     prisma.lead.findUnique({
       where: { id: parsed.data.leadId },
@@ -199,6 +222,48 @@ export async function draftFollowupFor(input: { leadId: number; cohortId: number
     text = text.slice(match[0].length);
   }
   return { ok: true, text, subject: parsed.data.channel === "email" ? subject ?? `${lead.firstName}, votre place pour la ${facts.name}` : null };
+}
+
+/**
+ * A personal follow-up after the automation diagnostic (Ben, 04/11). The
+ * link opens the inscription with the person already known and the entry
+ * preselected. Nothing is sent here.
+ */
+async function draftIaFollowup(input: { leadId: number; cohortId: number; channel: "whatsapp" | "email"; segment: SegmentKey }): Promise<{ ok: true; text: string; subject: string | null } | { ok: false; error: string }> {
+  const [lead, facts] = await Promise.all([
+    prisma.lead.findUnique({ where: { id: input.leadId }, include: { iaDiagnostics: { orderBy: { createdAt: "desc" }, take: 1, select: { token: true, answers: true, result: true } } } }),
+    cohortFacts(input.cohortId),
+  ]);
+  if (!lead || !facts) return { ok: false, error: "Introuvable." };
+  if (facts.program !== "ia") return { ok: false, error: "Choisissez une entrée du Bâtisseur IA pour cette relance." };
+  if (!lead.consentAt || lead.unsubscribedAt) return { ok: false, error: "Cette personne n'a pas accepté d'être recontactée." };
+  const diagnostic = lead.iaDiagnostics[0];
+  if (!diagnostic) return { ok: false, error: "Pas de diagnostic pour cette personne." };
+  const answers = (diagnostic.answers ?? {}) as { activity?: keyof typeof ACTIVITIES; tasks?: Array<keyof typeof TASKS>; hours?: keyof typeof HOURS; tools?: keyof typeof TOOLS };
+  const result = (diagnostic.result ?? {}) as Partial<IaDiagnosis>;
+  const person = [
+    `Prénom : ${lead.firstName}`,
+    `Pays : ${lead.country}`,
+    answers.activity && ACTIVITIES[answers.activity] ? `Activité : ${ACTIVITIES[answers.activity]}` : null,
+    answers.tasks?.length ? `Tâches qui lui prennent du temps : ${answers.tasks.map((t) => TASKS[t]?.label).filter(Boolean).join(", ")}` : null,
+    answers.hours && HOURS[answers.hours] ? `Temps déclaré sur ces tâches : ${HOURS[answers.hours].toLowerCase()} par semaine` : null,
+    answers.tools && TOOLS[answers.tools] ? `Outils actuels : ${TOOLS[answers.tools]}` : null,
+    result.priorities?.length ? `Première automatisation conseillée : ${result.priorities[0].title}` : null,
+  ].filter(Boolean).join("\n");
+  const offer = input.segment === "ia_prepare"
+    ? `Sa place pour l'${facts.name.charAt(0).toLowerCase()}${facts.name.slice(1)}, avec une séance d'accueil d'une heure avant la J1 pour installer les outils ensemble.`
+    : `Sa place pour l'${facts.name.charAt(0).toLowerCase()}${facts.name.slice(1)} : elle peut démarrer directement à la J1.`;
+  const link = `${env.NEXT_PUBLIC_APP_URL}/ia/inscription?t=${diagnostic.token}&entree=${facts.id}`;
+  const draft = await draftFollowup({ kind: "ia", facts: factsForModel(facts), channel: input.channel, person, segment: SEGMENT_REASON[input.segment], offer, link: "l'inscription au Bâtisseur IA, avec ses coordonnées déjà reconnues et cette date d'entrée présélectionnée ; paiement par carte ou mobile money" });
+  if (!draft.ok) return draft;
+  let text = withLink(draft.text, link);
+  let subject: string | null = null;
+  const match = /^Objet\s*:\s*(.+)\n+/i.exec(text);
+  if (match) {
+    subject = match[1].trim();
+    text = text.slice(match[0].length);
+  }
+  return { ok: true, text, subject: input.channel === "email" ? subject ?? `${lead.firstName}, votre application avec le Bâtisseur IA` : null };
 }
 
 /** Ben's score threshold for the "test réussi" and "test à consolider" segments. */
@@ -287,7 +352,7 @@ export async function generateVideo(input: { postId: number; prompt: string; ima
   await requireAdmin();
   const parsed = z.object({ postId: id, prompt: z.string().trim().min(20, "Prompt trop court.").max(1200), imageId: id.nullish() }).safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Prompt invalide." };
-  const post = await prisma.marketingPost.findUnique({ where: { id: parsed.data.postId }, select: { id: true } });
+  const post = await prisma.marketingPost.findUnique({ where: { id: parsed.data.postId }, select: { id: true, cohort: { select: { program: true } } } });
   if (!post) return { ok: false, error: "Post introuvable." };
   let firstFrame: { bytes: Uint8Array; type: string } | null = null;
   if (parsed.data.imageId) {
@@ -296,7 +361,7 @@ export async function generateVideo(input: { postId: number; prompt: string; ima
     if (!bytes) return { ok: false, error: "Image de départ introuvable." };
     firstFrame = { bytes, type: bytes[0] === 0x89 ? "image/png" : "image/jpeg" };
   }
-  const started = await startVideo(post.id, parsed.data.prompt, firstFrame);
+  const started = await startVideo(post.id, parsed.data.prompt, firstFrame, marketingKind(post.cohort?.program ?? "cissp"));
   if (!started.ok) return started;
   return { ok: true, videos: await videosOf(post.id) };
 }
@@ -329,13 +394,14 @@ export async function generateVisual(input: { postId: number; scene: string; hea
     })
     .safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Demande invalide." };
-  const post = await prisma.marketingPost.findUnique({ where: { id: parsed.data.postId }, select: { id: true, channel: true } });
+  const post = await prisma.marketingPost.findUnique({ where: { id: parsed.data.postId }, select: { id: true, channel: true, cohort: { select: { program: true } } } });
   if (!post) return { ok: false, error: "Post introuvable." };
   const channel = (post.channel in CANVAS ? post.channel : "linkedin") as keyof typeof CANVAS;
-  const photo = await generatePhoto(parsed.data.scene, CANVAS[channel].aspectRatio);
+  const kind = marketingKind(post.cohort?.program ?? "cissp");
+  const photo = await generatePhoto(parsed.data.scene, CANVAS[channel].aspectRatio, kind);
   if (!photo.ok) return photo;
   try {
-    const visual = await composeVisual({ photo: photo.bytes, photoType: photo.type, channel, headline: parsed.data.headline, keyword: parsed.data.keyword });
+    const visual = await composeVisual({ photo: photo.bytes, photoType: photo.type, channel, headline: parsed.data.headline, keyword: parsed.data.keyword, kind });
     const ext = photo.type === "image/png" ? "png" : "jpg";
     const [raw, final] = await Promise.all([
       put(`marketing-images/post-${post.id}-photo.${ext}`, Buffer.from(photo.bytes), { access: "private", contentType: photo.type, addRandomSuffix: true }),

@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-import { ANGLES, ART_DIRECTION, type Angle, CHANNELS, type Channel, DESTINATIONS, type Destination, FORMATS, type Format, PILLARS, type Pillar } from "./plan";
+import { ALL_DESTINATIONS, ALL_PILLARS, ANGLES, ART_DIRECTION, type Angle, CHANNELS, type Channel, type Destination, FORMATS, type Format, IA_ART_DIRECTION, type MarketingKind, type Pillar, destinationsFor, formatRule, pillarsFor } from "./plan";
 
 /**
  * The marketing studio's two calls to Claude (Ben, 28/09): three post
@@ -30,6 +30,27 @@ Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien
 ${ART_DIRECTION}
 
 Pour chaque variante, donne un brief visuel court et concret qui respecte strictement cette direction artistique : ce qu'on voit, le texte à l'écran (5 à 8 mots, un mot ou un chiffre fort à mettre en vert), le cadrage, et la description en anglais de la photographie seule pour le générateur d'images (personnes fictives : jamais Ben, jamais un élève présenté comme réel).
+Pour TikTok : un storyboard de 3 à 6 plans (durée, image, voix off, texte à l'écran) pour 15 à 30 secondes, et un prompt texte-vers-vidéo en anglais pour MiniMax (un seul plan de 6 secondes, le plan d'ouverture, avec les mouvements de caméra entre crochets comme [Push in] ou [Tracking shot], sans texte à l'écran, sans logo). Pour les autres canaux : storyboard vide et prompt vide.
+Les trois variantes doivent être vraiment différentes (accroche, structure, ton), pas trois reformulations.`;
+
+/** Bâtisseur IA (Ben, 04/11): business owners, not IT people; the same honesty, no gain promised. */
+const IA_HONESTY = [
+  HONESTY.split("\n").filter((l) => !l.includes("examen") && !l.includes("score")).join("\n"),
+  "- Aucun gain chiffré promis : ni heures gagnées, ni chiffre d'affaires, ni « sans effort ». On parle de ce que l'application fait, pas de ce qu'elle rapporte.",
+  "- Claude et Claude Code sont des outils d'Anthropic : ne laisse jamais croire à un partenariat ou à une certification Anthropic.",
+  "- Pas de jargon : si un mot technique est nécessaire (GitHub, Vercel, base de données), il s'explique en une demi-phrase.",
+].join("\n");
+
+const IA_STUDIO_SYSTEM = `Tu es le directeur marketing de Ben, formateur francophone qui a construit son propre site et ses automatisations avec Claude Code. Il vend le Bâtisseur IA : 5 journées en direct, le week-end, pour que des chefs d'entreprise, des indépendants et des porteurs de projet d'Afrique francophone et de la diaspora mettent en ligne leur propre application, sans savoir coder. Tu écris des contenus qui donnent envie de faire le premier pas gratuit (le diagnostic d'automatisation) puis de choisir sa date d'entrée.
+
+${IA_HONESTY}
+- Dates, places, prix ne viennent que des FAITS. Pour les posts de valeur, tu peux t'appuyer sur des connaissances établies (ce que fait un formulaire, une base de données, un paiement en ligne, un e-mail automatique), sans aucun chiffre de marché qui ne soit pas fourni. Une actualité ne se cite que si elle est fournie avec sa source, et la source se mentionne.
+
+Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Sa destination est donnée avec chaque demande : le texte doit annoncer exactement ce que la personne trouvera en cliquant.
+
+${IA_ART_DIRECTION}
+
+Pour chaque variante, donne un brief visuel court et concret qui respecte strictement cette direction artistique : ce qu'on voit, le texte à l'écran (5 à 8 mots, un mot ou un chiffre fort à mettre en vert), le cadrage, et la description en anglais de la photographie seule pour le générateur d'images (personnes fictives : jamais Ben, jamais un participant présenté comme réel).
 Pour TikTok : un storyboard de 3 à 6 plans (durée, image, voix off, texte à l'écran) pour 15 à 30 secondes, et un prompt texte-vers-vidéo en anglais pour MiniMax (un seul plan de 6 secondes, le plan d'ouverture, avec les mouvements de caméra entre crochets comme [Push in] ou [Tracking shot], sans texte à l'écran, sans logo). Pour les autres canaux : storyboard vide et prompt vide.
 Les trois variantes doivent être vraiment différentes (accroche, structure, ton), pas trois reformulations.`;
 
@@ -113,20 +134,24 @@ export type GenerateInput = {
   destination?: Destination;
   /** What Ben wants to say (an anecdote, an opinion) or an instruction. */
   brief: string;
+  /** The audience: certifications (default) or Bâtisseur IA. */
+  kind?: MarketingKind;
 };
 
 export async function generateVariants(input: GenerateInput): Promise<StudioResult> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
+  const kind = input.kind ?? "cert";
+  const destination = input.destination ?? (kind === "ia" ? "ia_diagnostic" : "scanner");
   const prompt = [
     "FAITS SUR L'OFFRE (seule source pour dates, places, prix et chiffres) :",
     input.facts,
     "",
     `Canal : ${CHANNELS[input.channel].label}. ${CHANNEL_RULES[input.channel]}`,
     `Format visuel : ${CHANNELS[input.channel].format}.`,
-    input.pillar ? `Pilier éditorial : ${PILLARS[input.pillar].label}.${input.pillar === "offre" ? "" : " C'est un post de valeur : il aide d'abord, l'offre n'arrive qu'avec l'action finale, en une phrase."}` : null,
+    input.pillar ? `Pilier éditorial : ${ALL_PILLARS[input.pillar].label}.${input.pillar === "offre" ? "" : " C'est un post de valeur : il aide d'abord, l'offre n'arrive qu'avec l'action finale, en une phrase."}` : null,
     input.topic ? `Sujet : ${input.topic}` : input.angle ? `Angle : ${ANGLES[input.angle]}.` : null,
-    `Format : ${FORMATS[input.format ?? "standard"].label}. ${FORMATS[input.format ?? "standard"].rule}`,
-    `Le lien [LIEN] mène à : ${DESTINATIONS[input.destination ?? "scanner"].forModel}.`,
+    `Format : ${FORMATS[input.format ?? "standard"].label}. ${formatRule(input.format ?? "standard", kind)}`,
+    `Le lien [LIEN] mène à : ${ALL_DESTINATIONS[destination].forModel}.`,
     input.brief ? `Ce que Ben veut dire, ou sa consigne (sa parole : tu peux la reprendre, sans rien y ajouter de factuel) : ${input.brief}` : null,
     "",
     "Écris trois variantes.",
@@ -139,7 +164,7 @@ export async function generateVariants(input: GenerateInput): Promise<StudioResu
       max_tokens: 12000,
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
-      system: [{ type: "text", text: STUDIO_SYSTEM, cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: kind === "ia" ? IA_STUDIO_SYSTEM : STUDIO_SYSTEM, cache_control: { type: "ephemeral" } }],
       output_config: { effort: "medium", format: { type: "json_schema", schema: VARIANTS_SCHEMA } },
       messages: [{ role: "user", content: prompt }],
     });
@@ -165,7 +190,13 @@ ${HONESTY}
 
 Message personnel, pas une publicité : prénom, un détail de son profil (son analyse, et son score au test s'il en a un), la cohorte et sa date, une seule question ou action à la fin. L'offre à proposer et la destination du lien sont données avec la demande : ne propose rien d'autre. 50 à 110 mots. Texte brut. Signe « Ben ».`;
 
-export type FollowupInput = { facts: string; channel: "whatsapp" | "email"; person: string; segment: string; offer: string; link: string };
+const IA_FOLLOWUP_SYSTEM = `Tu es Ben, formateur du Bâtisseur IA, francophone. Tu écris toi-même, à la première personne, à une personne qui a fait le diagnostic d'automatisation sur ton site et a accepté d'être recontactée. Objectif : une réponse, puis le choix de sa date d'entrée.
+
+${IA_HONESTY}
+
+Message personnel, pas une publicité : prénom, un détail de son diagnostic (son activité, la première automatisation conseillée), la prochaine date d'entrée (J1), une seule question ou action à la fin. L'offre à proposer et la destination du lien sont données avec la demande : ne propose rien d'autre. 50 à 110 mots. Texte brut. Signe « Ben ».`;
+
+export type FollowupInput = { facts: string; channel: "whatsapp" | "email"; person: string; segment: string; offer: string; link: string; kind?: MarketingKind };
 
 export async function draftFollowup(input: FollowupInput): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
@@ -176,9 +207,9 @@ export async function draftFollowup(input: FollowupInput): Promise<{ ok: true; t
       max_tokens: 2000,
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
-      system: [{ type: "text", text: FOLLOWUP_SYSTEM, cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: input.kind === "ia" ? IA_FOLLOWUP_SYSTEM : FOLLOWUP_SYSTEM, cache_control: { type: "ephemeral" } }],
       output_config: { effort: "low" },
-      messages: [{ role: "user", content: `FAITS SUR LA COHORTE :\n${input.facts}\n\nLA PERSONNE :\n${input.person}\n\nPourquoi on la relance : ${input.segment}\nCe qu'on lui propose : ${input.offer}\nLe lien [LIEN] mène à : ${input.link}\nCanal : ${input.channel === "whatsapp" ? "WhatsApp (pas d'objet, ton oral)" : "e-mail (commence par une ligne « Objet : … »)"}.\n\nÉcris le message. Le lien s'écrit [LIEN].` }],
+      messages: [{ role: "user", content: `FAITS SUR ${input.kind === "ia" ? "L'ENTRÉE" : "LA COHORTE"} :\n${input.facts}\n\nLA PERSONNE :\n${input.person}\n\nPourquoi on la relance : ${input.segment}\nCe qu'on lui propose : ${input.offer}\nLe lien [LIEN] mène à : ${input.link}\nCanal : ${input.channel === "whatsapp" ? "WhatsApp (pas d'objet, ton oral)" : "e-mail (commence par une ligne « Objet : … »)"}.\n\nÉcris le message. Le lien s'écrit [LIEN].` }],
     });
     if (response.stop_reason === "refusal") return { ok: false, error: "Le modèle a refusé cette demande." };
     const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("").trim();
@@ -197,7 +228,7 @@ export async function draftFollowup(input: FollowupInput): Promise<{ ok: true; t
 
 export type TopicIdea = { pillar: Pillar; format: Format; channel: Channel; destination: Destination; title: string; hook: string; why: string; source: string };
 
-const IDEAS_SCHEMA = {
+const ideasSchema = (kind: MarketingKind) => ({
   type: "object",
   additionalProperties: false,
   required: ["ideas"],
@@ -209,10 +240,10 @@ const IDEAS_SCHEMA = {
         additionalProperties: false,
         required: ["pillar", "format", "channel", "destination", "title", "hook", "why", "source"],
         properties: {
-          pillar: { type: "string", enum: Object.keys(PILLARS) },
+          pillar: { type: "string", enum: Object.keys(pillarsFor(kind)) },
           format: { type: "string", enum: Object.keys(FORMATS) },
           channel: { type: "string", enum: Object.keys(CHANNELS) },
-          destination: { type: "string", enum: Object.keys(DESTINATIONS) },
+          destination: { type: "string", enum: Object.keys(destinationsFor(kind)) },
           title: { type: "string", description: "Le sujet en une phrase, 12 mots au plus." },
           hook: { type: "string", description: "La première ligne du post, telle qu'elle serait écrite." },
           why: { type: "string", description: "Pourquoi ce sujet maintenant, en une phrase, pour Ben : quelle donnée ou quelle actualité l'inspire." },
@@ -221,7 +252,7 @@ const IDEAS_SCHEMA = {
       },
     },
   },
-} as const;
+});
 
 const IDEAS_SYSTEM = `Tu es le responsable éditorial de Ben, coach CISSP certifié et francophone. Tu proposes des sujets de posts pour LinkedIn, WhatsApp et TikTok, destinés à des professionnels de l'informatique et de la cybersécurité en Afrique francophone et dans la diaspora.
 
@@ -235,9 +266,21 @@ Règles des idées :
 - Évite les sujets déjà traités ce mois-ci.
 - Une actualité ne sert que si elle est fournie avec sa source ; ne rapporte que ce qu'elle dit.`;
 
+const IA_IDEAS_SYSTEM = `Tu es le responsable éditorial de Ben, formateur du Bâtisseur IA, francophone. Tu proposes des sujets de posts pour LinkedIn, WhatsApp et TikTok, destinés à des chefs d'entreprise, des indépendants et des porteurs de projet d'Afrique francophone et de la diaspora, qui ne savent pas coder et veulent leur propre application et leurs automatisations, construites avec Claude Code.
+
+${IA_HONESTY}
+
+Règles des idées :
+- Environ quatre sujets de valeur (cas d'usage, construire avec Claude Code, les outils expliqués, méthode et garde-fous, vie d'entrepreneur) pour un sujet de vente (pilier « offre »).
+- Varie les piliers, les formats et les canaux. Respecte les formats possibles par canal.
+- Chaque sujet a une seule destination pour son lien, la plus naturelle : cas d'usage, garde-fous et vie d'entrepreneur → diagnostic ; construire et outils → page du Bâtisseur IA ; offre → inscription.
+- Pars de ce que les entrepreneurs ont répondu au diagnostic (leur activité, les tâches qui leur coûtent du temps, leurs outils) : c'est la meilleure source. Agrégats seulement, jamais une personne.
+- Évite les sujets déjà traités ce mois-ci.
+- Une actualité ne sert que si elle est fournie avec sa source ; ne rapporte que ce qu'elle dit.`;
+
 const FORMAT_CHANNELS = Object.entries(FORMATS).map(([k, f]) => `${k} (${f.label}) : ${f.channels.join(", ")}`).join("\n");
 
-export async function suggestTopics(input: { facts: string; insights: string; recent: string; news: string }): Promise<{ ok: true; ideas: TopicIdea[] } | { ok: false; error: string }> {
+export async function suggestTopics(input: { facts: string; insights: string; recent: string; news: string; kind?: MarketingKind }): Promise<{ ok: true; ideas: TopicIdea[] } | { ok: false; error: string }> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
   const prompt = [
     "FAITS SUR L'OFFRE :",
@@ -252,7 +295,7 @@ export async function suggestTopics(input: { facts: string; insights: string; re
     "ACTUALITÉS (avec source) :",
     input.news || "Aucune : n'en invente pas.",
     "",
-    `Piliers : ${Object.entries(PILLARS).map(([k, p]) => `${k} (${p.label})`).join(", ")}.`,
+    `Piliers : ${Object.entries(pillarsFor(input.kind ?? "cert")).map(([k, p]) => `${k} (${p.label})`).join(", ")}.`,
     `Formats possibles par canal :\n${FORMAT_CHANNELS}`,
     "",
     "Propose 10 sujets.",
@@ -264,8 +307,8 @@ export async function suggestTopics(input: { facts: string; insights: string; re
       max_tokens: 8000,
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
-      system: [{ type: "text", text: IDEAS_SYSTEM, cache_control: { type: "ephemeral" } }],
-      output_config: { effort: "medium", format: { type: "json_schema", schema: IDEAS_SCHEMA } },
+      system: [{ type: "text", text: input.kind === "ia" ? IA_IDEAS_SYSTEM : IDEAS_SYSTEM, cache_control: { type: "ephemeral" } }],
+      output_config: { effort: "medium", format: { type: "json_schema", schema: ideasSchema(input.kind ?? "cert") } },
       messages: [{ role: "user", content: prompt }],
     });
     if (response.stop_reason === "refusal") return { ok: false, error: "Le modèle a refusé cette demande." };
@@ -290,6 +333,11 @@ const NEWS_SYSTEM = `Tu fais une veille d'actualité pour Ben, coach CISSP franc
 Réponds uniquement par une ligne par actualité, 3 à 6 lignes, sans autre texte :
 TITRE || DATE (AAAA-MM-JJ) || URL || en quoi c'est utile pour un post, en une phrase`;
 
+const IA_NEWS_SYSTEM = `Tu fais une veille d'actualité pour Ben, formateur du Bâtisseur IA, francophone. Cherche sur le web des actualités des 30 derniers jours utiles pour des posts destinés à des chefs d'entreprise d'Afrique francophone : nouveautés de Claude et de Claude Code annoncées par Anthropic, outils d'automatisation pour les petites entreprises, paiement en ligne et mobile money, numérisation des TPE et PME en Afrique francophone. Sources fiables uniquement (médias reconnus, annonces officielles des éditeurs, autorités). Ne rapporte que ce que la source dit.
+
+Réponds uniquement par une ligne par actualité, 3 à 6 lignes, sans autre texte :
+TITRE || DATE (AAAA-MM-JJ) || URL || en quoi c'est utile pour un post, en une phrase`;
+
 /** Pure: reads the model's news lines; drops anything without an http(s) URL. */
 export function parseNews(text: string): NewsItem[] {
   return text
@@ -306,7 +354,7 @@ export function parseNews(text: string): NewsItem[] {
  * citations, which structured outputs do not accept. A long search may
  * pause; the paused turn is sent back so the server resumes it.
  */
-export async function searchNews(): Promise<{ ok: true; items: NewsItem[] } | { ok: false; error: string }> {
+export async function searchNews(kind: MarketingKind = "cert"): Promise<{ ok: true; items: NewsItem[] } | { ok: false; error: string }> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
   try {
     const client = new Anthropic();
@@ -318,7 +366,7 @@ export async function searchNews(): Promise<{ ok: true; items: NewsItem[] } | { 
         max_tokens: 6000,
         betas: ["server-side-fallback-2026-07-01"],
         fallbacks: "default",
-        system: NEWS_SYSTEM,
+        system: kind === "ia" ? IA_NEWS_SYSTEM : NEWS_SYSTEM,
         tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
         output_config: { effort: "low" },
         messages,

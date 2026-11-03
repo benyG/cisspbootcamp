@@ -40,6 +40,21 @@ export const ART_DIRECTION = [
   "- Vidéo : plans lents et stables, caméra à l'épaule discrète, étalonnage froid dans les ombres et chaud sur la peau, texte à l'écran court en Inter Tight blanche, vert pour le mot clé.",
 ].join("\n");
 
+/** Bâtisseur IA art direction (Ben, 04/11): the same colours, other people, other signature. */
+export const IA_ART_DIRECTION = [
+  "Direction artistique « Nuit et vert », version Bâtisseur IA :",
+  "- Fond bleu nuit #071A33, un seul accent vert #17B890, blanc cassé #F7F8F6 ; rien d'autre.",
+  "- Typographie Inter Tight très grasse pour le titre (un seul mot ou chiffre en vert), Inter pour le reste. Beaucoup d'espace vide.",
+  "- Photographie réelle, jamais d'illustration générique : entrepreneurs et indépendants africains francophones, 28 à 50 ans, dans leur activité (boutique, atelier, cabinet, bureau partagé, comptoir), un ordinateur portable ou un téléphone en main, lumière naturelle chaude, attitude concentrée et fière.",
+  "- Interdits : robot, humanoïde, cerveau lumineux, visage en circuits, code vert façon Matrix, hologramme, main robotique, stock photo souriant face caméra.",
+  "- Signature graphique : une fine ligne verte de progression en 5 points (les 5 journées), et « Bâtisseur IA » en bas à gauche.",
+  "- Vidéo : plans lents et stables, caméra à l'épaule discrète, étalonnage froid dans les ombres et chaud sur la peau, texte à l'écran court en Inter Tight blanche, vert pour le mot clé. Un écran peut apparaître flou, jamais lisible.",
+].join("\n");
+
+export function artDirectionFor(kind: MarketingKind): string {
+  return kind === "ia" ? IA_ART_DIRECTION : ART_DIRECTION;
+}
+
 /**
  * Where a post sends people (Ben, 29/09): the free practice test, playful and
  * shareable, or the profile analysis, which qualifies. The test page then
@@ -51,7 +66,24 @@ export const DESTINATIONS = {
   conseil: { label: "Conseil carrière", path: "/conseil", forModel: "les séances de conseil carrière de Ben (bilan de carrière, évolution vers le management ou le poste de RSSI, reconversion…), payantes, avec prise de rendez-vous en ligne" },
   cohorte: { label: "Inscription à la cohorte", path: "/", forModel: "la page du bootcamp : programme, rythme, prix selon le pays et inscription à la prochaine cohorte" },
 } as const;
-export type Destination = keyof typeof DESTINATIONS;
+
+/** Where a Bâtisseur IA post sends people (Ben, 04/11). */
+export const IA_DESTINATIONS = {
+  ia_diagnostic: { label: "Diagnostic IA", path: "/ia/diagnostic", forModel: "le diagnostic d'automatisation gratuit (5 questions, 3 minutes) : les trois automatisations que son application peut prendre en charge en premier" },
+  ia_page: { label: "Page Bâtisseur IA", path: "/ia", forModel: "la page du Bâtisseur IA : programme des 5 journées le week-end, prix selon le pays, prochaines dates d'entrée" },
+  ia_inscription: { label: "Inscription IA", path: "/ia/inscription", forModel: "l'inscription au Bâtisseur IA : choix de la date d'entrée (J1), paiement par carte ou mobile money" },
+} as const;
+
+export const ALL_DESTINATIONS = { ...DESTINATIONS, ...IA_DESTINATIONS } as const;
+export type Destination = keyof typeof ALL_DESTINATIONS;
+
+/**
+ * Two audiences (Ben, 04/11): the certifications (CISSP and CC) speak to
+ * IT and security people; Bâtisseur IA speaks to business owners. Each has
+ * its pillars, link destinations, art direction and follow-ups.
+ */
+export type MarketingKind = "cert" | "ia";
+export const marketingKind = (program: string): MarketingKind => (program === "ia" ? "ia" : "cert");
 
 /** The angle's natural destination: the test angle opens the test. */
 export function defaultDestination(angle: Angle): Destination {
@@ -71,7 +103,27 @@ export const PILLARS = {
   candidat: { label: "Vie du candidat", destination: "cohorte", examples: ["Préparer le CISSP en travaillant", "Le mercredi lecture et les week-ends denses", "Gérer le stress du jour J"] },
   offre: { label: "Offre et cohorte", destination: "cohorte", examples: ["Places limitées, date de clôture", "Paiement par carte ou mobile money", "Un coach qui tient le rythme avec vous"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
-export type Pillar = keyof typeof PILLARS;
+
+/** Bâtisseur IA pillars (Ben, 04/11): about four value posts for one selling post, like the certifications. */
+export const IA_PILLARS = {
+  cas_usage: { label: "Cas d'usage", destination: "ia_diagnostic", examples: ["Relancer ses prospects sans y penser", "Savoir qui a payé, sans chercher", "Des devis et factures en un clic"] },
+  construire: { label: "Construire avec Claude Code", destination: "ia_page", examples: ["Ce site a été construit avec Claude Code", "Une panne corrigée et remise en ligne le jour même", "Les tests automatiques, l'assurance d'une application"] },
+  outils: { label: "Les outils expliqués", destination: "ia_page", examples: ["GitHub expliqué à un chef d'entreprise", "Mettre une application en ligne avec Vercel", "Ce que coûte vraiment une application sur mesure"] },
+  garde_fous: { label: "Méthode et garde-fous", destination: "ia_diagnostic", examples: ["Ne jamais confier ses mots de passe à une IA", "Relire ce que l'IA a écrit avant de publier", "Commencer petit : une tâche, puis la suivante"] },
+  entrepreneur: { label: "Vie d'entrepreneur", destination: "ia_diagnostic", examples: ["Le temps perdu dans WhatsApp", "Quand Excel ne suffit plus", "Confier les tâches répétitives à un outil"] },
+  offre: { label: "Offre et dates", destination: "ia_inscription", examples: ["Les prochaines entrées J1", "5 journées le week-end, aux dates de votre choix", "Paiement par carte ou mobile money"] },
+} as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
+
+export type Pillar = keyof typeof PILLARS | keyof typeof IA_PILLARS;
+export const ALL_PILLARS: Record<Pillar, { label: string; destination: Destination; examples: readonly string[] }> = { ...PILLARS, ...IA_PILLARS };
+
+export function pillarsFor(kind: MarketingKind): Record<string, { label: string; destination: Destination; examples: readonly string[] }> {
+  return kind === "ia" ? IA_PILLARS : PILLARS;
+}
+
+export function destinationsFor(kind: MarketingKind): Record<string, { label: string; path: string; forModel: string }> {
+  return kind === "ia" ? IA_DESTINATIONS : DESTINATIONS;
+}
 
 /** Post formats, with what the model must produce and where they fit. */
 export const FORMATS = {
@@ -89,6 +141,19 @@ export const FORMATS = {
 } as const satisfies Record<string, { label: string; channels: readonly Channel[]; rule: string }>;
 export type Format = keyof typeof FORMATS;
 
+/** Formats whose rule speaks to certification candidates get an IA version. */
+const IA_FORMAT_RULES: Partial<Record<Format, string>> = {
+  cas: "Une situation d'entrepreneur en 3 à 5 phrases (une tâche répétitive qui coûte du temps), une question à choix (A, B, C, D) sur la façon de l'automatiser, invitation à répondre en commentaire ; la réponse commentée sera donnée plus tard. Pas de réponse dans le post.",
+  erreur: "Une erreur fréquente quand on veut automatiser son entreprise ou utiliser l'IA (tout faire d'un coup, ne pas relire, confier ses secrets), pourquoi elle coûte, comment l'éviter.",
+  comparatif: "Deux options côte à côte (logiciel du marché, agence, application sur mesure construite avec Claude Code, ne rien changer) : pour qui, ce que ça demande, ce que ça coûte. Honnête, sans dénigrer.",
+  coulisses: "Ce qui se passe réellement dans le Bâtisseur IA, ou dans la construction de ce site avec Claude Code, sans inventer de participant, de chiffre ni de témoignage.",
+  pov: "Format « POV : vous … » mis en scène, situation reconnaissable par un entrepreneur ou un indépendant (relances oubliées, devis à refaire, WhatsApp débordé).",
+};
+
+export function formatRule(format: Format, kind: MarketingKind): string {
+  return (kind === "ia" && IA_FORMAT_RULES[format]) || FORMATS[format].rule;
+}
+
 export function formatsFor(channel: Channel): Format[] {
   return (Object.keys(FORMATS) as Format[]).filter((f) => (FORMATS[f].channels as readonly Channel[]).includes(channel));
 }
@@ -99,8 +164,9 @@ export const MAX_OFFER_SHARE = 0.25;
 export type BalancePost = { pillar: string | null; angle: string; destination: string };
 
 /** Old posts carry no pillar: their angle says what they were. */
-export function pillarOf(p: BalancePost): Pillar {
-  if (p.pillar && p.pillar in PILLARS) return p.pillar as Pillar;
+export function pillarOf(p: BalancePost, kind: MarketingKind = "cert"): Pillar {
+  if (p.pillar && p.pillar in pillarsFor(kind)) return p.pillar as Pillar;
+  if (kind === "ia") return "offre";
   if (p.angle === "conseil_du_jour" || p.angle === "test") return "methode";
   if (p.angle === "associate" || p.angle === "eligibilite") return "eligibilite";
   if (p.angle === "emploi") return "candidat";
@@ -111,18 +177,20 @@ export function pillarOf(p: BalancePost): Pillar {
  * The editorial balance of the last posts: counts by pillar and by
  * destination, and one line of advice when it leans too much one way.
  */
-export function editorialBalance(posts: BalancePost[]): { byPillar: Record<Pillar, number>; byDestination: Record<Destination, number>; advice: string | null } {
-  const byPillar = Object.fromEntries(Object.keys(PILLARS).map((k) => [k, 0])) as Record<Pillar, number>;
-  const byDestination = Object.fromEntries(Object.keys(DESTINATIONS).map((k) => [k, 0])) as Record<Destination, number>;
+export function editorialBalance(posts: BalancePost[], kind: MarketingKind = "cert"): { byPillar: Record<Pillar, number>; byDestination: Record<Destination, number>; advice: string | null } {
+  const pillars = pillarsFor(kind);
+  const byPillar = Object.fromEntries(Object.keys(pillars).map((k) => [k, 0])) as Record<Pillar, number>;
+  const byDestination = Object.fromEntries(Object.keys(destinationsFor(kind)).map((k) => [k, 0])) as Record<Destination, number>;
   for (const p of posts) {
-    byPillar[pillarOf(p)]++;
+    byPillar[pillarOf(p, kind)]++;
     if (p.destination in byDestination) byDestination[p.destination as Destination]++;
   }
-  if (posts.length === 0) return { byPillar, byDestination, advice: "Aucun post sur 30 jours : commencez par un post de valeur (méthode ou carrière)." };
-  const missing = (Object.keys(PILLARS) as Pillar[]).filter((k) => k !== "offre" && byPillar[k] === 0);
+  if (posts.length === 0) return { byPillar, byDestination, advice: kind === "ia" ? "Aucun post sur 30 jours : commencez par un post de valeur (un cas d'usage)." : "Aucun post sur 30 jours : commencez par un post de valeur (méthode ou carrière)." };
+  const missing = (Object.keys(pillars) as Pillar[]).filter((k) => k !== "offre" && byPillar[k] === 0);
+  const firstValue = kind === "ia" ? "cas_usage" : "methode";
   let advice: string | null = null;
-  if (posts.length >= 3 && byPillar.offre / posts.length > MAX_OFFER_SHARE) advice = `${byPillar.offre} posts de vente sur ${posts.length} : place à la valeur, par exemple « ${PILLARS[missing[0] ?? "methode"].label} ».`;
-  else if (missing.length > 0 && posts.length >= 4) advice = `Pas encore de post « ${PILLARS[missing[0]].label} » ce mois-ci.`;
+  if (posts.length >= 3 && byPillar.offre / posts.length > MAX_OFFER_SHARE) advice = `${byPillar.offre} posts de vente sur ${posts.length} : place à la valeur, par exemple « ${pillars[missing[0] ?? firstValue].label} ».`;
+  else if (missing.length > 0 && posts.length >= 4) advice = `Pas encore de post « ${pillars[missing[0]].label} » ce mois-ci.`;
   return { byPillar, byDestination, advice };
 }
 
@@ -158,7 +226,7 @@ export function trackedLink(appUrl: string, channel: Channel, cohortId: number |
     utm_campaign: cohortId ? `cohorte-${cohortId}` : "cohorte",
     utm_content: code,
   });
-  return `${appUrl}${DESTINATIONS[destination].path}?${params.toString()}`;
+  return `${appUrl}${ALL_DESTINATIONS[destination].path}?${params.toString()}`;
 }
 
 /** Replaces the [LIEN] placeholder the model writes with the tracked link. */
@@ -205,7 +273,8 @@ export function recommendations(s: Signals): string[] {
 /** Default of the adjustable score threshold, in percent: 3 good answers out of 5. */
 export const DEFAULT_TEST_THRESHOLD = 60;
 
-export type SegmentKey = "called" | "test_low" | "test_high" | "hot" | "associate" | "conseil" | "cc";
+export type SegmentKey = "called" | "test_low" | "test_high" | "hot" | "associate" | "conseil" | "cc" | "ia_ready" | "ia_prepare";
+export const IA_SEGMENTS = ["ia_ready", "ia_prepare"] as const;
 
 export type LeadJourney = {
   hadCall: boolean;
@@ -243,4 +312,17 @@ export function publishableTestStats(percents: number[], threshold: number, minS
   if (percents.length < minSample) return null;
   const average = Math.round(percents.reduce((a, p) => a + p, 0) / percents.length);
   return { count: percents.length, averagePercent: average, threshold, atOrAbove: Math.round((percents.filter((p) => p >= threshold).length / percents.length) * 100) };
+}
+
+export type IaSignals = { pace: Pace; diagnosticsLast7Days: number; diagnosedUnpaid: number; daysSinceLastPost: number | null };
+
+/** The Bâtisseur IA day's to-do (Ben, 04/11), at most three lines. */
+export function iaRecommendations(s: IaSignals): string[] {
+  if (s.pace.remaining === 0) return ["Cette entrée est complète : ouvrez la suivante dans Admin › Bâtisseur IA."];
+  const out: string[] = [];
+  if (s.diagnosedUnpaid > 0) out.push(`${s.diagnosedUnpaid} personne${s.diagnosedUnpaid > 1 ? "s ont" : " a"} fait le diagnostic sans s'inscrire : un message personnel chacune (relances ci-dessous).`);
+  if (s.daysSinceLastPost === null || s.daysSinceLastPost >= 3) out.push(s.daysSinceLastPost === null ? "Aucune publication pour cette entrée : lancez un premier post, un cas d'usage vers le diagnostic." : `Pas de publication depuis ${s.daysSinceLastPost} jours : un post aujourd'hui.`);
+  if (s.pace.daysLeft > 0 && s.pace.daysLeft <= 7) out.push(`Inscriptions closes dans ${s.pace.daysLeft} jour${s.pace.daysLeft > 1 ? "s" : ""} : un post « Offre et dates » sur tous les canaux.`);
+  if (s.diagnosticsLast7Days === 0) out.push("Aucun diagnostic IA en 7 jours : partagez le lien du diagnostic (statut WhatsApp ou TikTok).");
+  return out.slice(0, 3);
 }

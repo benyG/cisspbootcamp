@@ -27,7 +27,11 @@ const contactSchema = z.object({
   website: z.string().max(0).optional().or(z.literal("")),
 });
 
-export const submissionSchema = z.object({ answers: iaAnswersSchema, contact: contactSchema });
+const utmField = z.string().trim().max(120).optional();
+/** First-touch campaign of the visitor, so the studio's tracked links count diagnostics (Ben, 04/11). */
+const utmSchema = z.object({ source: utmField, medium: utmField, campaign: utmField, content: utmField }).partial().optional().catch(undefined);
+
+export const submissionSchema = z.object({ answers: iaAnswersSchema, contact: contactSchema, utm: utmSchema });
 export type IaSubmission = z.input<typeof submissionSchema>;
 export type IaSubmitResult = { ok: true; token: string } | { ok: false; error: string };
 
@@ -63,7 +67,7 @@ export function resultEmail(firstName: string, d: IaDiagnosis, token: string, un
 export async function submitIaDiagnostic(raw: unknown, now = new Date()): Promise<IaSubmitResult> {
   const parsed = submissionSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Réponses incomplètes." };
-  const { answers, contact } = parsed.data;
+  const { answers, contact, utm } = parsed.data;
   if (contact.website) return { ok: false, error: "Envoi refusé." };
 
   const tiers = await prisma.pricingTier.findMany({ select: { code: true, countries: true } });
@@ -73,7 +77,7 @@ export async function submitIaDiagnostic(raw: unknown, now = new Date()): Promis
 
   const lead = await prisma.lead.upsert({
     where: { email: contact.email },
-    create: { firstName: contact.firstName, lastName: "", email: contact.email, whatsapp: contact.whatsapp || null, country: contact.country, tier, consentAt: now, source: "ia_diagnostic", unsubscribeToken: createToken() },
+    create: { firstName: contact.firstName, lastName: "", email: contact.email, whatsapp: contact.whatsapp || null, country: contact.country, tier, consentAt: now, source: "ia_diagnostic", utmSource: utm?.source || null, utmMedium: utm?.medium || null, utmCampaign: utm?.campaign || null, utmContent: utm?.content || null, unsubscribeToken: createToken() },
     update: { whatsapp: contact.whatsapp || undefined, country: contact.country, tier, consentAt: now, unsubscribedAt: null },
   });
   await prisma.iaDiagnostic.create({ data: { leadId: lead.id, answers, result: JSON.parse(JSON.stringify(result)), token } });

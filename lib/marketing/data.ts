@@ -3,9 +3,10 @@ import { prisma } from "@/lib/db";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { formatUsdCents } from "@/lib/pricing";
 import { PROGRAMS, type ProgramCode } from "@/lib/programs";
+import { ACTIVITIES, HOURS, TASKS, TOOLS } from "@/lib/ia-diagnostic";
 import { HOT_LEAD_THRESHOLD } from "@/lib/scoring";
 
-import { type BalancePost, type Pace, type SegmentKey, type TestStats, anonymize, paceFor, publishableTestStats, recommendations, segmentOf } from "./plan";
+import { type BalancePost, type MarketingKind, type Pace, type SegmentKey, type TestStats, anonymize, iaRecommendations, paceFor, publishableTestStats, recommendations, segmentOf } from "./plan";
 
 /** Reads for the admin marketing page (Ben, 28/09). Never sends anything. */
 
@@ -78,6 +79,7 @@ export async function recentTestStats(threshold: number, now = new Date()): Prom
 export function factsForModel(f: CohortFacts, stats: TestStats | null = null): string {
   const program = PROGRAMS[f.program];
   const fmt = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  if (f.program === "ia") return iaFactsForModel(f, fmt);
   return [
     `Programme : ${program.productName} — ${program.productLine}`,
     `Cohorte : ${f.name}, du ${fmt(f.startsAt)} au ${fmt(f.endsAt)} (${formatCohortMonth(f.startsAt)}).`,
@@ -93,6 +95,24 @@ export function factsForModel(f: CohortFacts, stats: TestStats | null = null): s
       ? `Chiffres réels des 30 derniers jours, à citer exactement ou pas du tout : ${stats.count} tests d'entraînement faits sur le site, score moyen ${stats.averagePercent} %, ${stats.atOrAbove} % des candidats à ${stats.threshold} % ou plus.`
       : "Aucun chiffre de résultats n'est publiable : n'en cite aucun.",
   ].filter((l): l is string => l !== null).join("\n");
+}
+
+/** Bâtisseur IA facts (Ben, 04/11): business owners, not IT people; no exam, no test. */
+function iaFactsForModel(f: CohortFacts, fmt: (d: Date) => string): string {
+  const program = PROGRAMS.ia;
+  return [
+    `Programme : ${program.productName} — ${program.productLine}`,
+    `Entrée : ${f.name}. La J1 a lieu le ${fmt(f.startsAt)} ; chaque participant choisit ensuite ses journées J2 à J5 parmi les week-ends proposés, à son rythme.`,
+    "Public : chefs d'entreprise, indépendants, porteurs de projet, francophones, sans savoir coder. Pas d'informaticiens en particulier.",
+    "Promesse : à la fin, une application en ligne à son nom (site, formulaire, base de clients, paiement, e-mails, tableau de bord) et ses premières automatisations, construites avec Claude Code. Pas de chiffre de gain ni de revenu promis.",
+    `Places : ${f.capacity} par entrée, ${f.pace.remaining} encore libres.`,
+    `Clôture des inscriptions pour cette entrée : ${fmt(f.admissionClosesAt)}.`,
+    `Tarif : ${f.prices.africa ?? "?"} en Afrique francophone, ${f.prices.international ?? "?"} à l'international. Paiement par carte ou mobile money.`,
+    program.examNote,
+    "Formateur : Ben, qui a construit ce site et ses automatisations avec Claude Code. Formation en direct, en français, en petit groupe.",
+    "Diagnostic d'automatisation gratuit en 3 minutes (5 questions) : les trois automatisations que son application peut prendre en charge en premier.",
+    "Aucun chiffre de participants, de résultats ni de témoignage n'est publiable : n'en cite aucun.",
+  ].join("\n");
 }
 
 export type Cockpit = {
@@ -111,6 +131,7 @@ export type Cockpit = {
 export async function cockpit(f: CohortFacts, threshold: number, now = new Date()): Promise<Cockpit> {
   const since30 = new Date(now.getTime() - 30 * DAY);
   const since7 = new Date(now.getTime() - 7 * DAY);
+  if (f.program === "ia") return iaCockpit(f, since30, since7, now);
   const [scans30, scans7, calls30, paid30, segments, lastPost, tests] = await Promise.all([
     prisma.scannerResponse.count({ where: { createdAt: { gte: since30 } } }),
     prisma.scannerResponse.count({ where: { createdAt: { gte: since7 } } }),
@@ -137,6 +158,31 @@ export async function cockpit(f: CohortFacts, threshold: number, now = new Date(
   };
 }
 
+/** For an IA entry, the funnel is the diagnostic, then the inscription; no call, no test. */
+async function iaCockpit(f: CohortFacts, since30: Date, since7: Date, now: Date): Promise<Cockpit> {
+  const [scans30, scans7, paid30, segments, lastPost] = await Promise.all([
+    prisma.iaDiagnostic.count({ where: { createdAt: { gte: since30 } } }),
+    prisma.iaDiagnostic.count({ where: { createdAt: { gte: since7 } } }),
+    prisma.registration.count({ where: { status: "paid", paidAt: { gte: since30 }, cohort: { program: "ia" } } }),
+    followupSegments("ia", 0, now),
+    prisma.marketingPost.findFirst({ where: { cohortId: f.id, publishedAt: { not: null } }, orderBy: { publishedAt: "desc" }, select: { publishedAt: true } }),
+  ]);
+  const diagnosedUnpaid = segments.reduce((n, s) => n + s.leads.length, 0);
+  const daysSinceLastPost = lastPost?.publishedAt ? Math.floor((now.getTime() - lastPost.publishedAt.getTime()) / DAY) : null;
+  return {
+    scans30,
+    scans7,
+    calls30: 0,
+    paid30,
+    tests30: 0,
+    testStats: null,
+    hotUnpaid: diagnosedUnpaid,
+    callsWithoutSeat: 0,
+    daysSinceLastPost,
+    todo: iaRecommendations({ pace: f.pace, diagnosticsLast7Days: scans7, diagnosedUnpaid, daysSinceLastPost }),
+  };
+}
+
 export type SegmentLead = { id: number; firstName: string; lastName: string; heatScore: number; readiness: string | null; whatsapp: string | null; email: string; lastContactAt: Date | null; testPercent: number | null };
 export type Segment = { key: SegmentKey; label: string; hint: string; leads: SegmentLead[] };
 
@@ -148,6 +194,8 @@ const SEGMENT_TEXT: Record<SegmentKey, (threshold: number) => { label: string; h
   associate: () => ({ label: "Profil Associate of ISC²", hint: "Éligibles via le titre Associate." }),
   conseil: () => ({ label: "Délai serré : le conseil d'abord", hint: "Leur échéance est plus courte que l'estimation." }),
   cc: () => ({ label: "Pas encore prêts : CC ou conseil", hint: "Première marche : la CC d'ISC², ou un bilan de carrière." }),
+  ia_ready: () => ({ label: "Diagnostic IA fait, à l'aise", hint: "Peuvent démarrer directement à la J1." }),
+  ia_prepare: () => ({ label: "Diagnostic IA fait, à accompagner", hint: "Une séance d'accueil d'une heure avant la J1." }),
 };
 
 /**
@@ -158,6 +206,7 @@ const SEGMENT_TEXT: Record<SegmentKey, (threshold: number) => { label: string; h
  */
 export async function followupSegments(program: ProgramCode, threshold: number, now = new Date()): Promise<Segment[]> {
   const recent = new Date(now.getTime() - 3 * DAY);
+  if (program === "ia") return iaFollowupSegments(recent);
   const leads = await prisma.lead.findMany({
     where: {
       consentAt: { not: null },
@@ -192,12 +241,45 @@ export async function followupSegments(program: ProgramCode, threshold: number, 
 }
 
 /**
+ * Bâtisseur IA follow-ups (Ben, 04/11): people who did the diagnostic, gave
+ * their consent, never unsubscribed, have no paid IA seat, and were not
+ * contacted from here in the last three days. Split by the diagnostic's
+ * verdict on computer ease.
+ */
+async function iaFollowupSegments(recent: Date): Promise<Segment[]> {
+  const leads = await prisma.lead.findMany({
+    where: {
+      consentAt: { not: null },
+      unsubscribedAt: null,
+      status: { not: "lost" },
+      iaDiagnostics: { some: {} },
+      registrations: { none: { status: "paid", cohort: { program: "ia" } } },
+      actions: { none: { type: "marketing_followup_sent", createdAt: { gte: recent } } },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 200,
+    select: {
+      id: true, firstName: true, lastName: true, heatScore: true, readiness: true, whatsapp: true, email: true,
+      actions: { where: { type: "marketing_followup_sent" }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
+      iaDiagnostics: { orderBy: { createdAt: "desc" }, take: 1, select: { result: true } },
+    },
+  });
+  const buckets: Record<"ia_ready" | "ia_prepare", SegmentLead[]> = { ia_ready: [], ia_prepare: [] };
+  for (const l of leads) {
+    const ready = (l.iaDiagnostics[0]?.result as { ready?: boolean } | null | undefined)?.ready === true;
+    buckets[ready ? "ia_ready" : "ia_prepare"].push({ id: l.id, firstName: l.firstName, lastName: l.lastName, heatScore: l.heatScore, readiness: null, whatsapp: l.whatsapp, email: l.email, lastContactAt: l.actions[0]?.createdAt ?? null, testPercent: null });
+  }
+  return (["ia_ready", "ia_prepare"] as const).map((key) => ({ key, ...SEGMENT_TEXT[key](0), leads: buckets[key] }));
+}
+
+/**
  * What prospects say and do, for topic ideas (Ben, 29/09): their own words
  * (the "objectifs" field, anonymized), the FAQ questions they open, the
  * verdicts and test scores, where they come from. Aggregates only.
  */
-export async function audienceInsights(now = new Date()): Promise<string> {
+export async function audienceInsights(now = new Date(), kind: MarketingKind = "cert"): Promise<string> {
   const since = new Date(now.getTime() - 90 * DAY);
+  if (kind === "ia") return iaAudienceInsights(since);
   const [goals, faq, verdicts, tests, countries] = await Promise.all([
     prisma.lead.findMany({ where: { goals: { not: null }, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 60, select: { goals: true } }),
     prisma.funnelEvent.groupBy({ by: ["label"], where: { name: "faq_open", createdAt: { gte: since }, label: { not: null } }, _count: { _all: true }, orderBy: { _count: { label: "desc" } }, take: 8 }),
@@ -217,10 +299,32 @@ export async function audienceInsights(now = new Date()): Promise<string> {
   ].filter((l): l is string => l !== null).join("\n");
 }
 
-/** Posts of the last 30 days, for the editorial balance and to avoid repeating a subject. */
-export async function recentPosts(now = new Date()): Promise<Array<BalancePost & { topic: string | null; format: string | null; text: string }>> {
+/** What business owners answered in the diagnostic (90 days): aggregates only, never a person. */
+async function iaAudienceInsights(since: Date): Promise<string> {
+  const rows = await prisma.iaDiagnostic.findMany({ where: { createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 2000, select: { answers: true, lead: { select: { country: true } } } });
+  if (rows.length === 0) return "Aucun diagnostic d'automatisation fait pour l'instant : pas de donnée sur l'audience.";
+  const count = (values: string[], labels: Record<string, string>) => {
+    const tally = new Map<string, number>();
+    for (const v of values) if (v in labels) tally.set(v, (tally.get(v) ?? 0) + 1);
+    return [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, n]) => `${labels[k]} (${n})`).join(" ; ");
+  };
+  const answers = rows.map((r) => (r.answers ?? {}) as { activity?: string; tasks?: string[]; hours?: string; tools?: string });
+  const taskLabels = Object.fromEntries(Object.entries(TASKS).map(([k, t]) => [k, t.label]));
+  return [
+    `Diagnostics d'automatisation faits en 90 jours : ${rows.length}.`,
+    `Activités : ${count(answers.map((a) => a.activity ?? ""), ACTIVITIES)}.`,
+    `Tâches qui leur coûtent le plus de temps : ${count(answers.flatMap((a) => a.tasks ?? []), taskLabels)}.`,
+    `Heures perdues par semaine : ${count(answers.map((a) => a.hours ?? ""), HOURS)}.`,
+    `Outils actuels : ${count(answers.map((a) => a.tools ?? ""), TOOLS)}.`,
+    `Pays : ${count(rows.map((r) => r.lead.country), Object.fromEntries(rows.map((r) => [r.lead.country, r.lead.country])))}.`,
+  ].join("\n");
+}
+
+/** Posts of the last 30 days for one audience, for the editorial balance and to avoid repeating a subject. */
+export async function recentPosts(now = new Date(), kind: MarketingKind = "cert"): Promise<Array<BalancePost & { topic: string | null; format: string | null; text: string }>> {
+  const programs: ProgramCode[] = kind === "ia" ? ["ia"] : ["cissp", "cc"];
   return prisma.marketingPost.findMany({
-    where: { createdAt: { gte: new Date(now.getTime() - 30 * DAY) } },
+    where: { createdAt: { gte: new Date(now.getTime() - 30 * DAY) }, ...(kind === "ia" ? { cohort: { program: "ia" } } : { OR: [{ cohortId: null }, { cohort: { program: { in: programs } } }] }) },
     orderBy: { createdAt: "desc" },
     take: 60,
     select: { pillar: true, angle: true, destination: true, topic: true, format: true, text: true },

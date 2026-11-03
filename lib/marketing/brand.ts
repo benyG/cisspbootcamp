@@ -1,4 +1,4 @@
-import type { Channel } from "./plan";
+import type { Channel, MarketingKind } from "./plan";
 
 /**
  * The brand kit for generated media (Ben, 03/10): every MiniMax image and
@@ -40,6 +40,26 @@ const PHOTO_STYLE = [
 
 const AVOID = "Strictly no text, letters, numbers, logos or watermarks. Avoid: hooded hacker, Matrix code, padlocks, glowing shields, digital globes, handshakes, stock smiles at camera, neon, holograms.";
 
+/** Bâtisseur IA (Ben, 04/11): business owners at work, and no robot clichés. Kept in step with IA_ART_DIRECTION. */
+const IA_PHOTO_STYLE = [
+  "Style: realistic editorial documentary photo, 35mm lens, natural depth of field, real skin texture; not an illustration or 3D render.",
+  "People: Black African francophone entrepreneurs and freelancers, aged 28 to 50, women and men, smart casual clothes, working on a laptop or a phone, focused, not posing.",
+  "Place: their own credible, tidy business (shop counter, workshop, consulting office, co-working space) in a West or Central African city.",
+  "Colour: warm light on skin, deep night-blue shadows (#071A33), off-white, one small touch of emerald green (#17B890); no other strong colour.",
+  "Composition: calm, negative space, subject off-centre, lower third dark and quiet for a headline.",
+].join(" ");
+
+const IA_AVOID = "Strictly no text, letters, numbers, logos or watermarks; screens blurred and unreadable. Avoid: robots, humanoids, glowing brains, circuit faces, robotic hands, Matrix code, holograms, neon, stock smiles at camera.";
+
+/** What changes from one audience to the other: the people, the clichés, the signature. */
+export type BrandKit = { photoStyle: string; avoid: string; videoPeople: string; dots: number; signature: string };
+
+export function brandKit(kind: MarketingKind = "cert"): BrandKit {
+  return kind === "ia"
+    ? { photoStyle: IA_PHOTO_STYLE, avoid: IA_AVOID, videoPeople: "People: Black African francophone entrepreneurs aged 28 to 50 at work in their own business, on a laptop or a phone.", dots: 5, signature: "Bâtisseur IA" }
+    : { photoStyle: PHOTO_STYLE, avoid: AVOID, videoPeople: "People: Black African francophone cybersecurity professionals aged 30 to 45 in a credible workplace.", dots: PROGRESS_DOTS, signature: SIGNATURE };
+}
+
 const VIDEO_STYLE = "Cinematic documentary look: slow, steady camera moves, discreet handheld feel, shallow depth of field, cool night-blue shadows and warm light on skin, a single small touch of emerald green in the scene, realistic motion, no text, no logo, no subtitles on screen.";
 
 /** Longest prompt MiniMax accepts for an image (characters). */
@@ -52,14 +72,16 @@ function clip(text: string, max: number): string {
 }
 
 /** The scene Ben asked for, wrapped in the brand's photography rules. */
-export function brandedImagePrompt(scene: string): string {
-  const fixed = `${PHOTO_STYLE} ${AVOID}`;
+export function brandedImagePrompt(scene: string, kind: MarketingKind = "cert"): string {
+  const kit = brandKit(kind);
+  const fixed = `${kit.photoStyle} ${kit.avoid}`;
   return `${clip(scene.trim(), IMAGE_PROMPT_MAX - fixed.length - 2)}\n\n${fixed}`;
 }
 
 /** A clip prompt (camera moves in brackets kept as Ben wrote them) with the brand's film rules. */
-export function brandedVideoPrompt(prompt: string): string {
-  const fixed = `${VIDEO_STYLE} People: Black African francophone cybersecurity professionals aged 30 to 45 in a credible workplace. ${AVOID}`;
+export function brandedVideoPrompt(prompt: string, kind: MarketingKind = "cert"): string {
+  const kit = brandKit(kind);
+  const fixed = `${VIDEO_STYLE} ${kit.videoPeople} ${kit.avoid}`;
   const room = VIDEO_PROMPT_MAX - fixed.length - 2;
   return `${clip(prompt.trim(), room)}\n\n${fixed}`;
 }
