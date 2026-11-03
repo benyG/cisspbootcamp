@@ -7,6 +7,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { isClock } from "@/lib/cohort-sessions";
 import { type IaResult, deleteIaDay, openIaDates, updateIaDay } from "@/lib/ia-days-server";
+import { syncDayInvites } from "@/lib/ia-plan-server";
 
 async function requireAdmin() {
   const session = await auth();
@@ -50,4 +51,18 @@ export async function deleteDayAction(formData: FormData): Promise<void> {
   const id = z.coerce.number().int().positive().safeParse(formData.get("id"));
   if (!id.success) invalid(id.error);
   done(await deleteIaDay(id.data));
+}
+
+/** Sends (again) the Google invitation of a date to everyone holding a seat on it. */
+export async function inviteDayAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = z.coerce.number().int().positive().safeParse(formData.get("id"));
+  if (!id.success) invalid(id.error);
+  try {
+    const invited = await syncDayInvites(id.data);
+    done({ ok: true, message: invited ? `Invitation envoyée à ${invited} personne${invited > 1 ? "s" : ""}.` : "Invitations à jour." });
+  } catch (error) {
+    if (error && typeof error === "object" && "digest" in error) throw error;
+    done({ ok: false, error: `Google Agenda a refusé l’invitation : ${error instanceof Error ? error.message : "erreur inconnue"}. Vérifiez la connexion dans Paramètres › Agenda.` });
+  }
 }

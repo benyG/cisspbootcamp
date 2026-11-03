@@ -8,6 +8,7 @@ const db = vi.hoisted(() => {
     seatHold: { updateMany: vi.fn() },
     iaDay: { findUnique: vi.fn() },
     iaSeat: { upsert: vi.fn() },
+    iaPlan: { upsert: vi.fn() },
     actionLog: { create: vi.fn() },
     cohort: { findUnique: vi.fn(), update: vi.fn() },
   };
@@ -19,6 +20,7 @@ const db = vi.hoisted(() => {
     cohort: { findMany: vi.fn(), findUnique: vi.fn() },
     exchangeRate: { findMany: vi.fn() },
     registration: { findUnique: vi.fn(), count: vi.fn() },
+    iaPlan: { findUnique: vi.fn(async () => ({ token: "p".repeat(43) })) },
     $transaction: vi.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
   };
 });
@@ -28,6 +30,8 @@ vi.mock("@/lib/tracking/server", () => ({ recordEvent: vi.fn(async () => undefin
 const mail = vi.hoisted(() => ({ sendEmail: vi.fn<(input: { to: string; subject: string; text: string }) => Promise<{ sent: boolean; id: null }>>(async () => ({ sent: true, id: null })) }));
 vi.mock("@/lib/messaging/email", () => mail);
 vi.mock("@/lib/env", () => ({ env: { NEXT_PUBLIC_APP_URL: "https://x.test", ADMIN_EMAIL: "ben@x.test" } }));
+const plan = vi.hoisted(() => ({ inviteEntry: vi.fn(async () => undefined), iaPlanUrl: (t: string) => `https://x.test/ia/calendrier/${t}` }));
+vi.mock("@/lib/ia-plan-server", () => plan);
 
 import { buildOffer, markRegistrationPaid, registerByAdmin } from "@/lib/registration";
 
@@ -70,8 +74,11 @@ describe("Bâtisseur IA, inscription (Ben, 03/11)", () => {
       create: { leadId: 5, cohortId: 2, journee: 1, dayId: 40 },
       update: {},
     });
+    expect(db.tx.iaPlan.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { leadId_cohortId: { leadId: 5, cohortId: 2 } }, update: {} }));
+    expect(plan.inviteEntry).toHaveBeenCalledWith(5, 2);
     const confirmation = mail.sendEmail.mock.calls[0][0];
     expect(confirmation.text).toContain("Votre J1 est réservée");
+    expect(confirmation.text).toContain(`https://x.test/ia/calendrier/${"p".repeat(43)}`);
     expect(confirmation.text).not.toMatch(/\b\d{1,2}:\d{2}\b/);
   });
 
@@ -82,6 +89,7 @@ describe("Bâtisseur IA, inscription (Ben, 03/11)", () => {
     db.tx.cohort.findUnique.mockResolvedValue({ id: 7, capacity: 15, status: "open" });
     await markRegistrationPaid({ reference: "CB-AAAA-CCCC", amountPaidUsdCents: 14_900, paidAt: now });
     expect(db.tx.iaSeat.upsert).not.toHaveBeenCalled();
+    expect(plan.inviteEntry).not.toHaveBeenCalled();
   });
 
   it("gives the J1 seat to a participant Ben registers by hand", async () => {

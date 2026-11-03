@@ -12,6 +12,7 @@ import { sendEmail } from "@/lib/messaging/email";
 import { type RateTable, convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { PROGRAMS, type ProgramCode } from "@/lib/programs";
 import { consultingCredit } from "@/lib/services";
+import { createToken } from "@/lib/tokens";
 import { recordEvent } from "@/lib/tracking/server";
 
 /**
@@ -200,6 +201,21 @@ async function takeEntrySeat(tx: Prisma.TransactionClient, leadId: number, cohor
     create: { leadId, cohortId, journee: 1, dayId: day.id },
     update: {},
   });
+  // Their calendar link, to pick J2 to J5 (lib/ia-plan-server.ts).
+  await tx.iaPlan.upsert({ where: { leadId_cohortId: { leadId, cohortId } }, create: { leadId, cohortId, token: createToken() }, update: {} });
+}
+
+/** After the J1 seat: the agenda invitation (best effort, the cron retries) and the calendar link for the e-mail. */
+async function afterEntryPaid(leadId: number, cohortId: number): Promise<string | undefined> {
+  try {
+    const { inviteEntry, iaPlanUrl } = await import("@/lib/ia-plan-server");
+    await inviteEntry(leadId, cohortId);
+    const plan = await prisma.iaPlan.findUnique({ where: { leadId_cohortId: { leadId, cohortId } }, select: { token: true } });
+    return plan ? iaPlanUrl(plan.token) : undefined;
+  } catch (error) {
+    console.error("[ia] après paiement", error);
+    return undefined;
+  }
 }
 
 export type PaidResult = { ok: true; alreadyPaid: boolean } | { ok: false; error: string };
@@ -289,6 +305,7 @@ export async function markRegistrationPaid(input: {
   revalidateTag(COHORTS_CACHE_TAG);
   await recordEvent({ name: "paid", leadId: registration.leadId, label: registration.method });
 
+  const planUrl = program === "ia" ? await afterEntryPaid(registration.leadId, target?.id ?? registration.cohortId) : undefined;
   await sendSeatConfirmation({
     lead: registration.lead,
     amountUsd: registration.amountUsd,
@@ -297,6 +314,7 @@ export async function markRegistrationPaid(input: {
     program,
     cohort: target ?? registration.cohort,
     moved,
+    planUrl,
   });
 
   return { ok: true, alreadyPaid: false };
@@ -311,6 +329,8 @@ async function sendSeatConfirmation(input: {
   program: ProgramCode;
   cohort: { name: string; startsAt: Date };
   moved?: boolean;
+  /** Bâtisseur IA: the participant's calendar page. */
+  planUrl?: string;
 }) {
   const cohortName = `${PROGRAMS[input.program].name} — ${input.cohort.name}`;
   const cohortMonth = formatCohortMonth(input.cohort.startsAt);
@@ -326,7 +346,7 @@ async function sendSeatConfirmation(input: {
       `Référence : ${input.reference}\n` +
       `Votre reçu : ${env.NEXT_PUBLIC_APP_URL}/inscription/recu/${input.reference}\n\n` +
       (input.program === "ia"
-        ? "Votre J1 est réservée à cette date. Je vous envoie ensuite le lien de votre calendrier pour choisir vos J2 à J5, puis le guide d'installation des outils.\n\n"
+        ? `Votre J1 est réservée à cette date ; l'invitation arrive dans votre agenda, avec le lien de la visio.\n\n${input.planUrl ? `Choisissez maintenant vos J2 à J5, dans l'ordre, parmi les week-ends suivants : ${input.planUrl}\n\n` : ""}Je vous envoie ensuite le guide d'installation des outils.\n\n`
         : `Je vous écris avant le démarrage avec le programme détaillé et les accès${input.program === "cc" ? ", et la marche à suivre pour réserver votre examen CC auprès d'ISC²" : ""}.\n\n`) +
       `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${input.lead.unsubscribeToken}`,
   });
@@ -381,8 +401,9 @@ export async function registerByAdmin(input: { leadId: number; cohortId: number;
 
   revalidateTag(COHORTS_CACHE_TAG);
   await recordEvent({ name: "paid", leadId: lead.id, label: "manual" });
+  const planUrl = cohort.program === "ia" ? await afterEntryPaid(lead.id, cohort.id) : undefined;
   const email = input.notify
-    ? await sendSeatConfirmation({ lead, amountUsd: input.amountUsdCents, creditUsd: 0, reference, program: cohort.program, cohort })
+    ? await sendSeatConfirmation({ lead, amountUsd: input.amountUsdCents, creditUsd: 0, reference, program: cohort.program, cohort, planUrl })
     : null;
   return { ok: true, reference, emailSent: Boolean(email?.sent) };
 }
