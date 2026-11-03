@@ -60,12 +60,13 @@ export function OfferEditor({ initial, ctx, quoteId }: { initial: Offer; ctx: Of
           {text("schedule", "Calendrier", 3)}
           {text("objectives", "Votre besoin (vide = section masquée)", 3)}
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={o.includeReplays} onChange={(e) => set("includeReplays", e.target.checked)} />Inclure l&apos;accès aux enregistrements</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={o.includeEvaluations} onChange={(e) => set("includeEvaluations", e.target.checked)} />Inclure les tests et examens blancs ExamBoot</label>
+          {o.program !== "ia" && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={o.includeEvaluations} onChange={(e) => set("includeEvaluations", e.target.checked)} />Inclure les tests et examens blancs ExamBoot</label>}
         </fieldset>
         <fieldset className="grid gap-2 border-t border-line pt-3"><legend className="text-xs font-bold text-muted uppercase">Prix (USD par participant)</legend>
           <div className="grid grid-cols-2 gap-2">
-            {o.program !== "cc" && num("priceUsd", "CISSP")}
-            {o.program !== "cissp" && num("ccPriceUsd", "CC")}
+            {(o.program === "cissp" || o.program === "both") && num("priceUsd", "CISSP")}
+            {(o.program === "cc" || o.program === "both") && num("ccPriceUsd", "CC")}
+            {o.program === "ia" && num("iaPriceUsd", "Bâtisseur IA")}
           </div>
           <p className="text-sm">Total : <b className="tabular-nums">{totalUsd ? usd(totalUsd) : "à préciser"}</b></p>
           {text("paymentTerms", "Conditions de paiement", 2)}

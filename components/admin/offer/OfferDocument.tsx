@@ -1,4 +1,4 @@
-import { type Offer, FORMATS, PROGRAM_TITLES, ccProgramme, cisspProgramme, inclusions, longDate, offerLines, usd, validUntil } from "@/lib/offer";
+import { type Offer, FORMATS, PROGRAM_TITLES, ccProgramme, cisspProgramme, iaProgramme, inclusions, longDate, offerLines, usd, validUntil } from "@/lib/offer";
 import { PROGRAMS } from "@/lib/programs";
 import type { SiteSettings } from "@/lib/site-settings";
 
@@ -19,6 +19,10 @@ export function OfferDocument({ offer: o, ctx }: { offer: Offer; ctx: OfferConte
   const legal = [c.name, c.legalForm, c.registration && `Immatriculation : ${c.registration}`, c.taxId && `Identifiant fiscal : ${c.taxId}`].filter(Boolean).join(" · ");
   const contact = [c.address, c.phone, c.email, c.website.replace(/^https?:\/\//, "")].filter(Boolean).join(" · ");
   const onsite = o.format !== "online";
+  const ia = o.program === "ia";
+  // Sections are numbered in order; "Votre besoin" and "La méthode" may be absent.
+  let n = 0;
+  const num = () => ++n;
   return (
     <article id="offer-doc" className="mx-auto w-full max-w-[210mm] bg-white px-[14mm] py-[12mm] font-sans text-[#071a33] shadow-[0_10px_30px_rgba(7,26,51,.08)] print:max-w-none print:p-0 print:shadow-none">
       <header className="flex items-start justify-between gap-6 border-b border-[#dfe5e8] pb-4">
@@ -37,7 +41,7 @@ export function OfferDocument({ offer: o, ctx }: { offer: Offer; ctx: OfferConte
         <div>
           <div className="text-[10px] font-extrabold tracking-[.12em] text-[#0f8e73] uppercase">Offre de service</div>
           <h1 className="mt-1 text-[26px] leading-[1.05] font-black tracking-[-.03em]">{PROGRAM_TITLES[o.program]} pour {o.organization || "votre organisation"}</h1>
-          <p className={p + " mt-2"}>{FORMATS[o.format]} · {o.participants} participant{o.participants > 1 ? "s" : ""} · en français · par CISSP Bootcamp</p>
+          <p className={p + " mt-2"}>{FORMATS[o.format]} · {o.participants} participant{o.participants > 1 ? "s" : ""} · en français · {ia ? "avec Claude Code" : "par CISSP Bootcamp"}</p>
         </div>
         <div className="rounded-lg border border-[#dfe5e8] px-4 py-3 text-[11px] leading-[1.5]">
           <div className="text-[9.5px] font-extrabold tracking-[.1em] text-[#607085] uppercase">À l’attention de</div>
@@ -47,14 +51,27 @@ export function OfferDocument({ offer: o, ctx }: { offer: Offer; ctx: OfferConte
         </div>
       </section>
 
-      {o.objectives && (<><h2 className={h2}>1. Votre besoin</h2><p className={p + " whitespace-pre-line"}>{o.objectives}</p></>)}
+      {o.objectives && (<><h2 className={h2}>{num()}. Votre besoin</h2><p className={p + " whitespace-pre-line"}>{o.objectives}</p></>)}
 
-      <h2 className={h2}>{o.objectives ? 2 : 1}. Qui sommes-nous</h2>
+      <h2 className={h2}>{num()}. Qui sommes-nous</h2>
       <p className={p}>{c.presentation}</p>
-      <p className={p + " mt-1.5"}>La formation est animée par <b>{ctx.coach.name}</b> ({ctx.coach.credentials.join(", ")}). {ctx.coach.bio}</p>
+      <p className={p + " mt-1.5"}>La formation est animée par <b>{ctx.coach.name}</b> ({ctx.coach.credentials.join(", ")}). {ia ? "Il a construit avec Claude Code sa propre plateforme de formation, en production : inscriptions, paiements par carte et mobile money, agenda, back-office. C’est cette pratique qu’il transmet." : ctx.coach.bio}</p>
 
-      <h2 className={h2}>{o.objectives ? 3 : 2}. La formation proposée</h2>
-      {o.program !== "cc" && (
+      <h2 className={h2}>{num()}. La formation proposée</h2>
+      {ia && (
+        <div className="break-inside-avoid">
+          <p className={p}><b>{PROGRAMS.ia.name}</b> : {PROGRAMS.ia.days} journées de 5 h, en direct, pour que vos équipes créent avec Claude Code les outils internes de l’entreprise (suivi commercial, devis et factures, tableaux de bord, automatisations) et les mettent en ligne. Pas besoin de savoir coder.</p>
+          <table className="mt-2 w-full border-collapse text-[10.5px]">
+            <thead><tr className="bg-[#f2f5f4] text-left text-[9.5px] tracking-[.06em] text-[#607085] uppercase"><th className="px-2 py-1.5">Journée</th><th className="px-2 py-1.5">Ce que l’équipe construit</th></tr></thead>
+            <tbody>
+              {iaProgramme().map((j) => (
+                <tr key={j.n} className="border-b border-[#eef1f3] align-top"><td className="px-2 py-1.5 font-bold whitespace-nowrap">J{j.n}. {j.title}</td><td className="px-2 py-1.5 text-[#14324f]">{j.text}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {(o.program === "cissp" || o.program === "both") && (
         <div className="break-inside-avoid">
           <p className={p}><b>{PROGRAMS.cissp.name}</b> : {PROGRAMS.cissp.hours} h de sessions live pour préparer l’examen CISSP d’ISC², les 8 domaines du référentiel (CBK), avec un plan de préparation jusqu’à l’examen.</p>
           <table className="mt-2 w-full border-collapse text-[10.5px]">
@@ -73,7 +90,7 @@ export function OfferDocument({ offer: o, ctx }: { offer: Offer; ctx: OfferConte
           <p className="mt-1 text-[10px] text-[#607085]">Les heures restantes sont consacrées à la synthèse et à l’entraînement en conditions d’examen.</p>
         </div>
       )}
-      {o.program !== "cissp" && (
+      {(o.program === "cc" || o.program === "both") && (
         <div className="mt-3 break-inside-avoid">
           <p className={p}><b>Formation CC d’ISC²</b> : {PROGRAMS.cc.hours} h de sessions live pour préparer la certification Certified in Cybersecurity, première certification pour les profils qui débutent.</p>
           <ul className="mt-1.5 grid gap-0.5">
@@ -82,19 +99,21 @@ export function OfferDocument({ offer: o, ctx }: { offer: Offer; ctx: OfferConte
         </div>
       )}
 
-      <div className="break-inside-avoid">
-        <h2 className={h2}>{o.objectives ? 4 : 3}. La méthode</h2>
-        <ol className="grid grid-cols-2 gap-x-6 gap-y-1.5">
-          {ctx.steps.map((s, i) => <li key={s.title} className={p}><b>{i + 1}. {s.title}.</b> {s.text}</li>)}
-        </ol>
-      </div>
+      {!ia && (
+        <div className="break-inside-avoid">
+          <h2 className={h2}>{num()}. La méthode</h2>
+          <ol className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+            {ctx.steps.map((s, i) => <li key={s.title} className={p}><b>{i + 1}. {s.title}.</b> {s.text}</li>)}
+          </ol>
+        </div>
+      )}
 
       <div className="break-inside-avoid">
-        <h2 className={h2}>{o.objectives ? 5 : 4}. Modalités</h2>
+        <h2 className={h2}>{num()}. Modalités</h2>
         <dl className="grid grid-cols-[34mm_1fr] gap-x-4 gap-y-1 text-[11.5px] leading-[1.5]">
           <dt className="text-[#607085]">Format</dt><dd>{FORMATS[o.format]}{o.location ? `, ${o.location}` : ""}</dd>
           <dt className="text-[#607085]">Participants</dt><dd>{o.participants} collaborateur{o.participants > 1 ? "s" : ""} de {o.organization || "votre organisation"}, en session réservée</dd>
-          <dt className="text-[#607085]">Langue</dt><dd>Français ; le vocabulaire anglais de l’examen est travaillé au fil des sessions</dd>
+          <dt className="text-[#607085]">Langue</dt><dd>{ia ? "Français" : "Français ; le vocabulaire anglais de l’examen est travaillé au fil des sessions"}</dd>
           <dt className="text-[#607085]">Calendrier</dt><dd className="whitespace-pre-line">{o.schedule}</dd>
         </dl>
         <div className="mt-3 grid grid-cols-2 gap-6">
@@ -104,7 +123,7 @@ export function OfferDocument({ offer: o, ctx }: { offer: Offer; ctx: OfferConte
       </div>
 
       <div className="break-inside-avoid">
-        <h2 className={h2}>{o.objectives ? 6 : 5}. Proposition financière</h2>
+        <h2 className={h2}>{num()}. Proposition financière</h2>
         <table className="w-full border-collapse text-[11px]">
           <thead><tr className="bg-[#f2f5f4] text-left text-[9.5px] tracking-[.06em] text-[#607085] uppercase"><th className="px-2 py-1.5">Désignation</th><th className="px-2 py-1.5 text-right">Participants</th><th className="px-2 py-1.5 text-right">Prix unitaire</th><th className="px-2 py-1.5 text-right">Total</th></tr></thead>
           <tbody>
@@ -118,7 +137,7 @@ export function OfferDocument({ offer: o, ctx }: { offer: Offer; ctx: OfferConte
       </div>
 
       <div className="break-inside-avoid">
-        <h2 className={h2}>{o.objectives ? 7 : 6}. Conditions</h2>
+        <h2 className={h2}>{num()}. Conditions</h2>
         <ul className="grid gap-0.5">
           <li className={p}><b>Paiement :</b> {o.paymentTerms}</li>
           <li className={p}><b>Validité :</b> cette offre est valable jusqu’au {longDate(validUntil(o))}.</li>

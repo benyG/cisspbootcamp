@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { JOURNEES } from "@/lib/ia-days";
 import { CC_DOMAINS, PROGRAMS } from "@/lib/programs";
 import { CERTIFICATIONS, FORMATS, HEADCOUNTS } from "@/lib/quotes-options";
 import { DOMAINS, courseModules } from "@/lib/reading-plan/data";
@@ -20,12 +21,14 @@ export const offerSchema = z.object({
   jobTitle: z.string().trim().max(120),
   country: z.string().trim().max(80),
   email: z.string().trim().max(180),
-  program: z.enum(["cissp", "cc", "both"]),
+  program: z.enum(["cissp", "cc", "both", "ia"]),
   format: z.enum(["onsite", "online", "mixed"]),
   location: z.string().trim().max(200),
   participants: z.coerce.number().int().min(1).max(500),
   priceUsd: z.coerce.number().int().min(0).max(100_000),
   ccPriceUsd: z.coerce.number().int().min(0).max(100_000),
+  /** Bâtisseur IA, per participant (04/11); absent from offers saved before. */
+  iaPriceUsd: z.coerce.number().int().min(0).max(100_000).default(0),
   schedule: z.string().trim().max(600),
   objectives: z.string().trim().max(2000),
   includeReplays: z.boolean(),
@@ -41,7 +44,9 @@ export const offerReference = (quoteId: number | null, today: Date) =>
   quoteId ? `EB-${today.getUTCFullYear()}-${String(quoteId).padStart(4, "0")}` : `EB-${today.toISOString().slice(0, 10).replaceAll("-", "")}`;
 
 export const defaultSchedule = (program: Offer["program"]) =>
-  program === "cc"
+  program === "ia"
+    ? `${PROGRAMS.ia.days} journées de 5\u00a0h, plus 1\u00a0h de pause, à des dates convenues ensemble (en semaine ou le week-end), dans l’ordre J1 à J5.`
+    : program === "cc"
     ? `Calendrier à convenir ensemble : ${PROGRAMS.cc.hours}\u00a0h de sessions live.`
     : `Calendrier à convenir ensemble. Rythme de référence : ${PROGRAMS.cissp.hours}\u00a0h sur ${PROGRAMS.cissp.days} jours, 2\u00a0h en soirée en semaine et 5\u00a0h\u00a030 les samedis et dimanches.`;
 
@@ -53,7 +58,7 @@ export function draftOffer(input: {
   today: Date;
 }): Offer {
   const q = input.quote;
-  const program = (q?.certification === "cc" || q?.certification === "both" ? q.certification : "cissp") as Offer["program"];
+  const program = (q?.certification === "cc" || q?.certification === "both" || q?.certification === "ia" ? q.certification : "cissp") as Offer["program"];
   return {
     reference: offerReference(q?.id ?? null, input.today),
     issuedOn: input.today.toISOString().slice(0, 10),
@@ -69,10 +74,11 @@ export function draftOffer(input: {
     participants: q ? LOWER_BOUND[q.headcount] ?? 3 : 6,
     priceUsd: 0,
     ccPriceUsd: 0,
+    iaPriceUsd: 0,
     schedule: defaultSchedule(program),
     objectives: q?.need ?? "",
     includeReplays: true,
-    includeEvaluations: true,
+    includeEvaluations: program !== "ia",
     paymentTerms: input.paymentTerms,
     extraTerms: "",
   };
@@ -81,10 +87,11 @@ export function draftOffer(input: {
 export type OfferLine = { label: string; participants: number; unitUsd: number; totalUsd: number };
 
 /** The price table: one line per programme, in whole USD. */
-export function offerLines(o: Pick<Offer, "program" | "participants" | "priceUsd" | "ccPriceUsd">): { lines: OfferLine[]; totalUsd: number } {
+export function offerLines(o: Pick<Offer, "program" | "participants" | "priceUsd" | "ccPriceUsd"> & { iaPriceUsd?: number }): { lines: OfferLine[]; totalUsd: number } {
   const lines: OfferLine[] = [];
-  if (o.program !== "cc") lines.push({ label: `${PROGRAMS.cissp.name} : ${PROGRAMS.cissp.hours} h de préparation au CISSP`, participants: o.participants, unitUsd: o.priceUsd, totalUsd: o.participants * o.priceUsd });
-  if (o.program !== "cissp") lines.push({ label: `Formation CC d’ISC² : ${PROGRAMS.cc.hours} h de préparation`, participants: o.participants, unitUsd: o.ccPriceUsd, totalUsd: o.participants * o.ccPriceUsd });
+  if (o.program === "ia") lines.push({ label: `${PROGRAMS.ia.name} : ${PROGRAMS.ia.hours} h pour créer vos outils avec Claude Code`, participants: o.participants, unitUsd: o.iaPriceUsd ?? 0, totalUsd: o.participants * (o.iaPriceUsd ?? 0) });
+  if (o.program === "cissp" || o.program === "both") lines.push({ label: `${PROGRAMS.cissp.name} : ${PROGRAMS.cissp.hours} h de préparation au CISSP`, participants: o.participants, unitUsd: o.priceUsd, totalUsd: o.participants * o.priceUsd });
+  if (o.program === "cc" || o.program === "both") lines.push({ label: `Formation CC d’ISC² : ${PROGRAMS.cc.hours} h de préparation`, participants: o.participants, unitUsd: o.ccPriceUsd, totalUsd: o.participants * o.ccPriceUsd });
   return { lines, totalUsd: lines.reduce((a, l) => a + l.totalUsd, 0) };
 }
 
@@ -108,6 +115,11 @@ export const ccProgramme = () => CC_DOMAINS;
 
 /** What the offer includes and excludes, as lines. */
 export function inclusions(o: Pick<Offer, "program" | "includeReplays" | "includeEvaluations">, included: string[]): { yes: string[]; no: string[] } {
+  if (o.program === "ia") {
+    const yes: string[] = [...IA_INCLUDED];
+    if (o.includeReplays) yes.push(`Accès personnel aux enregistrements des journées, en lecture seule, jusqu’à ${ACCESS_MONTHS} mois après la formation`);
+    return { yes, no: ["L’abonnement Claude de chaque participant (Pro ou Max), le nom de domaine et, si l’application encaisse des paiements, l’offre payante de l’hébergeur"] };
+  }
   const yes = [...included];
   if (o.includeReplays) yes.push(`Accès personnel aux enregistrements des sessions, en lecture seule, jusqu’à ${ACCESS_MONTHS} mois après la formation`);
   if (o.includeEvaluations) yes.push("Tests et examens blancs par domaine sur ExamBoot, avec un bilan des résultats par domaine");
@@ -116,5 +128,16 @@ export function inclusions(o: Pick<Offer, "program" | "includeReplays" | "includ
   return { yes, no };
 }
 
-export const PROGRAM_TITLES: Record<Offer["program"], string> = { cissp: "Formation CISSP", cc: "Formation CC d’ISC²", both: "Formations CISSP et CC d’ISC²" };
+export const PROGRAM_TITLES: Record<Offer["program"], string> = { cissp: "Formation CISSP", cc: "Formation CC d’ISC²", both: "Formations CISSP et CC d’ISC²", ia: "Bâtisseur IA" };
+
+/** What a Bâtisseur IA offer includes: the site's settings list the CISSP inclusions. */
+export const IA_INCLUDED = [
+  "5 journées en direct avec Ben, en français, en groupe réservé",
+  "Un outil interne en ligne par participant ou par équipe, son code sur le GitHub de l’entreprise",
+  "Guide de préparation et fiche projet avant la J1",
+  "30 jours de suivi après la J5",
+] as const;
+
+/** The five journées, for the offer's programme section. */
+export const iaProgramme = () => JOURNEES;
 export { CERTIFICATIONS, FORMATS, HEADCOUNTS };
