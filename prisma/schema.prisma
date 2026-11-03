@@ -145,6 +145,7 @@ model Lead {
   serviceOrders        ServiceOrder[]
   actions              ActionLog[]
   personalSchedules    PersonalSchedule[]
+  iaSeats              IaSeat[]
   replayAccesses       ReplayAccess[]
   replayGrants         ReplayGrant[]
   evaluationRecipients EvaluationRecipient[]
@@ -239,6 +240,8 @@ model Cohort {
   marketingPosts    MarketingPost[]
   sessions          CohortSession[]
   personalSchedules PersonalSchedule[]
+  iaDay             IaDay?
+  iaSeats           IaSeat[]
   replayGrants      ReplayGrant[]
   replayAccesses    ReplayAccess[]
   evaluations       Evaluation[]
@@ -939,4 +942,46 @@ model QuoteRequest {
 
   @@index([status, createdAt])
   @@map("quote_requests")
+}
+
+/// One open weekend date of Bâtisseur IA (lib/ia-days.ts): it carries one
+/// journée, J1 to J5, taught from `start` (Montréal time) for 5 h plus a 1 h
+/// pause. A J1 date opens the IA cohort that participants register in.
+model IaDay {
+  id        Int      @id @default(autoincrement())
+  /// YYYY-MM-DD, a Saturday or a Sunday.
+  date      String   @unique @db.VarChar(10)
+  journee   Int      @db.TinyInt
+  start     String   @default("10:00") @db.VarChar(5)
+  capacity  Int      @default(12)
+  closed    Boolean  @default(false)
+  cohortId  Int?     @unique @map("cohort_id")
+  cohort    Cohort?  @relation(fields: [cohortId], references: [id], onDelete: SetNull)
+  /// The Google event every participant of the date is invited to.
+  eventId   String?  @map("event_id") @db.VarChar(255)
+  meetUrl   String?  @map("meet_url") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+  seats     IaSeat[]
+
+  @@map("ia_days")
+}
+
+/// A participant's place on one journée: J1 comes with the cohort they paid
+/// for, J2 to J5 are picked on their calendar page. Never moved once taken.
+model IaSeat {
+  id         Int       @id @default(autoincrement())
+  dayId      Int       @map("day_id")
+  day        IaDay     @relation(fields: [dayId], references: [id], onDelete: Restrict)
+  leadId     Int       @map("lead_id")
+  lead       Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  cohortId   Int       @map("cohort_id")
+  cohort     Cohort    @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  journee    Int       @db.TinyInt
+  invitedAt  DateTime? @map("invited_at")
+  remindedAt DateTime? @map("reminded_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@unique([leadId, cohortId, journee])
+  @@index([dayId])
+  @@map("ia_seats")
 }

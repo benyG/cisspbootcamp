@@ -1,4 +1,4 @@
-import { BellRing, Building2, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BellRing, Bot, Building2, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -175,6 +175,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/cohortes", label: "Cohortes", icon: GraduationCap },
   { href: "/admin/replays", label: "Vidéothèque", icon: Clapperboard },
   { href: "/admin/evaluations", label: "Évaluations", icon: ClipboardCheck },
+  { href: "/admin/ia", label: "Bâtisseur IA", icon: Bot },
   { href: "/admin/devis", label: "Devis entreprises", icon: Building2 },
   { href: "/admin/marketing", label: "Marketing", icon: Megaphone },
   { href: "/admin/conseil", label: "Conseil", icon: Compass },
