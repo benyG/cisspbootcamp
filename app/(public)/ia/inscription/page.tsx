@@ -17,7 +17,12 @@ import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
 import { payIaByCard, payIaByMobileMoney } from "./actions";
 
-export const metadata: Metadata = { title: "Réserver ma place · Bâtisseur IA", robots: { index: false, follow: true } };
+export const metadata: Metadata = {
+  title: "Réserver ma place · Bâtisseur IA",
+  robots: { index: false, follow: true },
+  openGraph: { title: "Bâtisseur IA : réservez votre place", description: "5 journées le week-end pour créer votre application avec Claude Code.", siteName: "Bâtisseur IA" },
+  twitter: { title: "Bâtisseur IA : réservez votre place" },
+};
 export const dynamic = "force-dynamic";
 
 const clock = (d: Date, timeZone: string) => d.toLocaleTimeString("fr-FR", { timeZone, hour: "numeric", minute: "2-digit", hourCycle: "h23" }).replace(":", " h ").replace(" h 00", " h");

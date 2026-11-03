@@ -4,7 +4,7 @@ import Link from "next/link";
 import { IA_DEFAULT_CAPACITY, IA_DEFAULT_START, IA_ZONE, JOURNEES, journeeSlot, longDate } from "@/lib/ia-days";
 import { cisspWeekendDates, loadIaDays } from "@/lib/ia-days-server";
 
-import { deleteDayAction, openDatesAction, updateDayAction } from "./actions";
+import { deleteDayAction, inviteDayAction, openDatesAction, updateDayAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +66,24 @@ export default async function IaDaysPage({ searchParams }: { searchParams: Promi
                 </summary>
                 <div className="grid gap-3 border-t border-line p-3">
                   {d.cohortId && <p className="text-sm">Entrée : <Link href={`/admin/cohortes/${d.cohortId}`} className="font-semibold underline">{d.cohortName}</Link> · {d.paid} inscription{d.paid > 1 ? "s" : ""} payée{d.paid > 1 ? "s" : ""}</p>}
+                  {d.people.length > 0 && (
+                    <div className="text-sm">
+                      <p className="font-semibold">Participants</p>
+                      <ul className="mt-1 grid gap-1">
+                        {d.people.map((p) => (
+                          <li key={p.leadId} className="flex flex-wrap items-center gap-x-2">
+                            <Link href={`/admin/leads/${p.leadId}`} className="underline">{p.name || "Sans nom"}</Link>
+                            {!p.invited && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-900">invitation en attente</span>}
+                            {d.journee === 1 && p.planToken && <a href={`/ia/calendrier/${p.planToken}`} target="_blank" rel="noopener" className="text-xs text-muted underline">son calendrier</a>}
+                          </li>
+                        ))}
+                      </ul>
+                      <form action={inviteDayAction} className="mt-2">
+                        <input type="hidden" name="id" value={d.id} />
+                        <button className="text-xs font-semibold underline">{d.meetUrl ? "Mettre à jour l’invitation Google" : "Envoyer l’invitation Google"}</button>
+                      </form>
+                    </div>
+                  )}
                   <form action={updateDayAction} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_1fr_1fr_auto_auto]">
                     <input type="hidden" name="id" value={d.id} />
                     <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Journée</span>

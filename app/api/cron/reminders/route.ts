@@ -8,6 +8,7 @@ import { sendPersonalReminders } from "@/lib/personal-schedule-send";
 import { syncReplays } from "@/lib/replays-server";
 import { env } from "@/lib/env";
 import { syncEvaluations } from "@/lib/evaluations-server";
+import { sendIaReminders, syncIaInvites } from "@/lib/ia-plan-server";
 import { sweepPendingTests } from "@/lib/examboot/service";
 import { sendResultReminders } from "@/lib/followups-auto";
 import { processSeatHolds } from "@/lib/seat-holds";
@@ -24,6 +25,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations] = await Promise.all([sendDueReminders(), processSeatHolds(), sweepPendingTests(), sendResultReminders(), sendSessionReminders(), syncPendingVideos(), syncCohortStatuses(new Date(), { revalidate: true }), sendPersonalReminders(), syncReplays(), syncEvaluations()]);
-  return NextResponse.json({ ...reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations });
+  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders] = await Promise.all([sendDueReminders(), processSeatHolds(), sweepPendingTests(), sendResultReminders(), sendSessionReminders(), syncPendingVideos(), syncCohortStatuses(new Date(), { revalidate: true }), sendPersonalReminders(), syncReplays(), syncEvaluations(), syncIaInvites().catch(() => -1), sendIaReminders().catch(() => -1)]);
+  return NextResponse.json({ ...reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders });
 }

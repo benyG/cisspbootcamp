@@ -29,12 +29,21 @@ function cohortData(date: string, start: string, capacity: number, now: Date) {
 }
 
 /** Every IA date with its seats taken, oldest first. */
-export async function loadIaDays(): Promise<Array<IaDay & { cohortId: number | null; cohortName: string | null; paid: number }>> {
+export type AdminIaDay = IaDay & { cohortId: number | null; cohortName: string | null; paid: number; meetUrl: string | null; people: Array<{ leadId: number; name: string; invited: boolean; planToken: string | null }> };
+
+export async function loadIaDays(): Promise<AdminIaDay[]> {
   const days = await prisma.iaDay.findMany({
     orderBy: { date: "asc" },
-    include: { _count: { select: { seats: true } }, cohort: { select: { name: true, _count: { select: { registrations: { where: { status: "paid" } } } } } } },
+    include: {
+      seats: { orderBy: { createdAt: "asc" }, include: { lead: { select: { id: true, firstName: true, lastName: true, iaPlans: { select: { cohortId: true, token: true } } } } } },
+      cohort: { select: { name: true, _count: { select: { registrations: { where: { status: "paid" } } } } } },
+    },
   });
-  return days.map((d) => ({ id: d.id, date: d.date, journee: d.journee, capacity: d.capacity, seats: d._count.seats, closed: d.closed, start: d.start, cohortId: d.cohortId, cohortName: d.cohort?.name ?? null, paid: d.cohort?._count.registrations ?? 0 }));
+  return days.map((d) => ({
+    id: d.id, date: d.date, journee: d.journee, capacity: d.capacity, seats: d.seats.length, closed: d.closed, start: d.start, meetUrl: d.meetUrl,
+    cohortId: d.cohortId, cohortName: d.cohort?.name ?? null, paid: d.cohort?._count.registrations ?? 0,
+    people: d.seats.map((s) => ({ leadId: s.lead.id, name: `${s.lead.firstName} ${s.lead.lastName}`.trim(), invited: !!s.invitedAt, planToken: s.lead.iaPlans.find((p) => p.cohortId === s.cohortId)?.token ?? null })),
+  }));
 }
 
 /** Weekend dates taught in a CISSP cohort, to warn Ben before he opens one. */

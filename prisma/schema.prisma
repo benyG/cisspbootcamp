@@ -147,6 +147,7 @@ model Lead {
   personalSchedules    PersonalSchedule[]
   iaSeats              IaSeat[]
   iaDiagnostics        IaDiagnostic[]
+  iaPlans              IaPlan[]
   replayAccesses       ReplayAccess[]
   replayGrants         ReplayGrant[]
   evaluationRecipients EvaluationRecipient[]
@@ -243,6 +244,7 @@ model Cohort {
   personalSchedules PersonalSchedule[]
   iaDay             IaDay?
   iaSeats           IaSeat[]
+  iaPlans           IaPlan[]
   replayGrants      ReplayGrant[]
   replayAccesses    ReplayAccess[]
   evaluations       Evaluation[]
@@ -1001,4 +1003,21 @@ model IaDiagnostic {
   @@index([leadId])
   @@index([createdAt])
   @@map("ia_diagnostics")
+}
+
+/// A Bâtisseur IA participant's calendar link (lib/ia-days.ts): created
+/// with the J1 seat when the entry is paid; the page at /ia/calendrier/[token]
+/// picks J2 to J5.
+model IaPlan {
+  id        Int      @id @default(autoincrement())
+  leadId    Int      @map("lead_id")
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  cohortId  Int      @map("cohort_id")
+  cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  token     String   @unique @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([leadId, cohortId])
+  @@index([cohortId])
+  @@map("ia_plans")
 }
