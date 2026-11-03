@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
 import { MANUAL_COHORT_STATUSES, COHORT_STATUS_LABEL as STATUS_LABEL, formatAdmissionDeadline, formatCohortMonth } from "@/lib/cohorts";
 import { listCohortsWithGauge, syncCohortStatuses } from "@/lib/cohorts-admin";
-import { PROGRAMS } from "@/lib/programs";
+import { PROGRAMS, isProgramCode } from "@/lib/programs";
 
 import { createCohort } from "./actions";
 
@@ -27,7 +27,7 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
           <li key={cohort.id}>
             <Link href={`/admin/cohortes/${cohort.id}`} className="block rounded-xl border border-slate-200 bg-white p-4">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="font-semibold">{cohort.program === "cc" && <span className="mr-2 rounded bg-accent-soft px-1.5 py-0.5 text-xs font-bold text-accent-ink">CC</span>}{cohort.name}</p>
+                <p className="font-semibold">{cohort.program !== "cissp" && <span className="mr-2 rounded bg-accent-soft px-1.5 py-0.5 text-xs font-bold text-accent-ink">{isProgramCode(cohort.program) ? PROGRAMS[cohort.program].shortName : cohort.program}</span>}{cohort.name}</p>
                 <span className="text-xs text-[var(--color-muted)]">{STATUS_LABEL[cohort.status]}</span>
               </div>
               <p className="text-sm text-[var(--color-muted)]">

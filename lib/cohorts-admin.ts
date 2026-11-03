@@ -2,6 +2,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 
 import { type Gauge, admissionClosesAt, automaticCohortStatus, buildGauge, isAdmissionOpen } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
+import type { ProgramCode } from "@/lib/programs";
 
 /**
  * Cohorts with their gauge (SPECS A5): paid seats, plus the prospects who
@@ -83,7 +84,7 @@ const cachedPublicCohort = unstable_cache(
  * reads must not hit MySQL on every visit) and invalidated by tag the moment
  * a seat is paid, so the gauge stays honest.
  */
-export async function publicCohortSummary(program: "cissp" | "cc" = "cissp"): Promise<PublicCohort | null> {
+export async function publicCohortSummary(program: ProgramCode = "cissp"): Promise<PublicCohort | null> {
   const cached = await cachedPublicCohort(program);
   if (!cached) return null;
   const startsAt = new Date(cached.startsAt);

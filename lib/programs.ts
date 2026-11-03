@@ -3,12 +3,13 @@ import type { Readiness, ScannerAnswers } from "@/lib/scoring";
 /**
  * Programmes taught in cohorts — docs/OFFRES.md §3. The CISSP bootcamp is
  * the product this site exists for; the ISC² CC course is the first step for
- * those who are not there yet. Copy and defaults live here; prices for the
+ * those who are not there yet; Bâtisseur IA (validated by Ben, 03/11/2026)
+ * teaches business owners to build their own application with Claude Code. Copy and defaults live here; prices for the
  * bootcamp stay on the pricing tiers, prices for the other programmes on
  * ProgramPrice (seeded from PROGRAM_PRICES).
  */
 
-export const PROGRAM_CODES = ["cissp", "cc"] as const;
+export const PROGRAM_CODES = ["cissp", "cc", "ia"] as const;
 export type ProgramCode = (typeof PROGRAM_CODES)[number];
 
 export function isProgramCode(value: unknown): value is ProgramCode {
@@ -19,6 +20,8 @@ export type ProgramDefinition = {
   code: ProgramCode;
   /** "CISSP Bootcamp", "Certification CC d'ISC²". */
   name: string;
+  /** Badge in the admin lists: "CISSP", "CC", "IA". */
+  shortName: string;
   /** What the receipt and Stripe line show. */
   productName: string;
   productLine: string;
@@ -34,6 +37,7 @@ export const PROGRAMS: Record<ProgramCode, ProgramDefinition> = {
   cissp: {
     code: "cissp",
     name: "CISSP Bootcamp",
+    shortName: "CISSP",
     productName: "CISSP Bootcamp",
     productLine: "40 h de préparation au CISSP en français, sur 15 jours, avec coach certifié.",
     hours: 40,
@@ -45,6 +49,7 @@ export const PROGRAMS: Record<ProgramCode, ProgramDefinition> = {
   cc: {
     code: "cc",
     name: "Certification CC d’ISC²",
+    shortName: "CC",
     productName: "Formation CC d’ISC² — 15 jours pour votre première certification",
     productLine: "10 h de préparation au Certified in Cybersecurity (ISC²) en français, sur 15 jours, avec coach CISSP.",
     hours: 10,
@@ -53,11 +58,32 @@ export const PROGRAMS: Record<ProgramCode, ProgramDefinition> = {
     examNote: "L’examen CC se passe auprès d’ISC², qui l’offre à la première tentative dans son programme « One Million Certified in Cybersecurity » (conditions en vigueur sur isc2.org).",
     receiptExamNote: "L'examen CC n'est pas inclus : il se passe auprès d'ISC², gratuit à la première tentative selon les conditions d'ISC².",
   },
+  ia: {
+    code: "ia",
+    name: "Bâtisseur IA",
+    shortName: "IA",
+    productName: "Bâtisseur IA — votre application en ligne en 5 journées avec Claude Code",
+    productLine: "25 h de formation en direct, en français, sur 5 journées le week-end : votre application en ligne et vos automatisations, avec Claude Code.",
+    hours: 25,
+    days: 5,
+    defaultCapacity: 12,
+    examNote: "À prévoir en plus : un abonnement Claude pendant le mois (20 à 100 USD) et un nom de domaine (environ 10 à 20 USD par an).",
+    receiptExamNote: "Non inclus : l'abonnement Claude et le nom de domaine, réglés directement auprès des fournisseurs.",
+  },
 };
 
-/** Seeded prices, USD cents by tier (docs/OFFRES.md §3, decided 24/09/2026). */
-export const PROGRAM_PRICES: Record<Exclude<ProgramCode, "cissp">, Record<"africa" | "international", number>> = {
+/** Programmes priced on ProgramPrice; the CISSP bootcamp stays on the pricing tiers. */
+export type PricedProgram = Exclude<ProgramCode, "cissp">;
+export const PRICED_PROGRAMS: readonly PricedProgram[] = ["cc", "ia"];
+
+/**
+ * Seeded prices, USD cents by tier (docs/OFFRES.md §3, decided 24/09/2026;
+ * Bâtisseur IA 03/11/2026 — the founding price, 390 USD, is set by Ben in
+ * /admin/parametres/prix for the first rotation). Never overwrites a row.
+ */
+export const PROGRAM_PRICES: Record<PricedProgram, Record<"africa" | "international", number>> = {
   cc: { africa: 14_900, international: 29_900 },
+  ia: { africa: 59_000, international: 119_000 },
 };
 
 /** The five CC domains, in ISC² order, with the share of the exam. */

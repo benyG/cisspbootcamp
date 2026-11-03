@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
+import { PRICED_PROGRAMS, type PricedProgram } from "@/lib/programs";
 
 /** Amount entered in whole USD, stored in cents (CLAUDE.md). Country list as codes. */
 export async function updateTier(formData: FormData): Promise<void> {
@@ -39,7 +40,7 @@ export async function updateProgramPrice(formData: FormData): Promise<void> {
   const session = await auth();
   if (!session?.user?.email) throw new Error("Non autorisé");
   const parsed = z.object({
-    program: z.enum(["cc"]),
+    program: z.enum(PRICED_PROGRAMS as [PricedProgram, ...PricedProgram[]]),
     tier: z.string().min(1).max(32),
     amountUsd: z.coerce.number().min(0).max(100_000),
     netticketTicketCode: z.string().trim().max(64).optional().or(z.literal("")),
@@ -54,4 +55,5 @@ export async function updateProgramPrice(formData: FormData): Promise<void> {
   revalidateTag(COHORTS_CACHE_TAG);
   revalidatePath("/admin/parametres/prix");
   revalidatePath("/demarrer");
+  revalidatePath("/ia");
 }
