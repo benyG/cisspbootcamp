@@ -11,12 +11,16 @@ type Props = {
   /** USD cents by tier code. */
   prices: Record<string, number>;
   rates: RateTable;
+  /** Programme code for the tracking label. */
+  program?: string;
+  /** Line under the price. */
+  note?: string;
 };
 
 const COUNTRY_KEY = "cb_country";
 
 /** Price of a programme by country, with the indicative local amount (same selector as everywhere). */
-export function ProgramPrice({ tiers, prices, rates }: Props) {
+export function ProgramPrice({ tiers, prices, rates, program = "cc", note = "Formation et préparation. L’examen se réserve auprès d’ISC²." }: Props) {
   const [country, setCountry] = useState("SN");
 
   useEffect(() => {
@@ -48,7 +52,7 @@ export function ProgramPrice({ tiers, prices, rates }: Props) {
         onChange={(e) => {
           setCountry(e.target.value);
           try { localStorage.setItem(COUNTRY_KEY, e.target.value); } catch { /* ignore */ }
-          track("price_country_change", { label: `cc:${e.target.value}` });
+          track("price_country_change", { label: `${program}:${e.target.value}` });
         }}
         className="mt-1.5 w-full rounded-xl border border-line bg-white px-3.5 py-3 text-base"
       >
@@ -64,7 +68,7 @@ export function ProgramPrice({ tiers, prices, rates }: Props) {
           <span className="text-muted">Sur devis</span>
         )}
       </div>
-      <p className="mt-1.5 text-[.8rem] text-muted">Formation et préparation. L’examen se réserve auprès d’ISC².</p>
+      <p className="mt-1.5 text-[.8rem] text-muted">{note}</p>
     </div>
   );
 }
