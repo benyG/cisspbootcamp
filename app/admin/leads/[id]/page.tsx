@@ -1,9 +1,11 @@
-import { ClipboardCheck, FileText, FlaskConical, History, UserCheck } from "lucide-react";
+import { Bot, ClipboardCheck, FileText, FlaskConical, History, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { ProfileAnalysis } from "@/lib/analysis";
 import { prisma } from "@/lib/db";
+import { diagnosisSummary } from "@/lib/ia-diagnostic";
+import { iaAnswersSchema } from "@/lib/ia-diagnostic-schema";
 import { formatUsdCents } from "@/lib/pricing";
 import { waMeLink } from "@/lib/messaging/templates";
 
@@ -48,6 +50,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       actions: { orderBy: { createdAt: "desc" }, take: 40 },
       practiceTests: { orderBy: { createdAt: "desc" }, take: 5 },
       evaluationRecipients: { orderBy: { createdAt: "desc" }, take: 10, include: { evaluation: { select: { id: true, title: true, kind: true, questions: true, domains: true } } } },
+      iaDiagnostics: { orderBy: { createdAt: "desc" }, take: 3 },
       pricingTier: true,
     },
   });
@@ -200,6 +203,24 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
                 {" "}<a href={t.url} target="_blank" rel="noopener" className="underline">ouvrir</a>
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {lead.iaDiagnostics.length > 0 && (
+        <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
+          <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><Bot className="size-4 text-accent" aria-hidden />Diagnostic Bâtisseur IA</h2>
+          <ul className="mt-2 grid gap-1">
+            {lead.iaDiagnostics.map((d) => {
+              const answers = iaAnswersSchema.safeParse(d.answers);
+              return (
+                <li key={d.id}>
+                  <span className="text-muted">{d.createdAt.toLocaleDateString("fr-FR")} · </span>
+                  {answers.success ? diagnosisSummary(answers.data) : "réponses illisibles"}
+                  {" "}<a href={`/ia/diagnostic/resultat/${d.token}`} target="_blank" rel="noopener" className="underline">voir le résultat</a>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

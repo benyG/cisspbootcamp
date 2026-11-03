@@ -105,3 +105,13 @@ export async function deleteIaDay(id: number): Promise<IaResult> {
   revalidateTag(COHORTS_CACHE_TAG);
   return { ok: true, message: `${longDate(day.date)} supprimé.` };
 }
+
+/** The next open entries (J1 dates) for the public page, soonest first. */
+export async function publicIaEntries(now = new Date(), take = 3): Promise<Array<{ date: string; start: string; left: number; capacity: number }>> {
+  const today = now.toISOString().slice(0, 10);
+  const days = await prisma.iaDay.findMany({ where: { journee: 1, closed: false, date: { gt: today } }, orderBy: { date: "asc" }, take: take * 2, include: { _count: { select: { seats: true } } } });
+  return days
+    .map((d) => ({ date: d.date, start: d.start, capacity: d.capacity, left: Math.max(0, d.capacity - d._count.seats) }))
+    .filter((d) => d.left > 0)
+    .slice(0, take);
+}
