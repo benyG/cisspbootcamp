@@ -29,20 +29,20 @@ function cohortData(date: string, start: string, capacity: number, now: Date) {
 }
 
 /** Every IA date with its seats taken, oldest first. */
-export type AdminIaDay = IaDay & { cohortId: number | null; cohortName: string | null; paid: number; meetUrl: string | null; people: Array<{ leadId: number; name: string; invited: boolean; planToken: string | null }> };
+export type AdminIaDay = IaDay & { cohortId: number | null; cohortName: string | null; paid: number; meetUrl: string | null; people: Array<{ leadId: number; name: string; invited: boolean; planToken: string | null; brief: boolean }> };
 
 export async function loadIaDays(): Promise<AdminIaDay[]> {
   const days = await prisma.iaDay.findMany({
     orderBy: { date: "asc" },
     include: {
-      seats: { orderBy: { createdAt: "asc" }, include: { lead: { select: { id: true, firstName: true, lastName: true, iaPlans: { select: { cohortId: true, token: true } } } } } },
+      seats: { orderBy: { createdAt: "asc" }, include: { lead: { select: { id: true, firstName: true, lastName: true, iaPlans: { select: { cohortId: true, token: true, briefAt: true } } } } } },
       cohort: { select: { name: true, _count: { select: { registrations: { where: { status: "paid" } } } } } },
     },
   });
   return days.map((d) => ({
     id: d.id, date: d.date, journee: d.journee, capacity: d.capacity, seats: d.seats.length, closed: d.closed, start: d.start, meetUrl: d.meetUrl,
     cohortId: d.cohortId, cohortName: d.cohort?.name ?? null, paid: d.cohort?._count.registrations ?? 0,
-    people: d.seats.map((s) => ({ leadId: s.lead.id, name: `${s.lead.firstName} ${s.lead.lastName}`.trim(), invited: !!s.invitedAt, planToken: s.lead.iaPlans.find((p) => p.cohortId === s.cohortId)?.token ?? null })),
+    people: d.seats.map((s) => ({ leadId: s.lead.id, name: `${s.lead.firstName} ${s.lead.lastName}`.trim(), invited: !!s.invitedAt, planToken: s.lead.iaPlans.find((p) => p.cohortId === s.cohortId)?.token ?? null, brief: !!s.lead.iaPlans.find((p) => p.cohortId === s.cohortId)?.briefAt })),
   }));
 }
 

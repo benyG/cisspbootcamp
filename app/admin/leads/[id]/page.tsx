@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 
 import type { ProfileAnalysis } from "@/lib/analysis";
 import { prisma } from "@/lib/db";
+import { briefLines } from "@/lib/ia-brief";
+import { storedBrief } from "@/lib/ia-brief-schema";
 import { diagnosisSummary } from "@/lib/ia-diagnostic";
 import { iaAnswersSchema } from "@/lib/ia-diagnostic-schema";
 import { formatUsdCents } from "@/lib/pricing";
@@ -51,6 +53,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       practiceTests: { orderBy: { createdAt: "desc" }, take: 5 },
       evaluationRecipients: { orderBy: { createdAt: "desc" }, take: 10, include: { evaluation: { select: { id: true, title: true, kind: true, questions: true, domains: true } } } },
       iaDiagnostics: { orderBy: { createdAt: "desc" }, take: 3 },
+      iaPlans: { orderBy: { createdAt: "desc" }, include: { cohort: { select: { name: true } } } },
       pricingTier: true,
     },
   });
@@ -204,6 +207,26 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {lead.iaPlans.length > 0 && (
+        <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
+          <h2 className="flex items-center gap-2 text-xs font-extrabold tracking-[.06em] text-muted uppercase"><Bot className="size-4 text-accent" aria-hidden />Bâtisseur IA</h2>
+          {lead.iaPlans.map((plan) => {
+            const brief = storedBrief(plan.brief);
+            return (
+              <div key={plan.id} className="mt-2">
+                <p><b>{plan.cohort.name}</b> · <a href={`/ia/calendrier/${plan.token}`} target="_blank" rel="noopener" className="underline">son calendrier</a></p>
+                {brief ? (
+                  <ul className="mt-1 grid gap-0.5 text-ink-2">{briefLines(brief).map((line) => <li key={line} className="whitespace-pre-wrap">{line}</li>)}</ul>
+                ) : (
+                  <p className="mt-1 text-muted">Fiche projet pas encore remplie.</p>
+                )}
+                {plan.briefAt && <p className="mt-1 text-xs text-muted">Fiche du {plan.briefAt.toLocaleDateString("fr-FR")}</p>}
+              </div>
+            );
+          })}
         </section>
       )}
 

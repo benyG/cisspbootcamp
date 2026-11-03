@@ -23,7 +23,7 @@ export default async function IaResultPage({ params }: { params: Promise<{ token
   return (
     <>
       <IaTopbar />
-      <main className={shell + " grid max-w-[720px] gap-5 pt-2 pb-16"}>
+      <main className={shell + " grid max-w-[720px] grid-cols-[minmax(0,1fr)] gap-5 pt-2 pb-16"}>
         <div className={eyebrow + " w-fit"}>Votre résultat</div>
         <h1 className="display text-[clamp(1.8rem,4vw,2.8rem)] leading-[1.04] font-black tracking-[-.05em]">
           {lead.firstName ? `${lead.firstName}, v` : "V"}oici ce que votre application fera à votre place.
