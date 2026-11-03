@@ -346,7 +346,7 @@ async function sendSeatConfirmation(input: {
       `Référence : ${input.reference}\n` +
       `Votre reçu : ${env.NEXT_PUBLIC_APP_URL}/inscription/recu/${input.reference}\n\n` +
       (input.program === "ia"
-        ? `Votre J1 est réservée à cette date ; l'invitation arrive dans votre agenda, avec le lien de la visio.\n\n${input.planUrl ? `Choisissez maintenant vos J2 à J5, dans l'ordre, parmi les week-ends suivants : ${input.planUrl}\n\n` : ""}Je vous envoie ensuite le guide d'installation des outils.\n\n`
+        ? `Votre J1 est réservée à cette date ; l'invitation arrive dans votre agenda, avec le lien de la visio.\n\n${input.planUrl ? `Choisissez maintenant vos J2 à J5, dans l'ordre, parmi les week-ends suivants, et remplissez votre fiche projet : ${input.planUrl}\n\n` : ""}Préparez votre J1 deux ou trois jours avant (30 minutes : vos comptes et Claude Code) : ${env.NEXT_PUBLIC_APP_URL}/ia/guide\n\n`
         : `Je vous écris avant le démarrage avec le programme détaillé et les accès${input.program === "cc" ? ", et la marche à suivre pour réserver votre examen CC auprès d'ISC²" : ""}.\n\n`) +
       `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${input.lead.unsubscribeToken}`,
   });

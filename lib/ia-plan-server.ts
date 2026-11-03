@@ -153,7 +153,9 @@ export async function sendIaReminders(now = new Date()): Promise<number> {
         `Demain, ${shortDate(seat.day.date)}, c’est la J${seat.journee} : ${j.title}. ${j.text}`,
         "",
         seat.day.meetUrl ? `Le lien de la visio : ${seat.day.meetUrl} (il est aussi dans l’invitation de votre agenda, à l’heure de votre fuseau).` : "Le lien de la visio est dans l’invitation de votre agenda, à l’heure de votre fuseau.",
-        "Ayez votre ordinateur chargé, votre compte Claude ouvert et votre application sous la main.",
+        seat.journee === 1
+          ? `Avant de commencer, vérifiez que vos comptes Claude, GitHub et Vercel sont prêts : ${appUrl()}/ia/guide`
+          : "Ayez votre ordinateur chargé, votre compte Claude ouvert et votre application sous la main.",
         ...(plan ? ["", `Votre calendrier : ${iaPlanUrl(plan.token)}`] : []),
         "",
         "À demain,",
@@ -172,4 +174,24 @@ export async function sendIaReminders(now = new Date()): Promise<number> {
 export async function inviteEntry(leadId: number, cohortId: number, now = new Date()): Promise<void> {
   const seat = await prisma.iaSeat.findUnique({ where: { leadId_cohortId_journee: { leadId, cohortId, journee: 1 } }, select: { dayId: true } });
   if (seat) await syncDayInvites(seat.dayId, now).catch((error) => console.error("[ia] invitation J1", error));
+}
+
+/** Saves the participant's project sheet; Ben is told the first time and when it changes. */
+export async function saveBrief(token: string, raw: unknown, now = new Date()): Promise<PlanResult> {
+  if (!validToken(token)) return { ok: false, error: "Lien invalide." };
+  const { briefSchema } = await import("@/lib/ia-brief-schema");
+  const { briefLines } = await import("@/lib/ia-brief");
+  const parsed = briefSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Fiche incomplète." };
+  const plan = await prisma.iaPlan.findUnique({ where: { token }, include: { lead: { select: { id: true, firstName: true, lastName: true, email: true } }, cohort: { select: { name: true } } } });
+  if (!plan) return { ok: false, error: "Lien invalide." };
+  const first = !plan.briefAt;
+  await prisma.iaPlan.update({ where: { id: plan.id }, data: { brief: JSON.parse(JSON.stringify(parsed.data)), briefAt: now } });
+  await prisma.actionLog.create({ data: { leadId: plan.leadId, type: "ia_brief_saved", payload: { cohortId: plan.cohortId, first } } }).catch(() => undefined);
+  await sendEmail({
+    to: env.ADMIN_EMAIL,
+    subject: `Fiche projet ${first ? "reçue" : "mise à jour"} : ${`${plan.lead.firstName} ${plan.lead.lastName}`.trim()} · ${PROGRAMS.ia.name}`,
+    text: [`${plan.lead.firstName} ${plan.lead.lastName}`.trim() + ` · ${plan.lead.email} · ${PROGRAMS.ia.name} — ${plan.cohort.name}`, "", ...briefLines(parsed.data), "", `Fiche : ${appUrl()}/admin/leads/${plan.leadId}`].join("\n"),
+  }).catch(() => undefined);
+  return { ok: true, message: first ? "Fiche envoyée à Ben. Vous pouvez la modifier jusqu’à la J1." : "Fiche mise à jour." };
 }

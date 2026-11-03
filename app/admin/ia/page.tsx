@@ -74,6 +74,7 @@ export default async function IaDaysPage({ searchParams }: { searchParams: Promi
                           <li key={p.leadId} className="flex flex-wrap items-center gap-x-2">
                             <Link href={`/admin/leads/${p.leadId}`} className="underline">{p.name || "Sans nom"}</Link>
                             {!p.invited && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-900">invitation en attente</span>}
+                            {d.journee === 1 && <span className={`rounded px-1.5 py-0.5 text-xs ${p.brief ? "bg-accent-soft text-accent-ink" : "bg-slate-100 text-muted"}`}>{p.brief ? "fiche projet reçue" : "fiche projet à venir"}</span>}
                             {d.journee === 1 && p.planToken && <a href={`/ia/calendrier/${p.planToken}`} target="_blank" rel="noopener" className="text-xs text-muted underline">son calendrier</a>}
                           </li>
                         ))}

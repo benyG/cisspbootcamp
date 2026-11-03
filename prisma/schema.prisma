@@ -1009,13 +1009,16 @@ model IaDiagnostic {
 /// with the J1 seat when the entry is paid; the page at /ia/calendrier/[token]
 /// picks J2 to J5.
 model IaPlan {
-  id        Int      @id @default(autoincrement())
-  leadId    Int      @map("lead_id")
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  cohortId  Int      @map("cohort_id")
-  cohort    Cohort   @relation(fields: [cohortId], references: [id], onDelete: Cascade)
-  token     String   @unique @db.VarChar(64)
-  createdAt DateTime @default(now()) @map("created_at")
+  id        Int       @id @default(autoincrement())
+  leadId    Int       @map("lead_id")
+  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  cohortId  Int       @map("cohort_id")
+  cohort    Cohort    @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+  token     String    @unique @db.VarChar(64)
+  /// The participant's project sheet (lib/ia-brief.ts), filled before J1.
+  brief     Json?
+  briefAt   DateTime? @map("brief_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   @@unique([leadId, cohortId])
   @@index([cohortId])

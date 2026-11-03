@@ -9,7 +9,8 @@ const db = vi.hoisted(() => {
   };
   return {
     tx,
-    iaPlan: { findUnique: vi.fn() },
+    iaPlan: { findUnique: vi.fn(), update: vi.fn() },
+    actionLog: { create: vi.fn(async () => ({})) },
     iaSeat: { findMany: vi.fn(), updateMany: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
     iaDay: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     registration: { count: vi.fn() },
@@ -23,7 +24,7 @@ const mail = vi.hoisted(() => ({ sendEmail: vi.fn<(input: { to: string; subject:
 vi.mock("@/lib/messaging/email", () => mail);
 vi.mock("@/lib/env", () => ({ env: { NEXT_PUBLIC_APP_URL: "https://x.test", ADMIN_EMAIL: "ben@x.test" } }));
 
-import { pickJournees, sendIaReminders, syncDayInvites } from "@/lib/ia-plan-server";
+import { pickJournees, saveBrief, sendIaReminders, syncDayInvites } from "@/lib/ia-plan-server";
 
 const TOKEN = "t".repeat(43);
 const now = new Date("2027-01-10T12:00:00Z");
@@ -106,5 +107,35 @@ describe("Bâtisseur IA, calendrier du participant (Ben, 03/11)", () => {
     db.iaSeat.findMany.mockResolvedValue([{ id: 50, leadId: 5, cohortId: 7, journee: 2, remindedAt: null, day: { date: "2027-01-24", start: "10:00", meetUrl: null }, lead }]);
     expect(await sendIaReminders(new Date("2027-01-23T02:00:00Z"))).toBe(0);
     expect(mail.sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("points J1 participants to the preparation guide in the reminder", async () => {
+    const reminderNow = new Date("2027-01-22T05:30:00Z");
+    db.iaSeat.findMany.mockResolvedValue([{ id: 49, leadId: 5, cohortId: 7, journee: 1, remindedAt: null, day: { date: "2027-01-23", start: "10:00", meetUrl: null }, lead }]);
+    db.iaPlan.findUnique.mockResolvedValue({ token: TOKEN });
+    expect(await sendIaReminders(reminderNow)).toBe(1);
+    expect(mail.sendEmail.mock.calls[0][0].text).toContain("https://x.test/ia/guide");
+  });
+
+  it("saves the project sheet and tells Ben, first time and on change", async () => {
+    const brief = { business: "Cabinet de formation", users: "Mon équipe", tasks: "Relances et devis", data: "Excel", inspiration: "", domain: "", payments: "both" };
+    db.iaPlan.findUnique.mockResolvedValue({ id: 1, leadId: 5, cohortId: 7, briefAt: null, lead, cohort: { name: "Entrée du samedi 23 janvier 2027" } });
+    expect(await saveBrief(TOKEN, brief, now)).toEqual({ ok: true, message: "Fiche envoyée à Ben. Vous pouvez la modifier jusqu’à la J1." });
+    expect(db.iaPlan.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { brief, briefAt: now } });
+    const toBen = mail.sendEmail.mock.calls[0][0];
+    expect(toBen.to).toBe("ben@x.test");
+    expect(toBen.subject).toContain("Fiche projet reçue");
+    expect(toBen.text).toContain("Encaissement : Carte et mobile money");
+
+    db.iaPlan.findUnique.mockResolvedValue({ id: 1, leadId: 5, cohortId: 7, briefAt: now, lead, cohort: { name: "x" } });
+    expect((await saveBrief(TOKEN, brief, now)).ok).toBe(true);
+    expect(mail.sendEmail.mock.calls[1][0].subject).toContain("mise à jour");
+  });
+
+  it("refuses an incomplete sheet or an unknown link", async () => {
+    expect(await saveBrief(TOKEN, { business: "x" }, now)).toMatchObject({ ok: false });
+    db.iaPlan.findUnique.mockResolvedValue(null);
+    expect(await saveBrief(TOKEN, { business: "Cabinet", users: "Moi", tasks: "Devis", data: "Excel", payments: "none" }, now)).toEqual({ ok: false, error: "Lien invalide." });
+    expect(db.iaPlan.update).not.toHaveBeenCalled();
   });
 });

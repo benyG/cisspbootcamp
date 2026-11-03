@@ -79,6 +79,7 @@ describe("Bâtisseur IA, inscription (Ben, 03/11)", () => {
     const confirmation = mail.sendEmail.mock.calls[0][0];
     expect(confirmation.text).toContain("Votre J1 est réservée");
     expect(confirmation.text).toContain(`https://x.test/ia/calendrier/${"p".repeat(43)}`);
+    expect(confirmation.text).toContain("https://x.test/ia/guide");
     expect(confirmation.text).not.toMatch(/\b\d{1,2}:\d{2}\b/);
   });
 

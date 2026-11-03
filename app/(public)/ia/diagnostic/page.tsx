@@ -20,7 +20,7 @@ export default async function IaDiagnosticPage() {
   return (
     <>
       <IaTopbar />
-      <main className={shell + " grid max-w-[640px] gap-5 pt-2 pb-16"}>
+      <main className={shell + " grid max-w-[640px] grid-cols-[minmax(0,1fr)] gap-5 pt-2 pb-16"}>
         <div className={eyebrow + " w-fit"}>Diagnostic d’automatisation · 3 min</div>
         <h1 className="display text-[clamp(1.9rem,4vw,3rem)] leading-[1.02] font-black tracking-[-.05em]">Ce que votre application peut faire à votre place.</h1>
         <p className="-mt-2 text-ink-2">Cinq questions. Le résultat est calculé par des règles simples, sans IA et sans gain promis.</p>
