@@ -1,10 +1,10 @@
 import { revalidateTag } from "next/cache";
 
-import { automaticCohortStatus } from "@/lib/cohorts";
+import { automaticCohortStatus, remainingSeats } from "@/lib/cohorts";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { type IaDay, isJournee, isWeekendDate, journeeSlot, longDate, rotateJournees, weekendDates } from "@/lib/ia-days";
-import { PROGRAMS } from "@/lib/programs";
+import { loadOpenCohorts } from "@/lib/registration";
 import { cohortDays } from "@/lib/replays-server";
 
 /**
@@ -19,7 +19,8 @@ const COHORT_WEEKS = 8;
 /** At most this many dates opened in one go. */
 const MAX_OPEN = 40;
 
-export const iaCohortName = (date: string) => `${PROGRAMS.ia.name} — entrée du ${longDate(date)}`;
+/** "Entrée du samedi 23 janvier 2027": the e-mails prefix it with the programme name. */
+export const iaCohortName = (date: string) => `Entrée du ${longDate(date)}`;
 
 function cohortData(date: string, start: string, capacity: number, now: Date) {
   const { startsAt } = journeeSlot(date, start);
@@ -106,12 +107,19 @@ export async function deleteIaDay(id: number): Promise<IaResult> {
   return { ok: true, message: `${longDate(day.date)} supprimé.` };
 }
 
-/** The next open entries (J1 dates) for the public page, soonest first. */
-export async function publicIaEntries(now = new Date(), take = 3): Promise<Array<{ date: string; start: string; left: number; capacity: number }>> {
-  const today = now.toISOString().slice(0, 10);
-  const days = await prisma.iaDay.findMany({ where: { journee: 1, closed: false, date: { gt: today } }, orderBy: { date: "asc" }, take: take * 2, include: { _count: { select: { seats: true } } } });
-  return days
-    .map((d) => ({ date: d.date, start: d.start, capacity: d.capacity, left: Math.max(0, d.capacity - d._count.seats) }))
-    .filter((d) => d.left > 0)
-    .slice(0, take);
+/**
+ * The entries (J1 dates) open for registration, soonest first: the IA
+ * cohorts the registration code would sell (open, admissions open, seats
+ * left), with their date. Used by /ia and /ia/inscription.
+ */
+export async function openIaEntries(now = new Date(), forLeadId?: number): Promise<Array<{ cohortId: number; date: string; start: string; left: number; capacity: number; startsAt: Date }>> {
+  const cohorts = (await loadOpenCohorts(now, forLeadId, "ia")).filter((c) => remainingSeats(c) > 0);
+  if (!cohorts.length) return [];
+  const days = await prisma.iaDay.findMany({ where: { cohortId: { in: cohorts.map((c) => c.id) }, closed: false }, select: { cohortId: true, date: true, start: true } });
+  return cohorts
+    .flatMap((c) => {
+      const day = days.find((d) => d.cohortId === c.id);
+      return day ? [{ cohortId: c.id, date: day.date, start: day.start, left: remainingSeats(c), capacity: c.capacity, startsAt: c.startsAt }] : [];
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
