@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
 import { ALLOWED_MIME_TYPES, MAX_FILE_BYTES, blobPathnameFor, formatBytes, validateUpload } from "@/lib/documents";
+import type { ProgramCode } from "@/lib/programs";
 
 import { registerDocument } from "./actions";
 
@@ -42,7 +43,7 @@ export function UploadForm({ programs }: Props) {
           multipart: file.size > 8 * 1024 * 1024,
           onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
         });
-        const result = await registerDocument({ name: name.trim(), program: program as "cissp" | "cc", filename: file.name, pathname: blob.pathname });
+        const result = await registerDocument({ name: name.trim(), program: program as ProgramCode, filename: file.name, pathname: blob.pathname });
         if (!result.ok) {
           setMessage({ ok: false, text: result.error });
         } else {

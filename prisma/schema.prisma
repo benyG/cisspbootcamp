@@ -49,11 +49,13 @@ enum BookingKind {
   consulting
 }
 
-/// What a cohort teaches (docs/OFFRES.md §3): the CISSP bootcamp, or the
-/// entry-level ISC² CC course. Pricing and copy live in lib/programs.ts.
+/// What a cohort teaches (docs/OFFRES.md §3): the CISSP bootcamp, the
+/// entry-level ISC² CC course, or Bâtisseur IA. Pricing and copy live in
+/// lib/programs.ts.
 enum Program {
   cissp
   cc
+  ia
 }
 
 enum CohortStatus {

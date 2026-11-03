@@ -9,6 +9,7 @@ import { MANUAL_COHORT_STATUSES, automaticCohortStatus, cohortDeletionProblem, c
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { sendOnboardingDocuments } from "@/lib/onboarding";
+import { PROGRAM_CODES } from "@/lib/programs";
 import { cisspEndsAt } from "@/lib/reading-plan/page";
 
 async function requireAdmin() {
@@ -18,7 +19,7 @@ async function requireAdmin() {
 
 const cohortSchema = z
   .object({
-    program: z.enum(["cissp", "cc"]).default("cissp"),
+    program: z.enum(PROGRAM_CODES).default("cissp"),
     name: z.string().trim().min(1, "Nom requis").max(120),
     startsAt: z.coerce.date(),
     // CISSP: computed from the reading plan's calendar, whatever was typed.

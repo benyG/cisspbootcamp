@@ -3,14 +3,14 @@ import Link from "next/link";
 
 import { prisma } from "@/lib/db";
 
-import { PROGRAMS } from "@/lib/programs";
+import { PRICED_PROGRAMS, PROGRAMS } from "@/lib/programs";
 
 import { updateProgramPrice, updateTier } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
-  const [tiers, rates, programPrices] = await Promise.all([prisma.pricingTier.findMany({ orderBy: { amountUsd: "asc" } }), prisma.exchangeRate.findMany({ orderBy: { currency: "asc" } }), prisma.programPrice.findMany({ where: { program: "cc" } })]);
+  const [tiers, rates, programPrices] = await Promise.all([prisma.pricingTier.findMany({ orderBy: { amountUsd: "asc" } }), prisma.exchangeRate.findMany({ orderBy: { currency: "asc" } }), prisma.programPrice.findMany({ where: { program: { in: [...PRICED_PROGRAMS] } } })]);
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Aujourd&apos;hui</Link>
@@ -30,25 +30,27 @@ export default async function PricingPage() {
           </form>
         ))}
       </div>
-      <section className="mt-8">
-        <h2 className="font-semibold">{PROGRAMS.cc.name} <span className="font-normal text-muted">· vendue sur /demarrer</span></h2>
+      {PRICED_PROGRAMS.map((program) => (
+      <section key={program} className="mt-8">
+        <h2 className="font-semibold">{PROGRAMS[program].name} <span className="font-normal text-muted">· vendu sur {SOLD_ON[program]}</span></h2>
         <p className="mt-1 text-sm text-muted">Les paliers sont les mêmes que pour le bootcamp ; seuls les montants changent. Code Netticket propre à ce programme.</p>
         <div className="mt-3 grid gap-3">
           {tiers.filter((t) => t.amountUsd > 0).map((t) => {
-            const price = programPrices.find((p) => p.tier === t.code);
+            const price = programPrices.find((p) => p.program === program && p.tier === t.code);
             return (
               <form key={t.code} action={updateProgramPrice} className="grid grid-cols-[1fr_120px_1fr_auto] items-end gap-2 rounded-xl border border-line bg-white p-4">
-                <input type="hidden" name="program" value="cc" />
+                <input type="hidden" name="program" value={program} />
                 <input type="hidden" name="tier" value={t.code} />
                 <span className="text-sm font-medium">{t.label}</span>
                 <label className="flex flex-col gap-1 text-sm"><span className="font-medium">USD</span><input name="amountUsd" type="number" min={0} step={1} defaultValue={price ? price.amountUsd / 100 : 0} className={input} /></label>
-                <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Code Netticket</span><input name="netticketTicketCode" defaultValue={price?.netticketTicketCode ?? ""} placeholder="ex. CC-AFR" className={input} /></label>
+                <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Code Netticket</span><input name="netticketTicketCode" defaultValue={price?.netticketTicketCode ?? ""} placeholder={`ex. ${PROGRAMS[program].shortName}-AFR`} className={input} /></label>
                 <button className="rounded-lg bg-accent px-4 py-2 font-semibold text-white">Enregistrer</button>
               </form>
             );
           })}
         </div>
       </section>
+      ))}
       <section className="mt-8 text-sm">
         <h2 className="font-semibold">Taux de change (mis à jour chaque nuit)</h2>
         <p className="mt-1 text-muted">{rates.length ? rates.map((r) => `1 USD = ${r.perUsd.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} ${r.currency}`).join(" · ") : "Aucun taux encore chargé."}</p>
@@ -57,3 +59,4 @@ export default async function PricingPage() {
   );
 }
 const input = "rounded-lg border border-line px-3 py-2 text-base";
+const SOLD_ON: Record<(typeof PRICED_PROGRAMS)[number], string> = { cc: "/demarrer", ia: "/ia (bientôt)" };

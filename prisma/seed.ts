@@ -204,7 +204,7 @@ async function main() {
   // Entry-level programme (docs/OFFRES.md §3): prices per tier, and a first
   // CC cohort so /demarrer sells from day one. Ben moves the dates in
   // /admin/cohortes; existing rows are never overwritten.
-  for (const [program, prices] of Object.entries(PROGRAM_PRICES) as Array<["cc", Record<string, number>]>) {
+  for (const [program, prices] of Object.entries(PROGRAM_PRICES) as Array<[keyof typeof PROGRAM_PRICES, Record<string, number>]>) {
     for (const [tier, amountUsd] of Object.entries(prices)) {
       await prisma.programPrice.upsert({ where: { program_tier: { program, tier } }, update: {}, create: { program, tier, amountUsd } });
     }

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { ALLOWED_MIME_TYPES, safeFilename, validateUpload } from "@/lib/documents";
+import { PROGRAM_CODES } from "@/lib/programs";
 
 async function requireAdmin() {
   const session = await auth();
@@ -17,7 +18,7 @@ const id = z.coerce.number().int().positive();
 
 const registerSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  program: z.enum(["cissp", "cc"]),
+  program: z.enum(PROGRAM_CODES),
   filename: z.string().trim().min(1).max(200),
   pathname: z.string().startsWith("documents/").max(255),
 });
