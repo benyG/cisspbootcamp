@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 
+import type { Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 
 import { type CohortCandidate, adminRegistrationProblem, formatCohortMonth, isAdmissionOpen, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
@@ -88,7 +89,7 @@ export type Offer = {
  * What the registration page shows a lead: cohort, price, local equivalent.
  * The bootcamp is priced by the tier; another programme by ProgramPrice.
  */
-export async function buildOffer(leadId: number, now = new Date(), program: ProgramCode = "cissp"): Promise<{ offer: Offer } | { offer: null; reason: "no_cohort" | "quote_only" | "not_found" }> {
+export async function buildOffer(leadId: number, now = new Date(), program: ProgramCode = "cissp", cohortId?: number): Promise<{ offer: Offer } | { offer: null; reason: "no_cohort" | "quote_only" | "not_found" }> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
   if (!lead) return { offer: null, reason: "not_found" };
 
@@ -105,7 +106,9 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
   if (program !== "cissp" && !programPrice) return { offer: null, reason: "quote_only" };
   const tier = { amountUsd: programPrice?.amountUsd ?? tierRow.amountUsd, netticketTicketCode: programPrice ? programPrice.netticketTicketCode : tierRow.netticketTicketCode };
 
-  const cohort = selectRegistrationCohort(await loadOpenCohorts(now, leadId, program), now, program);
+  // Bâtisseur IA: the person picks their entry (J1 date); otherwise the next open cohort.
+  const open = await loadOpenCohorts(now, leadId, program);
+  const cohort = cohortId ? open.find((c) => c.id === cohortId && remainingSeats(c) > 0) ?? null : selectRegistrationCohort(open, now, program);
   if (!cohort) return { offer: null, reason: "no_cohort" };
 
   // A consulting hour paid in the last 90 days comes off the bootcamp price.
@@ -147,8 +150,8 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
  * has one pending for that cohort, it is reused so a retried checkout does
  * not multiply rows.
  */
-export async function startRegistration(input: { leadId: number; method: "stripe" | "netticket"; program?: ProgramCode }) {
-  const result = await buildOffer(input.leadId, new Date(), input.program ?? "cissp");
+export async function startRegistration(input: { leadId: number; method: "stripe" | "netticket"; program?: ProgramCode; cohortId?: number }) {
+  const result = await buildOffer(input.leadId, new Date(), input.program ?? "cissp", input.cohortId);
   if (!result.offer) return { registration: null, reason: result.reason } as const;
   const { offer } = result;
 
@@ -183,6 +186,20 @@ export async function startRegistration(input: { leadId: number; method: "stripe
   ]);
 
   return { registration, offer } as const;
+}
+
+/**
+ * Bâtisseur IA (lib/ia-days.ts): paying for an entry takes the J1 seat on
+ * that entry's date. Idempotent, so a retried webhook adds nothing.
+ */
+async function takeEntrySeat(tx: Prisma.TransactionClient, leadId: number, cohortId: number): Promise<void> {
+  const day = await tx.iaDay.findUnique({ where: { cohortId }, select: { id: true } });
+  if (!day) return;
+  await tx.iaSeat.upsert({
+    where: { leadId_cohortId_journee: { leadId, cohortId, journee: 1 } },
+    create: { leadId, cohortId, journee: 1, dayId: day.id },
+    update: {},
+  });
 }
 
 export type PaidResult = { ok: true; alreadyPaid: boolean } | { ok: false; error: string };
@@ -250,6 +267,7 @@ export async function markRegistrationPaid(input: {
       where: { leadId: registration.leadId, releasedAt: null },
       data: { releasedAt: new Date(), releaseReason: "paid" },
     });
+    if (program === "ia") await takeEntrySeat(tx, registration.leadId, target?.id ?? registration.cohortId);
     await tx.actionLog.create({
       data: {
         leadId: registration.leadId,
@@ -307,7 +325,9 @@ async function sendSeatConfirmation(input: {
         : "") +
       `Référence : ${input.reference}\n` +
       `Votre reçu : ${env.NEXT_PUBLIC_APP_URL}/inscription/recu/${input.reference}\n\n` +
-      `Je vous écris avant le démarrage avec le programme détaillé et les accès${input.program === "cc" ? ", et la marche à suivre pour réserver votre examen CC auprès d'ISC²" : ""}.\n\n` +
+      (input.program === "ia"
+        ? "Votre J1 est réservée à cette date. Je vous envoie ensuite le lien de votre calendrier pour choisir vos J2 à J5, puis le guide d'installation des outils.\n\n"
+        : `Je vous écris avant le démarrage avec le programme détaillé et les accès${input.program === "cc" ? ", et la marche à suivre pour réserver votre examen CC auprès d'ISC²" : ""}.\n\n`) +
       `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${input.lead.unsubscribeToken}`,
   });
 }
@@ -351,6 +371,7 @@ export async function registerByAdmin(input: { leadId: number; cohortId: number;
     });
     await tx.lead.update({ where: { id: lead.id }, data: { status: "registered", nextFollowupAt: null } });
     await tx.seatHold.updateMany({ where: { leadId: lead.id, releasedAt: null }, data: { releasedAt: now, releaseReason: "paid" } });
+    if (cohort.program === "ia") await takeEntrySeat(tx, lead.id, cohort.id);
     await tx.actionLog.create({
       data: { leadId: lead.id, type: "registered_by_admin", payload: { registrationId: registration.id, reference, cohortId: cohort.id, amountUsd: input.amountUsdCents, note: input.paymentNote } },
     });

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { btnGhost, btnPrimary, eyebrow, shell } from "@/components/landing/sections";
+import { openIaEntries } from "@/lib/ia-days-server";
 import { diagnosticByToken } from "@/lib/ia-diagnostic-server";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
@@ -14,7 +15,8 @@ export const dynamic = "force-dynamic";
 /** The diagnostic result, addressed by its token (never indexed). */
 export default async function IaResultPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const [diag, settings] = await Promise.all([diagnosticByToken(token), loadSiteSettings().catch(() => SITE_DEFAULTS)]);
+  const [diag, settings, entries] = await Promise.all([diagnosticByToken(token), loadSiteSettings().catch(() => SITE_DEFAULTS), openIaEntries().catch(() => [])]);
+  const hasEntries = entries.length > 0;
   if (!diag) notFound();
   const { result: d, lead } = diag;
 
@@ -41,10 +43,14 @@ export default async function IaResultPage({ params }: { params: Promise<{ token
           <p>{d.ready ? "Votre aisance avec l’ordinateur suffit : vous démarrez directement à la J1." : "Vous pouvez y aller : avant la J1, une séance d’accueil d’une heure avec Ben installe les outils avec vous, pour démarrer à égalité avec le groupe."}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/ia#programme" className={btnPrimary}>Voir le programme, les dates et le prix</Link>
+          {hasEntries ? (
+            <Link href={`/ia/inscription?t=${token}`} className={btnPrimary}>Réserver ma place</Link>
+          ) : (
+            <Link href="/ia#programme" className={btnPrimary}>Voir le programme et le prix</Link>
+          )}
           <Link href="/ia/diagnostic" className={btnGhost}>Refaire le diagnostic</Link>
         </div>
-        <p className="text-[.85rem] text-muted">Ce résultat vous a aussi été envoyé par e-mail. Ben vous écrit dès l’ouverture des inscriptions.</p>
+        <p className="text-[.85rem] text-muted">Ce résultat vous a aussi été envoyé par e-mail.{hasEntries ? "" : " Ben vous écrit dès l’ouverture des inscriptions."}</p>
       </main>
       <IaFooter coach={settings.coach.name} />
     </>

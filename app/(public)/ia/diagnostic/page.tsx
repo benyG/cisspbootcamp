@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   title: "Diagnostic d’automatisation · Bâtisseur IA",
   description: "Cinq questions, trois minutes : les trois automatisations que votre application peut prendre en charge en premier.",
   alternates: { canonical: "/ia/diagnostic" },
+  openGraph: { title: "Diagnostic d’automatisation · Bâtisseur IA", description: "Cinq questions, trois minutes : les trois automatisations que votre application peut prendre en charge en premier.", siteName: "Bâtisseur IA", type: "website", locale: "fr_FR" },
+  twitter: { card: "summary_large_image", title: "Diagnostic d’automatisation · Bâtisseur IA" },
 };
 
 /** The automation diagnostic (Ben, 03/11): rules only, result on screen and by e-mail. */

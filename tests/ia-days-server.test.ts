@@ -7,8 +7,10 @@ const db = vi.hoisted(() => {
 vi.mock("@/lib/db", () => ({ prisma: db }));
 vi.mock("next/cache", () => ({ revalidateTag: vi.fn(), unstable_cache: (fn: unknown) => fn }));
 vi.mock("@/lib/replays-server", () => ({ cohortDays: () => [] }));
+const reg = vi.hoisted(() => ({ loadOpenCohorts: vi.fn(async () => [] as unknown[]) }));
+vi.mock("@/lib/registration", () => reg);
 
-import { deleteIaDay, iaCohortName, openIaDates, updateIaDay } from "@/lib/ia-days-server";
+import { deleteIaDay, iaCohortName, openIaDates, openIaEntries, updateIaDay } from "@/lib/ia-days-server";
 
 const now = new Date("2027-01-10T12:00:00Z");
 
@@ -28,7 +30,7 @@ describe("Bâtisseur IA, dates (Ben, 03/11)", () => {
     expect(created[0].cohortId).toBe(101);
     expect(created[1].cohortId).toBeNull();
     const cohort = db.tx.cohort.create.mock.calls[0][0].data;
-    expect(cohort).toMatchObject({ program: "ia", name: "Bâtisseur IA — entrée du samedi 23 janvier 2027", capacity: 12, status: "open" });
+    expect(cohort).toMatchObject({ program: "ia", name: "Entrée du samedi 23 janvier 2027", capacity: 12, status: "open" });
     expect(cohort.startsAt.toISOString()).toBe("2027-01-23T15:00:00.000Z");
     expect(cohort.endsAt > cohort.startsAt).toBe(true);
   });
@@ -74,5 +76,14 @@ describe("Bâtisseur IA, dates (Ben, 03/11)", () => {
     expect(await deleteIaDay(1)).toMatchObject({ ok: true });
     expect(db.tx.iaDay.delete).toHaveBeenCalledWith({ where: { id: 1 } });
     expect(db.tx.cohort.delete).toHaveBeenCalledWith({ where: { id: 7 } });
+  });
+
+  it("lists the entries open for registration, with seats left, by date", async () => {
+    const c = (id: number, startsAt: string, confirmedCount: number) => ({ id, program: "ia", name: "", startsAt: new Date(startsAt), capacity: 12, status: "open", confirmedCount, heldCount: 0 });
+    reg.loadOpenCohorts.mockResolvedValue([c(2, "2027-02-06T15:00:00Z", 3), c(1, "2027-01-23T15:00:00Z", 0), c(3, "2027-02-20T15:00:00Z", 12)]);
+    db.iaDay.findMany.mockResolvedValue([{ cohortId: 2, date: "2027-02-06", start: "10:00" }, { cohortId: 1, date: "2027-01-23", start: "10:00" }]);
+    const entries = await openIaEntries(now);
+    expect(entries.map((e) => [e.cohortId, e.date, e.left])).toEqual([[1, "2027-01-23", 12], [2, "2027-02-06", 9]]);
+    expect(db.iaDay.findMany.mock.calls.at(-1)![0].where).toEqual({ cohortId: { in: [2, 1] }, closed: false });
   });
 });

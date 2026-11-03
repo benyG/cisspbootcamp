@@ -8,15 +8,20 @@ import { ProgramPrice } from "@/components/programs/ProgramPrice";
 import { TrackView } from "@/components/tracking/TrackView";
 import { prisma } from "@/lib/db";
 import { IA_ZONE, JOURNEES, journeeSlot, shortDate } from "@/lib/ia-days";
-import { publicIaEntries } from "@/lib/ia-days-server";
+import { openIaEntries } from "@/lib/ia-days-server";
 import { PROGRAMS } from "@/lib/programs";
 import { loadRates } from "@/lib/registration";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
+const TITLE = "Bâtisseur IA : votre application en ligne en 5 journées, avec Claude Code";
+const DESCRIPTION = "Bootcamp en français, le week-end : créez l’application de votre entreprise et automatisez vente, relances, chiffres et comptabilité avec Claude Code. Pas besoin de savoir coder.";
 export const metadata: Metadata = {
-  title: "Bâtisseur IA : votre application en ligne en 5 journées, avec Claude Code",
-  description: "Bootcamp en français, le week-end : créez l’application de votre entreprise et automatisez vente, relances, chiffres et comptabilité avec Claude Code. Pas besoin de savoir coder.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: "/ia" },
+  // Not the CISSP card when the link is shared on WhatsApp or LinkedIn.
+  openGraph: { title: TITLE, description: DESCRIPTION, siteName: "Bâtisseur IA", type: "website", locale: "fr_FR" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 export const dynamic = "force-dynamic";
 
@@ -34,7 +39,7 @@ export default async function IaPage() {
   const program = PROGRAMS.ia;
   const [settings, entries, tiers, prices, rates] = await Promise.all([
     loadSiteSettings().catch(() => SITE_DEFAULTS),
-    publicIaEntries().catch(() => []),
+    openIaEntries().then((e) => e.slice(0, 3)).catch(() => []),
     prisma.pricingTier.findMany({ select: { code: true, countries: true } }).catch(() => []),
     prisma.programPrice.findMany({ where: { program: "ia" } }).catch(() => []),
     loadRates().catch(() => ({})),
@@ -70,15 +75,21 @@ export default async function IaPage() {
               <p className="text-[.78rem] font-extrabold tracking-[.06em] text-muted uppercase">Prochaines entrées (J1)</p>
               {entries.length ? (
                 <ul className="mt-2 grid gap-1.5">
-                  {entries.map((e) => <li key={e.date} className="flex justify-between gap-3 text-[.95rem]"><span className="font-bold first-letter:uppercase">{shortDate(e.date)}</span><span className="text-muted">{e.left} place{e.left > 1 ? "s" : ""} sur {e.capacity}</span></li>)}
+                  {entries.map((e) => <li key={e.cohortId} className="flex justify-between gap-3 text-[.95rem]"><span className="font-bold first-letter:uppercase">{shortDate(e.date)}</span><span className="text-muted">{e.left} place{e.left > 1 ? "s" : ""} sur {e.capacity}</span></li>)}
                 </ul>
               ) : (
                 <p className="mt-2 text-[.95rem] text-ink-2">Les dates arrivent. Faites le diagnostic : Ben vous écrit dès l’ouverture.</p>
               )}
               {slot && <p className="mt-2 text-[.82rem] text-muted">De {clock(slot.startsAt, IA_ZONE)} à {clock(slot.endsAt, IA_ZONE)} heure de Montréal ({clock(slot.startsAt, "Africa/Douala")} à {clock(slot.endsAt, "Africa/Douala")} à Douala).</p>}
             </div>
-            <Link href="/ia/diagnostic" className={btnPrimary + " mt-5 w-full"}>Faire le diagnostic →</Link>
-            <p className="mt-3 text-[.82rem] text-muted">Inscription et paiement (carte ou mobile money) depuis votre résultat, dès l’ouverture des places.</p>
+            {entries.length ? (
+              <>
+                <Link href="/ia/inscription" className={btnPrimary + " mt-5 w-full"}>Réserver ma place →</Link>
+                <p className="mt-3 text-[.82rem] text-muted">Carte bancaire ou mobile money. Place confirmée dès réception du paiement, reçu par e-mail.</p>
+              </>
+            ) : (
+              <Link href="/ia/diagnostic" className={btnPrimary + " mt-5 w-full"}>Faire le diagnostic →</Link>
+            )}
           </div>
         </section>
 
