@@ -128,6 +128,11 @@ export default async function IaPage() {
             <p className="mt-1 text-[.95rem] text-muted">Un ordinateur portable et une connexion correcte. Claude Code tourne aussi dans le cloud : la session continue même si la connexion coupe.</p>
           </div>
         </section>
+
+        <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-line bg-white p-5">
+          <p className="text-ink-2"><b className="text-ink">Former une équipe ?</b> Le Bâtisseur IA en groupe réservé, sur site ou en ligne, aux dates de votre entreprise.</p>
+          <Link href="/entreprises?formation=ia" className={btnGhost}>Demander un devis</Link>
+        </section>
       </main>
       <IaFooter coach={settings.coach.name} />
     </>

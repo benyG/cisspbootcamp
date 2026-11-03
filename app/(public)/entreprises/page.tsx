@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { QuoteForm } from "@/components/entreprises/QuoteForm";
 import { Footer, Topbar, eyebrow, shell } from "@/components/landing/sections";
 import { TrackView } from "@/components/tracking/TrackView";
-import { ANSWER_DELAY, MIN_TEAM } from "@/lib/quotes";
+import { ANSWER_DELAY, CERTIFICATIONS, MIN_TEAM } from "@/lib/quotes";
 import { COUNTRIES } from "@/lib/scanner/questions";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
@@ -24,7 +24,9 @@ const POINTS = [
 ];
 
 /** Companies training a team (Ben, 21/10): what we offer, then the quote form. */
-export default async function CompaniesPage() {
+export default async function CompaniesPage({ searchParams }: { searchParams: Promise<{ formation?: string }> }) {
+  const { formation } = await searchParams;
+  const initial = formation && formation in CERTIFICATIONS ? (formation as keyof typeof CERTIFICATIONS) : "cissp";
   const settings = await loadSiteSettings().catch(() => SITE_DEFAULTS);
   return (
     <>
@@ -34,7 +36,7 @@ export default async function CompaniesPage() {
         <div className="grid gap-5 lg:sticky lg:top-6">
           <div className={eyebrow}><Building2 className="size-4 shrink-0 text-accent" aria-hidden />Entreprises</div>
           <h1 className="display text-[clamp(2.1rem,4.6vw,4rem)] leading-[.98] font-black tracking-[-.05em]">Formez votre équipe au CISSP.</h1>
-          <p className="max-w-[560px] text-[1.05rem] font-semibold text-ink-2">Une préparation réservée à vos collaborateurs, guidée par {settings.coach.name}, coach CISSP certifié : les 8 domaines, le raisonnement de l&apos;examen et un plan jusqu&apos;au jour J. Ou la certification CC pour les profils qui débutent.</p>
+          <p className="max-w-[560px] text-[1.05rem] font-semibold text-ink-2">Une préparation réservée à vos collaborateurs, guidée par {settings.coach.name}, coach CISSP certifié : les 8 domaines, le raisonnement de l&apos;examen et un plan jusqu&apos;au jour J. Ou la certification CC pour les profils qui débutent, ou le <a href="/ia" className="underline underline-offset-4">Bâtisseur IA</a> pour que vos équipes créent vos outils internes avec Claude Code.</p>
           <ul className="grid gap-2.5 sm:grid-cols-2">
             {POINTS.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex items-start gap-3 rounded-[16px] border border-line bg-white p-4">
@@ -47,7 +49,7 @@ export default async function CompaniesPage() {
         </div>
         <div className="grid gap-3">
           <h2 className="display text-[1.5rem] font-black tracking-[-.03em]">Demander un devis</h2>
-          <QuoteForm countries={COUNTRIES} />
+          <QuoteForm countries={COUNTRIES} initialCertification={initial} />
         </div>
       </main>
       <Footer settings={settings} />

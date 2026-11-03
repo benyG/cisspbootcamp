@@ -12,7 +12,7 @@ const field = "w-full rounded-xl border border-line bg-white px-3.5 py-3 text-ba
 const label = "grid gap-1.5 text-[.9rem] font-bold";
 
 /** The company quote form (Ben, 21/10): mobile first, consent never pre-checked. */
-export function QuoteForm({ countries }: { countries: Option[] }) {
+export function QuoteForm({ countries, initialCertification = "cissp" }: { countries: Option[]; initialCertification?: keyof typeof CERTIFICATIONS }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
   const [sent, setSent] = useState(false);
@@ -66,7 +66,7 @@ export function QuoteForm({ countries }: { countries: Option[] }) {
         <label className={label}>E-mail professionnel<input name="email" type="email" required maxLength={180} autoComplete="email" className={field} /></label>
         <label className={label}>Téléphone ou WhatsApp <span className="font-normal text-muted">(facultatif)</span><input name="phone" type="tel" maxLength={40} autoComplete="tel" placeholder="+225 …" className={field} /></label>
       </div>
-      <fieldset className="grid gap-2"><legend className="mb-1.5 text-[.9rem] font-bold">Formation</legend>{radios("certification", CERTIFICATIONS, "cissp")}</fieldset>
+      <fieldset className="grid gap-2"><legend className="mb-1.5 text-[.9rem] font-bold">Formation</legend>{radios("certification", CERTIFICATIONS, initialCertification)}</fieldset>
       <fieldset className="grid gap-2"><legend className="mb-1.5 text-[.9rem] font-bold">Format</legend>{radios("format", FORMATS, "online")}</fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className={label}>Nombre de personnes<select name="headcount" defaultValue="6-10" className={field}>{Object.entries(HEADCOUNTS).map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></label>
