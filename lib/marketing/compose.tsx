@@ -3,8 +3,8 @@ import { join } from "node:path";
 
 import { ImageResponse } from "next/og";
 
-import { BRAND_COLORS as C, CANVAS, PROGRESS_DOTS, SIGNATURE, headlineParts, headlineSize } from "./brand";
-import type { Channel } from "./plan";
+import { BRAND_COLORS as C, CANVAS, brandKit, headlineParts, headlineSize } from "./brand";
+import type { Channel, MarketingKind } from "./plan";
 
 /**
  * The brand layout on top of a generated photograph (Ben, 03/10), drawn by
@@ -19,7 +19,8 @@ const FONT_DIR = join(process.cwd(), "lib/marketing/fonts");
 let fonts: Promise<[Buffer, Buffer]> | null = null;
 const loadFonts = () => (fonts ??= Promise.all([readFile(join(FONT_DIR, "inter-tight-800-latin.woff")), readFile(join(FONT_DIR, "inter-600-latin.woff"))]));
 
-export type ComposeInput = { photo: Uint8Array; photoType: string; channel: Channel; headline: string; keyword: string };
+/** kind: the Bâtisseur IA visuals carry 5 dots (the 5 journées) and their own signature. */
+export type ComposeInput = { photo: Uint8Array; photoType: string; channel: Channel; headline: string; keyword: string; kind?: MarketingKind };
 
 export async function composeVisual(input: ComposeInput): Promise<Uint8Array> {
   const { width, height } = CANVAS[input.channel];
@@ -29,6 +30,7 @@ export async function composeVisual(input: ComposeInput): Promise<Uint8Array> {
   const parts = headlineParts(input.headline, input.keyword);
   const size = headlineSize(input.headline, width);
   const dot = Math.round(width * 0.011);
+  const kit = brandKit(input.kind);
 
   const response = new ImageResponse(
     (
@@ -44,10 +46,10 @@ export async function composeVisual(input: ComposeInput): Promise<Uint8Array> {
           )}
           <div style={{ display: "flex", position: "relative", alignItems: "center", justifyContent: "space-between", height: dot * 2, marginBottom: Math.round(width * 0.035) }}>
             <div style={{ position: "absolute", left: 0, right: 0, top: dot - 1, height: 2, backgroundColor: C.green, opacity: 0.55 }} />
-            {Array.from({ length: PROGRESS_DOTS }, (_, i) => <div key={i} style={{ width: dot, height: dot, borderRadius: dot, backgroundColor: C.green }} />)}
+            {Array.from({ length: kit.dots }, (_, i) => <div key={i} style={{ width: dot, height: dot, borderRadius: dot, backgroundColor: C.green }} />)}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontFamily: "Inter", fontWeight: 600 }}>
-            <span style={{ fontSize: Math.round(width * 0.034), color: C.paper, letterSpacing: "-0.01em" }}>{SIGNATURE}</span>
+            <span style={{ fontSize: Math.round(width * 0.034), color: C.paper, letterSpacing: "-0.01em" }}>{kit.signature}</span>
             <span style={{ fontSize: Math.round(width * 0.024), color: C.paper, opacity: 0.7 }}>cisspbootcamp.online</span>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { get, put } from "@vercel/blob";
 
 import { prisma } from "@/lib/db";
 import { brandedImagePrompt, brandedVideoPrompt } from "@/lib/marketing/brand";
+import type { MarketingKind } from "@/lib/marketing/plan";
 
 /**
  * MiniMax text-to-video for the TikTok posts (Ben, 03/10), over plain
@@ -74,7 +75,7 @@ export function mapStatus(status: string | undefined): "queued" | "processing" |
  * prompt (lib/marketing/brand.ts); a first frame, when given, is one of the
  * post's generated photographs, so the clip opens on the brand's image.
  */
-export async function startVideo(postId: number, prompt: string, firstFrame?: { bytes: Uint8Array; type: string } | null): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+export async function startVideo(postId: number, prompt: string, firstFrame?: { bytes: Uint8Array; type: string } | null, kind: MarketingKind = "cert"): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
   if (!minimaxEnabled()) return { ok: false, error: "La clé MINIMAX_API_KEY n'est pas configurée sur Vercel." };
   const { model, resolution } = config();
   try {
@@ -82,7 +83,7 @@ export async function startVideo(postId: number, prompt: string, firstFrame?: { 
       method: "POST",
       body: JSON.stringify({
         model,
-        prompt: brandedVideoPrompt(prompt),
+        prompt: brandedVideoPrompt(prompt, kind),
         duration: CLIP_SECONDS,
         resolution,
         ...(firstFrame ? { first_frame_image: `data:${firstFrame.type};base64,${Buffer.from(firstFrame.bytes).toString("base64")}` } : {}),
@@ -156,10 +157,10 @@ export async function readBytes(pathname: string): Promise<Uint8Array | null> {
  * seconds to a minute). MiniMax's own prompt rewriting stays off, so the
  * brand rules reach the model as written.
  */
-export async function generatePhoto(scene: string, aspectRatio: string): Promise<{ ok: true; bytes: Uint8Array; type: string; prompt: string; model: string } | { ok: false; error: string }> {
+export async function generatePhoto(scene: string, aspectRatio: string, kind: MarketingKind = "cert"): Promise<{ ok: true; bytes: Uint8Array; type: string; prompt: string; model: string } | { ok: false; error: string }> {
   if (!minimaxEnabled()) return { ok: false, error: "La clé MINIMAX_API_KEY n'est pas configurée sur Vercel." };
   const { imageModel } = config();
-  const prompt = brandedImagePrompt(scene);
+  const prompt = brandedImagePrompt(scene, kind);
   try {
     const result = await call<{ data?: { image_base64?: string[] }; metadata?: { failed_count?: string | number }; base_resp?: BaseResp }>(
       "/v1/image_generation",

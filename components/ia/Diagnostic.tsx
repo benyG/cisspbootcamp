@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { submitIaDiagnosticAction } from "@/app/(public)/ia/diagnostic/actions";
+import { rememberUtm } from "@/lib/tracking/client";
 import { ACTIVITIES, EASE, HOURS, type IaAnswers, TASKS, TOOLS } from "@/lib/ia-diagnostic";
 import { track } from "@/lib/tracking/client";
 
@@ -53,6 +54,7 @@ export function Diagnostic({ countries }: { countries: Option[] }) {
         const result = await submitIaDiagnosticAction({
           answers,
           contact: { firstName: get("firstName"), email: get("email"), country: get("country"), whatsapp: get("whatsapp"), consent: d.get("consent") === "on", website: get("website") },
+          utm: rememberUtm(),
         });
         if (result.ok) router.push(`/ia/diagnostic/resultat/${result.token}`);
         else setError(result.error);

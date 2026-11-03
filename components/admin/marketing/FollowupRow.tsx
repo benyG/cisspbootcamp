@@ -36,7 +36,7 @@ export function FollowupRow({ lead, cohortId, segment }: { lead: Lead; cohortId:
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span>
           <Link href={`/admin/leads/${lead.id}`} className="font-semibold hover:underline">{lead.firstName} {lead.lastName}</Link>
-          <span className="ml-2 text-muted">chaleur {lead.heatScore}{lead.testPercent !== null ? ` · test ${lead.testPercent} %` : ""}{lead.lastContactAt ? ` · relancé le ${new Date(lead.lastContactAt).toLocaleDateString("fr-FR")}` : ""}</span>
+          <span className="ml-2 text-muted">{[lead.heatScore > 0 ? `chaleur ${lead.heatScore}` : null, lead.testPercent !== null ? `test ${lead.testPercent} %` : null, lead.lastContactAt ? `relancé le ${new Date(lead.lastContactAt).toLocaleDateString("fr-FR")}` : null].filter(Boolean).join(" · ")}</span>
         </span>
         <span className="flex gap-2">
           {lead.whatsapp && <button type="button" disabled={pending} onClick={() => draft("whatsapp")} className={ghost}><MessageCircle className="size-4" aria-hidden />WhatsApp</button>}

@@ -16,9 +16,10 @@ type Meta = { channel: string; pillar: string; format: string; topic: string };
  * prospects say, and the news when asked; then channel, pillar, format and
  * where the link leads; three variants to edit, copy, keep.
  */
-export function Studio({ cohortId, channels, pillars, formats, destinations }: { cohortId: number; channels: Option[]; pillars: PillarOption[]; formats: FormatOption[]; destinations: Option[] }) {
+export function Studio({ cohortId, channels, pillars, formats, destinations, ia = false }: { cohortId: number; channels: Option[]; pillars: PillarOption[]; formats: FormatOption[]; destinations: Option[]; ia?: boolean }) {
   const has = (d: string) => destinations.some((x) => x.value === d);
-  const destFor = (p: string) => { const d = pillars.find((x) => x.value === p)?.destination ?? "scanner"; return has(d) ? d : "scanner"; };
+  const fallback = destinations[0]?.value ?? "scanner";
+  const destFor = (p: string) => { const d = pillars.find((x) => x.value === p)?.destination ?? fallback; return has(d) ? d : fallback; };
   const [channel, setChannel] = useState(channels[0].value);
   const [pillar, setPillar] = useState(pillars[0].value);
   const [format, setFormat] = useState("standard");
@@ -129,9 +130,9 @@ export function Studio({ cohortId, channels, pillars, formats, destinations }: {
         {examples.map((x) => <button key={x} type="button" onClick={() => setTopic(x)} className="rounded-full border border-line bg-white px-2.5 py-0.5 text-xs">{x}</button>)}
       </div>
       <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Ce que je veux dire, facultatif</span>
-        <textarea value={brief} onChange={(e) => setBrief(e.target.value)} rows={2} maxLength={1200} placeholder="Une anecdote d'appel, votre avis, une question reçue… ou une consigne (« viser les RSSI au Sénégal »)" className={input} /></label>
+        <textarea value={brief} onChange={(e) => setBrief(e.target.value)} rows={2} maxLength={1200} placeholder={ia ? "Une anecdote de construction, votre avis, une question reçue… ou une consigne (« viser les commerçants à Abidjan »)" : "Une anecdote d'appel, votre avis, une question reçue… ou une consigne (« viser les RSSI au Sénégal »)"} className={input} /></label>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted">Aucun chiffre ni témoignage inventé : dates, places et prix viennent de la cohorte, les chiffres du test seulement s&apos;il y en a assez.</p>
+        <p className="text-xs text-muted">{ia ? "Aucun chiffre, gain ni témoignage inventé : dates, places et prix viennent de l'entrée choisie." : "Aucun chiffre ni témoignage inventé : dates, places et prix viennent de la cohorte, les chiffres du test seulement s'il y en a assez."}</p>
         <button type="button" onClick={generate} disabled={pending} className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-accent px-4 py-2 font-semibold text-white">
           <Sparkles className="size-4" aria-hidden />{pending ? "Rédaction… (20 s environ)" : variants.length ? "Trois autres variantes" : "Générer trois variantes"}
         </button>
