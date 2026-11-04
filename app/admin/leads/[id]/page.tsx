@@ -14,7 +14,8 @@ import { waMeLink } from "@/lib/messaging/templates";
 import { syncLeadTests } from "@/lib/examboot/service";
 import { HOLD_HOURS, activeHoldFor, formatDeadline } from "@/lib/seat-holds";
 
-import { holdSeatAction, releaseHoldAction } from "@/app/admin/actions";
+import { confirmBalancePayment, holdSeatAction, releaseHoldAction } from "@/app/admin/actions";
+import { balanceDeadline } from "@/lib/registration";
 
 import { formatBytes } from "@/lib/documents";
 import { planStart } from "@/lib/reading-plan/page";
@@ -272,7 +273,24 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
         <section className="mt-5 grid gap-2 text-sm">
           {lead.bookings.map((b) => <p key={b.id} className="rounded-lg border border-line bg-white px-3 py-2">{b.kind === "consulting" ? "Séance de conseil" : "Appel"} {b.startsAt.toLocaleString("fr-FR")} · {b.status}{b.outcome ? ` · ${b.outcome}` : ""}{b.meetUrl && <> · <a href={b.meetUrl} className="underline">Meet</a></>}</p>)}
           {lead.serviceOrders.map((o) => <p key={o.id} className="rounded-lg border border-line bg-white px-3 py-2">Conseil : {o.service.name} · {formatUsdCents(o.amountUsd)} · {o.method} · {o.status} · {o.bookings.length}/{o.sessionsTotal} séance{o.sessionsTotal > 1 ? "s" : ""} · {o.reference}{o.status === "paid" && <> · <a href={`/conseil/rdv/${o.bookingToken}`} className="underline">lien de réservation</a></>}</p>)}
-          {lead.registrations.map((r) => <p key={r.id} className="rounded-lg border border-line bg-white px-3 py-2">{r.cohort.name} · {formatUsdCents(r.amountUsd)} · {r.method} · {r.status} · {r.reference}{r.status === "paid" && <> · <a href={`/inscription/recu/${r.reference}`} className="underline">Reçu</a></>}</p>)}
+          {lead.registrations.map((r) => (
+            <div key={r.id} className="rounded-lg border border-line bg-white px-3 py-2">
+              <p>{r.cohort.name} · {formatUsdCents(r.amountUsd)}{r.balanceUsd > 0 ? " en deux fois" : ""} · {r.method} · {r.status} · {r.reference}{r.status === "paid" && <> · <a href={`/inscription/recu/${r.reference}`} className="underline">Reçu</a></>}</p>
+              {r.status === "paid" && r.balanceUsd > 0 && (
+                r.balancePaidAt ? (
+                  <p className="mt-1 text-muted">Solde de {formatUsdCents(r.balanceUsd)} reçu le {r.balancePaidAt.toLocaleDateString("fr-FR")} ({r.balanceMethod === "manual" ? `à la main${r.balanceNote ? ` : ${r.balanceNote}` : ""}` : r.balanceMethod === "stripe" ? "carte" : "mobile money"}).</p>
+                ) : (
+                  <form action={confirmBalancePayment} className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-amber-800">Solde de {formatUsdCents(r.balanceUsd)} à régler avant le {balanceDeadline(r.cohort.startsAt)}{r.balanceReminders ? ` · ${r.balanceReminders} rappel${r.balanceReminders > 1 ? "s" : ""} envoyé${r.balanceReminders > 1 ? "s" : ""}` : ""}</span>
+                    <a href={`/inscription/solde/${r.reference}`} target="_blank" rel="noopener" className="underline">lien de paiement</a>
+                    <input type="hidden" name="registrationId" value={r.id} />
+                    <input name="note" placeholder="Reçu comment ? (virement…)" className="w-44 rounded-lg border border-line px-2 py-1 text-sm" />
+                    <button className="rounded-lg border border-line bg-white px-2.5 py-1 font-semibold">Solde reçu</button>
+                  </form>
+                )
+              )}
+            </div>
+          ))}
         </section>
       )}
 

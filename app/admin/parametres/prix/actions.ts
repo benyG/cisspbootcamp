@@ -8,6 +8,17 @@ import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { PRICED_PROGRAMS, type PricedProgram } from "@/lib/programs";
 
+/** Payment in two instalments (lib/installments.ts): each instalment in whole USD; empty or 0 = not offered. */
+const installmentFields = {
+  installmentUsd: z.union([z.literal(""), z.coerce.number().min(0).max(100_000)]),
+  netticketInstallmentCode: z.string().trim().max(64).optional().or(z.literal("")),
+};
+const installmentInput = (formData: FormData) => ({ installmentUsd: formData.get("installmentUsd") ?? "", netticketInstallmentCode: formData.get("netticketInstallmentCode") ?? "" });
+function installmentData(d: { installmentUsd: number | ""; netticketInstallmentCode?: string }) {
+  const cents = d.installmentUsd === "" ? 0 : Math.round(d.installmentUsd * 100);
+  return { installmentUsd: cents > 0 ? cents : null, netticketInstallmentCode: d.netticketInstallmentCode || null };
+}
+
 /** Amount entered in whole USD, stored in cents (CLAUDE.md). Country list as codes. */
 export async function updateTier(formData: FormData): Promise<void> {
   const session = await auth();
@@ -18,7 +29,8 @@ export async function updateTier(formData: FormData): Promise<void> {
     amountUsd: z.coerce.number().min(0).max(100_000),
     countries: z.string().max(2000),
     netticketTicketCode: z.string().trim().max(64).optional().or(z.literal("")),
-  }).safeParse({ code: formData.get("code"), label: formData.get("label"), amountUsd: formData.get("amountUsd"), countries: formData.get("countries"), netticketTicketCode: formData.get("netticketTicketCode") });
+    ...installmentFields,
+  }).safeParse({ code: formData.get("code"), label: formData.get("label"), amountUsd: formData.get("amountUsd"), countries: formData.get("countries"), netticketTicketCode: formData.get("netticketTicketCode"), ...installmentInput(formData) });
   if (!parsed.success) return;
   const { code, label, amountUsd, countries, netticketTicketCode } = parsed.data;
   await prisma.pricingTier.update({
@@ -26,6 +38,7 @@ export async function updateTier(formData: FormData): Promise<void> {
     data: {
       label,
       netticketTicketCode: netticketTicketCode || null,
+      ...installmentData(parsed.data),
       amountUsd: Math.round(amountUsd * 100),
       countries: countries.split(/[\s,]+/).map((c) => c.trim().toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)),
     },
@@ -44,13 +57,15 @@ export async function updateProgramPrice(formData: FormData): Promise<void> {
     tier: z.string().min(1).max(32),
     amountUsd: z.coerce.number().min(0).max(100_000),
     netticketTicketCode: z.string().trim().max(64).optional().or(z.literal("")),
-  }).safeParse({ program: formData.get("program"), tier: formData.get("tier"), amountUsd: formData.get("amountUsd"), netticketTicketCode: formData.get("netticketTicketCode") });
+    ...installmentFields,
+  }).safeParse({ program: formData.get("program"), tier: formData.get("tier"), amountUsd: formData.get("amountUsd"), netticketTicketCode: formData.get("netticketTicketCode"), ...installmentInput(formData) });
   if (!parsed.success) return;
   const { program, tier, amountUsd, netticketTicketCode } = parsed.data;
+  const data = { amountUsd: Math.round(amountUsd * 100), netticketTicketCode: netticketTicketCode || null, ...installmentData(parsed.data) };
   await prisma.programPrice.upsert({
     where: { program_tier: { program, tier } },
-    create: { program, tier, amountUsd: Math.round(amountUsd * 100), netticketTicketCode: netticketTicketCode || null },
-    update: { amountUsd: Math.round(amountUsd * 100), netticketTicketCode: netticketTicketCode || null },
+    create: { program, tier, ...data },
+    update: data,
   });
   revalidateTag(COHORTS_CACHE_TAG);
   revalidatePath("/admin/parametres/prix");

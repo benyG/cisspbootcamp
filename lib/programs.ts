@@ -86,6 +86,11 @@ export const PROGRAM_PRICES: Record<PricedProgram, Record<"africa" | "internatio
   ia: { africa: 59_000, international: 119_000 },
 };
 
+/** Two-instalment plan seeded with a new price row (Ben, 04/11): each instalment, USD cents. */
+export const PROGRAM_INSTALLMENTS: Partial<Record<PricedProgram, Record<"africa" | "international", number>>> = {
+  ia: { africa: 31_000, international: 62_000 },
+};
+
 /** The five CC domains, in ISC² order, with the share of the exam. */
 export const CC_DOMAINS: ReadonlyArray<{ title: string; weight: string; text: string }> = [
   { title: "Principes de sécurité", weight: "26 %", text: "CIA, gestion des risques, contrôles, éthique et gouvernance : le vocabulaire commun de tout métier cyber." },

@@ -432,7 +432,21 @@ model Registration {
   /// How a "manual" payment reached Ben (virement, espèces…), as he typed it.
   paymentNote String? @map("payment_note") @db.VarChar(200)
 
+  /// When the first payment (or the only one) was confirmed: the seat is taken.
   paidAt DateTime? @map("paid_at")
+
+  /// Payment in two instalments (Ben, 04/11): the part of amountUsd due before
+  /// the first day, USD cents; 0 = paid at once. The first payment is
+  /// amountUsd - balanceUsd and makes the registration `paid` (the seat).
+  balanceUsd                    Int            @default(0) @map("balance_usd")
+  balancePaidAt                 DateTime?      @map("balance_paid_at")
+  balanceMethod                 PaymentMethod? @map("balance_method")
+  /// How a balance paid outside the app reached Ben, as he typed it.
+  balanceNote                   String?        @map("balance_note") @db.VarChar(200)
+  balanceStripeSessionId        String?        @unique @map("balance_stripe_session_id") @db.VarChar(255)
+  balanceNetticketTransactionId String?        @unique @map("balance_netticket_transaction_id") @db.VarChar(255)
+  /// Balance reminders already e-mailed (lib/installments.ts).
+  balanceReminders              Int            @default(0) @map("balance_reminders")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -445,14 +459,18 @@ model Registration {
 }
 
 model PricingTier {
-  code                String  @id @db.VarChar(32)
+  code                     String  @id @db.VarChar(32)
   /// Price in USD cents; 0 means "on request" (enterprise).
-  amountUsd           Int     @map("amount_usd")
+  amountUsd                Int     @map("amount_usd")
   /// ISO 3166-1 alpha-2 country codes mapped to this tier.
-  countries           Json
-  label               String  @db.VarChar(120)
+  countries                Json
+  label                    String  @db.VarChar(120)
   /// Netticket ticket code selling this tier (docs/NETTICKET.md); null = no mobile money.
-  netticketTicketCode String? @map("netticket_ticket_code") @db.VarChar(64)
+  netticketTicketCode      String? @map("netticket_ticket_code") @db.VarChar(64)
+  /// Payment in two instalments (lib/installments.ts): each instalment, USD cents; null = not offered.
+  installmentUsd           Int?    @map("installment_usd")
+  /// Netticket ticket priced at one instalment; null = card only for the two-instalment plan.
+  netticketInstallmentCode String? @map("netticket_installment_code") @db.VarChar(64)
 
   leads Lead[]
 
@@ -749,12 +767,16 @@ model ServiceOrder {
 /// Price of a non-CISSP programme for one pricing tier, USD cents. The CISSP
 /// bootcamp keeps its price on PricingTier (SPECS A4).
 model ProgramPrice {
-  id                  Int     @id @default(autoincrement())
-  program             Program
-  tier                String  @db.VarChar(32)
-  amountUsd           Int     @map("amount_usd")
+  id                       Int     @id @default(autoincrement())
+  program                  Program
+  tier                     String  @db.VarChar(32)
+  amountUsd                Int     @map("amount_usd")
   /// Netticket ticket selling this programme at this tier; null = card only.
-  netticketTicketCode String? @map("netticket_ticket_code") @db.VarChar(64)
+  netticketTicketCode      String? @map("netticket_ticket_code") @db.VarChar(64)
+  /// Payment in two instalments (lib/installments.ts): each instalment, USD cents; null = not offered.
+  installmentUsd           Int?    @map("installment_usd")
+  /// Netticket ticket priced at one instalment; null = card only for the two-instalment plan.
+  netticketInstallmentCode String? @map("netticket_installment_code") @db.VarChar(64)
 
   @@unique([program, tier])
   @@map("program_prices")

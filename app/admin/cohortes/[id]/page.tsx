@@ -172,6 +172,7 @@ export default async function CohortPage({
               </Link>
               <span className="flex items-center gap-2 text-[var(--color-muted)]">
                 {formatUsdCents(r.amountUsd)} · {r.method} · {r.paidAt?.toLocaleDateString("fr-FR")}
+                {r.balanceUsd > 0 && !r.balancePaidAt && <span className="font-semibold text-amber-800">· solde {formatUsdCents(r.balanceUsd)} dû</span>}
                 <form action={sendCohortOnboarding}>
                   <input type="hidden" name="cohortId" value={cohort.id} />
                   <input type="hidden" name="leadId" value={r.lead.id} />

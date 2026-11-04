@@ -3,10 +3,12 @@ import Link from "next/link";
 
 import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { eyebrow, shell } from "@/components/landing/sections";
+import { PlanAmount, PlanChoice } from "@/components/payment/PlanChoice";
 import { TrackView } from "@/components/tracking/TrackView";
 import { formatAdmissionDeadline } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 import { IA_ZONE, journeeSlot, longDate } from "@/lib/ia-days";
+import { twoPaymentPlan } from "@/lib/installments";
 import { openIaEntries } from "@/lib/ia-days-server";
 import { mobileMoneyAvailable } from "@/lib/payments/netticket";
 import { convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
@@ -48,6 +50,9 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
   const price = isQuoteOnly(tierCode) ? null : prices.find((p) => p.tier === tierCode) ?? null;
   const currency = localCurrencyFor(country);
   const local = price && currency !== "USD" ? convertUsdCents(price.amountUsd, currency, rates) : null;
+  // Payment in two instalments (lib/installments.ts), when Ben set an instalment for this tier.
+  const plan = price ? twoPaymentPlan(price.installmentUsd) : null;
+  const firstLocal = plan && currency !== "USD" ? convertUsdCents(plan.firstUsd, currency, rates) : null;
   const selected = entries.find((e) => String(e.cohortId) === entree)?.cohortId ?? entries[0]?.cohortId;
 
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
@@ -73,7 +78,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
               <Link href="/ia/diagnostic" className="mt-4 inline-flex rounded-[14px] border border-line bg-white px-5 py-3 font-extrabold">Faire le diagnostic →</Link>
             </section>
           ) : (
-            <form className="mt-6 grid gap-4">
+            <form className="group mt-6 grid gap-4">
               {t && <input type="hidden" name="t" value={t} />}
               <fieldset className="grid gap-2 rounded-[22px] border border-line bg-white p-5 shadow-[var(--shadow-card)]">
                 <legend className="px-1 text-sm font-bold">Votre J1</legend>
@@ -96,6 +101,17 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
                 </div>
                 <p className="text-[.82rem] text-muted">Tarif {tierCode === "africa" ? "Afrique francophone" : "international"} · {program.hours} h en direct sur {program.days} journées. {program.examNote}</p>
               </fieldset>
+
+              {plan && (
+                <PlanChoice
+                  fullUsd={price.amountUsd}
+                  fullLocal={local !== null ? formatLocal(local, currency) : null}
+                  plan={plan}
+                  firstLocal={firstLocal !== null ? formatLocal(firstLocal, currency) : null}
+                  deadline="votre J1"
+                  mobileTwo={Boolean(price.netticketInstallmentCode) || !process.env.NETTICKET_API_KEY}
+                />
+              )}
 
               {known ? (
                 <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm">{known.firstName}, l’inscription sera au nom de votre diagnostic.</p>
@@ -123,7 +139,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
               )}
 
               <button formAction={payIaByCard} disabled={!stripeReady} className="rounded-[14px] bg-ink px-5 py-4 text-lg font-extrabold text-white disabled:opacity-50">
-                Payer par carte bancaire · {formatUsdCents(price.amountUsd)}
+                Payer par carte bancaire · <PlanAmount full={formatUsdCents(price.amountUsd)} first={plan ? formatUsdCents(plan.firstUsd) : null} />
               </button>
               {mobileReady ? (
                 <details className="rounded-[14px] border border-line bg-white">

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { loadQueue } from "@/lib/action-queue";
 import { calendarHealth } from "@/lib/calendar/google";
+import { waMeLink } from "@/lib/messaging/templates";
 import { formatUsdCents } from "@/lib/pricing";
+import { balanceUrl } from "@/lib/registration";
 
-import { confirmManualPayment, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
+import { confirmBalancePayment, confirmManualPayment, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
 import { markSessionOutcome, remindSessionBooking } from "./conseil/actions";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +26,7 @@ export default async function AdminHomePage() {
     call: items.filter((i) => i.kind === "call"),
     followup: items.filter((i) => i.kind === "followup"),
     payment: items.filter((i) => i.kind === "payment"),
+    balance: items.filter((i) => i.kind === "balance"),
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
     personal: items.filter((i) => i.kind === "personal"),
@@ -112,6 +115,19 @@ export default async function AdminHomePage() {
               <input type="hidden" name="registrationId" value={i.registrationId} />
               <input name="transactionId" placeholder="N° transaction" className="w-32 rounded-lg border border-line px-2 py-1.5 text-sm" />
               <button className={primary}>Confirmer</button>
+            </form>
+          </Row>
+        ))}
+      </Group>
+
+      <Group icon={Wallet} title="Soldes non payés (paiement en deux fois)" count={groups.balance.length}>
+        {groups.balance.map((i) => i.kind === "balance" && (
+          <Row key={`b${i.registrationId}`} name={i.name} meta={`${formatUsdCents(i.balanceUsd)} à régler · ${i.cohortName} · ${i.started ? "a commencé" : "commence demain"} · ${i.reference}`} late={i.started} leadId={i.leadId}>
+            {i.whatsapp && <a href={waMeLink(i.whatsapp, `Bonjour ${i.name.split(" ")[0]}, votre second versement (${formatUsdCents(i.balanceUsd)}) n'est pas encore arrivé. Le lien pour le régler : ${balanceUrl(i.reference)}`)} target="_blank" rel="noopener" className={ghost}>WhatsApp</a>}
+            <form action={confirmBalancePayment} className="flex gap-1">
+              <input type="hidden" name="registrationId" value={i.registrationId} />
+              <input name="note" placeholder="Reçu comment ?" className="w-32 rounded-lg border border-line px-2 py-1.5 text-sm" />
+              <button className={primary}>Solde reçu</button>
             </form>
           </Row>
         ))}

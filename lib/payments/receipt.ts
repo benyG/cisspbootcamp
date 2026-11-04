@@ -13,8 +13,11 @@ export type ReceiptData = {
   method: "stripe" | "netticket" | "manual";
   /** For a manual payment: how it reached Ben (virement, espèces…). */
   paymentNote?: string | null;
+  /** Price of the registration (both instalments when paid in two). */
   amountUsdCents: number;
   amountLocalLabel: string | null;
+  /** Payment in two instalments (lib/installments.ts): what was paid when, what remains. */
+  installments?: { firstUsdCents: number; firstPaidAt: Date; balanceUsdCents: number; balancePaidAt: Date | null; balanceDeadline: string } | null;
   participantName: string;
   participantEmail: string;
   company: string | null;
@@ -70,19 +73,54 @@ export async function buildReceiptPdf(data: ReceiptData): Promise<Uint8Array> {
   text("Montant", { font: bold, size: 10, color: muted, x: 440 });
   y -= 18;
   const program = PROGRAMS[data.program ?? "cissp"];
-  text(`${program.productName} — ${data.cohortName}`, { font: bold, size: data.program === "cc" ? 10 : 11 });
+  // Long names (Bâtisseur IA) wrap inside the designation column, left of the amount.
+  const wrap = (value: string, font: typeof regular, size: number, width = 370): string[] => {
+    const lines: string[] = [];
+    let line = "";
+    for (const word of value.split(" ")) {
+      const next = line ? `${line} ${word}` : word;
+      if (line && font.widthOfTextAtSize(next, size) > width) {
+        lines.push(line);
+        line = word;
+      } else line = next;
+    }
+    return line ? [...lines, line] : lines;
+  };
+  const titleSize = data.program === "cc" ? 10 : 11;
   text(formatUsdCents(data.amountUsdCents), { font: bold, x: 440 });
-  y -= 14;
-  text(program.productLine, { size: 9, color: muted });
+  wrap(`${program.productName} — ${data.cohortName}`, bold, titleSize).forEach((line, i) => {
+    if (i > 0) y -= 13;
+    text(line, { font: bold, size: titleSize });
+  });
+  for (const line of wrap(program.productLine, regular, 9)) {
+    y -= 12;
+    text(line, { size: 9, color: muted });
+  }
   if (data.amountLocalLabel) {
     y -= 12;
     text(`soit ${data.amountLocalLabel}, montant indicatif`, { size: 9, color: muted, x: 440 });
   }
+  const inst = data.installments;
+  const day = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  if (inst) {
+    y -= 22;
+    text(`Premier versement, le ${day(inst.firstPaidAt)}`, { size: 10 });
+    text(formatUsdCents(inst.firstUsdCents), { size: 10, x: 440 });
+    y -= 14;
+    text(inst.balancePaidAt ? `Second versement, le ${day(inst.balancePaidAt)}` : `Second versement, à régler avant le ${inst.balanceDeadline}`, { size: 10, color: inst.balancePaidAt ? ink : muted });
+    text(formatUsdCents(inst.balanceUsdCents), { size: 10, x: 440, color: inst.balancePaidAt ? ink : muted });
+  }
+  const paidUsd = inst && !inst.balancePaidAt ? inst.firstUsdCents : data.amountUsdCents;
   y -= 20;
   page.drawLine({ start: { x: 56, y }, end: { x: 539, y }, thickness: 0.5, color: muted });
   y -= 22;
   text("Total réglé", { font: bold, size: 13 });
-  text(formatUsdCents(data.amountUsdCents), { font: bold, size: 13, x: 440 });
+  text(formatUsdCents(paidUsd), { font: bold, size: 13, x: 440 });
+  if (inst && !inst.balancePaidAt) {
+    y -= 16;
+    text("Reste à régler", { size: 10, color: muted });
+    text(formatUsdCents(inst.balanceUsdCents), { size: 10, color: muted, x: 440 });
+  }
   y -= 16;
   text(`Payé par ${data.method === "stripe" ? "carte bancaire (Stripe)" : data.method === "netticket" ? "mobile money (Netticket)" : `règlement direct${data.paymentNote ? ` (${data.paymentNote})` : ""}`}`, { size: 9, color: muted });
 

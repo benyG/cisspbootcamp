@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { isServiceReference, markServiceOrderPaid } from "@/lib/consulting";
 import { confirmationFromEvent, parseWebhook } from "@/lib/payments/stripe";
-import { markRegistrationPaid } from "@/lib/registration";
+import { seatReferenceOfBalance } from "@/lib/installments";
+import { markBalancePaid, markRegistrationPaid } from "@/lib/registration";
 
 export const dynamic = "force-dynamic";
 
@@ -26,8 +27,11 @@ export async function POST(request: NextRequest) {
   const confirmation = confirmationFromEvent(event);
   if (!confirmation) return NextResponse.json({ received: true, ignored: event.type });
 
-  // CB- references are bootcamp seats, CS- references consulting orders.
-  const mark = isServiceReference(confirmation.reference) ? markServiceOrderPaid : markRegistrationPaid;
+  // CB- references are seats (…-S: the second instalment of a seat), CS- references consulting orders.
+  const seatOfBalance = seatReferenceOfBalance(confirmation.reference);
+  const mark = seatOfBalance
+    ? (input: Parameters<typeof markRegistrationPaid>[0]) => markBalancePaid({ ...input, reference: seatOfBalance, method: "stripe" })
+    : isServiceReference(confirmation.reference) ? markServiceOrderPaid : markRegistrationPaid;
   const result = await mark({
     reference: confirmation.reference,
     amountPaidUsdCents: confirmation.amountPaidUsdCents,

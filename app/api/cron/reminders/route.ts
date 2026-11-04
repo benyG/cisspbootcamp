@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { sendBalanceReminders } from "@/lib/balance-reminders";
 import { sendDueReminders } from "@/lib/booking";
 import { sendSessionReminders } from "@/lib/cohort-sessions-send";
 import { syncCohortStatuses } from "@/lib/cohorts-admin";
@@ -25,6 +26,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders] = await Promise.all([sendDueReminders(), processSeatHolds(), sweepPendingTests(), sendResultReminders(), sendSessionReminders(), syncPendingVideos(), syncCohortStatuses(new Date(), { revalidate: true }), sendPersonalReminders(), syncReplays(), syncEvaluations(), syncIaInvites().catch(() => -1), sendIaReminders().catch(() => -1)]);
-  return NextResponse.json({ ...reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders });
+  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders] = await Promise.all([sendDueReminders(), processSeatHolds(), sweepPendingTests(), sendResultReminders(), sendSessionReminders(), syncPendingVideos(), syncCohortStatuses(new Date(), { revalidate: true }), sendPersonalReminders(), syncReplays(), syncEvaluations(), syncIaInvites().catch(() => -1), sendIaReminders().catch(() => -1), sendBalanceReminders().catch(() => -1)]);
+  return NextResponse.json({ ...reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders });
 }

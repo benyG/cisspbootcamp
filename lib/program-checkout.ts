@@ -6,6 +6,7 @@ import { env } from "@/lib/env";
 import { StripeNotConfiguredError, createCheckoutSession } from "@/lib/payments/stripe";
 import { resolveTierCode } from "@/lib/pricing";
 import { PROGRAMS, type PricedProgram } from "@/lib/programs";
+import { firstDueUsd } from "@/lib/installments";
 import { startRegistration } from "@/lib/registration";
 import { COUNTRIES } from "@/lib/scanner/questions";
 import { createToken } from "@/lib/tokens";
@@ -87,6 +88,14 @@ export function backUrl(formData: FormData, page: string, extra: Record<string, 
 }
 
 const unavailable = "Ce programme n'est pas disponible pour votre pays.";
+const noTwoPayments = "Le paiement en deux fois n'est plus proposé pour ce tarif : choisissez le paiement en une fois.";
+
+/** "two" on the form: payment in two instalments (lib/installments.ts). */
+export const wantsTwoPayments = (formData: FormData) => formData.get("plan") === "two";
+
+function startFailure(reason: string, noCohort: string): string {
+  return reason === "no_cohort" ? noCohort : reason === "no_two_payments" ? noTwoPayments : unavailable;
+}
 
 export async function programCardCheckout(formData: FormData, opts: CheckoutOptions): Promise<never> {
   const parsed = parseContact(formData);
@@ -98,8 +107,8 @@ export async function programCardCheckout(formData: FormData, opts: CheckoutOpti
 
   const program = PROGRAMS[opts.program];
   await recordServerEvent({ name: "pay_click", leadId: resolved.leadId, label: `${opts.program}:stripe` });
-  const started = await startRegistration({ leadId: resolved.leadId, method: "stripe", program: opts.program, cohortId: opts.cohortId });
-  if (!started.registration) return fail(started.reason === "no_cohort" ? opts.noCohort : unavailable);
+  const started = await startRegistration({ leadId: resolved.leadId, method: "stripe", program: opts.program, cohortId: opts.cohortId, twoPayments: wantsTwoPayments(formData) });
+  if (!started.registration) return fail(startFailure(started.reason, opts.noCohort));
   const { registration, offer } = started;
   const lead = await prisma.lead.findUniqueOrThrow({ where: { id: resolved.leadId } });
 
@@ -108,8 +117,8 @@ export async function programCardCheckout(formData: FormData, opts: CheckoutOpti
     checkout = await createCheckoutSession({
       reference: registration.reference,
       registrationId: registration.id,
-      amountUsdCents: registration.amountUsd,
-      productName: `${program.productName} — ${offer.cohort.name}`,
+      amountUsdCents: firstDueUsd(registration),
+      productName: `${program.productName} — ${offer.cohort.name}${registration.balanceUsd > 0 ? " · premier versement" : ""}`,
       description: program.productLine,
       customerEmail: lead.email,
       successUrl: `${env.NEXT_PUBLIC_APP_URL}/inscription/merci?ref=${registration.reference}`,
@@ -143,9 +152,9 @@ export async function programMobileCheckout(formData: FormData, opts: CheckoutOp
   const { markRegistrationPaid } = await import("@/lib/registration");
 
   await recordServerEvent({ name: "pay_click", leadId: resolved.leadId, label: `${opts.program}:netticket` });
-  const started = await startRegistration({ leadId: resolved.leadId, method: "netticket", program: opts.program, cohortId: opts.cohortId });
-  if (!started.registration) return fail(started.reason === "no_cohort" ? opts.noCohort : unavailable);
-  const { registration, offer } = started;
+  const started = await startRegistration({ leadId: resolved.leadId, method: "netticket", program: opts.program, cohortId: opts.cohortId, twoPayments: wantsTwoPayments(formData) });
+  if (!started.registration) return fail(startFailure(started.reason, opts.noCohort));
+  const { registration, checkout } = started;
   const lead = await prisma.lead.findUniqueOrThrow({ where: { id: resolved.leadId } });
 
   if (!process.env.NETTICKET_API_KEY) {
@@ -154,11 +163,11 @@ export async function programMobileCheckout(formData: FormData, opts: CheckoutOp
     await prisma.registration.update({ where: { id: registration.id }, data: { status: "pending_manual" } });
     redirect(url);
   }
-  if (!offer.netticketTicketCode) return fail("Le paiement mobile n'est pas disponible pour ce programme dans votre pays. Utilisez la carte bancaire.");
+  if (!checkout.netticketTicketCode) return fail("Le paiement mobile n'est pas disponible pour ce programme dans votre pays. Utilisez la carte bancaire.");
 
   let result;
   try {
-    result = await createMobilePayment({ email: lead.email, phone: mobile.data.phone, ticketCode: offer.netticketTicketCode, operator: mobile.data.operator, name: `${lead.firstName} ${lead.lastName}`.trim() });
+    result = await createMobilePayment({ email: lead.email, phone: mobile.data.phone, ticketCode: checkout.netticketTicketCode, operator: mobile.data.operator, name: `${lead.firstName} ${lead.lastName}`.trim() });
   } catch (error) {
     if (error instanceof NetticketNotConfiguredError) return fail("Le paiement mobile n'est pas encore activé.");
     console.error(`[${opts.program}] Netticket`, error);
@@ -167,7 +176,7 @@ export async function programMobileCheckout(formData: FormData, opts: CheckoutOp
   if (result.status === "failed") return fail(`Paiement refusé : ${result.message}`);
   if (result.transactionId) await prisma.registration.update({ where: { id: registration.id }, data: { netticketTransactionId: result.transactionId } });
   if (result.status === "success" && result.transactionId && (await checkTransaction(result.transactionId)) === "successful") {
-    await markRegistrationPaid({ reference: registration.reference, amountPaidUsdCents: registration.amountUsd, paidAt: new Date(), netticketTransactionId: result.transactionId });
+    await markRegistrationPaid({ reference: registration.reference, amountPaidUsdCents: firstDueUsd(registration), paidAt: new Date(), netticketTransactionId: result.transactionId });
   }
   redirect(`/inscription/merci?ref=${registration.reference}&mobile=1`);
 }
