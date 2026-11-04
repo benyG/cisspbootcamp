@@ -10,6 +10,7 @@ import { eyebrow, shell } from "@/components/landing/sections";
 import { storedBrief } from "@/lib/ia-brief-schema";
 import { planByToken } from "@/lib/ia-plan-server";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
+import { iaPath } from "@/lib/ia-domain";
 
 export const metadata: Metadata = { title: "Mon calendrier · Bâtisseur IA", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function IaCalendarPage({ params }: { params: Promise<{ tok
         <p className="-mt-1 text-ink-2">Chaque samedi ou dimanche ouvert porte une journée. Prenez la prochaine J2, J3, J4 et J5 que vous pouvez suivre, dans l’ordre. Les heures s’affichent dans votre fuseau.</p>
         <section className="rounded-[18px] border border-ink bg-white p-4">
           <h2 className="font-extrabold">Avant la J1</h2>
-          <p className="mt-1 text-[.92rem] text-ink-2">Créez vos comptes et ouvrez Claude Code : 30 minutes, deux ou trois jours avant. <Link href="/ia/guide" className="font-bold underline underline-offset-4">Le guide de préparation →</Link></p>
+          <p className="mt-1 text-[.92rem] text-ink-2">Créez vos comptes et ouvrez Claude Code : 30 minutes, deux ou trois jours avant. <Link href={iaPath("/ia/guide")} className="font-bold underline underline-offset-4">Le guide de préparation →</Link></p>
         </section>
         <BriefForm token={token} initial={storedBrief(data.plan.brief)} savedAt={data.plan.briefAt?.toISOString() ?? null} />
         <h2 className="mt-2 text-[1.1rem] font-extrabold">Mes journées</h2>

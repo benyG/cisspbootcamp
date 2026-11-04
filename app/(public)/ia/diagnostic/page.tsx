@@ -5,11 +5,12 @@ import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { eyebrow, shell } from "@/components/landing/sections";
 import { COUNTRIES } from "@/lib/scanner/questions";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
+import { iaPath } from "@/lib/ia-domain";
 
 export const metadata: Metadata = {
   title: "Diagnostic d’automatisation · Bâtisseur IA",
   description: "Cinq questions, trois minutes : les trois automatisations que votre application peut prendre en charge en premier.",
-  alternates: { canonical: "/ia/diagnostic" },
+  alternates: { canonical: iaPath("/ia/diagnostic") },
   openGraph: { title: "Diagnostic d’automatisation · Bâtisseur IA", description: "Cinq questions, trois minutes : les trois automatisations que votre application peut prendre en charge en premier.", siteName: "Bâtisseur IA", type: "website", locale: "fr_FR" },
   twitter: { card: "summary_large_image", title: "Diagnostic d’automatisation · Bâtisseur IA" },
 };

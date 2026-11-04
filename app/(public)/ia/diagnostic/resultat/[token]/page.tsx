@@ -8,6 +8,7 @@ import { btnGhost, btnPrimary, eyebrow, shell } from "@/components/landing/secti
 import { openIaEntries } from "@/lib/ia-days-server";
 import { diagnosticByToken } from "@/lib/ia-diagnostic-server";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
+import { iaPath } from "@/lib/ia-domain";
 
 export const metadata: Metadata = { title: "Votre diagnostic · Bâtisseur IA", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -44,11 +45,11 @@ export default async function IaResultPage({ params }: { params: Promise<{ token
         </div>
         <div className="flex flex-wrap gap-2">
           {hasEntries ? (
-            <Link href={`/ia/inscription?t=${token}`} className={btnPrimary}>Réserver ma place</Link>
+            <Link href={iaPath(`/ia/inscription?t=${token}`)} className={btnPrimary}>Réserver ma place</Link>
           ) : (
-            <Link href="/ia#programme" className={btnPrimary}>Voir le programme et le prix</Link>
+            <Link href={iaPath("/ia#programme")} className={btnPrimary}>Voir le programme et le prix</Link>
           )}
-          <Link href="/ia/diagnostic" className={btnGhost}>Refaire le diagnostic</Link>
+          <Link href={iaPath("/ia/diagnostic")} className={btnGhost}>Refaire le diagnostic</Link>
         </div>
         <p className="text-[.85rem] text-muted">Ce résultat vous a aussi été envoyé par e-mail.{hasEntries ? "" : " Ben vous écrit dès l’ouverture des inscriptions."}</p>
       </main>

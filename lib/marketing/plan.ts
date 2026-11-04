@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { iaUrl } from "@/lib/ia-domain";
 
 /**
  * Cohort marketing (Ben, 28/09): what the admin marketing page computes
@@ -226,7 +227,9 @@ export function trackedLink(appUrl: string, channel: Channel, cohortId: number |
     utm_campaign: cohortId ? `cohorte-${cohortId}` : "cohorte",
     utm_content: code,
   });
-  return `${appUrl}${ALL_DESTINATIONS[destination].path}?${params.toString()}`;
+  const path = `${ALL_DESTINATIONS[destination].path}?${params.toString()}`;
+  // Bâtisseur IA pages live on their own domain once it is set (lib/ia-domain.ts).
+  return path.startsWith("/ia") ? iaUrl(path, appUrl) : `${appUrl}${path}`;
 }
 
 /** Replaces the [LIEN] placeholder the model writes with the tracked link. */

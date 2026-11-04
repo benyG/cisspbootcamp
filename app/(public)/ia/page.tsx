@@ -12,13 +12,15 @@ import { openIaEntries } from "@/lib/ia-days-server";
 import { PROGRAMS } from "@/lib/programs";
 import { loadRates } from "@/lib/registration";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
+import { iaDomain, iaPath } from "@/lib/ia-domain";
+import { env } from "@/lib/env";
 
 const TITLE = "Bâtisseur IA : votre application en ligne en 5 journées, avec Claude Code";
 const DESCRIPTION = "Bootcamp en français, le week-end : créez l’application de votre entreprise et automatisez vente, relances, chiffres et comptabilité avec Claude Code. Pas besoin de savoir coder.";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/ia" },
+  alternates: { canonical: iaPath("/ia") },
   // Not the CISSP card when the link is shared on WhatsApp or LinkedIn.
   openGraph: { title: TITLE, description: DESCRIPTION, siteName: "Bâtisseur IA", type: "website", locale: "fr_FR" },
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
@@ -62,7 +64,7 @@ export default async function IaPage() {
               ))}
             </ul>
             <div className="mt-6 flex flex-wrap gap-2">
-              <Link href="/ia/diagnostic" className={btnPrimary}>Faire le diagnostic · 3 min</Link>
+              <Link href={iaPath("/ia/diagnostic")} className={btnPrimary}>Faire le diagnostic · 3 min</Link>
               <a href="#programme" className={btnGhost}>Voir le programme</a>
             </div>
             <p className="mt-2 text-[.85rem] text-muted">Gratuit, résultat immédiat.</p>
@@ -84,11 +86,11 @@ export default async function IaPage() {
             </div>
             {entries.length ? (
               <>
-                <Link href="/ia/inscription" className={btnPrimary + " mt-5 w-full"}>Réserver ma place →</Link>
+                <Link href={iaPath("/ia/inscription")} className={btnPrimary + " mt-5 w-full"}>Réserver ma place →</Link>
                 <p className="mt-3 text-[.82rem] text-muted">Carte bancaire ou mobile money. Place confirmée dès réception du paiement, reçu par e-mail.</p>
               </>
             ) : (
-              <Link href="/ia/diagnostic" className={btnPrimary + " mt-5 w-full"}>Faire le diagnostic →</Link>
+              <Link href={iaPath("/ia/diagnostic")} className={btnPrimary + " mt-5 w-full"}>Faire le diagnostic →</Link>
             )}
           </div>
         </section>
@@ -131,7 +133,7 @@ export default async function IaPage() {
 
         <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-line bg-white p-5">
           <p className="text-ink-2"><b className="text-ink">Former une équipe ?</b> Le Bâtisseur IA en groupe réservé, sur site ou en ligne, aux dates de votre entreprise.</p>
-          <Link href="/entreprises?formation=ia" className={btnGhost}>Demander un devis</Link>
+          <Link href={iaDomain() ? `${env.NEXT_PUBLIC_APP_URL}/entreprises?formation=ia` : "/entreprises?formation=ia"} className={btnGhost}>Demander un devis</Link>
         </section>
       </main>
       <IaFooter coach={settings.coach.name} />

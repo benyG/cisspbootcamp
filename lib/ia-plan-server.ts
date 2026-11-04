@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 import { IA_JOURNEES, IA_ZONE, type IaDay, JOURNEES, type Picks, checkPicks, journeeSlot, shortDate } from "@/lib/ia-days";
 import { sendEmail } from "@/lib/messaging/email";
 import { PROGRAMS } from "@/lib/programs";
+import { iaUrl } from "@/lib/ia-domain";
 
 /**
  * Bâtisseur IA participant calendars (lib/ia-days.ts): the page where a
@@ -19,7 +20,7 @@ import { PROGRAMS } from "@/lib/programs";
 export type PlanResult = { ok: true; message: string } | { ok: false; error: string };
 
 const appUrl = () => env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
-export const iaPlanUrl = (token: string) => `${appUrl()}/ia/calendrier/${token}`;
+export const iaPlanUrl = (token: string) => iaUrl(`/ia/calendrier/${token}`, appUrl());
 const validToken = (token: string) => /^[A-Za-z0-9_-]{20,64}$/.test(token);
 
 /** Open days from the participant's J1 on, with seats taken, and their own seats. */
@@ -104,7 +105,7 @@ export async function syncDayInvites(dayId: number, now = new Date()): Promise<n
     const j = JOURNEES[day.journee - 1]!;
     const event = await createSessionEvent({
       summary: `${PROGRAMS.ia.name} · J${day.journee} · ${j.title}`,
-      description: `J${day.journee} sur ${IA_JOURNEES} : ${j.text}\n\n5 h de formation et 1 h de pause. Votre calendrier : ${appUrl()}/ia`,
+      description: `J${day.journee} sur ${IA_JOURNEES} : ${j.text}\n\n5 h de formation et 1 h de pause. Le programme : ${iaUrl("/ia", appUrl())}`,
       start: startsAt,
       end: endsAt,
       timeZone: IA_ZONE,
@@ -154,7 +155,7 @@ export async function sendIaReminders(now = new Date()): Promise<number> {
         "",
         seat.day.meetUrl ? `Le lien de la visio : ${seat.day.meetUrl} (il est aussi dans l’invitation de votre agenda, à l’heure de votre fuseau).` : "Le lien de la visio est dans l’invitation de votre agenda, à l’heure de votre fuseau.",
         seat.journee === 1
-          ? `Avant de commencer, vérifiez que vos comptes Claude, GitHub et Vercel sont prêts : ${appUrl()}/ia/guide`
+          ? `Avant de commencer, vérifiez que vos comptes Claude, GitHub et Vercel sont prêts : ${iaUrl("/ia/guide", appUrl())}`
           : "Ayez votre ordinateur chargé, votre compte Claude ouvert et votre application sous la main.",
         ...(plan ? ["", `Votre calendrier : ${iaPlanUrl(plan.token)}`] : []),
         "",

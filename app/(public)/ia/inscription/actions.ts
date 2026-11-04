@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/db";
 import { type CheckoutOptions, programCardCheckout, programMobileCheckout } from "@/lib/program-checkout";
+import { env } from "@/lib/env";
+import { iaOrigin, iaPath } from "@/lib/ia-domain";
 
 /**
  * Bâtisseur IA registration: the person picks an entry (J1 date), is known
@@ -12,7 +14,8 @@ function options(formData: FormData): CheckoutOptions {
   const entry = Number(formData.get("entree"));
   return {
     program: "ia",
-    page: "/ia/inscription",
+    page: iaPath("/ia/inscription"),
+    origin: iaOrigin(env.NEXT_PUBLIC_APP_URL),
     source: "ia_inscription",
     cohortId: Number.isInteger(entry) && entry > 0 ? entry : undefined,
     noCohort: "Cette date d'entrée n'est plus disponible. Choisissez-en une autre.",

@@ -9,6 +9,7 @@ import { resolveTierCode } from "@/lib/pricing";
 import { PROGRAMS } from "@/lib/programs";
 import { COUNTRIES } from "@/lib/scanner/questions";
 import { createToken } from "@/lib/tokens";
+import { iaUrl } from "@/lib/ia-domain";
 
 /**
  * Records a Bâtisseur IA diagnostic: the person sees the result right away
@@ -36,7 +37,7 @@ export type IaSubmission = z.input<typeof submissionSchema>;
 export type IaSubmitResult = { ok: true; token: string } | { ok: false; error: string };
 
 const appUrl = () => env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
-export const resultUrl = (token: string) => `${appUrl()}/ia/diagnostic/resultat/${token}`;
+export const resultUrl = (token: string) => iaUrl(`/ia/diagnostic/resultat/${token}`, appUrl());
 
 export function resultEmail(firstName: string, d: IaDiagnosis, token: string, unsubscribeToken: string): { subject: string; text: string } {
   return {
