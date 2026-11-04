@@ -20,6 +20,7 @@ import { composeVisual } from "@/lib/marketing/compose";
 import { generatePhoto, readBytes, startVideo, syncVideo } from "@/lib/minimax";
 import { sendEmail } from "@/lib/messaging/email";
 import { recommendedService, serviceDefinition } from "@/lib/services";
+import { iaUrl } from "@/lib/ia-domain";
 
 async function requireAdmin() {
   const session = await auth();
@@ -253,7 +254,7 @@ async function draftIaFollowup(input: { leadId: number; cohortId: number; channe
   const offer = input.segment === "ia_prepare"
     ? `Sa place pour l'${facts.name.charAt(0).toLowerCase()}${facts.name.slice(1)}, avec une séance d'accueil d'une heure avant la J1 pour installer les outils ensemble.`
     : `Sa place pour l'${facts.name.charAt(0).toLowerCase()}${facts.name.slice(1)} : elle peut démarrer directement à la J1.`;
-  const link = `${env.NEXT_PUBLIC_APP_URL}/ia/inscription?t=${diagnostic.token}&entree=${facts.id}`;
+  const link = iaUrl(`/ia/inscription?t=${diagnostic.token}&entree=${facts.id}`, env.NEXT_PUBLIC_APP_URL);
   const draft = await draftFollowup({ kind: "ia", facts: factsForModel(facts), channel: input.channel, person, segment: SEGMENT_REASON[input.segment], offer, link: "l'inscription au Bâtisseur IA, avec ses coordonnées déjà reconnues et cette date d'entrée présélectionnée ; paiement par carte ou mobile money" });
   if (!draft.ok) return draft;
   let text = withLink(draft.text, link);

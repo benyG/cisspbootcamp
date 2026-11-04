@@ -18,6 +18,7 @@ import { COUNTRIES } from "@/lib/scanner/questions";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
 import { payIaByCard, payIaByMobileMoney } from "./actions";
+import { iaPath } from "@/lib/ia-domain";
 
 export const metadata: Metadata = {
   title: "Réserver ma place · Bâtisseur IA",
@@ -64,7 +65,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
       <IaTopbar />
       <main className={shell + " pb-16 sm:pb-20"}>
         <div className="mx-auto max-w-xl pt-2 sm:pt-6">
-          <Link href="/ia" className="text-sm text-muted">← Le programme</Link>
+          <Link href={iaPath("/ia")} className="text-sm text-muted">← Le programme</Link>
           <div className={eyebrow + " mt-4"}>Inscription · {program.name}</div>
           <h1 className="display mt-3 text-[clamp(1.9rem,4vw,3rem)] leading-[1] font-black tracking-[-.04em]">{known ? `${known.firstName}, réservez votre place.` : "Réservez votre place."}</h1>
 
@@ -75,7 +76,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
             <section className="mt-6 rounded-[22px] border border-line bg-white p-5">
               <p className="font-bold">{!entries.length ? "Aucune date d’entrée n’est ouverte pour le moment." : "Votre tarif se fait sur devis."}</p>
               <p className="mt-1 text-ink-2">{!entries.length ? "Les prochaines dates arrivent. Faites le diagnostic : Ben vous écrit dès l’ouverture." : "Écrivez à Ben pour une proposition adaptée à votre organisation."}</p>
-              <Link href="/ia/diagnostic" className="mt-4 inline-flex rounded-[14px] border border-line bg-white px-5 py-3 font-extrabold">Faire le diagnostic →</Link>
+              <Link href={iaPath("/ia/diagnostic")} className="mt-4 inline-flex rounded-[14px] border border-line bg-white px-5 py-3 font-extrabold">Faire le diagnostic →</Link>
             </section>
           ) : (
             <form className="group mt-6 grid gap-4">

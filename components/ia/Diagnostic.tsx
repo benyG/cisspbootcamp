@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { submitIaDiagnosticAction } from "@/app/(public)/ia/diagnostic/actions";
+import { iaPath } from "@/lib/ia-domain";
 import { rememberUtm } from "@/lib/tracking/client";
 import { ACTIVITIES, EASE, HOURS, type IaAnswers, TASKS, TOOLS } from "@/lib/ia-diagnostic";
 import { track } from "@/lib/tracking/client";
@@ -56,7 +57,7 @@ export function Diagnostic({ countries }: { countries: Option[] }) {
           contact: { firstName: get("firstName"), email: get("email"), country: get("country"), whatsapp: get("whatsapp"), consent: d.get("consent") === "on", website: get("website") },
           utm: rememberUtm(),
         });
-        if (result.ok) router.push(`/ia/diagnostic/resultat/${result.token}`);
+        if (result.ok) router.push(iaPath(`/ia/diagnostic/resultat/${result.token}`));
         else setError(result.error);
       } catch {
         setError("La connexion a échoué. Vérifiez votre réseau et réessayez.");

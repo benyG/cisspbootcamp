@@ -30,6 +30,8 @@ export type CheckoutOptions = {
   /** Cohort the person picked (Bâtisseur IA entry); default: the next open one. */
   cohortId?: number;
   noCohort: string;
+  /** Site the person pays from, for Stripe's return links: the IA domain for Bâtisseur IA (lib/ia-domain.ts). */
+  origin?: string;
 };
 
 const countryCode = z.string().length(2).refine((value) => COUNTRIES.some((c) => c.value === value), "Pays inconnu");
@@ -121,8 +123,8 @@ export async function programCardCheckout(formData: FormData, opts: CheckoutOpti
       productName: `${program.productName} — ${offer.cohort.name}${registration.balanceUsd > 0 ? " · premier versement" : ""}`,
       description: program.productLine,
       customerEmail: lead.email,
-      successUrl: `${env.NEXT_PUBLIC_APP_URL}/inscription/merci?ref=${registration.reference}`,
-      cancelUrl: `${env.NEXT_PUBLIC_APP_URL}${backUrl(formData, opts.page, { annule: "1" })}`,
+      successUrl: `${opts.origin ?? env.NEXT_PUBLIC_APP_URL}/inscription/merci?ref=${registration.reference}`,
+      cancelUrl: `${opts.origin ?? env.NEXT_PUBLIC_APP_URL}${backUrl(formData, opts.page, { annule: "1" })}`,
     });
   } catch (error) {
     if (error instanceof StripeNotConfiguredError) return fail("Le paiement par carte n'est pas encore activé.");

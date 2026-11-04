@@ -5,6 +5,7 @@ import Link from "next/link";
 import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { eyebrow, shell } from "@/components/landing/sections";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
+import { iaPath } from "@/lib/ia-domain";
 
 export const metadata: Metadata = {
   title: "Préparer sa J1 · Bâtisseur IA",
@@ -94,7 +95,7 @@ export default async function IaGuidePage() {
           <p className="mt-1">Répondez simplement à l’e-mail de confirmation de votre place{whatsapp ? <>, ou écrivez à Ben sur <a href={whatsapp} className="underline">WhatsApp</a></> : null}, avec une capture d’écran. Si l’ordinateur n’est pas votre point fort, une séance d’accueil d’une heure avant la J1 installe tout avec vous.</p>
         </section>
 
-        <p className="text-[.85rem] text-muted"><Link href="/ia" className="underline">Le programme des 5 journées</Link></p>
+        <p className="text-[.85rem] text-muted"><Link href={iaPath("/ia")} className="underline">Le programme des 5 journées</Link></p>
       </main>
       <IaFooter coach={settings.coach.name} />
     </>
