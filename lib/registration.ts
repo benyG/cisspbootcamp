@@ -8,6 +8,7 @@ import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { nextFollowupAt } from "@/lib/followups";
+import { type TwoPaymentPlan, balanceReference, firstDueUsd, twoPaymentPlan } from "@/lib/installments";
 import { sendEmail } from "@/lib/messaging/email";
 import { type RateTable, convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { PROGRAMS, type ProgramCode } from "@/lib/programs";
@@ -84,7 +85,16 @@ export type Offer = {
   amountLocal: number | null;
   localLabel: string | null;
   seatsLeft: number;
+  /** Payment in two instalments, when the price row offers it (lib/installments.ts). */
+  twoPayments: (TwoPaymentPlan & { firstLabel: string; balanceLabel: string; totalLabel: string; firstLocalLabel: string | null; netticketTicketCode: string | null }) | null;
 };
+
+/** The "avant le …" of the balance: the first day's date, never a clock time (Ben). */
+export function balanceDeadline(startsAt: Date): string {
+  return startsAt.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+}
+
+export const balanceUrl = (reference: string) => `${env.NEXT_PUBLIC_APP_URL}/inscription/solde/${reference}`;
 
 /**
  * What the registration page shows a lead: cohort, price, local equivalent.
@@ -105,7 +115,12 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
   if (!tierRow) return { offer: null, reason: "quote_only" };
   const programPrice = program === "cissp" ? null : await prisma.programPrice.findUnique({ where: { program_tier: { program, tier: tierCode } } });
   if (program !== "cissp" && !programPrice) return { offer: null, reason: "quote_only" };
-  const tier = { amountUsd: programPrice?.amountUsd ?? tierRow.amountUsd, netticketTicketCode: programPrice ? programPrice.netticketTicketCode : tierRow.netticketTicketCode };
+  const tier = {
+    amountUsd: programPrice?.amountUsd ?? tierRow.amountUsd,
+    netticketTicketCode: programPrice ? programPrice.netticketTicketCode : tierRow.netticketTicketCode,
+    installmentUsd: programPrice ? programPrice.installmentUsd : tierRow.installmentUsd,
+    netticketInstallmentCode: programPrice ? programPrice.netticketInstallmentCode : tierRow.netticketInstallmentCode,
+  };
 
   // Bâtisseur IA: the person picks their entry (J1 date); otherwise the next open cohort.
   const open = await loadOpenCohorts(now, leadId, program);
@@ -124,7 +139,10 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
   const amountUsd = Math.max(0, tier.amountUsd - (credit?.creditUsd ?? 0));
 
   const currencyLocal = localCurrencyFor(lead.country);
-  const amountLocal = convertUsdCents(amountUsd, currencyLocal, await loadRates());
+  const rates = await loadRates();
+  const amountLocal = convertUsdCents(amountUsd, currencyLocal, rates);
+  const plan = twoPaymentPlan(tier.installmentUsd, credit?.creditUsd ?? 0);
+  const firstLocal = plan ? convertUsdCents(plan.firstUsd, currencyLocal, rates) : null;
 
   return {
     offer: {
@@ -142,6 +160,16 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
       amountLocal,
       localLabel: amountLocal !== null && currencyLocal !== "USD" ? formatLocal(amountLocal, currencyLocal) : null,
       seatsLeft: remainingSeats(cohort),
+      twoPayments: plan
+        ? {
+            ...plan,
+            firstLabel: formatUsdCents(plan.firstUsd),
+            balanceLabel: formatUsdCents(plan.balanceUsd),
+            totalLabel: formatUsdCents(plan.totalUsd),
+            firstLocalLabel: firstLocal !== null && currencyLocal !== "USD" ? formatLocal(firstLocal, currencyLocal) : null,
+            netticketTicketCode: tier.netticketInstallmentCode,
+          }
+        : null,
     },
   };
 }
@@ -151,25 +179,33 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
  * has one pending for that cohort, it is reused so a retried checkout does
  * not multiply rows.
  */
-export async function startRegistration(input: { leadId: number; method: "stripe" | "netticket"; program?: ProgramCode; cohortId?: number }) {
+export async function startRegistration(input: { leadId: number; method: "stripe" | "netticket"; program?: ProgramCode; cohortId?: number; twoPayments?: boolean }) {
   const result = await buildOffer(input.leadId, new Date(), input.program ?? "cissp", input.cohortId);
   if (!result.offer) return { registration: null, reason: result.reason } as const;
   const { offer } = result;
+  // Two instalments asked but no longer offered (price changed): say so rather than charge in full.
+  const plan = input.twoPayments ? offer.twoPayments : null;
+  if (input.twoPayments && !plan) return { registration: null, reason: "no_two_payments" } as const;
+  const amountUsd = plan ? plan.totalUsd : offer.amountUsdCents;
+  const balanceUsd = plan ? plan.balanceUsd : 0;
+  /** What this checkout charges now, and with which Netticket ticket. */
+  const checkout = { amountUsd: amountUsd - balanceUsd, netticketTicketCode: plan ? plan.netticketTicketCode : offer.netticketTicketCode };
 
   const existing = await prisma.registration.findFirst({
-    where: { leadId: input.leadId, cohortId: offer.cohort.id, status: { in: ["pending", "pending_manual"] }, method: input.method },
+    where: { leadId: input.leadId, cohortId: offer.cohort.id, status: { in: ["pending", "pending_manual"] }, method: input.method, amountUsd, balanceUsd },
   });
-  if (existing) return { registration: existing, offer } as const;
+  if (existing) return { registration: existing, offer, checkout } as const;
 
   const registration = await prisma.registration.create({
     data: {
       leadId: input.leadId,
       cohortId: offer.cohort.id,
       tier: offer.tierCode,
-      amountUsd: offer.amountUsdCents,
+      amountUsd,
+      balanceUsd,
       creditUsd: offer.creditUsdCents,
       currencyLocal: offer.currencyLocal === "USD" ? null : offer.currencyLocal,
-      amountLocal: offer.currencyLocal === "USD" ? null : offer.amountLocal,
+      amountLocal: offer.currencyLocal === "USD" || plan ? null : offer.amountLocal,
       method: input.method,
       reference: newReference(),
     },
@@ -177,7 +213,7 @@ export async function startRegistration(input: { leadId: number; method: "stripe
 
   await prisma.$transaction([
     prisma.actionLog.create({
-      data: { leadId: input.leadId, type: "registration_started", payload: { registrationId: registration.id, method: input.method } },
+      data: { leadId: input.leadId, type: "registration_started", payload: { registrationId: registration.id, method: input.method, twoPayments: Boolean(plan) } },
     }),
     // Seat reserved, not paid → J+1 then J+3 (SPECS A6).
     prisma.lead.update({
@@ -186,7 +222,7 @@ export async function startRegistration(input: { leadId: number; method: "stripe
     }),
   ]);
 
-  return { registration, offer } as const;
+  return { registration, offer, checkout } as const;
 }
 
 /**
@@ -242,15 +278,17 @@ export async function markRegistrationPaid(input: {
   if (!registration) return { ok: false, error: `Référence inconnue : ${input.reference}` };
   if (registration.status === "paid") return { ok: true, alreadyPaid: true };
 
-  if (input.amountPaidUsdCents < registration.amountUsd) {
+  // With two instalments, the first payment is what takes the seat.
+  const expected = firstDueUsd(registration);
+  if (input.amountPaidUsdCents < expected) {
     await prisma.actionLog.create({
       data: {
         leadId: registration.leadId,
         type: "payment_amount_mismatch",
-        payload: { reference: input.reference, expected: registration.amountUsd, received: input.amountPaidUsdCents },
+        payload: { reference: input.reference, expected, received: input.amountPaidUsdCents },
       },
     });
-    return { ok: false, error: `Montant reçu ${input.amountPaidUsdCents} < attendu ${registration.amountUsd}` };
+    return { ok: false, error: `Montant reçu ${input.amountPaidUsdCents} < attendu ${expected}` };
   }
 
   // Seat check at confirmation time, not at checkout time, within the same programme.
@@ -309,6 +347,7 @@ export async function markRegistrationPaid(input: {
   await sendSeatConfirmation({
     lead: registration.lead,
     amountUsd: registration.amountUsd,
+    balanceUsd: registration.balanceUsd,
     creditUsd: registration.creditUsd,
     reference: registration.reference,
     program,
@@ -320,10 +359,67 @@ export async function markRegistrationPaid(input: {
   return { ok: true, alreadyPaid: false };
 }
 
+/**
+ * The only way a balance (second instalment) becomes paid: a verified
+ * Stripe webhook, a Netticket server-side check, or Ben's manual
+ * confirmation. Idempotent, like markRegistrationPaid.
+ */
+export async function markBalancePaid(input: {
+  /** The seat's reference (without the balance suffix). */
+  reference: string;
+  amountPaidUsdCents: number;
+  paidAt: Date;
+  method: "stripe" | "netticket" | "manual";
+  stripeSessionId?: string;
+  netticketTransactionId?: string;
+  note?: string;
+}): Promise<PaidResult> {
+  const registration = await prisma.registration.findUnique({ where: { reference: input.reference }, include: { lead: true, cohort: true } });
+  if (!registration) return { ok: false, error: `Référence inconnue : ${input.reference}` };
+  if (registration.balancePaidAt) return { ok: true, alreadyPaid: true };
+  if (registration.status !== "paid" || registration.balanceUsd <= 0) return { ok: false, error: `Aucun solde attendu pour ${input.reference}` };
+  if (input.amountPaidUsdCents < registration.balanceUsd) {
+    await prisma.actionLog.create({
+      data: { leadId: registration.leadId, type: "payment_amount_mismatch", payload: { reference: balanceReference(input.reference), expected: registration.balanceUsd, received: input.amountPaidUsdCents } },
+    });
+    return { ok: false, error: `Montant reçu ${input.amountPaidUsdCents} < solde attendu ${registration.balanceUsd}` };
+  }
+
+  // Conditional update: two confirmations racing (webhook and cron) record and e-mail once.
+  const updated = await prisma.registration.updateMany({
+    where: { id: registration.id, balancePaidAt: null },
+    data: {
+      balancePaidAt: input.paidAt,
+      balanceMethod: input.method,
+      balanceNote: input.note || null,
+      balanceStripeSessionId: input.stripeSessionId ?? registration.balanceStripeSessionId,
+      balanceNetticketTransactionId: input.netticketTransactionId ?? registration.balanceNetticketTransactionId,
+    },
+  });
+  if (updated.count === 0) return { ok: true, alreadyPaid: true };
+  await prisma.actionLog.create({ data: { leadId: registration.leadId, type: "balance_paid", payload: { reference: input.reference, method: input.method, amountUsd: registration.balanceUsd } } });
+  await recordEvent({ name: "paid", leadId: registration.leadId, label: `${input.method}:solde` });
+
+  const cohortName = `${PROGRAMS[registration.cohort.program].name} — ${registration.cohort.name}`;
+  await sendEmail({
+    to: registration.lead.email,
+    subject: `Solde reçu — ${cohortName}`,
+    text:
+      `Bonjour ${registration.lead.firstName},\n\n` +
+      `Votre second versement de ${formatUsdCents(registration.balanceUsd)} est confirmé : votre inscription à la ${cohortName} est entièrement réglée (${formatUsdCents(registration.amountUsd)}).\n\n` +
+      `Référence : ${registration.reference}\n` +
+      `Votre reçu, mis à jour : ${env.NEXT_PUBLIC_APP_URL}/inscription/recu/${registration.reference}\n\n` +
+      `Merci, et à très bientôt.\n\nBen\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${registration.lead.unsubscribeToken}`,
+  }).catch((error) => console.error("[solde] e-mail", error));
+  return { ok: true, alreadyPaid: false };
+}
+
 /** The "votre place est réservée" e-mail, with the receipt link. */
 async function sendSeatConfirmation(input: {
   lead: { email: string; firstName: string; unsubscribeToken: string };
   amountUsd: number;
+  /** Second instalment still due, 0 when paid at once. */
+  balanceUsd?: number;
   creditUsd: number;
   reference: string;
   program: ProgramCode;
@@ -339,7 +435,10 @@ async function sendSeatConfirmation(input: {
     subject: `Votre place est réservée — ${cohortName}`,
     text:
       `Bonjour ${input.lead.firstName},\n\n` +
-      `Votre paiement de ${formatUsdCents(input.amountUsd)} est confirmé${input.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(input.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n` +
+      (input.balanceUsd
+        ? `Votre premier versement de ${formatUsdCents(input.amountUsd - input.balanceUsd)} est confirmé${input.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(input.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n` +
+          `Le second versement, ${formatUsdCents(input.balanceUsd)}, est à régler avant le premier jour, le ${balanceDeadline(input.cohort.startsAt)}, par carte ou mobile money : ${balanceUrl(input.reference)}\nJe vous le rappelle par e-mail une semaine avant.\n\n`
+        : `Votre paiement de ${formatUsdCents(input.amountUsd)} est confirmé${input.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(input.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n`) +
       (input.moved
         ? `La cohorte que vous visiez s'est remplie entre-temps : votre place est sur la suivante, en ${cohortMonth}. Si cette date ne vous convient pas, répondez à ce message.\n\n`
         : "") +

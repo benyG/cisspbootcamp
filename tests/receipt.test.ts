@@ -22,4 +22,23 @@ describe("buildReceiptPdf", () => {
     expect(head).toBe("%PDF-");
     expect(bytes.length).toBeGreaterThan(1_000);
   });
+
+  it("détaille les deux versements, payé et restant (Ben, 04/11)", async () => {
+    const bytes = await buildReceiptPdf({
+      reference: "CB-TEST-2X27",
+      paidAt: new Date("2026-11-04T10:00:00.000Z"),
+      method: "netticket",
+      amountUsdCents: 62_000,
+      amountLocalLabel: null,
+      installments: { firstUsdCents: 31_000, firstPaidAt: new Date("2026-11-04T10:00:00.000Z"), balanceUsdCents: 31_000, balancePaidAt: null, balanceDeadline: "samedi 23 janvier" },
+      participantName: "Awa Diop",
+      participantEmail: "awa@example.com",
+      company: null,
+      cohortName: "Entrée du samedi 23 janvier 2027",
+      program: "ia",
+      issuerName: "Ben — Coach CISSP",
+      issuerEmail: "bonjour@cisspbootcamp.online",
+    });
+    expect(Buffer.from(bytes.slice(0, 5)).toString("latin1")).toBe("%PDF-");
+  });
 });

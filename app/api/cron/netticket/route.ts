@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { checkTransaction } from "@/lib/payments/netticket";
-import { markRegistrationPaid } from "@/lib/registration";
+import { firstDueUsd } from "@/lib/installments";
+import { markBalancePaid, markRegistrationPaid } from "@/lib/registration";
 import { safeEquals } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +27,20 @@ export async function GET(request: NextRequest) {
   for (const r of pending) {
     const status = await checkTransaction(r.netticketTransactionId as string);
     if (status === "successful") {
-      const result = await markRegistrationPaid({ reference: r.reference, amountPaidUsdCents: r.amountUsd, paidAt: new Date(), netticketTransactionId: r.netticketTransactionId ?? undefined });
+      const result = await markRegistrationPaid({ reference: r.reference, amountPaidUsdCents: firstDueUsd(r), paidAt: new Date(), netticketTransactionId: r.netticketTransactionId ?? undefined });
       if (result.ok) paid++;
     }
   }
-  return NextResponse.json({ checked: pending.length, paid });
+
+  // Second instalments paid by mobile money, the same way.
+  const balances = await prisma.registration.findMany({
+    where: { status: "paid", balanceUsd: { gt: 0 }, balancePaidAt: null, balanceNetticketTransactionId: { not: null }, updatedAt: { gte: since } },
+    take: 50,
+  });
+  for (const r of balances) {
+    if ((await checkTransaction(r.balanceNetticketTransactionId as string)) !== "successful") continue;
+    const result = await markBalancePaid({ reference: r.reference, amountPaidUsdCents: r.balanceUsd, paidAt: new Date(), method: "netticket", netticketTransactionId: r.balanceNetticketTransactionId ?? undefined });
+    if (result.ok) paid++;
+  }
+  return NextResponse.json({ checked: pending.length + balances.length, paid });
 }

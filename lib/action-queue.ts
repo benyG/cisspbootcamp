@@ -5,6 +5,7 @@ import { listCohortsWithGauge } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { HOT_LEAD_THRESHOLD, REVIEW_SLA_HOURS, hoursSince } from "@/lib/followups";
+import { BALANCE_ALERT_DAYS, balanceAlert, firstDueUsd } from "@/lib/installments";
 import { leadVars, loadTemplate, renderTemplate, waMeLink } from "@/lib/messaging/templates";
 import { countryLabel, quoteSummary } from "@/lib/quotes";
 
@@ -19,6 +20,7 @@ export type QueueItem =
   | { kind: "session"; orderId: number; leadId: number; name: string; service: string; number: number; total: number; daysSincePaid: number }
   | { kind: "followup"; leadId: number; name: string; heat: number; stage: string; waLink: string | null; emailSubject: string; emailBody: string; email: string; overdueDays: number }
   | { kind: "payment"; registrationId: number; leadId: number; name: string; reference: string; amountUsd: number; cohortName: string; ageHours: number }
+  | { kind: "balance"; registrationId: number; leadId: number; name: string; reference: string; balanceUsd: number; cohortName: string; startsAt: Date; started: boolean; whatsapp: string | null }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
   | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
   | { kind: "personal"; scheduleId: number; cohortId: number; leadId: number; name: string; cohortName: string; hoursWaiting: number }
@@ -109,7 +111,18 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
   }
 
   for (const p of manualPayments) {
-    items.push({ kind: "payment", registrationId: p.id, leadId: p.lead.id, name: `${p.lead.firstName} ${p.lead.lastName}`, reference: p.reference, amountUsd: p.amountUsd, cohortName: p.cohort.name, ageHours: hoursSince(p.createdAt, now) });
+    items.push({ kind: "payment", registrationId: p.id, leadId: p.lead.id, name: `${p.lead.firstName} ${p.lead.lastName}`, reference: p.reference, amountUsd: firstDueUsd(p), cohortName: p.cohort.name, ageHours: hoursSince(p.createdAt, now) });
+  }
+
+  // Second instalments still due on the eve of the first day (Ben, 04/11): Ben decides, nothing automatic.
+  const balances = await prisma.registration.findMany({
+    where: { status: "paid", balanceUsd: { gt: 0 }, balancePaidAt: null, cohort: { startsAt: { lte: new Date(now.getTime() + BALANCE_ALERT_DAYS * 86_400_000), gte: new Date(now.getTime() - 60 * 86_400_000) } } },
+    orderBy: { cohort: { startsAt: "asc" } },
+    include: { lead: { select: { id: true, firstName: true, lastName: true, whatsapp: true } }, cohort: { select: { name: true, startsAt: true } } },
+  });
+  for (const b of balances) {
+    if (!balanceAlert({ ...b, startsAt: b.cohort.startsAt }, now)) continue;
+    items.push({ kind: "balance", registrationId: b.id, leadId: b.lead.id, name: `${b.lead.firstName} ${b.lead.lastName}`, reference: b.reference, balanceUsd: b.balanceUsd, cohortName: b.cohort.name, startsAt: b.cohort.startsAt, started: b.cohort.startsAt.getTime() <= now.getTime(), whatsapp: b.lead.whatsapp });
   }
 
   for (const l of hotLeads) {

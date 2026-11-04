@@ -6,7 +6,8 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { nextFollowupAt, postponedAt } from "@/lib/followups";
-import { markRegistrationPaid } from "@/lib/registration";
+import { firstDueUsd } from "@/lib/installments";
+import { markBalancePaid, markRegistrationPaid } from "@/lib/registration";
 import { holdSeat, releaseHold } from "@/lib/seat-holds";
 import { sendAfterCallEmail } from "@/lib/followups-auto";
 
@@ -89,13 +90,30 @@ export async function confirmManualPayment(formData: FormData): Promise<void> {
 
   await markRegistrationPaid({
     reference: registration.reference,
-    amountPaidUsdCents: registration.amountUsd,
+    amountPaidUsdCents: firstDueUsd(registration),
     paidAt: new Date(),
     netticketTransactionId: parsed.data.transactionId || `manuel-${Date.now()}`,
   });
   await prisma.actionLog.create({ data: { leadId: registration.leadId, type: "payment_confirmed_manually", payload: { registrationId: registration.id } } });
   revalidatePath("/admin");
   revalidatePath("/admin/cohortes");
+}
+
+/**
+ * A second instalment that reached Ben outside the app (transfer, cash,
+ * Netticket's purchase page): his manual confirmation (CLAUDE.md, Paiement).
+ */
+export async function confirmBalancePayment(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const parsed = z.object({ registrationId: id, note: z.string().trim().max(200).optional().or(z.literal("")) })
+    .safeParse({ registrationId: formData.get("registrationId"), note: formData.get("note") ?? "" });
+  if (!parsed.success) return;
+  const registration = await prisma.registration.findUnique({ where: { id: parsed.data.registrationId } });
+  if (!registration || registration.balanceUsd <= 0 || registration.balancePaidAt) return;
+  const result = await markBalancePaid({ reference: registration.reference, amountPaidUsdCents: registration.balanceUsd, paidAt: new Date(), method: "manual", note: parsed.data.note || "confirmé par Ben" });
+  if (result.ok && !result.alreadyPaid) await prisma.actionLog.create({ data: { leadId: registration.leadId, type: "balance_confirmed_manually", payload: { registrationId: registration.id } } });
+  revalidatePath("/admin");
+  revalidatePath(`/admin/leads/${registration.leadId}`);
 }
 
 /** "Inviter à réserver": logged as a contact; the message itself goes via wa.me. */

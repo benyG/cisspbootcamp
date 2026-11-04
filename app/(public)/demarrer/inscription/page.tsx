@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Footer, Topbar, eyebrow, shell } from "@/components/landing/sections";
+import { PlanAmount, PlanChoice } from "@/components/payment/PlanChoice";
 import { TrackView } from "@/components/tracking/TrackView";
 import { formatAdmissionDeadline, formatCohortMonth, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
+import { twoPaymentPlan } from "@/lib/installments";
 import { mobileMoneyAvailable } from "@/lib/payments/netticket";
 import { convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { PROGRAMS } from "@/lib/programs";
-import { loadOpenCohorts, loadRates } from "@/lib/registration";
+import { balanceDeadline, loadOpenCohorts, loadRates } from "@/lib/registration";
 import { COUNTRIES } from "@/lib/scanner/questions";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
@@ -39,6 +41,9 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
   const price = isQuoteOnly(tierCode) ? null : prices.find((p) => p.tier === tierCode) ?? null;
   const currency = localCurrencyFor(country);
   const local = price && currency !== "USD" ? convertUsdCents(price.amountUsd, currency, rates) : null;
+  // Payment in two instalments (lib/installments.ts), when Ben set an instalment for this tier.
+  const plan = price ? twoPaymentPlan(price.installmentUsd) : null;
+  const firstLocal = plan && currency !== "USD" ? convertUsdCents(plan.firstUsd, currency, rates) : null;
 
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
   const mobileReady = mobileMoneyAvailable(country, price?.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
@@ -75,8 +80,18 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
                 <p className="mt-3 text-sm font-semibold">{remainingSeats(cohort)} place{remainingSeats(cohort) > 1 ? "s" : ""} restante{remainingSeats(cohort) > 1 ? "s" : ""} sur {cohort.capacity}</p>
               </section>
 
-              <form className="mt-6 grid gap-4">
+              <form className="group mt-6 grid gap-4">
                 {t && <input type="hidden" name="t" value={t} />}
+                {plan && (
+                  <PlanChoice
+                    fullUsd={price.amountUsd}
+                    fullLocal={local !== null ? formatLocal(local, currency) : null}
+                    plan={plan}
+                    firstLocal={firstLocal !== null ? formatLocal(firstLocal, currency) : null}
+                    deadline={`le premier jour, le ${balanceDeadline(cohort.startsAt)}`}
+                    mobileTwo={Boolean(price.netticketInstallmentCode) || !process.env.NETTICKET_API_KEY}
+                  />
+                )}
                 {known ? (
                   <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm">{known.firstName}, l’inscription sera au nom de votre analyse de profil.</p>
                 ) : (
@@ -103,7 +118,7 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
                 )}
 
                 <button formAction={payProgramByCard} disabled={!stripeReady} className="rounded-[14px] bg-ink px-5 py-4 text-lg font-extrabold text-white disabled:opacity-50">
-                  Payer par carte bancaire · {formatUsdCents(price.amountUsd)}
+                  Payer par carte bancaire · <PlanAmount full={formatUsdCents(price.amountUsd)} first={plan ? formatUsdCents(plan.firstUsd) : null} />
                 </button>
                 {mobileReady ? (
                   <details className="rounded-[14px] border border-line bg-white">

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { formatUsdCents } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,9 @@ export default async function RegistrationThanksPage({
       </h1>
       <p className="text-lg text-[var(--color-muted)]">
         {paid
-          ? "Un e-mail de confirmation avec votre reçu vient de partir. Ben vous écrit avant le démarrage."
+          ? registration && registration.balanceUsd > 0
+            ? `Votre premier versement est confirmé. Un e-mail avec votre reçu et le lien du second versement (${formatUsdCents(registration.balanceUsd)}, avant le premier jour) vient de partir.`
+            : "Un e-mail de confirmation avec votre reçu vient de partir. Ben vous écrit avant le démarrage."
           : mobile
             ? "Confirmez le paiement sur votre téléphone (code USSD ou notification de l'opérateur). Cette page se met à jour toute seule ; vous recevrez aussi un e-mail."
             : "Nous attendons la confirmation de votre banque. Cette page se met à jour toute seule ; vous recevrez aussi un e-mail."}

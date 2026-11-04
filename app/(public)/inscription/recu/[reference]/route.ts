@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { buildReceiptPdf } from "@/lib/payments/receipt";
+import { firstDueUsd } from "@/lib/installments";
 import { formatLocal } from "@/lib/pricing";
+import { balanceDeadline } from "@/lib/registration";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ref
       registration.currencyLocal && registration.amountLocal !== null
         ? formatLocal(registration.amountLocal, registration.currencyLocal)
         : null,
+    installments: registration.balanceUsd > 0
+      ? { firstUsdCents: firstDueUsd(registration), firstPaidAt: registration.paidAt, balanceUsdCents: registration.balanceUsd, balancePaidAt: registration.balancePaidAt, balanceDeadline: balanceDeadline(registration.cohort.startsAt) }
+      : null,
     participantName: `${registration.lead.firstName} ${registration.lead.lastName}`,
     participantEmail: registration.lead.email,
     company: null,
