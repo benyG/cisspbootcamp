@@ -77,7 +77,7 @@ export default async function IaGuidePage() {
         </Step>
 
         <Step n={5} title="Votre fiche projet">
-          <p>Sur votre calendrier personnel (le lien est dans l’e-mail de confirmation de votre place), remplissez la fiche projet : votre activité, les trois tâches à automatiser en premier, vos données. Ben la lit avant la J1 pour que vous démarriez sur votre vrai projet.</p>
+          <p>Sur votre calendrier personnel (le lien est dans l’e-mail de confirmation de votre place), remplissez la fiche projet : votre activité, les trois tâches à automatiser en premier, vos données. L’équipe la lit avant la J1 pour que vous démarriez sur votre vrai projet.</p>
         </Step>
 
         <section className="rounded-[18px] border border-line bg-white p-5">
@@ -92,12 +92,12 @@ export default async function IaGuidePage() {
 
         <section className="rounded-[18px] border border-amber-300 bg-amber-50 p-5 text-amber-950">
           <h2 className="flex items-center gap-2 font-extrabold"><LifeBuoy className="size-5" aria-hidden />Bloqué à une étape ?</h2>
-          <p className="mt-1">Répondez simplement à l’e-mail de confirmation de votre place{whatsapp ? <>, ou écrivez à Ben sur <a href={whatsapp} className="underline">WhatsApp</a></> : null}, avec une capture d’écran. Si l’ordinateur n’est pas votre point fort, une séance d’accueil d’une heure avant la J1 installe tout avec vous.</p>
+          <p className="mt-1">Répondez simplement à l’e-mail de confirmation de votre place{whatsapp ? <>, ou écrivez-nous sur <a href={whatsapp} className="underline">WhatsApp</a></> : null}, avec une capture d’écran. Si l’ordinateur n’est pas votre point fort, une séance d’accueil d’une heure avant la J1 installe tout avec vous.</p>
         </section>
 
         <p className="text-[.85rem] text-muted"><Link href={iaPath("/ia")} className="underline">Le programme des 6 journées</Link></p>
       </main>
-      <IaFooter coach={settings.coach.name} />
+      <IaFooter />
     </>
   );
 }

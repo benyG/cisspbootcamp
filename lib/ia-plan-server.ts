@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 import { IA_JOURNEES, IA_ZONE, type IaDay, JOURNEES, type Picks, checkPicks, journeeSlot, shortDate } from "@/lib/ia-days";
 import { sendEmail } from "@/lib/messaging/email";
 import { PROGRAMS } from "@/lib/programs";
+import { IA_SENDER, IA_SIGNATURE } from "@/lib/ia-brand";
 import { iaUrl } from "@/lib/ia-domain";
 
 /**
@@ -71,6 +72,7 @@ export async function pickJournees(token: string, wanted: Picks, now = new Date(
   const list = added.sort((a, b) => a.journee - b.journee).map((a) => `- J${a.journee}, ${shortDate(a.day.date)} : ${JOURNEES[a.journee - 1]!.title}`);
   await sendEmail({
     to: plan.lead.email,
+    fromName: IA_SENDER,
     subject: `Vos journées sont réservées · ${PROGRAMS.ia.name}`,
     text: [
       `Bonjour ${plan.lead.firstName},`,
@@ -78,11 +80,11 @@ export async function pickJournees(token: string, wanted: Picks, now = new Date(
       "Vos journées sont réservées :",
       ...list,
       "",
-      "L’invitation de chaque journée arrive dans votre agenda, avec le lien de la visio. La veille, je vous envoie un rappel.",
+      "L’invitation de chaque journée arrive dans votre agenda, avec le lien de la visio. La veille, nous vous envoyons un rappel.",
       "",
       `Votre calendrier : ${iaPlanUrl(token)}`,
       "",
-      "Ben",
+      IA_SIGNATURE,
     ].join("\n"),
   }).catch(() => undefined);
   return { ok: true, message: added.length > 1 ? `${added.length} journées réservées.` : "Journée réservée." };
@@ -147,6 +149,7 @@ export async function sendIaReminders(now = new Date()): Promise<number> {
     const plan = await prisma.iaPlan.findUnique({ where: { leadId_cohortId: { leadId: seat.leadId, cohortId: seat.cohortId } }, select: { token: true } });
     const result = await sendEmail({
       to: seat.lead.email,
+      fromName: IA_SENDER,
       subject: `Demain : J${seat.journee} du ${PROGRAMS.ia.name}`,
       text: [
         `Bonjour ${seat.lead.firstName},`,
@@ -160,7 +163,7 @@ export async function sendIaReminders(now = new Date()): Promise<number> {
         ...(plan ? ["", `Votre calendrier : ${iaPlanUrl(plan.token)}`] : []),
         "",
         "À demain,",
-        "Ben",
+        IA_SIGNATURE,
       ].join("\n"),
     });
     if (result.sent) {
@@ -194,5 +197,5 @@ export async function saveBrief(token: string, raw: unknown, now = new Date()): 
     subject: `Fiche projet ${first ? "reçue" : "mise à jour"} : ${`${plan.lead.firstName} ${plan.lead.lastName}`.trim()} · ${PROGRAMS.ia.name}`,
     text: [`${plan.lead.firstName} ${plan.lead.lastName}`.trim() + ` · ${plan.lead.email} · ${PROGRAMS.ia.name} — ${plan.cohort.name}`, "", ...briefLines(parsed.data), "", `Fiche : ${appUrl()}/admin/leads/${plan.leadId}`].join("\n"),
   }).catch(() => undefined);
-  return { ok: true, message: first ? "Fiche envoyée à Ben. Vous pouvez la modifier jusqu’à la J1." : "Fiche mise à jour." };
+  return { ok: true, message: first ? "Fiche envoyée. Vous pouvez la modifier jusqu’à la J1." : "Fiche mise à jour." };
 }

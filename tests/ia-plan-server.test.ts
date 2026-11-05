@@ -120,7 +120,7 @@ describe("Bâtisseur IA, calendrier du participant (Ben, 03/11)", () => {
   it("saves the project sheet and tells Ben, first time and on change", async () => {
     const brief = { business: "Cabinet de formation", users: "Mon équipe", tasks: "Relances et devis", data: "Excel", inspiration: "", domain: "", payments: "both" };
     db.iaPlan.findUnique.mockResolvedValue({ id: 1, leadId: 5, cohortId: 7, briefAt: null, lead, cohort: { name: "Entrée du samedi 23 janvier 2027" } });
-    expect(await saveBrief(TOKEN, brief, now)).toEqual({ ok: true, message: "Fiche envoyée à Ben. Vous pouvez la modifier jusqu’à la J1." });
+    expect(await saveBrief(TOKEN, brief, now)).toEqual({ ok: true, message: "Fiche envoyée. Vous pouvez la modifier jusqu’à la J1." });
     expect(db.iaPlan.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { brief, briefAt: now } });
     const toBen = mail.sendEmail.mock.calls[0][0];
     expect(toBen.to).toBe("ben@x.test");

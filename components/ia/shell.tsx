@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { shell } from "@/components/landing/sections";
 import { iaPath } from "@/lib/ia-domain";
+import { IA_COMPANY } from "@/lib/ia-brand";
 
 /** Bâtisseur IA has its own header: it is not the CISSP site (a separate domain later). */
 export function IaTopbar() {
@@ -19,11 +20,11 @@ export function IaTopbar() {
   );
 }
 
-export function IaFooter({ coach }: { coach: string }) {
+export function IaFooter() {
   return (
     <footer className="border-t border-line py-7 pb-12 text-[.86rem] text-muted">
       <div className={shell + " flex flex-wrap justify-between gap-x-6 gap-y-3.5"}>
-        <span>Bâtisseur IA · Formation en français · {coach}</span>
+        <span>Bâtisseur IA · Une formation {IA_COMPANY}, en français</span>
         <span className="flex flex-wrap gap-x-3">
           <Link href={iaPath("/ia")} className="underline underline-offset-4">Le programme</Link>
           <Link href={iaPath("/ia/diagnostic")} className="underline underline-offset-4">Diagnostic</Link>

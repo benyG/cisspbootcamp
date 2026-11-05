@@ -6,6 +6,7 @@ import { buildReceiptPdf } from "@/lib/payments/receipt";
 import { firstDueUsd } from "@/lib/installments";
 import { formatLocal } from "@/lib/pricing";
 import { balanceDeadline } from "@/lib/registration";
+import { IA_ISSUER } from "@/lib/ia-brand";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ref
     company: null,
     cohortName: registration.cohort.name,
     program: registration.cohort.program,
-    issuerName: "Ben — Coach CISSP",
+    issuerName: registration.cohort.program === "ia" ? IA_ISSUER : "Ben — Coach CISSP",
     issuerEmail: (process.env.EMAIL_FROM ?? "").replace(/.*<|>.*/g, "") || `bonjour@${new URL(env.NEXT_PUBLIC_APP_URL).hostname}`,
   });
 

@@ -16,6 +16,7 @@ import { consultingCredit } from "@/lib/services";
 import { createToken } from "@/lib/tokens";
 import { recordEvent } from "@/lib/tracking/server";
 import { iaUrl } from "@/lib/ia-domain";
+import { senderFor, signatureFor } from "@/lib/ia-brand";
 
 /**
  * Registration to a cohort — SPECS A4/A5.
@@ -404,13 +405,14 @@ export async function markBalancePaid(input: {
   const cohortName = `${PROGRAMS[registration.cohort.program].name} — ${registration.cohort.name}`;
   await sendEmail({
     to: registration.lead.email,
+    fromName: senderFor(registration.cohort.program),
     subject: `Solde reçu — ${cohortName}`,
     text:
       `Bonjour ${registration.lead.firstName},\n\n` +
       `Votre second versement de ${formatUsdCents(registration.balanceUsd)} est confirmé : votre inscription à la ${cohortName} est entièrement réglée (${formatUsdCents(registration.amountUsd)}).\n\n` +
       `Référence : ${registration.reference}\n` +
       `Votre reçu, mis à jour : ${env.NEXT_PUBLIC_APP_URL}/inscription/recu/${registration.reference}\n\n` +
-      `Merci, et à très bientôt.\n\nBen\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${registration.lead.unsubscribeToken}`,
+      `Merci, et à très bientôt.\n\n${signatureFor(registration.cohort.program, "Ben")}\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${registration.lead.unsubscribeToken}`,
   }).catch((error) => console.error("[solde] e-mail", error));
   return { ok: true, alreadyPaid: false };
 }
@@ -433,12 +435,13 @@ async function sendSeatConfirmation(input: {
   const cohortMonth = formatCohortMonth(input.cohort.startsAt);
   return sendEmail({
     to: input.lead.email,
+    fromName: senderFor(input.program),
     subject: `Votre place est réservée — ${cohortName}`,
     text:
       `Bonjour ${input.lead.firstName},\n\n` +
       (input.balanceUsd
         ? `Votre premier versement de ${formatUsdCents(input.amountUsd - input.balanceUsd)} est confirmé${input.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(input.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n` +
-          `Le second versement, ${formatUsdCents(input.balanceUsd)}, est à régler avant le premier jour, le ${balanceDeadline(input.cohort.startsAt)}, par carte ou mobile money : ${balanceUrl(input.reference)}\nJe vous le rappelle par e-mail une semaine avant.\n\n`
+          `Le second versement, ${formatUsdCents(input.balanceUsd)}, est à régler avant le premier jour, le ${balanceDeadline(input.cohort.startsAt)}, par carte ou mobile money : ${balanceUrl(input.reference)}\n${input.program === "ia" ? "Nous vous le rappelons" : "Je vous le rappelle"} par e-mail une semaine avant.\n\n`
         : `Votre paiement de ${formatUsdCents(input.amountUsd)} est confirmé${input.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(input.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n`) +
       (input.moved
         ? `La cohorte que vous visiez s'est remplie entre-temps : votre place est sur la suivante, en ${cohortMonth}. Si cette date ne vous convient pas, répondez à ce message.\n\n`
@@ -448,7 +451,7 @@ async function sendSeatConfirmation(input: {
       (input.program === "ia"
         ? `Votre J1 est réservée à cette date ; l'invitation arrive dans votre agenda, avec le lien de la visio.\n\n${input.planUrl ? `Choisissez maintenant vos J2 à J6, dans l'ordre, parmi les week-ends suivants, et remplissez votre fiche projet : ${input.planUrl}\n\n` : ""}Préparez votre J1 deux ou trois jours avant (30 minutes : vos comptes et Claude Code) : ${iaUrl("/ia/guide", env.NEXT_PUBLIC_APP_URL)}\n\n`
         : `Je vous écris avant le démarrage avec le programme détaillé et les accès${input.program === "cc" ? ", et la marche à suivre pour réserver votre examen CC auprès d'ISC²" : ""}.\n\n`) +
-      `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${input.lead.unsubscribeToken}`,
+      `${signatureFor(input.program, "Ben\nCoach CISSP")}\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${input.lead.unsubscribeToken}`,
   });
 }
 

@@ -35,7 +35,7 @@ export function BriefForm({ token, initial, savedAt }: { token: string; initial:
         <h2 className="font-extrabold">Ma fiche projet</h2>
         {(initial || done) && <span className="rounded bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent-ink">{done ? "envoyée" : `envoyée le ${savedAt ? new Date(savedAt).toLocaleDateString("fr-FR") : ""}`}</span>}
       </div>
-      <p className="mt-1 text-[.9rem] text-muted">Ben la lit avant la J1 : vous démarrez directement sur votre projet.</p>
+      <p className="mt-1 text-[.9rem] text-muted">L’équipe la lit avant la J1 : vous démarrez directement sur votre projet.</p>
       {done && <p role="status" className="mt-2 rounded-xl bg-accent-soft px-3.5 py-2.5 text-[.92rem] text-accent-ink">{done}</p>}
       {!open ? (
         <button type="button" onClick={() => setOpen(true)} className="mt-3 text-[.92rem] font-bold underline underline-offset-4">Modifier ma fiche</button>
@@ -61,7 +61,7 @@ export function BriefForm({ token, initial, savedAt }: { token: string; initial:
             ))}
           </fieldset>
           {error && <p role="alert" className="rounded-xl bg-red-50 px-3.5 py-2.5 text-[.92rem] text-red-800">{error}</p>}
-          <button disabled={pending} className="rounded-[14px] bg-ink px-5 py-3.5 font-extrabold text-white disabled:opacity-60">{pending ? "Envoi…" : initial ? "Mettre à jour ma fiche" : "Envoyer ma fiche à Ben"}</button>
+          <button disabled={pending} className="rounded-[14px] bg-ink px-5 py-3.5 font-extrabold text-white disabled:opacity-60">{pending ? "Envoi…" : initial ? "Mettre à jour ma fiche" : "Envoyer ma fiche"}</button>
         </form>
       )}
     </section>

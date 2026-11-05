@@ -15,10 +15,10 @@ import { convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrenc
 import { PROGRAMS } from "@/lib/programs";
 import { loadRates } from "@/lib/registration";
 import { COUNTRIES } from "@/lib/scanner/questions";
-import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
 import { payIaByCard, payIaByMobileMoney } from "./actions";
 import { iaPath } from "@/lib/ia-domain";
+import { IA_COMPANY } from "@/lib/ia-brand";
 
 export const metadata: Metadata = {
   title: "Réserver ma place · Bâtisseur IA",
@@ -40,8 +40,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
     : null;
   const country = known?.country ?? (pays && COUNTRIES.some((c) => c.value === pays) ? pays : "SN");
 
-  const [settings, tiers, prices, rates, entries] = await Promise.all([
-    loadSiteSettings().catch(() => SITE_DEFAULTS),
+  const [tiers, prices, rates, entries] = await Promise.all([
     prisma.pricingTier.findMany({ select: { code: true, countries: true } }),
     prisma.programPrice.findMany({ where: { program: "ia" } }),
     loadRates().catch(() => ({})),
@@ -75,7 +74,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
           {!entries.length || !price ? (
             <section className="mt-6 rounded-[22px] border border-line bg-white p-5">
               <p className="font-bold">{!entries.length ? "Aucune date d’entrée n’est ouverte pour le moment." : "Votre tarif se fait sur devis."}</p>
-              <p className="mt-1 text-ink-2">{!entries.length ? "Les prochaines dates arrivent. Faites le diagnostic : Ben vous écrit dès l’ouverture." : "Écrivez à Ben pour une proposition adaptée à votre organisation."}</p>
+              <p className="mt-1 text-ink-2">{!entries.length ? "Les prochaines dates arrivent. Faites le diagnostic : nous vous écrivons dès l’ouverture." : "Écrivez-nous pour une proposition adaptée à votre organisation."}</p>
               <Link href={iaPath("/ia/diagnostic")} className="mt-4 inline-flex rounded-[14px] border border-line bg-white px-5 py-3 font-extrabold">Faire le diagnostic →</Link>
             </section>
           ) : (
@@ -134,7 +133,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
                   </label>
                   <label className="flex items-start gap-3 text-sm">
                     <input name="consent" type="checkbox" required className="mt-1 size-5 shrink-0 accent-accent" />
-                    <span>J’accepte que Ben utilise ces informations pour organiser la formation et me recontacter à ce sujet. <Link href="/confidentialite" className="underline" target="_blank">Politique de confidentialité</Link></span>
+                    <span>J’accepte qu’{IA_COMPANY} utilise ces informations pour organiser la formation et me recontacter à ce sujet. <Link href="/confidentialite" className="underline" target="_blank">Politique de confidentialité</Link></span>
                   </label>
                 </fieldset>
               )}
@@ -163,7 +162,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
           )}
         </div>
       </main>
-      <IaFooter coach={settings.coach.name} />
+      <IaFooter />
     </>
   );
 }

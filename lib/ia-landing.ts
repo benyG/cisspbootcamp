@@ -20,8 +20,8 @@ export const DAY_DEMO: ReadonlyArray<{ short: string; prompt: string; skills: re
  * of teaching and 1 h of pause, as lib/ia-days.ts counts them. Validated by Ben (05/11).
  */
 export const DAY_PLAN: ReadonlyArray<{ at: number; title: string; text: string; kind: "show" | "you" | "pause" | "review" }> = [
-  { at: 0, title: "Démonstration", text: "Ben construit l’étape du jour en direct, sur un projet d’exemple.", kind: "show" },
-  { at: 45, title: "Vous construisez", text: "Même étape, sur votre application. Ben passe d’un écran à l’autre.", kind: "you" },
+  { at: 0, title: "Démonstration", text: "L’étape du jour est construite en direct, sur un projet d’exemple.", kind: "show" },
+  { at: 45, title: "Vous construisez", text: "Même étape, sur votre application. On passe d’un écran à l’autre pour vous débloquer.", kind: "you" },
   { at: 150, title: "Pause", text: "1 heure.", kind: "pause" },
   { at: 210, title: "Vous construisez", text: "Vous terminez, vous testez, vous mettez en ligne.", kind: "you" },
   { at: 315, title: "Revue en groupe", text: "Chacun montre ce qui marche. Ce qui bloque se règle ensemble.", kind: "review" },
@@ -39,7 +39,7 @@ export const SITE_LOG: ReadonlyArray<{ date: string; label: string; text: string
 ];
 
 export const IA_FAQ: ReadonlyArray<{ q: string; a: string }> = [
-  { q: "Construisez-vous l’application pour moi ?", a: "Non : c’est une formation. Vous la construisez vous-même, en direct, avec Ben qui montre chaque étape et vous débloque. À la fin, l’application est à vous, et vous savez la faire évoluer seul." },
+  { q: "Construisez-vous l’application pour moi ?", a: "Non : c’est une formation. Vous la construisez vous-même, en direct : chaque étape vous est montrée, puis on vous débloque sur votre projet. À la fin, l’application est à vous, et vous savez la faire évoluer seul." },
   { q: "Je ne sais pas coder.", a: "C’est prévu. Vous décrivez ce que vous voulez en français, Claude Code écrit le code, vous vérifiez le résultat à l’écran. Si l’ordinateur vous intimide, une séance d’accueil d’une heure installe tout avec vous avant la J1." },
   { q: "Ma connexion coupe souvent.", a: "Claude Code tourne aussi dans le cloud : si votre connexion coupe, le travail continue et vous le retrouvez en vous reconnectant." },
   { q: "Je ne suis pas libre tous les week-ends.", a: "Vous entrez par une J1, puis vous choisissez vos J2 à J6 parmi les samedis et dimanches suivants, sur votre calendrier personnel." },

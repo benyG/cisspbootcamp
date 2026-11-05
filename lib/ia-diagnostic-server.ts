@@ -9,6 +9,7 @@ import { resolveTierCode } from "@/lib/pricing";
 import { PROGRAMS } from "@/lib/programs";
 import { COUNTRIES } from "@/lib/scanner/questions";
 import { createToken } from "@/lib/tokens";
+import { IA_SENDER, IA_SIGNATURE } from "@/lib/ia-brand";
 import { iaUrl } from "@/lib/ia-domain";
 
 /**
@@ -53,11 +54,11 @@ export function resultEmail(firstName: string, d: IaDiagnosis, token: string, un
       "",
       d.ready
         ? "Votre aisance avec l’ordinateur suffit pour démarrer directement à la J1."
-        : "Avant la J1, une séance d’accueil d’une heure avec moi installe les outils avec vous : vous démarrez à égalité avec le groupe.",
+        : "Avant la J1, une séance d’accueil d’une heure installe les outils avec vous : vous démarrez à égalité avec le groupe.",
       "",
       `Votre résultat, les journées et le prix : ${resultUrl(token)}`,
       "",
-      "Ben",
+      IA_SIGNATURE,
       "",
       "—",
       `Pour ne plus recevoir de messages : ${appUrl()}/desinscription/${unsubscribeToken}`,
@@ -85,7 +86,7 @@ export async function submitIaDiagnostic(raw: unknown, now = new Date()): Promis
 
   const mail = resultEmail(lead.firstName || contact.firstName, result, token, lead.unsubscribeToken);
   await Promise.all([
-    sendEmail({ to: contact.email, ...mail }).catch(() => undefined),
+    sendEmail({ to: contact.email, ...mail, fromName: IA_SENDER }).catch(() => undefined),
     sendEmail({
       to: env.ADMIN_EMAIL,
       subject: `Diagnostic IA : ${contact.firstName}, ${result.ready ? "démarrage direct" : "séance d’accueil"}`,

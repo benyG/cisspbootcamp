@@ -15,8 +15,8 @@ import { iaDomain, iaPath } from "@/lib/ia-domain";
 import { DAY_DEMO, DAY_PLAN, IA_FAQ, SITE_LOG } from "@/lib/ia-landing";
 import { PROGRAMS } from "@/lib/programs";
 import { loadRates } from "@/lib/registration";
-import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 
+import { IA_COMPANY } from "@/lib/ia-brand";
 import "./landing.css";
 
 const TITLE = "Bâtisseur IA : le bootcamp pratique pour construire votre application avec l’IA";
@@ -41,8 +41,7 @@ const clock = (d: Date, timeZone: string) => d.toLocaleTimeString("fr-FR", { tim
  */
 export default async function IaPage() {
   const program = PROGRAMS.ia;
-  const [settings, entries, tiers, prices, rates] = await Promise.all([
-    loadSiteSettings().catch(() => SITE_DEFAULTS),
+  const [entries, tiers, prices, rates] = await Promise.all([
     openIaEntries().then((e) => e.slice(0, 3)).catch(() => []),
     prisma.pricingTier.findMany({ select: { code: true, countries: true } }).catch(() => []),
     prisma.programPrice.findMany({ where: { program: "ia" } }).catch(() => []),
@@ -65,7 +64,7 @@ export default async function IaPage() {
             <div>
               <div className="kicker"><span>Bootcamp pratique</span><span>en direct</span><span>en français</span></div>
               <h1>Apprenez à construire <em>votre</em> application avec l’IA.</h1>
-              <p className="lede">Une formation en direct, en petit groupe, avec {settings.coach.name.split(" ")[0] || "Ben"}. En {program.days} journées, <b>vous construisez vous-même</b> l’application de votre entreprise avec Claude Code, étape par étape, et vous repartez en sachant la faire évoluer. <b>Sans savoir coder.</b></p>
+              <p className="lede">Une formation {IA_COMPANY} en direct, en petit groupe. En {program.days} journées, <b>vous construisez vous-même</b> l’application de votre entreprise avec Claude Code, étape par étape, et vous repartez en sachant la faire évoluer. <b>Sans savoir coder.</b></p>
               <ul className="facts">
                 <li><b>{program.days}</b> journées de 5 h</li>
                 <li><b>{IA_DEFAULT_CAPACITY}</b> places par groupe</li>
@@ -84,8 +83,8 @@ export default async function IaPage() {
           <div className="wrap">
             <div className="sec-head">
               <span className="label">Une journée de formation</span>
-              <h2 id="journee-type">Ben montre. Vous construisez. On vérifie ensemble.</h2>
-              <p>Chaque journée suit le même rythme : une étape montrée en direct, puis vous la refaites sur votre propre projet, avec Ben pour vous débloquer.</p>
+              <h2 id="journee-type">On vous montre. Vous construisez. On vérifie ensemble.</h2>
+              <p>Chaque journée suit le même rythme : une étape montrée en direct, puis vous la refaites sur votre propre projet, avec quelqu’un pour vous débloquer.</p>
             </div>
             <div className="dayplan">
               {DAY_PLAN.map((s) => (
@@ -116,7 +115,7 @@ export default async function IaPage() {
             <div className="sec-head">
               <span className="label">Notre preuve</span>
               <h2 id="preuve">Ce site est notre chantier. Voici son journal.</h2>
-              <p>Il a été construit avec Claude Code par Ben, votre formateur, sans agence. On ne le cache pas : c’est la méthode que la formation vous transmet.</p>
+              <p>Il a été construit avec Claude Code par l’équipe qui vous forme, sans agence. On ne le cache pas : c’est la méthode que la formation vous transmet.</p>
             </div>
             <div className="tallies">
               <div><b>21 sept.</b><span>premier jour en ligne</span></div>
@@ -163,7 +162,7 @@ export default async function IaPage() {
                         <span className="left">{e.left} place{e.left > 1 ? "s" : ""}</span>
                       </Link>
                     );
-                  }) : <p className="empty">Les prochaines dates arrivent. Faites le diagnostic : Ben vous écrit dès l’ouverture.</p>}
+                  }) : <p className="empty">Les prochaines dates arrivent. Faites le diagnostic : nous vous écrivons dès l’ouverture.</p>}
                 </div>
                 <div className="cta-stack">
                   <Link className="btn btn-go" href={diagnostic}>Faire le diagnostic d’abord</Link>
@@ -189,7 +188,7 @@ export default async function IaPage() {
         </section>
         <Dock href={diagnostic} watch="diagnostic" />
       </main>
-      <IaFooter coach={settings.coach.name} />
+      <IaFooter />
     </div>
   );
 }

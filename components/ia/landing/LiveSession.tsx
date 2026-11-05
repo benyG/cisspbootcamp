@@ -9,14 +9,14 @@ import { useEffect, useState } from "react";
  * said under the picture.
  */
 const LINES: ReadonlyArray<{ kind: "who" | "out" | "ok"; prefix: string; text: string }> = [
-  { kind: "who", prefix: "ben › ", text: "Ajoute un acompte par Orange Money ou carte sur la page de commande." },
+  { kind: "who", prefix: "démo › ", text: "Ajoute un acompte par Orange Money ou carte sur la page de commande." },
   { kind: "out", prefix: "", text: "Claude Code : page de paiement créée, 3 tests ajoutés." },
   { kind: "ok", prefix: "", text: "✓ tests réussis · en ligne" },
-  { kind: "who", prefix: "ben › ", text: "À vous : même étape sur votre projet. Je passe voir chacun." },
+  { kind: "who", prefix: "démo › ", text: "À vous : même étape sur votre projet. On passe voir chacun." },
 ];
 
 const TILES: ReadonlyArray<{ initials: string; name: string; project: string; status: string; done?: boolean; flips?: boolean; coach?: boolean }> = [
-  { initials: "B", name: "Ben", project: "formateur", status: "montre l’étape", done: true, coach: true },
+  { initials: "EB", name: "ExamBoot", project: "démonstration", status: "montre l’étape", done: true, coach: true },
   { initials: "AK", name: "Adjoa", project: "atelier de couture", status: "✓ paiement en ligne", done: true },
   { initials: "MN", name: "Moussa", project: "cabinet comptable", status: "en cours…", flips: true },
   { initials: "FD", name: "Fatou", project: "salon de coiffure", status: "✓ rendez-vous", done: true },
@@ -56,7 +56,7 @@ export function LiveSession({ journee }: { journee: { n: number; title: string }
         <div className="s-bar"><span className="rec">En direct · J{journee.n}</span><span>{journee.title} · 12 participants</span></div>
         <div className="s-main">
           <div className="share">
-            <div className="share-head"><span>Écran partagé : <b>Ben</b></span><span>Claude Code</span></div>
+            <div className="share-head"><span>Écran partagé : <b>démonstration</b></span><span>Claude Code</span></div>
             <div className="term">
               {LINES.map((l, i) => {
                 const n = Math.max(0, Math.min(l.text.length, left));

@@ -132,7 +132,7 @@ export const PROGRAM_TITLES: Record<Offer["program"], string> = { cissp: "Format
 
 /** What a Bâtisseur IA offer includes: the site's settings list the CISSP inclusions. */
 export const IA_INCLUDED = [
-  `${PROGRAMS.ia.days} journées en direct avec Ben, en français, en groupe réservé`,
+  `${PROGRAMS.ia.days} journées en direct, en français, en groupe réservé`,
   "Un outil interne en ligne par participant ou par équipe, son code sur le GitHub de l’entreprise",
   "Guide de préparation et fiche projet avant la J1",
   `30 jours de suivi après la J${PROGRAMS.ia.days}`,
