@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
 import { ANSWER_DELAY, CERTIFICATIONS, FORMATS, HEADCOUNTS, type QuoteStatus, TIMINGS } from "@/lib/quotes-options";
 import { COUNTRIES } from "@/lib/scanner/questions";
+import { senderFor, signatureFor } from "@/lib/ia-brand";
 
 /**
  * Company quote requests (Ben, 21/10): a company asks to train a team, on
@@ -29,7 +30,7 @@ export const quoteSchema = z.object({
   timing: z.enum(keys(TIMINGS)),
   need: optional(2000),
   /** Must be literally true: an unchecked box never reaches the server as consent. */
-  consent: z.literal(true, { errorMap: () => ({ message: "Votre accord est nécessaire pour que Ben vous réponde." }) }),
+  consent: z.literal(true, { errorMap: () => ({ message: "Votre accord est nécessaire pour que nous puissions vous répondre." }) }),
   /** Honeypot: hidden from people, filled by bots. */
   website: z.string().max(0).optional().or(z.literal("")),
 });
@@ -74,17 +75,17 @@ export async function submitQuote(raw: unknown, now = new Date()): Promise<Submi
     }),
     sendEmail({
       to: q.email,
-      subject: "Votre demande de devis · CISSP Bootcamp",
+      fromName: senderFor(q.certification),
+      subject: `Votre demande de devis · ${q.certification === "ia" ? "Bâtisseur IA" : "CISSP Bootcamp"}`,
       text: [
         `Bonjour ${q.contactName},`,
         "",
-        `Merci pour votre demande pour ${q.organization}. Je vous réponds sous ${ANSWER_DELAY}, à cette adresse.`,
+        `Merci pour votre demande pour ${q.organization}. ${q.certification === "ia" ? "Nous vous répondons" : "Je vous réponds"} sous ${ANSWER_DELAY}, à cette adresse.`,
         "",
         `Votre demande : ${summary}.`,
         ...(q.need ? ["", `« ${q.need} »`] : []),
         "",
-        "Ben",
-        "Coach CISSP",
+        signatureFor(q.certification, "Ben\nCoach CISSP"),
       ].join("\n"),
     }),
   ]);

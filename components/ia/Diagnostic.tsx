@@ -8,6 +8,7 @@ import { iaPath } from "@/lib/ia-domain";
 import { rememberUtm } from "@/lib/tracking/client";
 import { ACTIVITIES, EASE, HOURS, type IaAnswers, TASKS, TOOLS } from "@/lib/ia-diagnostic";
 import { track } from "@/lib/tracking/client";
+import { IA_COMPANY } from "@/lib/ia-brand";
 
 type Option = { value: string; label: string };
 type Step = { id: keyof IaAnswers; q: string; hint?: string; multi?: boolean; options: Record<string, string> | Record<string, { label: string }> };
@@ -113,7 +114,7 @@ export function Diagnostic({ countries }: { countries: Option[] }) {
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] size-px opacity-0" />
       <label className="flex items-start gap-2.5 text-[.88rem] text-ink-2">
         <input type="checkbox" name="consent" className="mt-1 size-4 shrink-0" />
-        J&apos;accepte que Ben m&apos;envoie ce résultat et me recontacte au sujet du Bâtisseur IA. Désinscription en un clic dans chaque e-mail.
+        J&apos;accepte qu&apos;{IA_COMPANY} m&apos;envoie ce résultat et me recontacte au sujet du Bâtisseur IA. Désinscription en un clic dans chaque e-mail.
       </label>
       {error && <p role="alert" className="rounded-xl bg-red-50 px-3.5 py-2.5 text-[.92rem] text-red-800">{error}</p>}
       <button disabled={pending} className="inline-flex items-center justify-center rounded-[14px] bg-ink px-5.5 py-4 font-extrabold text-white disabled:opacity-60">{pending ? "Calcul…" : "Voir mon résultat"}</button>

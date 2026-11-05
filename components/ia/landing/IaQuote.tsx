@@ -85,7 +85,7 @@ export function IaQuote({ tiers, prices, rates, hours, days, capacity }: Props) 
           {quote.twice && <p className="twice">{quote.twice}</p>}
         </>
       ) : (
-        <p className="empty" style={{ marginTop: 14 }}>Pour votre pays, le tarif se fait sur devis : écrivez à Ben.</p>
+        <p className="empty" style={{ marginTop: 14 }}>Pour votre pays, le tarif se fait sur devis : écrivez-nous.</p>
       )}
     </div>
   );

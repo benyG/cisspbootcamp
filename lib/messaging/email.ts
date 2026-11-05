@@ -1,5 +1,7 @@
 import { Resend } from "resend";
 
+import { withSenderName } from "@/lib/ia-brand";
+
 /**
  * Transactional e-mail through Resend (SPECS A8).
  *
@@ -17,9 +19,11 @@ export async function sendEmail(input: {
   text: string;
   html?: string;
   attachments?: EmailAttachment[];
+  /** Display name instead of the default one (Bâtisseur IA e-mails); same address. */
+  fromName?: string;
 }): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM ?? "CISSP Bootcamp <bonjour@cisspbootcamp.online>";
+  const from = withSenderName(process.env.EMAIL_FROM ?? "CISSP Bootcamp <bonjour@cisspbootcamp.online>", input.fromName);
 
   if (!apiKey) {
     console.warn(`[email] RESEND_API_KEY absent — non envoyé à ${input.to} : ${input.subject}`);

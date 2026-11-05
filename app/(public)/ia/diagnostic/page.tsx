@@ -4,7 +4,6 @@ import { Diagnostic } from "@/components/ia/Diagnostic";
 import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { eyebrow, shell } from "@/components/landing/sections";
 import { COUNTRIES } from "@/lib/scanner/questions";
-import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 import { iaPath } from "@/lib/ia-domain";
 
 export const metadata: Metadata = {
@@ -17,7 +16,6 @@ export const metadata: Metadata = {
 
 /** The automation diagnostic (Ben, 03/11): rules only, result on screen and by e-mail. */
 export default async function IaDiagnosticPage() {
-  const settings = await loadSiteSettings().catch(() => SITE_DEFAULTS);
   return (
     <>
       <IaTopbar />
@@ -27,7 +25,7 @@ export default async function IaDiagnosticPage() {
         <p className="-mt-2 text-ink-2">Cinq questions. Le résultat est calculé par des règles simples, sans IA et sans gain promis.</p>
         <Diagnostic countries={COUNTRIES} />
       </main>
-      <IaFooter coach={settings.coach.name} />
+      <IaFooter />
     </>
   );
 }

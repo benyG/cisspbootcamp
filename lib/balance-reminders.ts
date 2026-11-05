@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { senderFor, signatureFor } from "@/lib/ia-brand";
 import { BALANCE_REMINDER_DAYS, balanceReminderDue } from "@/lib/installments";
 import { sendEmail } from "@/lib/messaging/email";
 import { formatUsdCents } from "@/lib/pricing";
@@ -12,7 +13,7 @@ import { balanceDeadline, balanceUrl } from "@/lib/registration";
  * link. Never a clock time. Someone who unsubscribed gets none: Ben's
  * action queue tells him on the eve instead.
  */
-export function balanceReminderEmail(input: { firstName: string; programName: string; cohortName: string; balanceUsd: number; startsAt: Date; reference: string; unsubscribeToken: string; last: boolean }): { subject: string; text: string } {
+export function balanceReminderEmail(input: { program?: string; firstName: string; programName: string; cohortName: string; balanceUsd: number; startsAt: Date; reference: string; unsubscribeToken: string; last: boolean }): { subject: string; text: string } {
   return {
     subject: input.last ? `Dernier rappel : votre second versement — ${input.programName}` : `Votre second versement — ${input.programName}`,
     text: [
@@ -24,7 +25,7 @@ export function balanceReminderEmail(input: { firstName: string; programName: st
       "",
       "Déjà réglé, ou un souci ? Répondez à ce message.",
       "",
-      "Ben",
+      signatureFor(input.program ?? "", "Ben"),
       "",
       "—",
       `Pour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${input.unsubscribeToken}`,
@@ -46,8 +47,8 @@ export async function sendBalanceReminders(now = new Date()): Promise<number> {
     // Claim the reminder first: two cron runs never send it twice.
     const claimed = await prisma.registration.updateMany({ where: { id: r.id, balanceReminders: r.balanceReminders, balancePaidAt: null }, data: { balanceReminders: next + 1 } });
     if (claimed.count === 0) continue;
-    const email = balanceReminderEmail({ firstName: r.lead.firstName, programName: PROGRAMS[r.cohort.program].name, cohortName: r.cohort.name, balanceUsd: r.balanceUsd, startsAt: r.cohort.startsAt, reference: r.reference, unsubscribeToken: r.lead.unsubscribeToken, last: next === BALANCE_REMINDER_DAYS.length - 1 });
-    const result = await sendEmail({ to: r.lead.email, ...email }).catch(() => ({ sent: false }));
+    const email = balanceReminderEmail({ program: r.cohort.program, firstName: r.lead.firstName, programName: PROGRAMS[r.cohort.program].name, cohortName: r.cohort.name, balanceUsd: r.balanceUsd, startsAt: r.cohort.startsAt, reference: r.reference, unsubscribeToken: r.lead.unsubscribeToken, last: next === BALANCE_REMINDER_DAYS.length - 1 });
+    const result = await sendEmail({ to: r.lead.email, ...email, fromName: senderFor(r.cohort.program) }).catch(() => ({ sent: false }));
     if (result.sent) sent++;
     await prisma.actionLog.create({ data: { leadId: r.leadId, type: "balance_reminder", channel: "email", payload: { reference: r.reference, reminder: next + 1, sent: result.sent } } });
   }

@@ -9,7 +9,6 @@ import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { eyebrow, shell } from "@/components/landing/sections";
 import { storedBrief } from "@/lib/ia-brief-schema";
 import { planByToken } from "@/lib/ia-plan-server";
-import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 import { iaPath } from "@/lib/ia-domain";
 import { IA_JOURNEES } from "@/lib/ia-days";
 
@@ -19,7 +18,7 @@ export const dynamic = "force-dynamic";
 /** A participant's calendar (Ben, 03/11): J1 comes with the entry; J2 to J6 are picked here, in order. */
 export default async function IaCalendarPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const [data, settings] = await Promise.all([planByToken(token), loadSiteSettings().catch(() => SITE_DEFAULTS)]);
+  const data = await planByToken(token);
   if (!data) notFound();
   const done = [1, 2, 3, 4, 5].every((n) => data.held[n]);
 
@@ -38,7 +37,7 @@ export default async function IaCalendarPage({ params }: { params: Promise<{ tok
         <h2 className="mt-2 text-[1.1rem] font-extrabold">Mes journées</h2>
         <Planner token={token} days={data.days} held={data.held} heldStarts={Object.fromEntries(data.seats.map((seat) => [seat.day.date, seat.day.start]))} nowIso={new Date().toISOString()} />
       </main>
-      <IaFooter coach={settings.coach.name} />
+      <IaFooter />
     </>
   );
 }

@@ -14,6 +14,11 @@ export default function PrivacyPage() {
         Ce site est édité par Ben, coach CISSP, pour l&apos;inscription à ses
         bootcamps. Voici ce qui est collecté, pourquoi, et comment le retirer.
       </p>
+      <p>
+        Le Bâtisseur IA (batisseur-ia.com) est une formation d&apos;ExamBoot. Les
+        informations que vous y donnez (diagnostic, inscription, fiche projet) sont
+        traitées par l&apos;équipe ExamBoot, selon les mêmes règles que ci-dessous.
+      </p>
       <h2>Ce qui est collecté</h2>
       <ul>
         <li>Vos réponses au questionnaire d&apos;analyse de profil ;</li>
@@ -34,7 +39,8 @@ export default function PrivacyPage() {
       </p>
       <h2>Qui y a accès</h2>
       <p>
-        Ben seul, et les prestataires techniques nécessaires au service : l&apos;hébergeur
+        Ben seul pour les bootcamps CISSP et CC, l&apos;équipe ExamBoot pour le
+        Bâtisseur IA, et les prestataires techniques nécessaires au service : l&apos;hébergeur
         du site et de la base de données, le service d&apos;envoi d&apos;e-mails,
         Google Calendar pour les rendez-vous, Stripe et Netticket pour les paiements.
       </p>

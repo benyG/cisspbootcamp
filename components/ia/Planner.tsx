@@ -79,7 +79,7 @@ export function Planner({ token, days, held, heldStarts, nowIso }: { token: stri
             {!previous ? (
               <p className="mt-1 text-[.9rem] text-muted">Choisissez d’abord la J{j.n - 1}.</p>
             ) : options.length === 0 ? (
-              <p className="mt-1 text-[.9rem] text-muted">Pas encore de date ouverte après votre J{j.n - 1}. Revenez sur ce lien : Ben ouvre de nouveaux week-ends régulièrement.</p>
+              <p className="mt-1 text-[.9rem] text-muted">Pas encore de date ouverte après votre J{j.n - 1}. Revenez sur ce lien : de nouveaux week-ends ouvrent régulièrement.</p>
             ) : (
               <div className="mt-2 grid gap-2">
                 {options.map((d) => (

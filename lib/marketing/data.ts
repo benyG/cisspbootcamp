@@ -109,7 +109,7 @@ function iaFactsForModel(f: CohortFacts, fmt: (d: Date) => string): string {
     `Clôture des inscriptions pour cette entrée : ${fmt(f.admissionClosesAt)}.`,
     `Tarif : ${f.prices.africa ?? "?"} en Afrique francophone, ${f.prices.international ?? "?"} à l'international. Paiement par carte ou mobile money.`,
     program.examNote,
-    "Formateur : Ben, qui a construit ce site et ses automatisations avec Claude Code. Formation en direct, en français, en petit groupe.",
+    "Organisme : ExamBoot, entreprise qui a construit ce site et ses automatisations avec Claude Code. Formation en direct, en français, en petit groupe, suivie par l'équipe ExamBoot. Ne jamais nommer Ben ni aucun formateur.",
     "Diagnostic d'automatisation gratuit en 3 minutes (5 questions) : les trois automatisations que son application peut prendre en charge en premier.",
     "Aucun chiffre de participants, de résultats ni de témoignage n'est publiable : n'en cite aucun.",
   ].join("\n");
