@@ -23,7 +23,7 @@ import { iaPath } from "@/lib/ia-domain";
 export const metadata: Metadata = {
   title: "Réserver ma place · Bâtisseur IA",
   robots: { index: false, follow: true },
-  openGraph: { title: "Bâtisseur IA : réservez votre place", description: "5 journées le week-end pour créer votre application avec Claude Code.", siteName: "Bâtisseur IA" },
+  openGraph: { title: "Bâtisseur IA : réservez votre place", description: "6 journées le week-end pour construire votre application avec Claude Code.", siteName: "Bâtisseur IA" },
   twitter: { title: "Bâtisseur IA : réservez votre place" },
 };
 export const dynamic = "force-dynamic";
@@ -95,7 +95,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
                     </label>
                   );
                 })}
-                <p className="text-[.82rem] text-muted">Vous choisissez ensuite vos J2 à J5 parmi les week-ends suivants, sur votre calendrier personnel.</p>
+                <p className="text-[.82rem] text-muted">Vous choisissez ensuite vos J2 à J6 parmi les week-ends suivants, sur votre calendrier personnel.</p>
                 <div className="mt-2 flex flex-wrap items-baseline gap-x-3 border-t border-line pt-3">
                   <p className="display text-[2.2rem] leading-none font-black tracking-[-.04em]">{formatUsdCents(price.amountUsd)}</p>
                   {local !== null && <p className="font-bold text-muted">≈ {formatLocal(local, currency)}</p>}

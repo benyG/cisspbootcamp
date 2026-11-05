@@ -7,11 +7,12 @@
 
 /** Per journée, beside JOURNEES (lib/ia-days.ts): a tab label, the example prompt, the skills. */
 export const DAY_DEMO: ReadonlyArray<{ short: string; prompt: string; skills: readonly string[] }> = [
-  { short: "Premier déploiement", prompt: "Crée le site de mon atelier de couture avec une page de prise de rendez-vous, et mets-le en ligne.", skills: ["Mettre une application en ligne", "Décrire une page à Claude Code et la corriger", "Sauvegarder votre code sur GitHub"] },
-  { short: "Le cœur métier", prompt: "Ajoute la liste de mes clientes avec leurs mesures et l’état de chaque commande.", skills: ["Créer vos écrans et votre base de clients", "Protéger l’accès à vos données", "Faire tester chaque changement"] },
-  { short: "Vendre et encaisser", prompt: "Ajoute un acompte par Orange Money ou carte, et relance un devis resté trois jours sans réponse.", skills: ["Brancher le paiement mobile money et carte", "Programmer des relances par e-mail", "Écrire une page d’offre qui vend"] },
-  { short: "Piloter", prompt: "Fais-moi le tableau de bord du mois et les factures en PDF pour mon comptable.", skills: ["Construire votre tableau de bord", "Produire factures et reçus en PDF", "Préparer l’export pour le comptable"] },
-  { short: "Automatiser", prompt: "Chaque lundi, prépare les relances de la semaine et laisse-moi les valider avant l’envoi.", skills: ["Créer un assistant qui prépare votre travail", "Poser des garde-fous : rien ne part sans vous", "Présenter votre application au groupe"] },
+  { short: "En ligne", prompt: "Crée le site de mon atelier de couture avec une page de prise de rendez-vous, et mets-le en ligne sur mon nom de domaine.", skills: ["Mettre une application en ligne", "Décrire une page à Claude Code et la corriger", "Sauvegarder votre code sur GitHub"] },
+  { short: "Cœur métier", prompt: "Ajoute la liste de mes clientes avec leurs mesures, l’état de chaque commande et le tableau de bord du mois.", skills: ["Créer votre base de données et vos écrans", "Construire votre tableau de bord", "Faire tester chaque changement"] },
+  { short: "Vendre", prompt: "Ajoute un acompte par Orange Money ou carte, la facture en PDF, et relance un devis resté trois jours sans réponse.", skills: ["Brancher le paiement mobile money et carte", "Produire devis, factures et reçus en PDF", "Programmer des relances par e-mail"] },
+  { short: "Communiquer", prompt: "Chaque semaine, propose-moi trois publications LinkedIn et Facebook sur mes nouveaux modèles, avec leur image.", skills: ["Générer des publications à votre ton", "Créer leurs images automatiquement", "Tout valider avant publication"] },
+  { short: "Marché", prompt: "Analyse les recherches sur la couture sur mesure à Lomé et ce que publient mes concurrents, puis propose-moi un plan de contenu.", skills: ["Améliorer le référencement de votre site", "Collecter mots-clés et pages des concurrents", "Tirer un plan de contenu de ces données"] },
+  { short: "Agent IA", prompt: "Branche un agent sur ma base en lecture seule : chaque lundi, il me dit quelles clientes relancer et quels modèles se vendent.", skills: ["Ouvrir vos données à un agent avec MCP", "Programmer des analyses automatiques", "Poser des garde-fous : lecture seule, rien ne part sans vous"] },
 ];
 
 /**
@@ -41,5 +42,5 @@ export const IA_FAQ: ReadonlyArray<{ q: string; a: string }> = [
   { q: "Construisez-vous l’application pour moi ?", a: "Non : c’est une formation. Vous la construisez vous-même, en direct, avec Ben qui montre chaque étape et vous débloque. À la fin, l’application est à vous, et vous savez la faire évoluer seul." },
   { q: "Je ne sais pas coder.", a: "C’est prévu. Vous décrivez ce que vous voulez en français, Claude Code écrit le code, vous vérifiez le résultat à l’écran. Si l’ordinateur vous intimide, une séance d’accueil d’une heure installe tout avec vous avant la J1." },
   { q: "Ma connexion coupe souvent.", a: "Claude Code tourne aussi dans le cloud : si votre connexion coupe, le travail continue et vous le retrouvez en vous reconnectant." },
-  { q: "Je ne suis pas libre tous les week-ends.", a: "Vous entrez par une J1, puis vous choisissez vos J2 à J5 parmi les samedis et dimanches suivants, sur votre calendrier personnel." },
+  { q: "Je ne suis pas libre tous les week-ends.", a: "Vous entrez par une J1, puis vous choisissez vos J2 à J6 parmi les samedis et dimanches suivants, sur votre calendrier personnel." },
 ];

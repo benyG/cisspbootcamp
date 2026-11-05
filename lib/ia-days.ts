@@ -4,18 +4,19 @@ import { zonedInstant } from "@/lib/cohort-sessions";
  * Bâtisseur IA journées (Ben, 03/11/2026). Pure: the rules, shared by the
  * admin, the participant's page and the server.
  *
- * - The bootcamp is five journées, J1 to J5, taught in that order.
+ * - The bootcamp is six journées, J1 to J6, taught in that order (six since
+ *   Ben's programme of 05/11: communication, market and an AI agent on MCP).
  * - Each open Saturday or Sunday carries one journée. Ben opens weekends;
- *   journées follow in rotation over the open dates (J1, J2 … J5, J1 …).
+ *   journées follow in rotation over the open dates (J1, J2 … J6, J1 …).
  * - A participant enters on a J1 date (that date is their cohort), then
- *   picks the J2, J3, J4 and J5 dates they can attend, each after the last.
+ *   picks the J2 to J6 dates they can attend, each after the last.
  * - A journée is 5 h of teaching plus a 1 h pause, from 10 h Montréal time
  *   by default, with 12 places.
  */
 
 export const IA_ZONE = "America/Toronto";
 export const IA_ZONE_LABEL = "heure de Montréal";
-export const IA_JOURNEES = 5;
+export const IA_JOURNEES = 6;
 export const IA_TEACHING_HOURS = 5;
 export const IA_PAUSE_MINUTES = 60;
 export const IA_DEFAULT_START = "10:00";
@@ -24,11 +25,12 @@ export const IA_DEFAULT_CAPACITY = 12;
 export const IA_PICK_LEAD_HOURS = 24;
 
 export const JOURNEES: ReadonlyArray<{ n: number; title: string; text: string }> = [
-  { n: 1, title: "De l’idée au premier déploiement", text: "Votre application est en ligne dès le premier soir, son code sur GitHub." },
-  { n: 2, title: "Le cœur métier", text: "Vos écrans, vos données, vos comptes, testés à chaque changement." },
-  { n: 3, title: "Vendre et encaisser", text: "Page d’offre, prospects, e-mails, paiement par carte ou mobile money." },
-  { n: 4, title: "Piloter", text: "Tableau de bord, factures, dépenses, export pour le comptable, un assistant qui répond depuis vos documents." },
-  { n: 5, title: "Automatiser et exploiter", text: "Vos agents, vos routines, vos garde-fous, et la démo devant le groupe." },
+  { n: 1, title: "De l’idée à l’application en ligne", text: "La méthode, Claude Code et GitHub : votre application est en ligne dès le premier soir, à votre nom de domaine." },
+  { n: 2, title: "Le cœur métier et vos données", text: "Votre base de données, vos écrans, vos comptes et votre tableau de bord, testés à chaque changement." },
+  { n: 3, title: "Vendre et encaisser", text: "Page d’offre, formulaires, relances par e-mail, paiement par carte ou mobile money, devis, factures et reçus en PDF." },
+  { n: 4, title: "Communiquer", text: "Un générateur de publications Facebook et LinkedIn, avec leurs images, que vous validez avant publication." },
+  { n: 5, title: "Connaître son marché", text: "Le référencement de votre site, les mots-clés, l’analyse des concurrents : un rapport qui guide votre positionnement et vos contenus." },
+  { n: 6, title: "Un agent IA branché sur votre entreprise", text: "Un serveur MCP sur vos données : un agent qui analyse ventes, clients et marché, vos routines, vos garde-fous, et la démo devant le groupe." },
 ];
 
 export type IaDay = { id: number; date: string; journee: number; capacity: number; seats: number; closed: boolean; start: string };
@@ -81,7 +83,7 @@ export function rotateJournees(existing: ReadonlyArray<Pick<IaDay, "date" | "jou
 
 const pickable = (day: IaDay, now: Date) => !day.closed && day.seats < day.capacity && journeeSlot(day.date, day.start).startsAt.getTime() - now.getTime() >= IA_PICK_LEAD_HOURS * 3_600_000;
 
-/** The next journée to choose (2 to 5), or null once J5 is chosen. */
+/** The next journée to choose, or null once the last one is chosen. */
 export function nextJournee(picks: Picks): number | null {
   for (let n = 1; n <= IA_JOURNEES; n++) if (!picks[n]) return n;
   return null;

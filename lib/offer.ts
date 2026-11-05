@@ -45,7 +45,7 @@ export const offerReference = (quoteId: number | null, today: Date) =>
 
 export const defaultSchedule = (program: Offer["program"]) =>
   program === "ia"
-    ? `${PROGRAMS.ia.days} journées de 5\u00a0h, plus 1\u00a0h de pause, à des dates convenues ensemble (en semaine ou le week-end), dans l’ordre J1 à J5.`
+    ? `${PROGRAMS.ia.days} journées de 5\u00a0h, plus 1\u00a0h de pause, à des dates convenues ensemble (en semaine ou le week-end), dans l’ordre J1 à J${PROGRAMS.ia.days}.`
     : program === "cc"
     ? `Calendrier à convenir ensemble : ${PROGRAMS.cc.hours}\u00a0h de sessions live.`
     : `Calendrier à convenir ensemble. Rythme de référence : ${PROGRAMS.cissp.hours}\u00a0h sur ${PROGRAMS.cissp.days} jours, 2\u00a0h en soirée en semaine et 5\u00a0h\u00a030 les samedis et dimanches.`;
@@ -132,12 +132,12 @@ export const PROGRAM_TITLES: Record<Offer["program"], string> = { cissp: "Format
 
 /** What a Bâtisseur IA offer includes: the site's settings list the CISSP inclusions. */
 export const IA_INCLUDED = [
-  "5 journées en direct avec Ben, en français, en groupe réservé",
+  `${PROGRAMS.ia.days} journées en direct avec Ben, en français, en groupe réservé`,
   "Un outil interne en ligne par participant ou par équipe, son code sur le GitHub de l’entreprise",
   "Guide de préparation et fiche projet avant la J1",
-  "30 jours de suivi après la J5",
+  `30 jours de suivi après la J${PROGRAMS.ia.days}`,
 ] as const;
 
-/** The five journées, for the offer's programme section. */
+/** The journées, for the offer's programme section. */
 export const iaProgramme = () => JOURNEES;
 export { CERTIFICATIONS, FORMATS, HEADCOUNTS };

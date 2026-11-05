@@ -8,6 +8,7 @@ import { auth } from "@/auth";
 import { isClock } from "@/lib/cohort-sessions";
 import { type IaResult, deleteIaDay, openIaDates, updateIaDay } from "@/lib/ia-days-server";
 import { syncDayInvites } from "@/lib/ia-plan-server";
+import { IA_JOURNEES } from "@/lib/ia-days";
 
 async function requireAdmin() {
   const session = await auth();
@@ -39,7 +40,7 @@ export async function openDatesAction(formData: FormData): Promise<void> {
 
 export async function updateDayAction(formData: FormData): Promise<void> {
   await requireAdmin();
-  const parsed = z.object({ id: z.coerce.number().int().positive(), journee: z.coerce.number().int().min(1).max(5), start: clock, capacity, closed: z.boolean() }).safeParse({
+  const parsed = z.object({ id: z.coerce.number().int().positive(), journee: z.coerce.number().int().min(1).max(IA_JOURNEES), start: clock, capacity, closed: z.boolean() }).safeParse({
     id: formData.get("id"), journee: formData.get("journee"), start: formData.get("start"), capacity: formData.get("capacity"), closed: formData.get("closed") === "on",
   });
   if (!parsed.success) invalid(parsed.error);

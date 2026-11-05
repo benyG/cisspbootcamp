@@ -230,3 +230,7 @@
 .ial .country select { font: 600 .92rem/1.2 var(--body); color: var(--ink); background: var(--paper); border: 1.5px solid var(--line); border-radius: 8px; padding: 8px 10px; max-width: 100%; }
 .ial .dayplan-note { margin-top: 10px; font: 500 .8rem/1.4 var(--mono); color: var(--muted); }
 .ial .empty { background: var(--sheet); border: 1.5px dashed var(--line); border-radius: 12px; padding: 14px; color: var(--ink-2); }
+.ial .social { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: center; font-size: .8rem; }
+.ial .social b { display: block; font: 600 .82rem/1.2 var(--body); }
+.ial .social .thumb { width: 52px; height: 52px; border-radius: 8px; background: linear-gradient(135deg, #F5B700 0 33%, #17B890 33% 66%, #0B6E56 66%); }
+.ial .part[data-state="plan"].social { display: block; }

@@ -19,7 +19,7 @@ const FONT_DIR = join(process.cwd(), "lib/marketing/fonts");
 let fonts: Promise<[Buffer, Buffer]> | null = null;
 const loadFonts = () => (fonts ??= Promise.all([readFile(join(FONT_DIR, "inter-tight-800-latin.woff")), readFile(join(FONT_DIR, "inter-600-latin.woff"))]));
 
-/** kind: the Bâtisseur IA visuals carry 5 dots (the 5 journées) and their own signature. */
+/** kind: the Bâtisseur IA visuals carry one dot per journée and their own signature. */
 export type ComposeInput = { photo: Uint8Array; photoType: string; channel: Channel; headline: string; keyword: string; kind?: MarketingKind };
 
 export async function composeVisual(input: ComposeInput): Promise<Uint8Array> {

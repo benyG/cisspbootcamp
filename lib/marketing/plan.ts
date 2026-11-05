@@ -48,7 +48,7 @@ export const IA_ART_DIRECTION = [
   "- Typographie Inter Tight très grasse pour le titre (un seul mot ou chiffre en vert), Inter pour le reste. Beaucoup d'espace vide.",
   "- Photographie réelle, jamais d'illustration générique : entrepreneurs et indépendants africains francophones, 28 à 50 ans, dans leur activité (boutique, atelier, cabinet, bureau partagé, comptoir), un ordinateur portable ou un téléphone en main, lumière naturelle chaude, attitude concentrée et fière.",
   "- Interdits : robot, humanoïde, cerveau lumineux, visage en circuits, code vert façon Matrix, hologramme, main robotique, stock photo souriant face caméra.",
-  "- Signature graphique : une fine ligne verte de progression en 5 points (les 5 journées), et « Bâtisseur IA » en bas à gauche.",
+  "- Signature graphique : une fine ligne verte de progression en 6 points (les 6 journées), et « Bâtisseur IA » en bas à gauche.",
   "- Vidéo : plans lents et stables, caméra à l'épaule discrète, étalonnage froid dans les ombres et chaud sur la peau, texte à l'écran court en Inter Tight blanche, vert pour le mot clé. Un écran peut apparaître flou, jamais lisible.",
 ].join("\n");
 
@@ -71,7 +71,7 @@ export const DESTINATIONS = {
 /** Where a Bâtisseur IA post sends people (Ben, 04/11). */
 export const IA_DESTINATIONS = {
   ia_diagnostic: { label: "Diagnostic IA", path: "/ia/diagnostic", forModel: "le diagnostic d'automatisation gratuit (5 questions, 3 minutes) : les trois automatisations que son application peut prendre en charge en premier" },
-  ia_page: { label: "Page Bâtisseur IA", path: "/ia", forModel: "la page du Bâtisseur IA : programme des 5 journées le week-end, prix selon le pays, prochaines dates d'entrée" },
+  ia_page: { label: "Page Bâtisseur IA", path: "/ia", forModel: "la page du Bâtisseur IA : programme des 6 journées le week-end, prix selon le pays, prochaines dates d'entrée" },
   ia_inscription: { label: "Inscription IA", path: "/ia/inscription", forModel: "l'inscription au Bâtisseur IA : choix de la date d'entrée (J1), paiement par carte ou mobile money" },
 } as const;
 
@@ -112,7 +112,7 @@ export const IA_PILLARS = {
   outils: { label: "Les outils expliqués", destination: "ia_page", examples: ["GitHub expliqué à un chef d'entreprise", "Mettre une application en ligne avec Vercel", "Ce que coûte vraiment une application sur mesure"] },
   garde_fous: { label: "Méthode et garde-fous", destination: "ia_diagnostic", examples: ["Ne jamais confier ses mots de passe à une IA", "Relire ce que l'IA a écrit avant de publier", "Commencer petit : une tâche, puis la suivante"] },
   entrepreneur: { label: "Vie d'entrepreneur", destination: "ia_diagnostic", examples: ["Le temps perdu dans WhatsApp", "Quand Excel ne suffit plus", "Confier les tâches répétitives à un outil"] },
-  offre: { label: "Offre et dates", destination: "ia_inscription", examples: ["Les prochaines entrées J1", "5 journées le week-end, aux dates de votre choix", "Paiement par carte ou mobile money"] },
+  offre: { label: "Offre et dates", destination: "ia_inscription", examples: ["Les prochaines entrées J1", "6 journées le week-end, aux dates de votre choix", "Paiement par carte ou mobile money"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
 
 export type Pillar = keyof typeof PILLARS | keyof typeof IA_PILLARS;
