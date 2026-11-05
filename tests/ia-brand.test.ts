@@ -60,3 +60,12 @@ describe("Bâtisseur IA voice (ExamBoot, not Ben)", () => {
     }
   });
 });
+
+describe("Bâtisseur IA share image", () => {
+  it("names ExamBoot, not Ben, and has no portrait", async () => {
+    const { IA_SHARE_ALT } = await import("@/lib/og/ia-share-image");
+    expect(IA_SHARE_ALT).toContain("ExamBoot");
+    expect(IA_SHARE_ALT).not.toMatch(/\bBen\b/);
+    expect(readFileSync("lib/og/ia-share-image.tsx", "utf8")).not.toContain("coach.png");
+  });
+});
