@@ -3,37 +3,52 @@ import { join } from "node:path";
 
 import { ImageResponse } from "next/og";
 
+import { IA_COMPANY } from "@/lib/ia-brand";
+import { JOURNEES } from "@/lib/ia-days";
 import { SHARE_SIZE } from "@/lib/og/share-image";
 
-/** Bâtisseur IA share image: same colours, fonts and photo as the site's, its own promise. */
-export const IA_SHARE_ALT = "Bâtisseur IA : construisez votre application en 6 journées avec Claude Code, avec Ben";
+/**
+ * Bâtisseur IA share image: the site's colours and fonts, its own promise,
+ * the six journées, signed ExamBoot. No portrait: the IA side speaks for the
+ * company, not for Ben (05/11).
+ */
+export const IA_SHARE_ALT = `Bâtisseur IA : apprenez à construire votre application avec l’IA, en ${JOURNEES.length} journées en direct, une formation ${IA_COMPANY}`;
 
-const C = { night: "#071A33", night2: "#14324F", paper: "#F7F8F6", green: "#17B890", muted: "#9FB0C2" };
+const C = { night: "#071A33", night2: "#14324F", panel: "#0B2440", paper: "#F7F8F6", green: "#17B890", muted: "#9FB0C2" };
 const read = (...p: string[]) => readFile(join(process.cwd(), ...p));
 
+/** Short names of the journées, as on the share card. */
+const SHORT = ["Votre application en ligne", "Vos données et tableau de bord", "Devis, factures, paiements", "Publications Facebook, LinkedIn", "Référencement et marché", "Un agent IA sur vos données"] as const;
+
 export async function iaShareImage(): Promise<ImageResponse> {
-  const [display, sans, coach] = await Promise.all([
+  const [display, sans] = await Promise.all([
     read("lib/marketing/fonts/inter-tight-800-latin.woff"),
     read("lib/marketing/fonts/inter-600-latin.woff"),
-    read("lib/og/coach.png"),
   ]);
-  const photo = `data:image/png;base64,${coach.toString("base64")}`;
+  const days = JOURNEES.map((j, i) => ({ n: j.n, label: SHORT[i] ?? j.title }));
   return new ImageResponse(
     (
       <div style={{ width: 1200, height: 630, display: "flex", position: "relative", backgroundImage: `linear-gradient(135deg, ${C.night} 0%, ${C.night} 55%, ${C.night2} 100%)`, fontFamily: "Inter" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-        <img src={photo} width={537} height={600} style={{ position: "absolute", right: 30, bottom: 0 }} />
-        <div style={{ position: "absolute", left: 72, top: 64, bottom: 64, width: 660, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 30, color: C.paper, fontWeight: 600 }}>Bâtisseur IA</span>
-          <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", columnGap: 18, fontFamily: "Inter Tight", fontWeight: 800, fontSize: 68, lineHeight: 1.04, letterSpacing: "-0.04em", color: C.paper }}>
-              <span>Votre</span><span>application</span><span>en</span><span>ligne</span><span>en</span><span style={{ color: C.green }}>5</span><span style={{ color: C.green }}>journées.</span>
+        <div style={{ position: "absolute", left: 64, top: 56, bottom: 56, width: 600, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 20, color: C.green, fontWeight: 600, letterSpacing: "0.04em" }}>BOOTCAMP PRATIQUE · EN DIRECT · EN FRANÇAIS</span>
+          <div style={{ display: "flex", flexWrap: "wrap", columnGap: 16, fontFamily: "Inter Tight", fontWeight: 800, fontSize: 64, lineHeight: 1.04, letterSpacing: "-0.04em", color: C.paper }}>
+            {["Apprenez", "à", "construire"].map((w) => <span key={w}>{w}</span>)}
+            <span style={{ color: C.green }}>votre</span>
+            {["application", "avec", "l’IA."].map((w) => <span key={w}>{w}</span>)}
+          </div>
+          <span style={{ fontSize: 23, color: C.muted, lineHeight: 1.4 }}>Avec Claude Code · le week-end · sans savoir coder</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 30, color: C.paper, fontWeight: 600 }}>Bâtisseur IA</span>
+            <span style={{ fontSize: 22, color: C.muted }}>{`Une formation ${IA_COMPANY} · batisseur-ia.com`}</span>
+          </div>
+        </div>
+        <div style={{ position: "absolute", right: 56, top: 56, bottom: 56, width: 470, display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
+          {days.map((d) => (
+            <div key={d.n} style={{ display: "flex", alignItems: "center", gap: 16, backgroundColor: C.panel, borderRadius: 14, padding: "14px 18px" }}>
+              <span style={{ fontFamily: "Inter Tight", fontWeight: 800, fontSize: 30, color: C.green, width: 48 }}>{`J${d.n}`}</span>
+              <span style={{ fontSize: 21, color: C.paper }}>{d.label}</span>
             </div>
-            <span style={{ fontSize: 26, color: C.muted, lineHeight: 1.4, maxWidth: 620 }}>Avec Claude Code · le week-end · en français · pas besoin de savoir coder</span>
-          </div>
-          <div style={{ display: "flex", gap: 14 }}>
-            {[1, 2, 3, 4, 5].map((n) => <div key={n} style={{ display: "flex", width: 64, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: n === 1 ? C.green : "#0B2440", color: C.paper, fontSize: 22, fontWeight: 600 }}>J{n}</div>)}
-          </div>
+          ))}
         </div>
       </div>
     ),
