@@ -238,7 +238,7 @@ async function takeEntrySeat(tx: Prisma.TransactionClient, leadId: number, cohor
     create: { leadId, cohortId, journee: 1, dayId: day.id },
     update: {},
   });
-  // Their calendar link, to pick J2 to J5 (lib/ia-plan-server.ts).
+  // Their calendar link, to pick J2 to J6 (lib/ia-plan-server.ts).
   await tx.iaPlan.upsert({ where: { leadId_cohortId: { leadId, cohortId } }, create: { leadId, cohortId, token: createToken() }, update: {} });
 }
 
@@ -446,7 +446,7 @@ async function sendSeatConfirmation(input: {
       `Référence : ${input.reference}\n` +
       `Votre reçu : ${env.NEXT_PUBLIC_APP_URL}/inscription/recu/${input.reference}\n\n` +
       (input.program === "ia"
-        ? `Votre J1 est réservée à cette date ; l'invitation arrive dans votre agenda, avec le lien de la visio.\n\n${input.planUrl ? `Choisissez maintenant vos J2 à J5, dans l'ordre, parmi les week-ends suivants, et remplissez votre fiche projet : ${input.planUrl}\n\n` : ""}Préparez votre J1 deux ou trois jours avant (30 minutes : vos comptes et Claude Code) : ${iaUrl("/ia/guide", env.NEXT_PUBLIC_APP_URL)}\n\n`
+        ? `Votre J1 est réservée à cette date ; l'invitation arrive dans votre agenda, avec le lien de la visio.\n\n${input.planUrl ? `Choisissez maintenant vos J2 à J6, dans l'ordre, parmi les week-ends suivants, et remplissez votre fiche projet : ${input.planUrl}\n\n` : ""}Préparez votre J1 deux ou trois jours avant (30 minutes : vos comptes et Claude Code) : ${iaUrl("/ia/guide", env.NEXT_PUBLIC_APP_URL)}\n\n`
         : `Je vous écris avant le démarrage avec le programme détaillé et les accès${input.program === "cc" ? ", et la marche à suivre pour réserver votre examen CC auprès d'ISC²" : ""}.\n\n`) +
       `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${input.lead.unsubscribeToken}`,
   });

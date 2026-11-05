@@ -78,6 +78,7 @@ export function IaQuote({ tiers, prices, rates, hours, days, capacity }: Props) 
               <tr><td>30 jours de suivi après la J{days}</td><td>inclus</td></tr>
               <tr className="sub"><td>À régler chez les fournisseurs : abonnement Claude pendant le mois</td><td>20 à 100 USD</td></tr>
               <tr className="sub"><td>Nom de domaine de votre application</td><td>10 à 20 USD / an</td></tr>
+              <tr className="sub"><td>Images générées pour vos publications (J4)</td><td>quelques centimes / image</td></tr>
             </tbody>
           </table>
           <div className="total"><div><small>Total formation</small><b>{quote.price}</b></div>{quote.local && <small>≈ {quote.local}, montant indicatif</small>}</div>

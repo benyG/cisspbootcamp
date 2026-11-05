@@ -20,7 +20,7 @@ import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 import "./landing.css";
 
 const TITLE = "Bâtisseur IA : le bootcamp pratique pour construire votre application avec l’IA";
-const DESCRIPTION = "Formation en direct, en français, le week-end : en 5 journées, construisez vous-même l’application de votre entreprise avec Claude Code. Sans savoir coder.";
+const DESCRIPTION = "Formation en direct, en français, le week-end : en 6 journées, construisez vous-même l’application de votre entreprise avec Claude Code. Sans savoir coder.";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
@@ -159,7 +159,7 @@ export default async function IaPage() {
                     return (
                       <Link key={e.cohortId} href={iaPath(`/ia/inscription?entree=${e.cohortId}`)} className="date" style={{ textDecoration: "none" }}>
                         <div className="d"><b>{d.getUTCDate()}</b><span>{d.toLocaleDateString("fr-FR", { month: "short", timeZone: "UTC" })}</span></div>
-                        <p><span className="first-letter:uppercase">{shortDate(e.date)}</span><small>puis vos J2 à J5 aux week-ends suivants</small></p>
+                        <p><span className="first-letter:uppercase">{shortDate(e.date)}</span><small>puis vos J2 à J6 aux week-ends suivants</small></p>
                         <span className="left">{e.left} place{e.left > 1 ? "s" : ""}</span>
                       </Link>
                     );

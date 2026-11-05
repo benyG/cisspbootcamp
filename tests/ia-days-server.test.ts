@@ -23,10 +23,10 @@ describe("Bâtisseur IA, dates (Ben, 03/11)", () => {
 
   it("opens the weekend days in rotation and a cohort for each J1", async () => {
     db.iaDay.findMany.mockResolvedValue([]);
-    const r = await openIaDates({ from: "2027-01-20", to: "2027-02-08", which: "both", start: "10:00", capacity: 12 }, now);
-    expect(r).toEqual({ ok: true, message: "6 dates ouvertes, dont 2 entrées (J1)." });
+    const r = await openIaDates({ from: "2027-01-20", to: "2027-02-13", which: "both", start: "10:00", capacity: 12 }, now);
+    expect(r).toEqual({ ok: true, message: "7 dates ouvertes, dont 2 entrées (J1)." });
     const created = db.tx.iaDay.create.mock.calls.map((c) => c[0].data);
-    expect(created.map((d) => [d.date, d.journee])).toEqual([["2027-01-23", 1], ["2027-01-24", 2], ["2027-01-30", 3], ["2027-01-31", 4], ["2027-02-06", 5], ["2027-02-07", 1]]);
+    expect(created.map((d) => [d.date, d.journee])).toEqual([["2027-01-23", 1], ["2027-01-24", 2], ["2027-01-30", 3], ["2027-01-31", 4], ["2027-02-06", 5], ["2027-02-07", 6], ["2027-02-13", 1]]);
     expect(created[0].cohortId).toBe(101);
     expect(created[1].cohortId).toBeNull();
     const cohort = db.tx.cohort.create.mock.calls[0][0].data;

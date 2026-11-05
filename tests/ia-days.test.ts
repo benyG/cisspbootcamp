@@ -4,10 +4,10 @@ import { type IaDay, candidates, checkPicks, isWeekendDate, journeeSlot, longDat
 
 const day = (id: number, date: string, journee: number, extra: Partial<IaDay> = {}): IaDay => ({ id, date, journee, capacity: 12, seats: 0, closed: false, start: "10:00", ...extra });
 const now = new Date("2027-01-10T12:00:00Z");
-// Saturdays and Sundays from 23 January 2027, J1..J5 in rotation.
+// Saturdays and Sundays from 23 January 2027, J1..J6 in rotation.
 const DAYS: IaDay[] = [
-  day(1, "2027-01-23", 1), day(2, "2027-01-24", 2), day(3, "2027-01-30", 3), day(4, "2027-01-31", 4), day(5, "2027-02-06", 5),
-  day(6, "2027-02-07", 1), day(7, "2027-02-13", 2), day(8, "2027-02-14", 3), day(9, "2027-02-20", 4), day(10, "2027-02-21", 5),
+  day(1, "2027-01-23", 1), day(2, "2027-01-24", 2), day(3, "2027-01-30", 3), day(4, "2027-01-31", 4), day(5, "2027-02-06", 5), day(11, "2027-02-07", 6),
+  day(6, "2027-02-13", 1), day(7, "2027-02-14", 2), day(8, "2027-02-20", 3), day(9, "2027-02-21", 4), day(10, "2027-02-27", 5), day(12, "2027-02-28", 6),
 ];
 
 describe("weekend dates", () => {
@@ -46,8 +46,8 @@ describe("rotation", () => {
     ]);
   });
 
-  it("wraps after J5, skips dates already open and ignores closed ones", () => {
-    const existing = [{ date: "2027-01-23", journee: 4, closed: false }, { date: "2027-01-24", journee: 5, closed: false }, { date: "2027-01-30", journee: 1, closed: true }];
+  it("wraps after J6, skips dates already open and ignores closed ones", () => {
+    const existing = [{ date: "2027-01-23", journee: 5, closed: false }, { date: "2027-01-24", journee: 6, closed: false }, { date: "2027-01-30", journee: 1, closed: true }];
     expect(rotateJournees(existing, ["2027-01-24", "2027-01-30", "2027-01-31"])).toEqual([{ date: "2027-01-31", journee: 1 }]);
   });
 });
@@ -55,9 +55,10 @@ describe("rotation", () => {
 describe("picks", () => {
   it("offers the next journée after the previous one", () => {
     expect(nextJournee({ 1: "2027-01-23" })).toBe(2);
-    expect(nextJournee({ 1: "a", 2: "b", 3: "c", 4: "d", 5: "e" })).toBeNull();
-    expect(candidates(DAYS, { 1: "2027-01-23" }, 2, now).map((d) => d.date)).toEqual(["2027-01-24", "2027-02-13"]);
-    expect(candidates(DAYS, { 1: "2027-02-07" }, 2, now).map((d) => d.date)).toEqual(["2027-02-13"]);
+    expect(nextJournee({ 1: "a", 2: "b", 3: "c", 4: "d", 5: "e" })).toBe(6);
+    expect(nextJournee({ 1: "a", 2: "b", 3: "c", 4: "d", 5: "e", 6: "f" })).toBeNull();
+    expect(candidates(DAYS, { 1: "2027-01-23" }, 2, now).map((d) => d.date)).toEqual(["2027-01-24", "2027-02-14"]);
+    expect(candidates(DAYS, { 1: "2027-02-13" }, 2, now).map((d) => d.date)).toEqual(["2027-02-14"]);
   });
 
   it("hides full, closed and too-close dates", () => {
@@ -68,14 +69,14 @@ describe("picks", () => {
   });
 
   it("accepts journées in order", () => {
-    const r = checkPicks(DAYS, { 1: "2027-01-23" }, { 2: "2027-01-24", 3: "2027-01-30", 4: "2027-02-20", 5: "2027-02-21" }, now);
-    expect(r.ok && r.added.map((a) => a.day.id)).toEqual([2, 3, 9, 10]);
+    const r = checkPicks(DAYS, { 1: "2027-01-23" }, { 2: "2027-01-24", 3: "2027-01-30", 4: "2027-02-21", 5: "2027-02-27", 6: "2027-02-28" }, now);
+    expect(r.ok && r.added.map((a) => a.day.id)).toEqual([2, 3, 9, 10, 12]);
   });
 
   it("refuses a date that does not carry the journée, a skipped journée or a wrong order", () => {
     expect(checkPicks(DAYS, { 1: "2027-01-23" }, { 2: "2027-01-30" }, now)).toEqual({ ok: false, error: "Cette date ne porte pas la J2." });
     expect(checkPicks(DAYS, { 1: "2027-01-23" }, { 3: "2027-01-30" }, now)).toEqual({ ok: false, error: "Choisissez d’abord la J2." });
-    expect(checkPicks(DAYS, { 1: "2027-02-07" }, { 2: "2027-01-24" }, now)).toMatchObject({ ok: false });
+    expect(checkPicks(DAYS, { 1: "2027-02-13" }, { 2: "2027-01-24" }, now)).toMatchObject({ ok: false });
     expect(checkPicks(DAYS, { 1: "2027-01-23" }, {}, now)).toMatchObject({ ok: false });
     expect(checkPicks(DAYS, { 1: "2027-01-23" }, { 7: "2027-01-24" }, now)).toEqual({ ok: false, error: "Journée inconnue." });
   });

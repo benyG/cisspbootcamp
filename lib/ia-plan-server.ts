@@ -12,7 +12,7 @@ import { iaUrl } from "@/lib/ia-domain";
 
 /**
  * Bâtisseur IA participant calendars (lib/ia-days.ts): the page where a
- * paid participant picks J2 to J5, the Google invitations (one event per
+ * paid participant picks J2 to J6, the Google invitations (one event per
  * date, every participant of that date invited) and the reminder the day
  * before. Seats are final once taken.
  */

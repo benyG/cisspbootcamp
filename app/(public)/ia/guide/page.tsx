@@ -38,7 +38,7 @@ export default async function IaGuidePage() {
             <li><b>Pro, 20 USD par mois</b> : suffisant pour suivre le bootcamp.</li>
             <li><b>Max, 100 USD par mois</b> : recommandé si vous voulez avancer beaucoup entre les journées.</li>
           </ul>
-          <p className="mt-2 text-muted">Un mois d’abonnement couvre les 5 journées si vous les prenez sur des week-ends rapprochés.</p>
+          <p className="mt-2 text-muted">Un mois d’abonnement couvre les 6 journées si vous les prenez sur des week-ends rapprochés.</p>
         </Step>
 
         <Step n={2} title="Un compte GitHub, gratuit">
@@ -95,7 +95,7 @@ export default async function IaGuidePage() {
           <p className="mt-1">Répondez simplement à l’e-mail de confirmation de votre place{whatsapp ? <>, ou écrivez à Ben sur <a href={whatsapp} className="underline">WhatsApp</a></> : null}, avec une capture d’écran. Si l’ordinateur n’est pas votre point fort, une séance d’accueil d’une heure avant la J1 installe tout avec vous.</p>
         </section>
 
-        <p className="text-[.85rem] text-muted"><Link href={iaPath("/ia")} className="underline">Le programme des 5 journées</Link></p>
+        <p className="text-[.85rem] text-muted"><Link href={iaPath("/ia")} className="underline">Le programme des 6 journées</Link></p>
       </main>
       <IaFooter coach={settings.coach.name} />
     </>

@@ -102,7 +102,7 @@ function iaFactsForModel(f: CohortFacts, fmt: (d: Date) => string): string {
   const program = PROGRAMS.ia;
   return [
     `Programme : ${program.productName} — ${program.productLine}`,
-    `Entrée : ${f.name}. La J1 a lieu le ${fmt(f.startsAt)} ; chaque participant choisit ensuite ses journées J2 à J5 parmi les week-ends proposés, à son rythme.`,
+    `Entrée : ${f.name}. La J1 a lieu le ${fmt(f.startsAt)} ; chaque participant choisit ensuite ses journées J2 à J6 parmi les week-ends proposés, à son rythme.`,
     "Public : chefs d'entreprise, indépendants, porteurs de projet, francophones, sans savoir coder. Pas d'informaticiens en particulier.",
     "Promesse : à la fin, une application en ligne à son nom (site, formulaire, base de clients, paiement, e-mails, tableau de bord) et ses premières automatisations, construites avec Claude Code. Pas de chiffre de gain ni de revenu promis.",
     `Places : ${f.capacity} par entrée, ${f.pace.remaining} encore libres.`,

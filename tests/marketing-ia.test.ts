@@ -55,8 +55,8 @@ describe("marketing Bâtisseur IA, deux publics (Ben, 04/11)", () => {
     expect(iaRecommendations({ pace: paceFor(0, NOW, NOW), diagnosticsLast7Days: 3, diagnosedUnpaid: 0, daysSinceLastPost: 1 })[0]).toContain("complète");
   });
 
-  it("habille les visuels IA : entrepreneurs, pas de robot, 5 points", () => {
-    expect(brandKit("ia")).toMatchObject({ dots: 5, signature: "Bâtisseur IA" });
+  it("habille les visuels IA : entrepreneurs, pas de robot, un point par journée", () => {
+    expect(brandKit("ia")).toMatchObject({ dots: 6, signature: "Bâtisseur IA" });
     expect(brandKit()).toMatchObject({ dots: 15, signature: "CISSP Bootcamp" });
     const image = brandedImagePrompt("A tailor checks orders on her phone", "ia");
     expect(image).toContain("entrepreneurs");

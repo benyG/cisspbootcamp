@@ -10,7 +10,7 @@ describe("programs", () => {
   it("recognises Bâtisseur IA", () => {
     expect(isProgramCode("ia")).toBe(true);
     expect(isProgramCode("autre")).toBe(false);
-    expect(PROGRAMS.ia).toMatchObject({ name: "Bâtisseur IA", shortName: "IA", hours: 25, days: 5, defaultCapacity: 12 });
+    expect(PROGRAMS.ia).toMatchObject({ name: "Bâtisseur IA", shortName: "IA", hours: 30, days: 6, defaultCapacity: 12 });
   });
 
   it("prices every non-CISSP programme for both tiers, in cents", () => {

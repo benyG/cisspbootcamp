@@ -6,7 +6,7 @@ import { ImageResponse } from "next/og";
 import { SHARE_SIZE } from "@/lib/og/share-image";
 
 /** Bâtisseur IA share image: same colours, fonts and photo as the site's, its own promise. */
-export const IA_SHARE_ALT = "Bâtisseur IA : votre application en ligne en 5 journées avec Claude Code, avec Ben";
+export const IA_SHARE_ALT = "Bâtisseur IA : construisez votre application en 6 journées avec Claude Code, avec Ben";
 
 const C = { night: "#071A33", night2: "#14324F", paper: "#F7F8F6", green: "#17B890", muted: "#9FB0C2" };
 const read = (...p: string[]) => readFile(join(process.cwd(), ...p));

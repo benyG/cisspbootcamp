@@ -6,18 +6,18 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
  * The programme (Ben, 05/11): pick a journée, see what you write to Claude
  * Code, what you know afterwards, and an example project on a phone where
  * what is still on the plan is blue and what is built is white. Tours the
- * five journées until the reader takes over.
+ * journées until the reader takes over.
  */
 export type ScrubDay = { n: number; title: string; text: string; short: string; prompt: string; skills: readonly string[] };
 
 const PARTS: ReadonlyArray<{ day: number; plan: string; className?: string; content: ReactNode }> = [
   { day: 1, plan: "J1 · mise en ligne", className: "url", content: <><span>atelier-adjoa.com</span><span className="live">en ligne</span></> },
   { day: 1, plan: "J1 · page d’accueil", content: <><div className="shop">Atelier Adjoa<small>Couture sur mesure · Lomé</small></div><span className="mini-btn">Prendre rendez-vous pour mes mesures</span></> },
-  { day: 2, plan: "J2 · clientes et commandes", content: <div className="rows"><div><span>Afi K. · robe de cérémonie</span><span className="pill ok">prête</span></div><div><span>Mawuena D. · ensemble pagne</span><span className="pill">essayage</span></div><div><span>Kossi A. · 3 chemises</span><span className="pill">mesures</span></div></div> },
-  { day: 3, plan: "J3 · paiement", content: <><b>Acompte · 15 000 FCFA</b><div className="pay"><span className="om">Orange Money</span><span className="mtn">MTN MoMo</span><span>Carte</span></div></> },
-  { day: 3, plan: "J3 · relances", className: "toast", content: <>Relance envoyée à Kossi : devis du 12 janvier</> },
-  { day: 4, plan: "J4 · tableau de bord", content: <><div className="rows"><div><b>Encaissé en janvier</b><span className="pill ok">facture F-0042.pdf</span></div></div><div className="bars" aria-hidden="true">{[35, 52, 44, 70, 62, 88].map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}</div></> },
-  { day: 5, plan: "J5 · votre assistant", className: "agent", content: <><b>Assistant du lundi</b>4 relances préparées pour cette semaine. À valider avant envoi.</> },
+  { day: 2, plan: "J2 · clientes et tableau de bord", content: <><div className="rows"><div><span>Afi K. · robe de cérémonie</span><span className="pill ok">prête</span></div><div><span>Kossi A. · 3 chemises</span><span className="pill">mesures</span></div></div><div className="bars" aria-hidden="true">{[35, 52, 44, 70, 62, 88].map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}</div></> },
+  { day: 3, plan: "J3 · paiement et factures", content: <><div className="rows"><div><b>Acompte · 15 000 FCFA</b><span className="pill ok">F-0042.pdf</span></div></div><div className="pay"><span className="om">Orange Money</span><span className="mtn">MTN MoMo</span><span>Carte</span></div></> },
+  { day: 4, plan: "J4 · publications", className: "social", content: <><span className="thumb" aria-hidden="true" /><span><b>LinkedIn · Facebook</b>« Nouveaux modèles en wax pour les fêtes » · image prête, à valider</span></> },
+  { day: 5, plan: "J5 · référencement", content: <div className="rows"><div><b>couture sur mesure Lomé</b><span className="pill ok">mot-clé suivi</span></div><div><span>3 sujets à publier ce mois</span><span className="pill">plan de contenu</span></div></div> },
+  { day: 6, plan: "J6 · votre agent IA", className: "agent", content: <><b>Analyse du lundi, via MCP</b>4 clientes à relancer ; les ensembles en pagne se vendent le mieux ce mois. À valider avant envoi.</> },
 ];
 
 export function BuildScrubber({ days }: { days: readonly ScrubDay[] }) {
@@ -46,7 +46,7 @@ export function BuildScrubber({ days }: { days: readonly ScrubDay[] }) {
 
   return (
     <>
-      <div className="days" role="tablist" aria-label="Les 5 journées">
+      <div className="days" role="tablist" aria-label={`Les ${days.length} journées`}>
         {days.map((d, i) => (
           <button key={d.n} type="button" role="tab" id={`journee-${d.n}`} aria-selected={i === index} aria-controls="journee-panel" className={"day" + (i < index ? " done" : "")} onClick={() => pick(i)}>
             <b>J{d.n}</b><span>{d.short}</span>

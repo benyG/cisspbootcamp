@@ -38,12 +38,12 @@ describe("offre de service ExamBoot (Ben, 21/10)", () => {
   it("Bâtisseur IA (04/11) : brouillon, une seule ligne de prix, ses inclusions, sans ExamBoot", () => {
     const o = draftOffer({ quote: { ...quote, certification: "ia" }, countryLabel: () => "Côte d'Ivoire", paymentTerms: "50/50", today });
     expect(o).toMatchObject({ program: "ia", iaPriceUsd: 0, includeEvaluations: false });
-    expect(o.schedule).toContain("5 journées");
+    expect(o.schedule).toContain("6 journées");
     expect(offerSchema.safeParse(o).success).toBe(true);
     expect(offerLines({ program: "ia", participants: 6, priceUsd: 900, ccPriceUsd: 300, iaPriceUsd: 500 })).toEqual({ lines: [expect.objectContaining({ label: expect.stringContaining("Bâtisseur IA"), unitUsd: 500, totalUsd: 3000 })], totalUsd: 3000 });
     const { yes, no } = inclusions({ program: "ia", includeReplays: false, includeEvaluations: true }, ["Plan de lecture CISSP"]);
     expect(yes.join(" ")).not.toMatch(/CISSP|ExamBoot/);
-    expect(yes).toContain("30 jours de suivi après la J5");
+    expect(yes).toContain("30 jours de suivi après la J6");
     expect(no[0]).toContain("abonnement Claude");
   });
 

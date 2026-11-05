@@ -1,4 +1,5 @@
 import type { Channel, MarketingKind } from "./plan";
+import { IA_JOURNEES } from "@/lib/ia-days";
 
 /**
  * The brand kit for generated media (Ben, 03/10): every MiniMax image and
@@ -56,7 +57,7 @@ export type BrandKit = { photoStyle: string; avoid: string; videoPeople: string;
 
 export function brandKit(kind: MarketingKind = "cert"): BrandKit {
   return kind === "ia"
-    ? { photoStyle: IA_PHOTO_STYLE, avoid: IA_AVOID, videoPeople: "People: Black African francophone entrepreneurs aged 28 to 50 at work in their own business, on a laptop or a phone.", dots: 5, signature: "Bâtisseur IA" }
+    ? { photoStyle: IA_PHOTO_STYLE, avoid: IA_AVOID, videoPeople: "People: Black African francophone entrepreneurs aged 28 to 50 at work in their own business, on a laptop or a phone.", dots: IA_JOURNEES, signature: "Bâtisseur IA" }
     : { photoStyle: PHOTO_STYLE, avoid: AVOID, videoPeople: "People: Black African francophone cybersecurity professionals aged 30 to 45 in a credible workplace.", dots: PROGRESS_DOTS, signature: SIGNATURE };
 }
 

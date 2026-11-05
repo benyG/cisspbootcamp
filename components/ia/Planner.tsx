@@ -8,7 +8,7 @@ import { IA_JOURNEES, IA_ZONE, type IaDay, JOURNEES, type Picks, candidates, jou
 const clock = (d: Date, timeZone: string) => d.toLocaleTimeString("fr-FR", { timeZone, hour: "numeric", minute: "2-digit", hourCycle: "h23" }).replace(":", " h ").replace(" h 00", " h");
 
 /**
- * Picks J2 to J5 in order (Ben, 03/11): each journée offers the open dates
+ * Picks J2 to J6 in order (Ben, 03/11): each journée offers the open dates
  * after the previous one; held journées are shown and never change.
  */
 export function Planner({ token, days, held, heldStarts, nowIso }: { token: string; days: IaDay[]; held: Picks; heldStarts: Record<string, string>; nowIso: string }) {

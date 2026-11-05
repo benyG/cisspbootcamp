@@ -14,7 +14,7 @@ import { cohortDays } from "@/lib/replays-server";
 
 export type IaResult = { ok: true; message: string } | { ok: false; error: string };
 
-/** A J1 cohort runs until its participants can have taken J5: eight weeks. */
+/** A J1 cohort runs until its participants can have taken the last journée: eight weeks. */
 const COHORT_WEEKS = 8;
 /** At most this many dates opened in one go. */
 const MAX_OPEN = 40;
