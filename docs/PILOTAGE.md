@@ -39,7 +39,7 @@ des admissions (jamais sous les places déjà payées).
 | 3 | Moteur de playbooks et garde-fous ; Santé technique, Inscription non finalisée, En retard sur la courbe | Livré |
 | 4 | Playbooks du cycle : Ouverture, Prospect chaud, Suivi d'appel, Dernier appel, Cohorte pleine, Fin de cohorte | Livré |
 | 5 | Lancer une cohorte : assistant et plan de campagne J-60 → J0 | Livré |
-| 6 | Promo : tarif de lancement, codes partenaires, parrainage | À faire |
+| 6 | Promo : tarif de lancement, codes partenaires, parrainage | Livré |
 | 7 | Communication automatisée : rythme de contenu, publication programmée, séquences e-mail, WhatsApp préparé | À faire |
 | 8 | Ajustement et pub : rattrapage, suivi des campagnes payantes, coût par inscrit | À faire |
 
@@ -98,8 +98,8 @@ seulement, plafond de pression, une fois par personne et par cohorte, au plus
 ## Lot 5 (livré)
 
 - `Cohort.campaign` (JSON) : canaux, budget pub, promo (tarif de lancement,
-  codes partenaires, parrainage). Les promos sont appliquées au paiement au
-  lot 6 ; d'ici là, le plan rappelle de les régler dans Tarifs.
+  codes partenaires, parrainage). Le tarif de lancement s'applique au paiement
+  par carte (lot 6).
 - `lib/campaign.ts` (pur, testé) : le plan daté de J-60 à une semaine après le
   dernier jour. Chaque action est automatique (un playbook, le rapport du
   lundi, les rappels de solde), à valider (avec l'endroit où la faire), une
@@ -110,3 +110,22 @@ seulement, plafond de pression, une fois par personne et par cohorte, au plus
 - Fiche de cohorte : le plan avec ce qui est fait, et le réglage de la campagne.
 - File d'actions : les actions « à valider » arrivées à leur date, avec
   « Ouvrir » et « Fait » (`campaign_done`), pendant deux semaines.
+
+## Lot 6 (livré)
+
+Choix de Ben (06/11) : un **pourcentage** sur le prix du pays ; **par carte, en
+une fois** seulement (Netticket vend des tickets à prix fixe : le mobile money
+et le paiement en deux fois restent au prix plein) ; le **parrainage** donne
+une remise à la personne recommandée, Ben remercie l'ancien lui-même.
+
+- `lib/promo.ts` (pur, testé) : codes, validité, meilleure remise (jamais deux
+  ensemble), arrondie au dollar, puis l'heure de conseil déduite.
+- Tarif de lancement : `promo.early` de la campagne (`percent`, `until`),
+  valable jusqu'à la fin de son dernier jour.
+- `PromoCode` : codes partenaires (remise, programme, date de fin, nombre
+  d'utilisations) et codes de parrainage (un par ancien participant).
+- `Registration.promoCode` (`LANCEMENT` ou le code) et `discountUsd`.
+- Pages d'inscription CISSP, CC, Bâtisseur IA : champ « Code promo » (ou
+  `?code=`) et prix remisé affiché ; la caisse recalcule tout côté serveur.
+- `/admin/promos` : codes, inscriptions payées par code, montants, qui a fait
+  inscrire qui, lien WhatsApp pour envoyer son code à chaque ancien.

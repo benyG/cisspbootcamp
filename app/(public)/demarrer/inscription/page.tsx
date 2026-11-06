@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Footer, Topbar, eyebrow, shell } from "@/components/landing/sections";
+import { PromoCode } from "@/components/payment/PromoCode";
+import { promoPreview } from "@/lib/promo-server";
 import { PlanAmount, PlanChoice } from "@/components/payment/PlanChoice";
 import { TrackView } from "@/components/tracking/TrackView";
 import { formatAdmissionDeadline, formatCohortMonth, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
@@ -20,8 +22,8 @@ export const metadata: Metadata = { title: "S'inscrire à la formation CC — CI
 export const dynamic = "force-dynamic";
 
 /** Registration to the CC course: cohort, price for the country, contact, payment. */
-export default async function ProgramRegistrationPage({ searchParams }: { searchParams: Promise<{ pays?: string; t?: string; annule?: string; erreur?: string }> }) {
-  const { pays, t, annule, erreur } = await searchParams;
+export default async function ProgramRegistrationPage({ searchParams }: { searchParams: Promise<{ pays?: string; t?: string; annule?: string; erreur?: string; code?: string }> }) {
+  const { pays, t, annule, erreur, code } = await searchParams;
   const program = PROGRAMS.cc;
 
   const known = t && t.length >= 10
@@ -45,6 +47,7 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
   const plan = price ? twoPaymentPlan(price.installmentUsd) : null;
   const firstLocal = plan && currency !== "USD" ? convertUsdCents(plan.firstUsd, currency, rates) : null;
 
+  const promo = price && cohort ? await promoPreview({ program: "cc", cohortId: cohort.id, listUsdCents: price.amountUsd, code }) : null;
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
   const mobileReady = mobileMoneyAvailable(country, price?.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
 
@@ -77,11 +80,13 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
                   {local !== null && <p className="font-bold text-muted">≈ {formatLocal(local, currency)}</p>}
                 </div>
                 <p className="mt-2 text-[.82rem] text-muted">Tarif {tierCode === "africa" ? "Afrique francophone" : "international"}. {program.examNote}</p>
+                <div className="mt-3"><PromoCode promo={promo?.promo ?? null} error={promo?.error ?? null} code={promo?.code ?? null} listUsdCents={price.amountUsd} page="/demarrer/inscription" keep={{ t, pays: known ? undefined : pays }} /></div>
                 <p className="mt-3 text-sm font-semibold">{remainingSeats(cohort)} place{remainingSeats(cohort) > 1 ? "s" : ""} restante{remainingSeats(cohort) > 1 ? "s" : ""} sur {cohort.capacity}</p>
               </section>
 
               <form className="group mt-6 grid gap-4">
                 {t && <input type="hidden" name="t" value={t} />}
+                {promo?.code && <input type="hidden" name="code" value={promo.code} />}
                 {plan && (
                   <PlanChoice
                     fullUsd={price.amountUsd}
@@ -118,7 +123,7 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
                 )}
 
                 <button formAction={payProgramByCard} disabled={!stripeReady} className="rounded-[14px] bg-ink px-5 py-4 text-lg font-extrabold text-white disabled:opacity-50">
-                  Payer par carte bancaire · <PlanAmount full={formatUsdCents(price.amountUsd)} first={plan ? formatUsdCents(plan.firstUsd) : null} />
+                  Payer par carte bancaire · <PlanAmount full={formatUsdCents(promo?.promo?.amountUsdCents ?? price.amountUsd)} first={plan ? formatUsdCents(plan.firstUsd) : null} />
                 </button>
                 {mobileReady ? (
                   <details className="rounded-[14px] border border-line bg-white">

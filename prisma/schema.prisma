@@ -449,6 +449,9 @@ model Registration {
   balanceNote                   String?        @map("balance_note") @db.VarChar(200)
   balanceStripeSessionId        String?        @unique @map("balance_stripe_session_id") @db.VarChar(255)
   balanceNetticketTransactionId String?        @unique @map("balance_netticket_transaction_id") @db.VarChar(255)
+  /// Promo applied to a card payment in one go (lib/promo.ts): the code, or "LANCEMENT", and the discount in USD cents.
+  promoCode                     String?        @map("promo_code") @db.VarChar(24)
+  discountUsd                   Int            @default(0) @map("discount_usd")
   /// Balance reminders already e-mailed (lib/installments.ts).
   balanceReminders              Int            @default(0) @map("balance_reminders")
 
@@ -459,6 +462,7 @@ model Registration {
 
   @@index([cohortId, status])
   @@index([leadId])
+  @@index([promoCode])
   @@map("registrations")
 }
 
@@ -1049,4 +1053,27 @@ model IaPlan {
   @@unique([leadId, cohortId])
   @@index([cohortId])
   @@map("ia_plans")
+}
+
+/// A promo code (lot 6, lib/promo.ts): a partner's, or an alumnus' referral
+/// code. A percentage off the country's price, by card, in one payment.
+model PromoCode {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique @db.VarChar(24)
+  /// partner | referral
+  kind           String    @db.VarChar(16)
+  /// Who it is for: the partner's name, or the alumnus.
+  label          String    @db.VarChar(120)
+  percent        Int
+  /// cissp | cc | ia; null = every programme.
+  program        String?   @db.VarChar(8)
+  validUntil     DateTime? @map("valid_until")
+  maxUses        Int?      @map("max_uses")
+  active         Boolean   @default(true)
+  /// The alumnus who recommends (referral codes).
+  referrerLeadId Int?      @map("referrer_lead_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([referrerLeadId])
+  @@map("promo_codes")
 }

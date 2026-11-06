@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { eyebrow, shell } from "@/components/landing/sections";
+import { PromoCode } from "@/components/payment/PromoCode";
+import { promoPreview } from "@/lib/promo-server";
 import { PlanAmount, PlanChoice } from "@/components/payment/PlanChoice";
 import { TrackView } from "@/components/tracking/TrackView";
 import { formatAdmissionDeadline } from "@/lib/cohorts";
@@ -31,8 +33,8 @@ export const dynamic = "force-dynamic";
 const clock = (d: Date, timeZone: string) => d.toLocaleTimeString("fr-FR", { timeZone, hour: "numeric", minute: "2-digit", hourCycle: "h23" }).replace(":", " h ").replace(" h 00", " h");
 
 /** Bâtisseur IA registration: entry date, price for the country, contact, payment. */
-export default async function IaRegistrationPage({ searchParams }: { searchParams: Promise<{ pays?: string; t?: string; entree?: string; annule?: string; erreur?: string }> }) {
-  const { pays, t, entree, annule, erreur } = await searchParams;
+export default async function IaRegistrationPage({ searchParams }: { searchParams: Promise<{ pays?: string; t?: string; entree?: string; annule?: string; erreur?: string; code?: string }> }) {
+  const { pays, t, entree, annule, erreur, code } = await searchParams;
   const program = PROGRAMS.ia;
 
   const known = t && t.length >= 10
@@ -55,6 +57,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
   const firstLocal = plan && currency !== "USD" ? convertUsdCents(plan.firstUsd, currency, rates) : null;
   const selected = entries.find((e) => String(e.cohortId) === entree)?.cohortId ?? entries[0]?.cohortId;
 
+  const promo = price && selected ? await promoPreview({ program: "ia", cohortId: selected, listUsdCents: price.amountUsd, code }) : null;
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
   const mobileReady = mobileMoneyAvailable(country, price?.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
 
@@ -78,8 +81,11 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
               <Link href={iaPath("/ia/diagnostic")} className="mt-4 inline-flex rounded-[14px] border border-line bg-white px-5 py-3 font-extrabold">Faire le diagnostic →</Link>
             </section>
           ) : (
-            <form className="group mt-6 grid gap-4">
+            <>
+            <div className="mt-6"><PromoCode promo={promo?.promo ?? null} error={promo?.error ?? null} code={promo?.code ?? null} listUsdCents={price.amountUsd} page={iaPath("/ia/inscription")} keep={{ t, pays: known ? undefined : pays, entree: selected ? String(selected) : undefined }} /></div>
+            <form className="group mt-4 grid gap-4">
               {t && <input type="hidden" name="t" value={t} />}
+              {promo?.code && <input type="hidden" name="code" value={promo.code} />}
               <fieldset className="grid gap-2 rounded-[22px] border border-line bg-white p-5 shadow-[var(--shadow-card)]">
                 <legend className="px-1 text-sm font-bold">Votre J1</legend>
                 {entries.map((e) => {
@@ -139,7 +145,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
               )}
 
               <button formAction={payIaByCard} disabled={!stripeReady} className="rounded-[14px] bg-ink px-5 py-4 text-lg font-extrabold text-white disabled:opacity-50">
-                Payer par carte bancaire · <PlanAmount full={formatUsdCents(price.amountUsd)} first={plan ? formatUsdCents(plan.firstUsd) : null} />
+                Payer par carte bancaire · <PlanAmount full={formatUsdCents(promo?.promo?.amountUsdCents ?? price.amountUsd)} first={plan ? formatUsdCents(plan.firstUsd) : null} />
               </button>
               {mobileReady ? (
                 <details className="rounded-[14px] border border-line bg-white">
@@ -159,6 +165,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
               )}
               <p className="text-xs text-muted">Paiement sécurisé par Stripe. Votre place est confirmée dès réception du paiement, par e-mail, avec votre reçu.</p>
             </form>
+            </>
           )}
         </div>
       </main>

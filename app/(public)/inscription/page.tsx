@@ -9,6 +9,7 @@ import { balanceDeadline, buildOffer } from "@/lib/registration";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
 import { recordServerEvent } from "@/lib/tracking/server";
 
+import { PromoCode } from "@/components/payment/PromoCode";
 import { PlanAmount, PlanChoice } from "@/components/payment/PlanChoice";
 import { mobileMoneyAvailable } from "@/lib/payments/netticket";
 
@@ -20,9 +21,9 @@ export const dynamic = "force-dynamic";
 export default async function RegistrationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ t?: string; annule?: string; erreur?: string }>;
+  searchParams: Promise<{ t?: string; annule?: string; erreur?: string; code?: string }>;
 }) {
-  const { t, annule, erreur } = await searchParams;
+  const { t, annule, erreur, code } = await searchParams;
   const leadId = await leadIdFromToken(t);
 
   if (!leadId) {
@@ -38,7 +39,7 @@ export default async function RegistrationPage({
 
   const [lead, result, settings] = await Promise.all([
     prisma.lead.findUniqueOrThrow({ where: { id: leadId }, select: { firstName: true } }),
-    buildOffer(leadId),
+    buildOffer(leadId, new Date(), "cissp", undefined, { promoCode: code }),
     loadSiteSettings().catch(() => SITE_DEFAULTS),
   ]);
 
@@ -82,6 +83,7 @@ export default async function RegistrationPage({
         <p className="mt-3 text-sm text-[var(--color-muted)]">
           Formation et préparation. Les frais d&apos;examen ISC² (~750 USD) se règlent séparément auprès d&apos;ISC².
         </p>
+        <div className="mt-3"><PromoCode promo={offer.promo} error={offer.promoError} code={offer.promo?.code ?? (offer.promoError ? null : code ?? null)} listUsdCents={offer.listPriceUsdCents} page="/inscription" keep={{ t }} /></div>
         <p className="mt-3 text-sm font-semibold">
           {offer.seatsLeft} place{offer.seatsLeft > 1 ? "s" : ""} restante{offer.seatsLeft > 1 ? "s" : ""} sur {offer.cohort.capacity}
         </p>
@@ -90,6 +92,7 @@ export default async function RegistrationPage({
       {/* One form: the plan choice (two instalments) applies to card and mobile money alike. */}
       <form className="group flex flex-col gap-3">
         <input type="hidden" name="t" value={t} />
+        {offer.promo?.code && <input type="hidden" name="code" value={offer.promo.code} />}
         {offer.twoPayments && (
           <PlanChoice
             fullUsd={offer.amountUsdCents}
@@ -112,7 +115,7 @@ export default async function RegistrationPage({
           disabled={!stripeReady}
           className={primary + " w-full disabled:opacity-50"}
         >
-          Payer par carte bancaire{offer.twoPayments && <> · <PlanAmount full={offer.usdLabel} first={offer.twoPayments.firstLabel} /></>}
+          Payer par carte bancaire{offer.twoPayments ? <> · <PlanAmount full={offer.promo?.usdLabel ?? offer.usdLabel} first={offer.twoPayments.firstLabel} /></> : offer.promo ? ` · ${offer.promo.usdLabel}` : null}
         </button>
         {mobileReady ? (
           <details className="rounded-lg border border-line bg-white">
