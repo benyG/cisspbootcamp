@@ -234,6 +234,8 @@ model Cohort {
   capacity    Int          @default(10)
   /// Seats the campaign aims for (lib/pilotage.ts); null = the capacity.
   targetSeats Int?         @map("target_seats")
+  /// "Lancer une cohorte" (lib/campaign.ts): channels and promo; null = no campaign plan.
+  campaign    Json?
   status      CohortStatus @default(planned)
 
   createdAt DateTime @default(now()) @map("created_at")

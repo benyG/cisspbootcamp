@@ -1,4 +1,4 @@
-import { BellRing, Bot, Building2, Gauge, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BellRing, Bot, Building2, Gauge, Rocket, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -9,6 +9,7 @@ import { formatUsdCents } from "@/lib/pricing";
 import { balanceUrl } from "@/lib/registration";
 
 import { confirmBalancePayment, confirmManualPayment, unfinishedHandled, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
+import { markCampaignDone } from "./cohortes/actions";
 import { markSessionOutcome, remindSessionBooking } from "./conseil/actions";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function AdminHomePage() {
     payment: items.filter((i) => i.kind === "payment"),
     balance: items.filter((i) => i.kind === "balance"),
     unfinished: items.filter((i) => i.kind === "unfinished"),
+    campaign: items.filter((i) => i.kind === "campaign"),
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
     personal: items.filter((i) => i.kind === "personal"),
@@ -118,6 +120,22 @@ export default async function AdminHomePage() {
               <button className={primary}>Confirmer</button>
             </form>
           </Row>
+        ))}
+      </Group>
+
+      <Group icon={Rocket} title="Plan de campagne : à faire" count={groups.campaign.length}>
+        {groups.campaign.map((i) => i.kind === "campaign" && (
+          <li key={`k${i.cohortId}-${i.key}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white px-3.5 py-3">
+            <span className="min-w-0 text-sm"><b>{i.text}</b><span className="block text-xs text-muted">{i.cohortName} · {i.by} · depuis le {i.dueLabel}</span></span>
+            <span className="flex gap-1.5">
+              {i.href && <Link href={i.href} className={ghost}>Ouvrir</Link>}
+              <form action={markCampaignDone}>
+                <input type="hidden" name="cohortId" value={i.cohortId} />
+                <input type="hidden" name="key" value={i.key} />
+                <button className={primary}>Fait</button>
+              </form>
+            </span>
+          </li>
         ))}
       </Group>
 

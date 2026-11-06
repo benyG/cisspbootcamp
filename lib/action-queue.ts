@@ -1,3 +1,5 @@
+import { Prisma } from "@prisma/client";
+
 import { formatWhen } from "@/lib/booking";
 import { ordersAwaitingBooking } from "@/lib/consulting";
 import { formatCohortMonth } from "@/lib/cohorts";
@@ -7,6 +9,7 @@ import { env } from "@/lib/env";
 import { HOT_LEAD_THRESHOLD, REVIEW_SLA_HOURS, hoursSince } from "@/lib/followups";
 import { BALANCE_ALERT_DAYS, balanceAlert, firstDueUsd } from "@/lib/installments";
 import { leadVars, loadTemplate, renderTemplate, waMeLink } from "@/lib/messaging/templates";
+import { buildCampaignPlan, dueActions, readCampaign } from "@/lib/campaign";
 import { unfinishedCallDue } from "@/lib/playbooks/rules";
 import { countryLabel, quoteSummary } from "@/lib/quotes";
 
@@ -22,6 +25,7 @@ export type QueueItem =
   | { kind: "followup"; leadId: number; name: string; heat: number; stage: string; waLink: string | null; emailSubject: string; emailBody: string; email: string; overdueDays: number }
   | { kind: "payment"; registrationId: number; leadId: number; name: string; reference: string; amountUsd: number; cohortName: string; ageHours: number }
   | { kind: "unfinished"; registrationId: number; leadId: number; name: string; reference: string; cohortName: string; days: number; waLink: string | null; email: string }
+  | { kind: "campaign"; cohortId: number; key: string; cohortName: string; text: string; by: string; href: string | null; dueLabel: string }
   | { kind: "balance"; registrationId: number; leadId: number; name: string; reference: string; balanceUsd: number; cohortName: string; startsAt: Date; started: boolean; whatsapp: string | null }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
   | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
@@ -116,6 +120,9 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
     items.push({ kind: "payment", registrationId: p.id, leadId: p.lead.id, name: `${p.lead.firstName} ${p.lead.lastName}`, reference: p.reference, amountUsd: firstDueUsd(p), cohortName: p.cohort.name, ageHours: hoursSince(p.createdAt, now) });
   }
 
+  // Campaign plans (lot 5): the actions to validate whose date has come.
+  for (const c of await campaignActions(now)) items.push(c);
+
   // Playbook "inscription non finalisée" (lot 3): e-mailed 3 days ago, still unpaid: Ben calls.
   for (const u of await unfinishedCalls(now)) items.push(u);
 
@@ -202,5 +209,27 @@ async function unfinishedCalls(now: Date): Promise<QueueItem[]> {
       ? `Bonjour ${r.lead.firstName}, vous avez commencé votre inscription au Bâtisseur IA sans la terminer. Un souci de paiement ou une question ? Nous pouvons vous aider.`
       : `Bonjour ${r.lead.firstName}, vous avez commencé votre inscription (${r.cohort.name}) sans la terminer. Un souci de paiement ou une question ? Je peux vous aider.`;
     return [{ kind: "unfinished" as const, registrationId: r.id, leadId: r.lead.id, name: `${r.lead.firstName} ${r.lead.lastName}`, reference: r.reference, cohortName: r.cohort.name, days: Math.floor((now.getTime() - log.createdAt.getTime()) / 86_400_000), waLink: r.lead.whatsapp ? waMeLink(r.lead.whatsapp, text) : null, email: r.lead.email }];
+  });
+}
+
+/** The campaign actions waiting for Ben (lot 5): "à valider", due, not marked done. */
+async function campaignActions(now: Date): Promise<QueueItem[]> {
+  const cohorts = await prisma.cohort.findMany({
+    where: { campaign: { not: Prisma.DbNull }, endsAt: { gte: new Date(now.getTime() - 30 * 86_400_000) } },
+    select: { id: true, program: true, name: true, startsAt: true, endsAt: true, capacity: true, targetSeats: true, campaign: true },
+  });
+  if (!cohorts.length) return [];
+  const done = new Set(
+    (await prisma.actionLog.findMany({ where: { type: "campaign_done" }, select: { payload: true } }))
+      .map((l) => l.payload as { cohortId?: number; key?: string } | null)
+      .map((p) => `${p?.cohortId}:${p?.key}`),
+  );
+  const fmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" });
+  return cohorts.flatMap((c) => {
+    const campaign = readCampaign(c.campaign);
+    if (!campaign) return [];
+    const plan = buildCampaignPlan({ program: c.program, startsAt: c.startsAt, endsAt: c.endsAt, goal: c.targetSeats ?? c.capacity }, campaign);
+    const doneHere = new Set([...done].filter((k) => k.startsWith(`${c.id}:`)).map((k) => k.slice(String(c.id).length + 1)));
+    return dueActions(plan, doneHere, now).map((a) => ({ kind: "campaign" as const, cohortId: c.id, key: a.key, cohortName: c.name, text: a.text, by: a.by, href: a.href ?? null, dueLabel: fmt.format(a.date) }));
   });
 }

@@ -38,7 +38,7 @@ des admissions (jamais sous les places déjà payées).
 | 2 | Mesure : objectif par cohorte, courbe, prévision, page Pilotage, rapport du lundi | Livré |
 | 3 | Moteur de playbooks et garde-fous ; Santé technique, Inscription non finalisée, En retard sur la courbe | Livré |
 | 4 | Playbooks du cycle : Ouverture, Prospect chaud, Suivi d'appel, Dernier appel, Cohorte pleine, Fin de cohorte | Livré |
-| 5 | Lancer une cohorte : assistant et plan de campagne J-60 → J0 | À faire |
+| 5 | Lancer une cohorte : assistant et plan de campagne J-60 → J0 | Livré |
 | 6 | Promo : tarif de lancement, codes partenaires, parrainage | À faire |
 | 7 | Communication automatisée : rythme de contenu, publication programmée, séquences e-mail, WhatsApp préparé | À faire |
 | 8 | Ajustement et pub : rattrapage, suivi des campagnes payantes, coût par inscrit | À faire |
@@ -94,3 +94,19 @@ seulement, plafond de pression, une fois par personne et par cohorte, au plus
 - Fin de cohorte (Actif) : 7 jours après le dernier jour, la liste des
   participants avec un message WhatsApp prêt (témoignage avec accord écrit,
   recommandation).
+
+## Lot 5 (livré)
+
+- `Cohort.campaign` (JSON) : canaux, budget pub, promo (tarif de lancement,
+  codes partenaires, parrainage). Les promos sont appliquées au paiement au
+  lot 6 ; d'ici là, le plan rappelle de les régler dans Tarifs.
+- `lib/campaign.ts` (pur, testé) : le plan daté de J-60 à une semaine après le
+  dernier jour. Chaque action est automatique (un playbook, le rapport du
+  lundi, les rappels de solde), à valider (avec l'endroit où la faire), une
+  mesure ou un jalon.
+- `/admin/cohortes/nouvelle` : l'assistant, avec le plan calculé pendant la
+  saisie (CISSP et CC ; les entrées du Bâtisseur IA s'ouvrent depuis leur J1
+  et règlent leur campagne sur leur fiche).
+- Fiche de cohorte : le plan avec ce qui est fait, et le réglage de la campagne.
+- File d'actions : les actions « à valider » arrivées à leur date, avec
+  « Ouvrir » et « Fait » (`campaign_done`), pendant deux semaines.

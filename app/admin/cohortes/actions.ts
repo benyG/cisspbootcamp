@@ -4,7 +4,10 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { Prisma } from "@prisma/client";
+
 import { auth } from "@/auth";
+import { campaignFromForm } from "@/lib/campaign";
 import { MANUAL_COHORT_STATUSES, automaticCohortStatus, cohortDeletionProblem, cohortHasStarted } from "@/lib/cohorts";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
@@ -49,9 +52,10 @@ function parse(formData: FormData) {
 export async function createCohort(formData: FormData): Promise<void> {
   await requireAdmin();
   const parsed = parse(formData);
-  if (!parsed.success) redirect(`/admin/cohortes?erreur=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`);
+  if (!parsed.success) redirect(`/admin/cohortes${formData.get("hasCampaign") ? "/nouvelle" : ""}?erreur=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`);
 
-  const data = { ...parsed.data, status: automaticCohortStatus({ ...parsed.data, paid: 0 }, new Date()) as never };
+  const campaign = formData.get("hasCampaign") ? campaignFromForm((name) => formData.get(name) as string | null) : null;
+  const data = { ...parsed.data, campaign: campaign ?? Prisma.JsonNull, status: automaticCohortStatus({ ...parsed.data, paid: 0 }, new Date()) as never };
   const cohort = await prisma.cohort.create({ data });
   revalidatePath("/admin/cohortes");
   revalidateTag(COHORTS_CACHE_TAG);
@@ -184,4 +188,26 @@ async function registrationsAlreadyOnboarded(leadIds: number[]): Promise<Set<num
   if (leadIds.length === 0) return new Set();
   const logs = await prisma.actionLog.findMany({ where: { leadId: { in: leadIds }, type: "onboarding_sent" }, select: { payload: true } });
   return new Set(logs.map((l) => (l.payload as { registrationId?: number } | null)?.registrationId).filter((id): id is number => typeof id === "number"));
+}
+
+/** "Lancer une cohorte" on an existing cohort (lot 5): its channels and promo. */
+export async function saveCampaign(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = z.coerce.number().int().positive().safeParse(formData.get("id"));
+  if (!id.success) redirect("/admin/cohortes");
+  const campaign = campaignFromForm((name) => formData.get(name) as string | null);
+  await prisma.cohort.update({ where: { id: id.data }, data: { campaign } });
+  revalidatePath(`/admin/cohortes/${id.data}`);
+  revalidatePath("/admin");
+  redirect(`/admin/cohortes/${id.data}?ok=1#campagne`);
+}
+
+/** Ben did a campaign action (lot 5): it leaves his queue and shows "Fait". */
+export async function markCampaignDone(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const cohortId = z.coerce.number().int().positive().parse(formData.get("cohortId"));
+  const key = z.string().regex(/^[a-z0-9-]{1,40}$/).parse(formData.get("key"));
+  await prisma.actionLog.create({ data: { type: "campaign_done", leadId: null, payload: { cohortId, key } } });
+  revalidatePath("/admin");
+  revalidatePath(`/admin/cohortes/${cohortId}`);
 }
