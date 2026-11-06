@@ -25,6 +25,8 @@ const cohortSchema = z
     // CISSP: computed from the reading plan's calendar, whatever was typed.
     endsAt: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.coerce.date().optional()),
     capacity: z.coerce.number().int().min(1).max(100),
+    // Pilotage goal (lot 2): empty = the capacity.
+    targetSeats: z.preprocess((v) => (v === "" || v === null || v === undefined ? null : v), z.coerce.number().int().min(1, "Objectif : au moins 1 place").max(100).nullable()),
     // Ben picks planned or open; full, running and done are set automatically.
     status: z.enum(MANUAL_COHORT_STATUSES),
   })
@@ -39,6 +41,7 @@ function parse(formData: FormData) {
     startsAt: formData.get("startsAt"),
     endsAt: formData.get("endsAt"),
     capacity: formData.get("capacity"),
+    targetSeats: formData.get("targetSeats"),
     status: formData.get("status"),
   });
 }

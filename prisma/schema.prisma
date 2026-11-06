@@ -226,13 +226,15 @@ model Booking {
 }
 
 model Cohort {
-  id       Int          @id @default(autoincrement())
-  program  Program      @default(cissp)
-  name     String       @db.VarChar(120)
-  startsAt DateTime     @map("starts_at")
-  endsAt   DateTime     @map("ends_at")
-  capacity Int          @default(10)
-  status   CohortStatus @default(planned)
+  id          Int          @id @default(autoincrement())
+  program     Program      @default(cissp)
+  name        String       @db.VarChar(120)
+  startsAt    DateTime     @map("starts_at")
+  endsAt      DateTime     @map("ends_at")
+  capacity    Int          @default(10)
+  /// Seats the campaign aims for (lib/pilotage.ts); null = the capacity.
+  targetSeats Int?         @map("target_seats")
+  status      CohortStatus @default(planned)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
