@@ -1,4 +1,4 @@
-import { BellRing, Bot, Building2, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BellRing, Bot, Building2, Gauge, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -186,6 +186,7 @@ export default async function AdminHomePage() {
 
 /** The admin sections, each with its icon (Ben, 25/09). */
 const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
+  { href: "/admin/pilotage", label: "Pilotage", icon: Gauge },
   { href: "/admin/leads", label: "Tous les leads", icon: Users },
   { href: "/admin/tunnel", label: "Tunnel", icon: Filter },
   { href: "/admin/cohortes", label: "Cohortes", icon: GraduationCap },

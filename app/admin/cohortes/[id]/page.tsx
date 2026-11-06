@@ -112,6 +112,11 @@ export default async function CohortPage({
           <input name="capacity" type="number" min={1} max={100} defaultValue={cohort.capacity} disabled={locked} className={input} />
         </label>
         <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Objectif de places</span>
+          <input name="targetSeats" type="number" min={1} max={100} defaultValue={cohort.targetSeats ?? ""} placeholder="= capacité" disabled={locked} className={input} />
+          <span className="text-xs text-[var(--color-muted)]">Pour le pilotage : la courbe et la prévision visent ce nombre.</span>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Statut</span>
           {locked || cohort.status === "full" ? (
             <>

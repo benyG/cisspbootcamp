@@ -69,6 +69,11 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
             <input name="capacity" type="number" min={1} max={100} defaultValue={10} className={input} />
           </label>
           <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Objectif de places</span>
+            <input name="targetSeats" type="number" min={1} max={100} placeholder="= capacité" className={input} />
+            <span className="text-xs text-[var(--color-muted)]">Pour le pilotage : la courbe et la prévision visent ce nombre.</span>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium">Statut</span>
             <select name="status" defaultValue="planned" className={input}>
               {MANUAL_COHORT_STATUSES.map((value) => <option key={value} value={value}>{STATUS_LABEL[value]}</option>)}
