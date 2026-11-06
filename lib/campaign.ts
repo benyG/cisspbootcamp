@@ -22,7 +22,7 @@ export const campaignSchema = z.object({
   }).default({}),
   adsBudgetUsd: z.number().int().min(0).max(100_000).nullable().default(null),
   promo: z.object({
-    early: z.object({ priceUsd: z.number().int().min(1).max(100_000), until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).nullable().default(null),
+    early: z.object({ percent: z.number().int().min(1).max(50), until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).nullable().default(null),
     partners: z.boolean().default(false),
     referral: z.boolean().default(false),
   }).default({}),
@@ -76,19 +76,19 @@ export function buildCampaignPlan(cohort: { program: string; startsAt: Date; end
 
   add({ key: "opening", day: -CAMPAIGN_DAYS, kind: "auto", by: "Playbook Ouverture", text: channels.email ? "Ouverture : « les inscriptions sont ouvertes » aux prospects consentants du programme (ou un rappel pour ouvrir les inscriptions)" : "Ouverture : un rappel si les inscriptions ne sont pas ouvertes" });
   if (social) add({ key: "content-plan", day: -CAMPAIGN_DAYS, kind: "validate", by: "Studio marketing", href: "/admin/marketing", text: `Préparer le plan de contenu des 8 semaines (${social})` });
-  if (promo.early) add({ key: "early-start", day: -CAMPAIGN_DAYS, kind: "validate", by: "Tarifs", href: "/admin/parametres/prix", text: `Tarif de lancement : ${usd(promo.early.priceUsd)} jusqu’au ${dayMonth(promo.early.until)}`, note: "appliqué automatiquement au paiement avec le lot 6 ; d’ici là, réglé dans Tarifs" });
-  if (promo.partners) add({ key: "partners", day: -CAMPAIGN_DAYS, kind: "validate", by: "Promo", href: "/admin/pilotage", text: "Créer un code par partenaire", note: "codes suivis inscrit par inscrit avec le lot 6" });
+  if (promo.early) add({ key: "early-start", day: -CAMPAIGN_DAYS, kind: "auto", by: "Paiement par carte", text: `Tarif de lancement : -${promo.early.percent} % jusqu’au ${dayMonth(promo.early.until)}`, note: "appliqué au paiement par carte en une fois ; le mobile money reste au prix plein" });
+  if (promo.partners) add({ key: "partners", day: -CAMPAIGN_DAYS, kind: "validate", by: "Codes promo", href: "/admin/promos", text: "Créer un code par partenaire et le leur envoyer", note: "chaque inscription par code est suivie" });
   add({ key: "monday", day: -56, kind: "auto", by: "Rapport du lundi", text: "Chaque lundi : où en est la cohorte, ce qui a marché, qui appeler (e-mail)" });
   add({ key: "playbooks", day: -56, kind: "auto", by: "Playbooks", text: "En continu : inscriptions non finalisées, retard sur la courbe, cohorte pleine", note: channels.whatsapp ? "les relances personnelles arrivent dans votre file avec un message WhatsApp prêt" : undefined });
   if (social) {
     for (let d = -56; d < close; d += 7) add({ key: `posts${d}`, day: d, kind: "validate", by: "Studio marketing", href: "/admin/marketing", text: `Valider les publications de la semaine (${social})` });
   }
-  if (promo.referral) add({ key: "referral", day: -45, kind: "validate", by: "Anciens participants", href: "/admin/pilotage", text: "Inviter les anciens participants à recommander la cohorte", note: "codes de parrainage avec le lot 6" });
+  if (promo.referral) add({ key: "referral", day: -45, kind: "validate", by: "Codes promo", href: "/admin/promos", text: "Créer les codes de parrainage des anciens et les leur envoyer", note: "remise pour la personne recommandée" });
   if (channels.ads) add({ key: "ads", day: -45, kind: "validate", by: "Pub payante", href: "/admin/marketing", text: `Préparer la campagne payante${campaign.adsBudgetUsd ? ` (budget ${usd(campaign.adsBudgetUsd)})` : ""} : textes, visuels, liens suivis ; vous la lancez dans Meta ou LinkedIn` });
   add({ key: "check-20", day: -45, kind: "measure", by: "Pilotage", text: `Point d’étape : ${seats(0.2)} attendue${Math.round(goal * 0.2) > 1 ? "s" : ""} (20 %)`, note: "en retard : alerte et pack de rattrapage" });
   if (promo.early) {
     const end = Math.floor((new Date(`${promo.early.until}T00:00:00Z`).getTime() - cohort.startsAt.getTime()) / DAY_MS);
-    add({ key: "early-end", day: end, kind: "validate", by: "Tarifs", href: "/admin/parametres/prix", text: "Fin du tarif de lancement : remettre le prix normal" });
+    add({ key: "early-end", day: end, kind: "auto", by: "Paiement par carte", text: "Fin du tarif de lancement : retour au prix normal" });
   }
   add({ key: "check-50", day: -21, kind: "measure", by: "Pilotage", text: `Point d’étape : ${seats(0.5)} attendues (50 %)`, note: "en retard : alerte et pack de rattrapage" });
   if (channels.email) add({ key: "follow-up", day: -14, kind: "validate", by: "File d’actions", href: "/admin", text: "Relancer les prospects « à suivre » qui n’ont pas réservé" });
@@ -127,13 +127,13 @@ export const PHASES: ReadonlyArray<{ title: string; from: number; to: number }> 
 export function campaignFromForm(get: (name: string) => string | null): Campaign {
   const on = (name: string) => get(name) === "on" || get(name) === "true";
   const int = (name: string) => { const v = Number(get(name)); return Number.isFinite(v) && v > 0 ? Math.round(v) : null; };
-  const earlyPrice = int("earlyPriceUsd");
+  const earlyPercent = int("earlyPercent");
   const earlyUntil = get("earlyUntil") ?? "";
   return campaignSchema.parse({
     channels: { email: on("chEmail"), linkedin: on("chLinkedin"), facebook: on("chFacebook"), whatsapp: on("chWhatsapp"), ads: on("chAds") },
     adsBudgetUsd: on("chAds") ? int("adsBudgetUsd") : null,
     promo: {
-      early: on("promoEarly") && earlyPrice && /^\d{4}-\d{2}-\d{2}$/.test(earlyUntil) ? { priceUsd: earlyPrice, until: earlyUntil } : null,
+      early: on("promoEarly") && earlyPercent && earlyPercent <= 50 && /^\d{4}-\d{2}-\d{2}$/.test(earlyUntil) ? { percent: earlyPercent, until: earlyUntil } : null,
       partners: on("promoPartners"),
       referral: on("promoReferral"),
     },

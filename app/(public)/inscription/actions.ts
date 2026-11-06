@@ -45,7 +45,7 @@ export async function payByCard(formData: FormData): Promise<PayResult> {
   if (!leadId) return { ok: false, error: "Repassez par votre analyse pour vous inscrire." };
 
   await recordServerEvent({ name: "pay_click", leadId, label: "stripe" });
-  const started = await startRegistration({ leadId, method: "stripe", twoPayments: formData.get("plan") === "two" });
+  const started = await startRegistration({ leadId, method: "stripe", twoPayments: formData.get("plan") === "two", promoCode: (formData.get("code") as string | null) || null });
   if (!started.registration) return { ok: false, error: startError(started.reason) };
 
   const { registration, offer } = started;

@@ -9,11 +9,11 @@ const form = (values: Record<string, string>) => (name: string) => values[name] 
 
 describe("campaign settings", () => {
   it("reads the form's flat fields, and only keeps a launch price with a date", () => {
-    const c = campaignFromForm(form({ chEmail: "on", chLinkedin: "on", chAds: "on", adsBudgetUsd: "300", promoEarly: "on", earlyPriceUsd: "490", earlyUntil: "2027-01-08", promoReferral: "on" }));
+    const c = campaignFromForm(form({ chEmail: "on", chLinkedin: "on", chAds: "on", adsBudgetUsd: "300", promoEarly: "on", earlyPercent: "15", earlyUntil: "2027-01-08", promoReferral: "on" }));
     expect(c.channels).toEqual({ email: true, linkedin: true, facebook: false, whatsapp: false, ads: true });
     expect(c.adsBudgetUsd).toBe(300);
-    expect(c.promo).toEqual({ early: { priceUsd: 490, until: "2027-01-08" }, partners: false, referral: true });
-    expect(campaignFromForm(form({ promoEarly: "on", earlyPriceUsd: "490" })).promo.early).toBeNull();
+    expect(c.promo).toEqual({ early: { percent: 15, until: "2027-01-08" }, partners: false, referral: true });
+    expect(campaignFromForm(form({ promoEarly: "on", earlyPercent: "15" })).promo.early).toBeNull();
   });
 
   it("treats a missing or broken campaign as none", () => {
@@ -38,7 +38,7 @@ describe("plan", () => {
   it("asks for weekly posts only with a social channel, and adds promo and ads actions when chosen", () => {
     const quiet = buildCampaignPlan(cohort, { ...DEFAULT_CAMPAIGN, channels: { ...DEFAULT_CAMPAIGN.channels, linkedin: false } });
     expect(quiet.some((a) => a.key.startsWith("posts"))).toBe(false);
-    const full = buildCampaignPlan(cohort, { channels: { email: true, linkedin: true, facebook: true, whatsapp: true, ads: true }, adsBudgetUsd: 300, promo: { early: { priceUsd: 490, until: "2027-01-08" }, partners: true, referral: true } });
+    const full = buildCampaignPlan(cohort, { channels: { email: true, linkedin: true, facebook: true, whatsapp: true, ads: true }, adsBudgetUsd: 300, promo: { early: { percent: 15, until: "2027-01-08" }, partners: true, referral: true } });
     expect(full.filter((a) => a.key.startsWith("posts"))).toHaveLength(7); // J-56 to J-14, weekly, before the close
     expect(full.find((a) => a.key === "early-end")!.date.toISOString().slice(0, 10)).toBe("2027-01-08");
     expect(full.find((a) => a.key === "ads")!.text).toContain("300 USD");

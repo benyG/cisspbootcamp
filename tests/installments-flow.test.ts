@@ -21,6 +21,7 @@ const db = vi.hoisted(() => {
     cohort: { findMany: vi.fn(), findUnique: vi.fn() },
     exchangeRate: { findMany: vi.fn(async () => [{ currency: "XOF", perUsd: 600 }]) },
     registration: { findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), updateMany: vi.fn(), count: vi.fn() },
+    promoCode: { findUnique: vi.fn(async () => null as unknown) },
     actionLog: { create: vi.fn() },
     iaPlan: { findUnique: vi.fn(async () => null) },
     $transaction: vi.fn(async (arg: unknown) => (Array.isArray(arg) ? Promise.all(arg) : (arg as (t: typeof tx) => Promise<unknown>)(tx))),
@@ -123,5 +124,44 @@ describe("paiement en deux fois, parcours (Ben, 04/11)", () => {
     expect(email.text).toContain("https://x.test/inscription/solde/CB-AAAA-BBBB");
     expect(email.text).toContain(`https://x.test/desinscription/${lead.unsubscribeToken}`);
     expect(email.text).not.toMatch(clock);
+  });
+});
+
+describe("promo au paiement (lot 6 : pourcentage, carte en une fois)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    db.lead.findUnique.mockResolvedValue(lead);
+    db.pricingTier.findMany.mockResolvedValue([{ code: "africa", amountUsd: 0, countries: ["SN"], netticketTicketCode: null, installmentUsd: null, netticketInstallmentCode: null }]);
+    db.programPrice.findUnique.mockResolvedValue({ amountUsd: 59_000, netticketTicketCode: "IA-AFR", installmentUsd: 31_000, netticketInstallmentCode: "IA-AFR-2X" });
+    db.cohort.findMany.mockResolvedValue([entry]);
+    db.cohort.findUnique.mockResolvedValue({ campaign: { promo: { early: { percent: 15, until: "2026-12-10" } } } });
+    db.registration.findFirst.mockResolvedValue(null);
+    db.registration.count.mockResolvedValue(0);
+    db.registration.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: 9, ...data }));
+  });
+
+  it("applies the launch price by card in one go, not by mobile money nor in two payments", async () => {
+    await startRegistration({ leadId: 5, method: "stripe", program: "ia", cohortId: 2 });
+    expect(db.registration.create.mock.calls[0][0].data).toMatchObject({ amountUsd: 50_100, promoCode: "LANCEMENT", discountUsd: 8_900, amountLocal: null });
+    await startRegistration({ leadId: 5, method: "netticket", program: "ia", cohortId: 2 });
+    expect(db.registration.create.mock.calls[1][0].data).toMatchObject({ amountUsd: 59_000, promoCode: null, discountUsd: 0 });
+    await startRegistration({ leadId: 5, method: "stripe", program: "ia", cohortId: 2, twoPayments: true });
+    expect(db.registration.create.mock.calls[2][0].data).toMatchObject({ amountUsd: 62_000, promoCode: null });
+  });
+
+  it("takes a better code, and says why a code does not apply", async () => {
+    db.promoCode.findUnique.mockResolvedValue({ code: "AMI-7K3Q", kind: "referral", label: "Koffi A.", percent: 20, program: "ia", validUntil: null, maxUses: null, active: true, referrerLeadId: 8 });
+    await startRegistration({ leadId: 5, method: "stripe", program: "ia", cohortId: 2, promoCode: "ami-7k3q" });
+    expect(db.registration.create.mock.calls[0][0].data).toMatchObject({ amountUsd: 47_200, promoCode: "AMI-7K3Q", discountUsd: 11_800 });
+
+    db.promoCode.findUnique.mockResolvedValue({ code: "AMI-7K3Q", kind: "referral", label: "Awa D.", percent: 20, program: "ia", validUntil: null, maxUses: null, active: true, referrerLeadId: 5 });
+    const { offer } = await buildOffer(5, now, "ia", 2, { promoCode: "AMI-7K3Q" });
+    expect(offer?.promoError).toContain("personnes que vous recommandez");
+    expect(offer?.promo).toMatchObject({ source: "launch", percent: 15 });
+  });
+
+  it("ends the launch price after its last day", async () => {
+    const { offer } = await buildOffer(5, new Date("2026-12-11T00:00:01Z"), "ia", 2);
+    expect(offer?.promo).toBeNull();
   });
 });

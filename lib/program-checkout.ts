@@ -81,7 +81,7 @@ function parseContact(formData: FormData) {
 
 export function backUrl(formData: FormData, page: string, extra: Record<string, string>): string {
   const params = new URLSearchParams();
-  for (const key of ["pays", "t", "entree"]) {
+  for (const key of ["pays", "t", "entree", "code"]) {
     const value = formData.get(key);
     if (typeof value === "string" && value) params.set(key, value);
   }
@@ -109,7 +109,7 @@ export async function programCardCheckout(formData: FormData, opts: CheckoutOpti
 
   const program = PROGRAMS[opts.program];
   await recordServerEvent({ name: "pay_click", leadId: resolved.leadId, label: `${opts.program}:stripe` });
-  const started = await startRegistration({ leadId: resolved.leadId, method: "stripe", program: opts.program, cohortId: opts.cohortId, twoPayments: wantsTwoPayments(formData) });
+  const started = await startRegistration({ leadId: resolved.leadId, method: "stripe", program: opts.program, cohortId: opts.cohortId, twoPayments: wantsTwoPayments(formData), promoCode: (formData.get("code") as string | null) || null });
   if (!started.registration) return fail(startFailure(started.reason, opts.noCohort));
   const { registration, offer } = started;
   const lead = await prisma.lead.findUniqueOrThrow({ where: { id: resolved.leadId } });

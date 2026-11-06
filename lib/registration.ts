@@ -17,6 +17,8 @@ import { createToken } from "@/lib/tokens";
 import { recordEvent } from "@/lib/tracking/server";
 import { iaUrl } from "@/lib/ia-domain";
 import { senderFor, signatureFor } from "@/lib/ia-brand";
+import { bestPromo, codeProblem, launchPercent, normalizeCode, type Promo } from "@/lib/promo";
+import { readCampaign } from "@/lib/campaign";
 
 /**
  * Registration to a cohort — SPECS A4/A5.
@@ -87,6 +89,10 @@ export type Offer = {
   amountLocal: number | null;
   localLabel: string | null;
   seatsLeft: number;
+  /** Launch price or promo code (lib/promo.ts): card, one payment only. */
+  promo: (Promo & { usdLabel: string }) | null;
+  /** Why the code typed does not apply, in the visitor's words. */
+  promoError: string | null;
   /** Payment in two instalments, when the price row offers it (lib/installments.ts). */
   twoPayments: (TwoPaymentPlan & { firstLabel: string; balanceLabel: string; totalLabel: string; firstLocalLabel: string | null; netticketTicketCode: string | null }) | null;
 };
@@ -102,7 +108,7 @@ export const balanceUrl = (reference: string) => `${env.NEXT_PUBLIC_APP_URL}/ins
  * What the registration page shows a lead: cohort, price, local equivalent.
  * The bootcamp is priced by the tier; another programme by ProgramPrice.
  */
-export async function buildOffer(leadId: number, now = new Date(), program: ProgramCode = "cissp", cohortId?: number): Promise<{ offer: Offer } | { offer: null; reason: "no_cohort" | "quote_only" | "not_found" }> {
+export async function buildOffer(leadId: number, now = new Date(), program: ProgramCode = "cissp", cohortId?: number, opts: { promoCode?: string | null } = {}): Promise<{ offer: Offer } | { offer: null; reason: "no_cohort" | "quote_only" | "not_found" }> {
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
   if (!lead) return { offer: null, reason: "not_found" };
 
@@ -146,6 +152,21 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
   const plan = twoPaymentPlan(tier.installmentUsd, credit?.creditUsd ?? 0);
   const firstLocal = plan ? convertUsdCents(plan.firstUsd, currencyLocal, rates) : null;
 
+  // Promo (lot 6): the cohort's launch price, or a code; the best one, by card in one payment.
+  let campaignRow: { campaign: unknown } | null = null;
+  try { campaignRow = await prisma.cohort.findUnique({ where: { id: cohort.id }, select: { campaign: true } }); } catch { campaignRow = null; }
+  const launch = launchPercent(readCampaign(campaignRow?.campaign)?.promo.early, now);
+  const typed = opts.promoCode ? normalizeCode(opts.promoCode) : null;
+  let codeRow: { code: string; percent: number; kind: string } | null = null;
+  let promoError: string | null = opts.promoCode && !typed ? "Ce code n’existe pas ou n’est plus actif." : null;
+  if (typed) {
+    const row = await prisma.promoCode.findUnique({ where: { code: typed } });
+    const usedCount = row ? await prisma.registration.count({ where: { promoCode: row.code, status: "paid" } }) : 0;
+    promoError = codeProblem(row, { program, leadId, usedCount }, now);
+    if (!promoError && row) codeRow = { code: row.code, percent: row.percent, kind: row.kind };
+  }
+  const promo = bestPromo({ listUsdCents: tier.amountUsd, creditUsdCents: credit?.creditUsd ?? 0, launch, code: codeRow });
+
   return {
     offer: {
       program,
@@ -162,6 +183,8 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
       amountLocal,
       localLabel: amountLocal !== null && currencyLocal !== "USD" ? formatLocal(amountLocal, currencyLocal) : null,
       seatsLeft: remainingSeats(cohort),
+      promo: promo ? { ...promo, usdLabel: formatUsdCents(promo.amountUsdCents) } : null,
+      promoError,
       twoPayments: plan
         ? {
             ...plan,
@@ -181,14 +204,16 @@ export async function buildOffer(leadId: number, now = new Date(), program: Prog
  * has one pending for that cohort, it is reused so a retried checkout does
  * not multiply rows.
  */
-export async function startRegistration(input: { leadId: number; method: "stripe" | "netticket"; program?: ProgramCode; cohortId?: number; twoPayments?: boolean }) {
-  const result = await buildOffer(input.leadId, new Date(), input.program ?? "cissp", input.cohortId);
+export async function startRegistration(input: { leadId: number; method: "stripe" | "netticket"; program?: ProgramCode; cohortId?: number; twoPayments?: boolean; promoCode?: string | null }) {
+  const result = await buildOffer(input.leadId, new Date(), input.program ?? "cissp", input.cohortId, { promoCode: input.promoCode });
   if (!result.offer) return { registration: null, reason: result.reason } as const;
   const { offer } = result;
   // Two instalments asked but no longer offered (price changed): say so rather than charge in full.
   const plan = input.twoPayments ? offer.twoPayments : null;
   if (input.twoPayments && !plan) return { registration: null, reason: "no_two_payments" } as const;
-  const amountUsd = plan ? plan.totalUsd : offer.amountUsdCents;
+  // The promo is for a card payment in one go (Ben, 06/11): Netticket tickets have a fixed price.
+  const promo = input.method === "stripe" && !plan ? offer.promo : null;
+  const amountUsd = plan ? plan.totalUsd : promo ? promo.amountUsdCents : offer.amountUsdCents;
   const balanceUsd = plan ? plan.balanceUsd : 0;
   /** What this checkout charges now, and with which Netticket ticket. */
   const checkout = { amountUsd: amountUsd - balanceUsd, netticketTicketCode: plan ? plan.netticketTicketCode : offer.netticketTicketCode };
@@ -207,9 +232,11 @@ export async function startRegistration(input: { leadId: number; method: "stripe
       balanceUsd,
       creditUsd: offer.creditUsdCents,
       currencyLocal: offer.currencyLocal === "USD" ? null : offer.currencyLocal,
-      amountLocal: offer.currencyLocal === "USD" || plan ? null : offer.amountLocal,
+      amountLocal: offer.currencyLocal === "USD" || plan || promo ? null : offer.amountLocal,
       method: input.method,
       reference: newReference(),
+      promoCode: promo ? promo.code ?? "LANCEMENT" : null,
+      discountUsd: promo ? promo.discountUsdCents : 0,
     },
   });
 

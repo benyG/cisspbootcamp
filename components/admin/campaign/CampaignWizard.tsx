@@ -41,7 +41,7 @@ export function CampaignWizard({
     chAds: campaign.channels.ads ? "on" : "",
     adsBudgetUsd: campaign.adsBudgetUsd ? String(campaign.adsBudgetUsd) : "",
     promoEarly: campaign.promo.early ? "on" : "",
-    earlyPriceUsd: campaign.promo.early ? String(campaign.promo.early.priceUsd) : "",
+    earlyPercent: campaign.promo.early ? String(campaign.promo.early.percent) : "",
     earlyUntil: campaign.promo.early?.until ?? "",
     promoPartners: campaign.promo.partners ? "on" : "",
     promoReferral: campaign.promo.referral ? "on" : "",
@@ -105,13 +105,13 @@ export function CampaignWizard({
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="promoEarly" checked={values.promoEarly === "on"} onChange={check("promoEarly")} className="mt-1 accent-[var(--color-accent)]" /><span>Tarif de lancement<span className="block text-xs text-muted">Un prix réduit jusqu’à une vraie date limite</span></span></label>
           {values.promoEarly === "on" && (
             <div className="grid grid-cols-2 gap-2 pl-6">
-              <label className="grid gap-1 text-xs text-muted">Prix (USD)<input name="earlyPriceUsd" type="number" min={1} value={values.earlyPriceUsd} onChange={(e) => set("earlyPriceUsd", e.target.value)} className={input} /></label>
+              <label className="grid gap-1 text-xs text-muted">Remise (%)<input name="earlyPercent" type="number" min={1} max={50} value={values.earlyPercent} onChange={(e) => set("earlyPercent", e.target.value)} className={input} /></label>
               <label className="grid gap-1 text-xs text-muted">Jusqu’au<input name="earlyUntil" type="date" value={values.earlyUntil} onChange={(e) => set("earlyUntil", e.target.value)} className={input} /></label>
             </div>
           )}
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="promoPartners" checked={values.promoPartners === "on"} onChange={check("promoPartners")} className="mt-1 accent-[var(--color-accent)]" /><span>Codes partenaires</span></label>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="promoReferral" checked={values.promoReferral === "on"} onChange={check("promoReferral")} className="mt-1 accent-[var(--color-accent)]" /><span>Parrainage des anciens</span></label>
-          <p className="text-xs text-muted">Les promos sont appliquées au paiement avec le lot 6 ; d’ici là, le plan vous rappelle de les régler.</p>
+          <p className="text-xs text-muted">Les promos s’appliquent au paiement par carte, en une fois, sur le prix du pays. Le mobile money reste au prix plein.</p>
         </fieldset>
 
         <fieldset className="grid gap-2">
