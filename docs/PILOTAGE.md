@@ -36,7 +36,7 @@ des admissions (jamais sous les places déjà payées).
 | 0 | Prérequis de Ben : agenda Google, prix 30 h, dates avec J6, validation Meta, clé images | En cours (Ben) |
 | 1 | Prototype des deux écrans | Validé le 06/11 |
 | 2 | Mesure : objectif par cohorte, courbe, prévision, page Pilotage, rapport du lundi | Livré |
-| 3 | Moteur de playbooks et garde-fous ; Santé technique, Inscription non finalisée, En retard sur la courbe | À faire |
+| 3 | Moteur de playbooks et garde-fous ; Santé technique, Inscription non finalisée, En retard sur la courbe | Livré |
 | 4 | Playbooks du cycle : Ouverture, Prospect chaud, Suivi d'appel, Dernier appel, Cohorte pleine, Fin de cohorte | À faire |
 | 5 | Lancer une cohorte : assistant et plan de campagne J-60 → J0 | À faire |
 | 6 | Promo : tarif de lancement, codes partenaires, parrainage | À faire |
@@ -53,3 +53,20 @@ des admissions (jamais sous les places déjà payées).
   origine des inscrits, aperçu du rapport.
 - Rapport du lundi : par la tâche quotidienne, le lundi, une fois par
   semaine, à `ADMIN_EMAIL`.
+
+## Lot 3 (livré)
+
+- `lib/playbooks/rules.ts` (pur, testé) : modes (Actif, Essai, Arrêté),
+  plafond de pression, consentement, fenêtres et seuils de chaque playbook.
+- `lib/playbooks/server.ts` : chaque playbook planifie ses étapes sans rien
+  écrire ; la tâche quotidienne exécute celles des playbooks actifs et les
+  trace dans `actions_log` (`playbook_<id>`), ce qui les empêche de se répéter.
+- Santé technique : alerte par e-mail (agenda, envoi d'e-mails, LinkedIn),
+  une fois par jour tant que le problème dure.
+- Inscription non finalisée : e-mail « finalisez votre place » entre 24 h et
+  7 jours après le paiement commencé ; à J+3 sans paiement, un appel dans la
+  file d'actions. Par défaut en Essai : Ben lit l'e-mail, puis l'active.
+- En retard sur la courbe : alerte avec pack de rattrapage, une fois par
+  semaine par cohorte, ou plus tôt si le retard grandit.
+- `/admin/playbooks` : mode de chaque playbook, ce qu'il ferait maintenant,
+  les 7 derniers jours, le journal.

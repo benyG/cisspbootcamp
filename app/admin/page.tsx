@@ -1,4 +1,4 @@
-import { BellRing, Bot, Building2, Gauge, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BellRing, Bot, Building2, Gauge, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -8,7 +8,7 @@ import { waMeLink } from "@/lib/messaging/templates";
 import { formatUsdCents } from "@/lib/pricing";
 import { balanceUrl } from "@/lib/registration";
 
-import { confirmBalancePayment, confirmManualPayment, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
+import { confirmBalancePayment, confirmManualPayment, unfinishedHandled, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
 import { markSessionOutcome, remindSessionBooking } from "./conseil/actions";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +27,7 @@ export default async function AdminHomePage() {
     followup: items.filter((i) => i.kind === "followup"),
     payment: items.filter((i) => i.kind === "payment"),
     balance: items.filter((i) => i.kind === "balance"),
+    unfinished: items.filter((i) => i.kind === "unfinished"),
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
     personal: items.filter((i) => i.kind === "personal"),
@@ -120,6 +121,19 @@ export default async function AdminHomePage() {
         ))}
       </Group>
 
+      <Group icon={PhoneCall} title="Inscriptions non finalisées : à appeler" count={groups.unfinished.length}>
+        {groups.unfinished.map((i) => i.kind === "unfinished" && (
+          <Row key={`u${i.registrationId}`} name={i.name} meta={`${i.cohortName} · e-mail de relance il y a ${i.days} jours, toujours rien · ${i.reference}`} leadId={i.leadId}>
+            {i.waLink ? <a href={i.waLink} target="_blank" rel="noopener" className={ghost}>WhatsApp</a> : <a href={`mailto:${i.email}`} className={ghost}>E-mail</a>}
+            <form action={unfinishedHandled}>
+              <input type="hidden" name="registrationId" value={i.registrationId} />
+              <input type="hidden" name="leadId" value={i.leadId} />
+              <button className={primary}>Fait</button>
+            </form>
+          </Row>
+        ))}
+      </Group>
+
       <Group icon={Wallet} title="Soldes non payés (paiement en deux fois)" count={groups.balance.length}>
         {groups.balance.map((i) => i.kind === "balance" && (
           <Row key={`b${i.registrationId}`} name={i.name} meta={`${formatUsdCents(i.balanceUsd)} à régler · ${i.cohortName} · ${i.started ? "a commencé" : "commence demain"} · ${i.reference}`} late={i.started} leadId={i.leadId}>
@@ -187,6 +201,7 @@ export default async function AdminHomePage() {
 /** The admin sections, each with its icon (Ben, 25/09). */
 const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/pilotage", label: "Pilotage", icon: Gauge },
+  { href: "/admin/playbooks", label: "Playbooks", icon: Workflow },
   { href: "/admin/leads", label: "Tous les leads", icon: Users },
   { href: "/admin/tunnel", label: "Tunnel", icon: Filter },
   { href: "/admin/cohortes", label: "Cohortes", icon: GraduationCap },
