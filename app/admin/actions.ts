@@ -140,6 +140,16 @@ export async function holdSeatAction(formData: FormData): Promise<void> {
   revalidatePath("/admin");
 }
 
+/** Ben handled an unfinished checkout (called, wrote, or gave up): it leaves the queue. */
+export async function unfinishedHandled(formData: FormData): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.email) throw new Error("Non autorisé");
+  const registrationId = id.parse(formData.get("registrationId"));
+  const leadId = id.parse(formData.get("leadId"));
+  await prisma.actionLog.create({ data: { type: "playbook_unfinished_done", leadId, payload: { registrationId } } });
+  revalidatePath("/admin");
+}
+
 export async function releaseHoldAction(formData: FormData): Promise<void> {
   await auth();
   const holdId = id.parse(formData.get("holdId"));

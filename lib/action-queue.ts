@@ -7,6 +7,7 @@ import { env } from "@/lib/env";
 import { HOT_LEAD_THRESHOLD, REVIEW_SLA_HOURS, hoursSince } from "@/lib/followups";
 import { BALANCE_ALERT_DAYS, balanceAlert, firstDueUsd } from "@/lib/installments";
 import { leadVars, loadTemplate, renderTemplate, waMeLink } from "@/lib/messaging/templates";
+import { unfinishedCallDue } from "@/lib/playbooks/rules";
 import { countryLabel, quoteSummary } from "@/lib/quotes";
 
 /**
@@ -20,6 +21,7 @@ export type QueueItem =
   | { kind: "session"; orderId: number; leadId: number; name: string; service: string; number: number; total: number; daysSincePaid: number }
   | { kind: "followup"; leadId: number; name: string; heat: number; stage: string; waLink: string | null; emailSubject: string; emailBody: string; email: string; overdueDays: number }
   | { kind: "payment"; registrationId: number; leadId: number; name: string; reference: string; amountUsd: number; cohortName: string; ageHours: number }
+  | { kind: "unfinished"; registrationId: number; leadId: number; name: string; reference: string; cohortName: string; days: number; waLink: string | null; email: string }
   | { kind: "balance"; registrationId: number; leadId: number; name: string; reference: string; balanceUsd: number; cohortName: string; startsAt: Date; started: boolean; whatsapp: string | null }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
   | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
@@ -114,6 +116,9 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
     items.push({ kind: "payment", registrationId: p.id, leadId: p.lead.id, name: `${p.lead.firstName} ${p.lead.lastName}`, reference: p.reference, amountUsd: firstDueUsd(p), cohortName: p.cohort.name, ageHours: hoursSince(p.createdAt, now) });
   }
 
+  // Playbook "inscription non finalisée" (lot 3): e-mailed 3 days ago, still unpaid: Ben calls.
+  for (const u of await unfinishedCalls(now)) items.push(u);
+
   // Second instalments still due on the eve of the first day (Ben, 04/11): Ben decides, nothing automatic.
   const balances = await prisma.registration.findMany({
     where: { status: "paid", balanceUsd: { gt: 0 }, balancePaidAt: null, cohort: { startsAt: { lte: new Date(now.getTime() + BALANCE_ALERT_DAYS * 86_400_000), gte: new Date(now.getTime() - 60 * 86_400_000) } } },
@@ -170,4 +175,32 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
     items,
     kpis: { leadsThisWeek, callsThisWeek, confirmed: current?.gauge.confirmed ?? 0, capacity: current?.capacity ?? 10, cohortName: current?.name ?? null },
   };
+}
+
+/**
+ * Unfinished checkouts the playbook e-mailed at least 3 days ago that are
+ * still unpaid, and that Ben has not marked as handled: one call each.
+ */
+async function unfinishedCalls(now: Date): Promise<QueueItem[]> {
+  const logs = await prisma.actionLog.findMany({
+    where: { type: { in: ["playbook_unfinished", "playbook_unfinished_done"] }, createdAt: { gte: new Date(now.getTime() - 30 * 86_400_000) } },
+    orderBy: { createdAt: "asc" },
+    select: { type: true, leadId: true, createdAt: true, payload: true },
+  });
+  const handled = new Set(logs.filter((l) => l.type === "playbook_unfinished_done").map((l) => (l.payload as { registrationId?: number } | null)?.registrationId));
+  const due = logs.filter((l) => l.type === "playbook_unfinished" && unfinishedCallDue(l.createdAt, now) && !handled.has((l.payload as { registrationId?: number } | null)?.registrationId));
+  if (!due.length) return [];
+  const ids = due.map((l) => Number((l.payload as { registrationId?: number }).registrationId)).filter(Number.isFinite);
+  const regs = await prisma.registration.findMany({
+    where: { id: { in: ids }, status: "pending" },
+    include: { cohort: { select: { id: true, name: true, program: true } }, lead: { select: { id: true, firstName: true, lastName: true, email: true, whatsapp: true, unsubscribedAt: true, registrations: { where: { status: "paid" }, select: { cohortId: true } } } } },
+  });
+  return regs.flatMap((r) => {
+    if (r.lead.unsubscribedAt || r.lead.registrations.some((p) => p.cohortId === r.cohort.id)) return [];
+    const log = due.find((l) => (l.payload as { registrationId?: number }).registrationId === r.id)!;
+    const text = r.cohort.program === "ia"
+      ? `Bonjour ${r.lead.firstName}, vous avez commencé votre inscription au Bâtisseur IA sans la terminer. Un souci de paiement ou une question ? Nous pouvons vous aider.`
+      : `Bonjour ${r.lead.firstName}, vous avez commencé votre inscription (${r.cohort.name}) sans la terminer. Un souci de paiement ou une question ? Je peux vous aider.`;
+    return [{ kind: "unfinished" as const, registrationId: r.id, leadId: r.lead.id, name: `${r.lead.firstName} ${r.lead.lastName}`, reference: r.reference, cohortName: r.cohort.name, days: Math.floor((now.getTime() - log.createdAt.getTime()) / 86_400_000), waLink: r.lead.whatsapp ? waMeLink(r.lead.whatsapp, text) : null, email: r.lead.email }];
+  });
 }

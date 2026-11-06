@@ -36,8 +36,8 @@ des admissions (jamais sous les places déjà payées).
 | 0 | Prérequis de Ben : agenda Google, prix 30 h, dates avec J6, validation Meta, clé images | En cours (Ben) |
 | 1 | Prototype des deux écrans | Validé le 06/11 |
 | 2 | Mesure : objectif par cohorte, courbe, prévision, page Pilotage, rapport du lundi | Livré |
-| 3 | Moteur de playbooks et garde-fous ; Santé technique, Inscription non finalisée, En retard sur la courbe | À faire |
-| 4 | Playbooks du cycle : Ouverture, Prospect chaud, Suivi d'appel, Dernier appel, Cohorte pleine, Fin de cohorte | À faire |
+| 3 | Moteur de playbooks et garde-fous ; Santé technique, Inscription non finalisée, En retard sur la courbe | Livré |
+| 4 | Playbooks du cycle : Ouverture, Prospect chaud, Suivi d'appel, Dernier appel, Cohorte pleine, Fin de cohorte | Livré |
 | 5 | Lancer une cohorte : assistant et plan de campagne J-60 → J0 | À faire |
 | 6 | Promo : tarif de lancement, codes partenaires, parrainage | À faire |
 | 7 | Communication automatisée : rythme de contenu, publication programmée, séquences e-mail, WhatsApp préparé | À faire |
@@ -53,3 +53,44 @@ des admissions (jamais sous les places déjà payées).
   origine des inscrits, aperçu du rapport.
 - Rapport du lundi : par la tâche quotidienne, le lundi, une fois par
   semaine, à `ADMIN_EMAIL`.
+
+## Lot 3 (livré)
+
+- `lib/playbooks/rules.ts` (pur, testé) : modes (Actif, Essai, Arrêté),
+  plafond de pression, consentement, fenêtres et seuils de chaque playbook.
+- `lib/playbooks/server.ts` : chaque playbook planifie ses étapes sans rien
+  écrire ; la tâche quotidienne exécute celles des playbooks actifs et les
+  trace dans `actions_log` (`playbook_<id>`), ce qui les empêche de se répéter.
+- Santé technique : alerte par e-mail (agenda, envoi d'e-mails, LinkedIn),
+  une fois par jour tant que le problème dure.
+- Inscription non finalisée : e-mail « finalisez votre place » entre 24 h et
+  7 jours après le paiement commencé ; à J+3 sans paiement, un appel dans la
+  file d'actions. Par défaut en Essai : Ben lit l'e-mail, puis l'active.
+- En retard sur la courbe : alerte avec pack de rattrapage, une fois par
+  semaine par cohorte, ou plus tôt si le retard grandit.
+- `/admin/playbooks` : mode de chaque playbook, ce qu'il ferait maintenant,
+  les 7 derniers jours, le journal.
+
+## Lot 4 (livré)
+
+`lib/playbooks/cycle.ts`, même contrat que le lot 3 (planifier sans écrire,
+exécuter et tracer). Les e-mails aux prospects : personnes consentantes
+seulement, plafond de pression, une fois par personne et par cohorte, au plus
+25 par playbook et 50 au total par passage.
+
+- Ouverture (Essai) : à J-60, rappel à Ben si les inscriptions ne sont pas
+  ouvertes ; sinon « les inscriptions sont ouvertes » aux prospects
+  consentants du programme (6 derniers mois). Fenêtre J-60 à J-50.
+- Prospect chaud, Bâtisseur IA (Essai) : diagnostic de 2 à 7 jours sans
+  inscription, e-mail avec la première automatisation conseillée et la
+  prochaine entrée. Côté CISSP, la relance après l'analyse de profil existe
+  déjà (`result_reminder`).
+- Suivi d'appel : déjà couvert par l'e-mail après appel et la file de
+  relances (`nextFollowupAt`) ; pas de playbook en double.
+- Dernier appel (Essai) : de 4 jours avant la fermeture des admissions à la
+  veille, s'il reste des places, aux prospects engagés (3 derniers mois).
+- Cohorte pleine (Actif) : Ben est prévenu une fois, avec la cohorte suivante ;
+  les autres playbooks n'écrivent plus pour une cohorte sans place.
+- Fin de cohorte (Actif) : 7 jours après le dernier jour, la liste des
+  participants avec un message WhatsApp prêt (témoignage avec accord écrit,
+  recommandation).
