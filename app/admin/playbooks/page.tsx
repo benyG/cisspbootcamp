@@ -18,6 +18,12 @@ const JOURNAL: Record<string, string> = {
   playbook_unfinished: "E-mail « finalisez votre place » envoyé",
   playbook_unfinished_done: "Inscription non finalisée traitée par vous",
   playbook_late: "Alerte de retard envoyée, avec pack de rattrapage",
+  playbook_opening: "E-mail « les inscriptions sont ouvertes » envoyé",
+  playbook_opening_admin: "Rappel : ouvrir les inscriptions",
+  playbook_hot: "E-mail de suite du diagnostic envoyé",
+  playbook_last_call: "E-mail de dernier appel envoyé",
+  playbook_full: "Cohorte pleine : vous avez été prévenu",
+  playbook_wrapup: "Fin de cohorte : messages de témoignage préparés",
 };
 
 /**
@@ -39,6 +45,11 @@ export default async function PlaybooksPage() {
     health: count("playbook_health") ? `${count("playbook_health")} alerte(s)` : "Aucune alerte",
     unfinished: count("playbook_unfinished") ? `${count("playbook_unfinished")} e-mail(s) · ${converted} inscription(s) finalisée(s) ensuite` : "Aucun e-mail",
     late: count("playbook_late") ? `${count("playbook_late")} alerte(s)` : "Aucune alerte",
+    opening: count("playbook_opening") ? `${count("playbook_opening")} e-mail(s)` : count("playbook_opening_admin") ? "Rappel d’ouverture envoyé" : "Rien",
+    hot: count("playbook_hot") ? `${count("playbook_hot")} e-mail(s)` : "Aucun e-mail",
+    last_call: count("playbook_last_call") ? `${count("playbook_last_call")} e-mail(s)` : "Aucun e-mail",
+    full: count("playbook_full") ? `${count("playbook_full")} cohorte(s) pleine(s)` : "Rien",
+    wrapup: count("playbook_wrapup") ? `${count("playbook_wrapup")} fin(s) de cohorte` : "Rien",
   };
 
   return (
@@ -72,8 +83,8 @@ export default async function PlaybooksPage() {
                   {steps.length ? (
                     <ul className="mt-1 grid gap-1">{steps.slice(0, 6).map((s, i) => <li key={i}>{s.summary}</li>)}{steps.length > 6 && <li className="text-muted">et {steps.length - 6} de plus</li>}</ul>
                   ) : <p className="mt-1 text-muted">Rien à faire.</p>}
-                  {id === "unfinished" && steps[0] && (
-                    <details className="mt-2"><summary className="cursor-pointer text-xs font-semibold text-ink-2">Voir l’e-mail</summary><pre className="mt-1 whitespace-pre-wrap rounded-lg bg-slate-50 p-2.5 font-sans text-xs text-ink-2">{steps[0].email.subject}{"\n\n"}{steps[0].email.text}</pre></details>
+                  {["unfinished", "opening", "hot", "last_call"].includes(id) && steps.find((s) => s.log.leadId) && (
+                    <details className="mt-2"><summary className="cursor-pointer text-xs font-semibold text-ink-2">Voir l’e-mail</summary><pre className="mt-1 whitespace-pre-wrap rounded-lg bg-slate-50 p-2.5 font-sans text-xs text-ink-2">{steps.find((s) => s.log.leadId)!.email.subject}{"\n\n"}{steps.find((s) => s.log.leadId)!.email.text}</pre></details>
                   )}
                 </div>
                 <div>

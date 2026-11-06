@@ -26,9 +26,10 @@ const ago = (days: number) => new Date(now.getTime() - days * DAY);
 
 describe("rules", () => {
   it("defaults: alerts on, the prospect e-mail in trial until Ben reads it", () => {
-    expect(resolveModes(null)).toEqual({ health: "on", unfinished: "trial", late: "on" });
-    expect(resolveModes({ unfinished: "on", late: "nope" })).toEqual({ health: "on", unfinished: "trial", late: "on" });
-    expect(resolveModes({ unfinished: "on" })).toEqual({ health: "on", unfinished: "on", late: "on" });
+    const defaults = { health: "on", unfinished: "trial", late: "on", opening: "trial", hot: "trial", last_call: "trial", full: "on", wrapup: "on" };
+    expect(resolveModes(null)).toEqual(defaults);
+    expect(resolveModes({ unfinished: "on", late: "nope" })).toEqual(defaults);
+    expect(resolveModes({ unfinished: "on" })).toEqual({ ...defaults, unfinished: "on" });
   });
 
   it("caps automatic messages at one every 4 days, and needs consent", () => {

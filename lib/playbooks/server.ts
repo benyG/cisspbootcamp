@@ -9,7 +9,8 @@ import { iaUrl } from "@/lib/ia-domain";
 import { sendEmail } from "@/lib/messaging/email";
 import { forecastSentence, stateLabel } from "@/lib/pilotage";
 import { cohortTitle, loadPilotCohorts } from "@/lib/pilotage-server";
-import { AUTO_MESSAGE_TYPES, HEALTH_REPEAT_HOURS, type Mode, PLAYBOOK_IDS, PLAYBOOKS, type PlaybookId, PRESSURE_DAYS, UNFINISHED_MAX_DAYS, catchUpPack, healthProblems, lateAlertDue, mayContact, resolveModes, underPressure, unfinishedDue } from "@/lib/playbooks/rules";
+import { AUTO_MESSAGE_TYPES, HEALTH_REPEAT_HOURS, MAX_PROSPECT_EMAILS_PER_RUN, type Mode, PLAYBOOK_IDS, PLAYBOOKS, type PlaybookId, PRESSURE_DAYS, UNFINISHED_MAX_DAYS, catchUpPack, healthProblems, lateAlertDue, mayContact, resolveModes, underPressure, unfinishedDue } from "@/lib/playbooks/rules";
+import { planFull, planHot, planLastCall, planOpening, planWrapup } from "@/lib/playbooks/cycle";
 import { PROGRAMS, type ProgramCode } from "@/lib/programs";
 
 /**
@@ -215,7 +216,7 @@ export async function planLate(now: Date): Promise<Step[]> {
 
 /* ---------- Runner ---------- */
 
-const PLANNERS: Record<PlaybookId, (now: Date) => Promise<Step[]>> = { health: planHealth, unfinished: planUnfinished, late: planLate };
+const PLANNERS: Record<PlaybookId, (now: Date) => Promise<Step[]>> = { health: planHealth, unfinished: planUnfinished, late: planLate, opening: planOpening, hot: planHot, last_call: planLastCall, full: planFull, wrapup: planWrapup };
 
 /** What every playbook would do now, whatever its mode. Writes nothing. */
 export async function planAll(now = new Date()): Promise<Record<PlaybookId, Step[]>> {
@@ -231,11 +232,14 @@ export async function planAll(now = new Date()): Promise<Record<PlaybookId, Step
 export async function runPlaybooks(now = new Date()): Promise<Record<PlaybookId, number | Mode>> {
   const modes = await loadModes();
   const out = {} as Record<PlaybookId, number | Mode>;
+  // The cron has a minute: prospect e-mails beyond this wait for the next run (nothing is logged for them).
+  let prospectBudget = MAX_PROSPECT_EMAILS_PER_RUN * 2;
   for (const id of PLAYBOOK_IDS) {
     if (modes[id] !== "on") { out[id] = modes[id]; continue; }
     const steps = await PLANNERS[id](now).catch((error) => { console.error(`[playbook] ${id}`, error); return [] as Step[]; });
     let done = 0;
     for (const step of steps) {
+      if (step.log.leadId !== null && prospectBudget-- <= 0) break;
       const result = await sendEmail(step.email).catch((error) => ({ sent: false as const, reason: String(error) }));
       if (!result.sent && result.reason !== "RESEND_API_KEY manquante") continue;
       await prisma.actionLog.create({ data: { type: step.log.type, leadId: step.log.leadId, channel: "email", payload: step.log.payload } });

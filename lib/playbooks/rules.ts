@@ -6,7 +6,7 @@ import { z } from "zod";
  * runner (cron), the Playbooks page and the tests. Constants are Ben's.
  */
 
-export const PLAYBOOK_IDS = ["health", "unfinished", "late"] as const;
+export const PLAYBOOK_IDS = ["health", "unfinished", "late", "opening", "hot", "last_call", "full", "wrapup"] as const;
 export type PlaybookId = (typeof PLAYBOOK_IDS)[number];
 export const MODES = ["on", "trial", "off"] as const;
 export type Mode = (typeof MODES)[number];
@@ -31,6 +31,36 @@ export const PLAYBOOKS: Record<PlaybookId, { title: string; trigger: string; act
     action: "Vous alerte avec un pack de rattrapage à valider, une fois par semaine par cohorte",
     defaultMode: "on",
   },
+  opening: {
+    title: "Ouverture",
+    trigger: "La campagne d’une cohorte s’ouvre (J-60)",
+    action: "Vous rappelle d’ouvrir les inscriptions si besoin ; écrit « les inscriptions sont ouvertes » aux prospects consentants du programme (6 derniers mois)",
+    defaultMode: "trial",
+  },
+  hot: {
+    title: "Prospect chaud (Bâtisseur IA)",
+    trigger: "Diagnostic fait il y a 2 à 7 jours, sans inscription",
+    action: "Un e-mail avec sa première automatisation conseillée et la prochaine date d’entrée (le CISSP a déjà sa relance après l’analyse de profil)",
+    defaultMode: "trial",
+  },
+  last_call: {
+    title: "Dernier appel",
+    trigger: "Quelques jours avant la fermeture des admissions, s’il reste des places",
+    action: "Un e-mail aux prospects engagés (3 derniers mois) avec la vraie date de fermeture et les places restantes",
+    defaultMode: "trial",
+  },
+  full: {
+    title: "Cohorte pleine",
+    trigger: "Toutes les places sont payées",
+    action: "Vous prévient ; les playbooks n’écrivent plus pour cette cohorte et vous indiquent la suivante",
+    defaultMode: "on",
+  },
+  wrapup: {
+    title: "Fin de cohorte",
+    trigger: "7 jours après le dernier jour",
+    action: "Vous envoie la liste des participants avec un message prêt : témoignage (avec accord écrit) et recommandation",
+    defaultMode: "on",
+  },
 };
 
 export const modesSchema = z.object(Object.fromEntries(PLAYBOOK_IDS.map((id) => [id, z.enum(MODES).optional()])) as Record<PlaybookId, z.ZodOptional<z.ZodEnum<["on", "trial", "off"]>>>);
@@ -49,7 +79,7 @@ export const MODE_LABEL: Record<Mode, string> = { on: "Actif", trial: "Essai", o
 /** At most one automatic message to a prospect every this many days, all playbooks and automatic e-mails together. */
 export const PRESSURE_DAYS = 4;
 /** Logged types that are automatic messages to a prospect (actions_log.type). */
-export const AUTO_MESSAGE_TYPES = ["playbook_unfinished", "result_reminder", "after_call_email"] as const;
+export const AUTO_MESSAGE_TYPES = ["playbook_unfinished", "playbook_opening", "playbook_hot", "playbook_last_call", "result_reminder", "after_call_email"] as const;
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
@@ -127,4 +157,39 @@ export function catchUpPack(input: { toFollowUp: number; alumni: number; unfinis
   out.push("Publier deux fois de plus cette semaine sur le pilier qui amène le plus d’analyses (Marketing).");
   if (input.alumni) out.push(`Demander ${input.alumni === 1 ? "à l’ancien participant" : `aux ${input.alumni} anciens participants`} de recommander la cohorte.`);
   return out;
+}
+
+/* ---------- Cycle (lot 4) ---------- */
+
+/** Automatic e-mails to prospects per playbook and per run, at most: the rest goes the next day (the cron has a minute). */
+export const MAX_PROSPECT_EMAILS_PER_RUN = 25;
+
+/** The opening e-mail goes out from J-60 until this day, so a missed run catches up. */
+export const OPENING_LAST_DAY = -50;
+/** Prospects of the last this-many days hear about the opening. */
+export const OPENING_LOOKBACK_DAYS = 180;
+/** The hot-prospect e-mail: a diagnostic this many days old. */
+export const HOT_MIN_DAYS = 2;
+export const HOT_MAX_DAYS = 7;
+/** The last call goes out this many days before the admissions close, until the day before it. */
+export const LAST_CALL_DAYS_BEFORE_CLOSE = 4;
+export const LAST_CALL_LOOKBACK_DAYS = 90;
+/** The wrap-up comes this many days after the last day (and is still sent for a week after). */
+export const WRAPUP_AFTER_DAYS = 7;
+
+/** Opening window, in days from the first day. */
+export function openingDue(day: number): boolean {
+  return day >= -60 && day <= OPENING_LAST_DAY;
+}
+
+/** Last-call window: from 4 days before the close to the day before it. */
+export function lastCallDue(day: number, closeDay: number): boolean {
+  return day >= closeDay - LAST_CALL_DAYS_BEFORE_CLOSE && day < closeDay;
+}
+
+/** Which prospects belong to a programme: readiness for certifications (CC for "not yet"), the diagnostic for the IA. */
+export function programOfReadiness(readiness: string | null): "cissp" | "cc" | null {
+  if (readiness === "ready" || readiness === "conditional") return "cissp";
+  if (readiness === "not_yet") return "cc";
+  return null;
 }
