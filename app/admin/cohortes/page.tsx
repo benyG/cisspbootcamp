@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Rocket } from "lucide-react";
 import Link from "next/link";
 
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
@@ -22,6 +22,11 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
       {erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{erreur}</p>}
       {supprime && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{supprime} supprimée.{vers ? ` ${n} personne${Number(n) > 1 ? "s" : ""} déplacée${Number(n) > 1 ? "s" : ""} vers ${vers}.` : ""}</p>}
 
+      <Link href="/admin/cohortes/nouvelle" className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-ink bg-white p-4 hover:shadow-[var(--shadow-card)]">
+        <span><span className="flex items-center gap-2 font-bold"><Rocket className="size-5 text-accent" aria-hidden />Lancer une cohorte</span><span className="block text-sm text-muted">Objectif, promo, canaux, et le plan de campagne daté de J-60 au premier jour.</span></span>
+        <span aria-hidden>→</span>
+      </Link>
+
       <ul className="mt-6 flex flex-col gap-3">
         {cohorts.map((cohort) => (
           <li key={cohort.id}>
@@ -43,7 +48,7 @@ export default async function CohortsPage({ searchParams }: { searchParams: Prom
       </ul>
 
       <section className="mt-8 rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="font-semibold">Nouvelle cohorte</h2>
+        <h2 className="font-semibold">Nouvelle cohorte, sans plan de campagne</h2>
         <form action={createCohort} className="mt-3 grid grid-cols-2 gap-3">
           <label className="col-span-2 flex flex-col gap-1 text-sm">
             <span className="font-medium">Programme</span>

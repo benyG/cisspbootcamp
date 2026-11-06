@@ -107,6 +107,7 @@ function Detail({ cohort, funnel, now }: { cohort: PilotCohort; funnel: Array<{ 
           <span><i className="mr-1.5 inline-block h-[3px] w-4 rounded bg-[var(--color-accent)] align-middle opacity-50" />Prévision à ce rythme</span>
         </p>
         <p className="mt-3 text-sm text-ink-2">{forecastSentence(p)}</p>
+        <p className="mt-2 text-sm"><Link href={`/admin/cohortes/${cohort.id}#campagne`} className="font-semibold underline">Plan de campagne de cette cohorte</Link></p>
       </section>
 
       <div className="grid content-start gap-5">

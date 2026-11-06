@@ -2,7 +2,10 @@ import { Clapperboard, FileText, GraduationCap, Send, Trash2, Video } from "luci
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { CampaignPlan } from "@/components/admin/campaign/CampaignPlan";
+import { CampaignWizard } from "@/components/admin/campaign/CampaignWizard";
 import { CohortGauge } from "@/components/cohorts/CohortGauge";
+import { DEFAULT_CAMPAIGN, buildCampaignPlan, readCampaign } from "@/lib/campaign";
 import { COHORT_STATUS_LABEL as STATUS_LABEL, MANUAL_COHORT_STATUSES, buildGauge, cohortHasStarted } from "@/lib/cohorts";
 import { syncCohortStatuses } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
@@ -11,7 +14,7 @@ import { loadLimits, plannerUrl } from "@/lib/personal-schedule-send";
 import { PROGRAMS } from "@/lib/programs";
 import { formatUsdCents } from "@/lib/pricing";
 
-import { deleteCohort, sendCohortOnboarding, updateCohort } from "../actions";
+import { deleteCohort, saveCampaign, sendCohortOnboarding, updateCohort } from "../actions";
 import { invitePersonalAction, saveLimitsAction } from "./calendriers/actions";
 
 export const dynamic = "force-dynamic";
@@ -69,6 +72,16 @@ export default async function CohortPage({
   });
 
   const locked = cohortHasStarted(cohort, new Date());
+  const now = new Date();
+  const campaign = readCampaign(cohort.campaign);
+  const plan = campaign ? buildCampaignPlan({ program: cohort.program, startsAt: cohort.startsAt, endsAt: cohort.endsAt, goal: cohort.targetSeats ?? cohort.capacity }, campaign) : null;
+  const campaignDone = new Set(
+    (await prisma.actionLog.findMany({ where: { type: "campaign_done" }, select: { payload: true } }))
+      .map((l) => l.payload as { cohortId?: number; key?: string } | null)
+      .filter((p) => p?.cohortId === cohort.id)
+      .map((p) => p!.key!),
+  );
+  const toDate = (d: Date) => d.toISOString().slice(0, 10);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
@@ -137,6 +150,30 @@ export default async function CohortPage({
           <button type="submit" className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 font-semibold text-white">Enregistrer</button>
         </div>
       </form>
+
+      <section id="campagne" className="mt-8 rounded-xl border border-line bg-white p-4">
+        <h2 className="font-semibold">Plan de campagne</h2>
+        {plan ? (
+          <div className="mt-3"><CampaignPlan plan={plan} done={campaignDone} now={now} /></div>
+        ) : (
+          <p className="mt-1 text-sm text-muted">Pas encore de plan : choisissez la promo et les canaux ci-dessous, le plan daté de J-60 au premier jour se calcule.</p>
+        )}
+        {!locked && (
+          <details className="mt-4" open={!plan}>
+            <summary className="cursor-pointer text-sm font-semibold">{plan ? "Modifier la promo et les canaux" : "Régler la campagne"}</summary>
+            <div className="mt-3">
+              <CampaignWizard
+                mode="edit"
+                action={saveCampaign}
+                cohortId={cohort.id}
+                programs={[{ code: cohort.program, name: PROGRAMS[cohort.program].name, days: PROGRAMS[cohort.program].days }]}
+                initial={{ program: cohort.program, name: cohort.name, startsAt: toDate(cohort.startsAt), endsAt: toDate(cohort.endsAt), capacity: cohort.capacity, targetSeats: cohort.targetSeats ? String(cohort.targetSeats) : "", status: cohort.status }}
+                campaign={campaign ?? DEFAULT_CAMPAIGN}
+              />
+            </div>
+          </details>
+        )}
+      </section>
 
       {cohort.program === "cissp" && (
         <Link href={`/admin/cohortes/${cohort.id}/sessions`} className="mt-8 flex items-center justify-between gap-3 rounded-xl border border-line bg-white p-4 text-sm hover:border-accent">
