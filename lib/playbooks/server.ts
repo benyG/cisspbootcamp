@@ -10,6 +10,7 @@ import { sendEmail } from "@/lib/messaging/email";
 import { forecastSentence, stateLabel } from "@/lib/pilotage";
 import { cohortTitle, loadPilotCohorts } from "@/lib/pilotage-server";
 import { AUTO_MESSAGE_TYPES, HEALTH_REPEAT_HOURS, MAX_PROSPECT_EMAILS_PER_RUN, type Mode, PLAYBOOK_IDS, PLAYBOOKS, type PlaybookId, PRESSURE_DAYS, UNFINISHED_MAX_DAYS, catchUpPack, healthProblems, lateAlertDue, mayContact, resolveModes, underPressure, unfinishedDue } from "@/lib/playbooks/rules";
+import { planContent } from "@/lib/playbooks/content";
 import { planFull, planHot, planLastCall, planOpening, planWrapup } from "@/lib/playbooks/cycle";
 import { PROGRAMS, type ProgramCode } from "@/lib/programs";
 
@@ -32,6 +33,8 @@ export type Step = {
   summary: string;
   email: { to: string; subject: string; text: string; fromName?: string };
   log: { type: string; leadId: number | null; payload: Prisma.InputJsonValue };
+  /** Content rhythm: drafts to write for this cohort before the e-mail (run by /api/cron/content). */
+  generate?: { cohortId: number };
 };
 
 export async function loadModes(): Promise<Record<PlaybookId, Mode>> {
@@ -216,7 +219,7 @@ export async function planLate(now: Date): Promise<Step[]> {
 
 /* ---------- Runner ---------- */
 
-const PLANNERS: Record<PlaybookId, (now: Date) => Promise<Step[]>> = { health: planHealth, unfinished: planUnfinished, late: planLate, opening: planOpening, hot: planHot, last_call: planLastCall, full: planFull, wrapup: planWrapup };
+const PLANNERS: Record<PlaybookId, (now: Date) => Promise<Step[]>> = { health: planHealth, unfinished: planUnfinished, late: planLate, opening: planOpening, hot: planHot, last_call: planLastCall, full: planFull, wrapup: planWrapup, content: planContent };
 
 /** What every playbook would do now, whatever its mode. Writes nothing. */
 export async function planAll(now = new Date()): Promise<Record<PlaybookId, Step[]>> {
@@ -236,6 +239,8 @@ export async function runPlaybooks(now = new Date()): Promise<Record<PlaybookId,
   let prospectBudget = MAX_PROSPECT_EMAILS_PER_RUN * 2;
   for (const id of PLAYBOOK_IDS) {
     if (modes[id] !== "on") { out[id] = modes[id]; continue; }
+    // The content rhythm calls the AI: it runs in its own function (/api/cron/content).
+    if (id === "content") { out[id] = "on"; continue; }
     const steps = await PLANNERS[id](now).catch((error) => { console.error(`[playbook] ${id}`, error); return [] as Step[]; });
     let done = 0;
     for (const step of steps) {

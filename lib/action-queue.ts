@@ -25,6 +25,7 @@ export type QueueItem =
   | { kind: "followup"; leadId: number; name: string; heat: number; stage: string; waLink: string | null; emailSubject: string; emailBody: string; email: string; overdueDays: number }
   | { kind: "payment"; registrationId: number; leadId: number; name: string; reference: string; amountUsd: number; cohortName: string; ageHours: number }
   | { kind: "unfinished"; registrationId: number; leadId: number; name: string; reference: string; cohortName: string; days: number; waLink: string | null; email: string }
+  | { kind: "drafts"; cohortId: number; cohortName: string; count: number }
   | { kind: "campaign"; cohortId: number; key: string; cohortName: string; text: string; by: string; href: string | null; dueLabel: string }
   | { kind: "balance"; registrationId: number; leadId: number; name: string; reference: string; balanceUsd: number; cohortName: string; startsAt: Date; started: boolean; whatsapp: string | null }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
@@ -118,6 +119,13 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
 
   for (const p of manualPayments) {
     items.push({ kind: "payment", registrationId: p.id, leadId: p.lead.id, name: `${p.lead.firstName} ${p.lead.lastName}`, reference: p.reference, amountUsd: firstDueUsd(p), cohortName: p.cohort.name, ageHours: hoursSince(p.createdAt, now) });
+  }
+
+  // Content rhythm (lot 7): drafts proposed automatically, waiting to be read.
+  const drafts = await prisma.marketingPost.groupBy({ by: ["cohortId"], where: { autoDraft: true, publishedAt: null, scheduledFor: null }, _count: { _all: true } });
+  if (drafts.length) {
+    const names = await prisma.cohort.findMany({ where: { id: { in: drafts.map((d) => d.cohortId!).filter(Boolean) } }, select: { id: true, name: true } });
+    for (const d of drafts) if (d.cohortId) items.push({ kind: "drafts", cohortId: d.cohortId, cohortName: names.find((n) => n.id === d.cohortId)?.name ?? "", count: d._count._all });
   }
 
   // Campaign plans (lot 5): the actions to validate whose date has come.

@@ -15,7 +15,7 @@ import { minimaxEnabled } from "@/lib/minimax";
 import { loadMarketingSettings } from "@/lib/marketing/settings";
 import { PROGRAMS } from "@/lib/programs";
 
-import { deletePost, saveTestThreshold, togglePublished } from "./actions";
+import { deletePost, saveTestThreshold, schedulePost, togglePublished, unschedulePost } from "./actions";
 
 export const dynamic = "force-dynamic";
 // The studio's web search can take a minute or two.
@@ -139,11 +139,22 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
                   <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {ALL_PILLARS[pillarOf(p, kind)].label}{p.format && p.format !== "standard" ? ` · ${FORMATS[p.format as keyof typeof FORMATS]?.label ?? p.format}` : ""} · vers {ALL_DESTINATIONS[p.destination as keyof typeof ALL_DESTINATIONS]?.label.toLowerCase() ?? p.destination}</span>
                   <span className="text-muted">{p.visitors} visiteur{p.visitors > 1 ? "s" : ""} · {p.destination === "test" || p.tests > 0 ? `${p.tests} test${p.tests > 1 ? "s" : ""} ouvert${p.tests > 1 ? "s" : ""} (${p.testsDone} fait${p.testsDone > 1 ? "s" : ""}) · ` : ""}{p.leads} {ia ? "contact" : "analyse"}{p.leads > 1 ? "s" : ""} · {p.paid} inscription{p.paid > 1 ? "s" : ""} · {p.code}</span>
                 </div>
+                {p.autoDraft && !p.publishedAt && <p className="mt-1 inline-block rounded-full bg-[#e6eef8] px-2 py-0.5 text-xs font-semibold text-[#2f6fb5]">Proposé automatiquement : à relire, puis à programmer ou à supprimer</p>}
+                {p.publishError && <p className="mt-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-800">Publication programmée refusée : {p.publishError}</p>}
                 {p.topic && <p className="mt-1 text-xs text-muted">Sujet : {p.topic}</p>}
                 <p className="mt-1 line-clamp-3 whitespace-pre-line text-ink-2">{p.text}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <CopyButton value={p.text} label="Copier" />
                   {p.channel === "linkedin" && linkedin.state === "connected" && !p.linkedinUrn && <LinkedinPublish postId={p.id} images={p.images.map((i) => ({ id: i.id, headline: i.headline }))} />}
+                  {p.channel === "linkedin" && !p.linkedinUrn && !p.publishedAt && (p.scheduledFor && !p.publishError ? (
+                    <form action={unschedulePost} className="flex items-center gap-2"><input type="hidden" name="postId" value={p.id} /><span className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-ink">Programmé le {p.scheduledFor.toLocaleDateString("fr-FR", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" })}</span><button className={ghost}>Déprogrammer</button></form>
+                  ) : (
+                    <form action={schedulePost} className="flex flex-wrap items-center gap-1.5"><input type="hidden" name="postId" value={p.id} />
+                      <input type="date" name="day" required min={new Date().toISOString().slice(0, 10)} aria-label="Jour de publication" className="rounded-lg border border-line px-2 py-1 text-sm" />
+                      {p.images.length > 0 && <select name="imageId" defaultValue={p.images[0]!.id} aria-label="Visuel" className="rounded-lg border border-line px-2 py-1 text-sm"><option value="">Sans visuel</option>{p.images.map((i) => <option key={i.id} value={i.id}>Visuel n° {i.id}</option>)}</select>}
+                      <button className={ghost}>Programmer</button>
+                    </form>
+                  ))}
                   {p.linkedinUrn && <a href={`https://www.linkedin.com/feed/update/${p.linkedinUrn}/`} target="_blank" rel="noopener" className={ghost}>Voir sur LinkedIn</a>}
                   <form action={togglePublished}><input type="hidden" name="postId" value={p.id} /><button className={ghost}>{p.publishedAt ? `Publié le ${p.publishedAt.toLocaleDateString("fr-FR")}` : "Marquer publié"}</button></form>
                   <form action={deletePost}><input type="hidden" name="postId" value={p.id} /><button className={ghost} aria-label="Supprimer"><Trash2 className="size-4" aria-hidden /></button></form>

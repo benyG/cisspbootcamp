@@ -24,6 +24,7 @@ const JOURNAL: Record<string, string> = {
   playbook_last_call: "E-mail de dernier appel envoyé",
   playbook_full: "Cohorte pleine : vous avez été prévenu",
   playbook_wrapup: "Fin de cohorte : messages de témoignage préparés",
+  playbook_content: "Publications LinkedIn proposées dans Marketing",
 };
 
 /**
@@ -50,6 +51,7 @@ export default async function PlaybooksPage() {
     last_call: count("playbook_last_call") ? `${count("playbook_last_call")} e-mail(s)` : "Aucun e-mail",
     full: count("playbook_full") ? `${count("playbook_full")} cohorte(s) pleine(s)` : "Rien",
     wrapup: count("playbook_wrapup") ? `${count("playbook_wrapup")} fin(s) de cohorte` : "Rien",
+    content: count("playbook_content") ? `${count("playbook_content")} série(s) de propositions` : "Rien",
   };
 
   return (

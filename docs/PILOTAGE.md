@@ -40,7 +40,7 @@ des admissions (jamais sous les places déjà payées).
 | 4 | Playbooks du cycle : Ouverture, Prospect chaud, Suivi d'appel, Dernier appel, Cohorte pleine, Fin de cohorte | Livré |
 | 5 | Lancer une cohorte : assistant et plan de campagne J-60 → J0 | Livré |
 | 6 | Promo : tarif de lancement, codes partenaires, parrainage | Livré |
-| 7 | Communication automatisée : rythme de contenu, publication programmée, séquences e-mail, WhatsApp préparé | À faire |
+| 7 | Communication automatisée : rythme de contenu, publication programmée, séquences e-mail, WhatsApp préparé | Livré |
 | 8 | Ajustement et pub : rattrapage, suivi des campagnes payantes, coût par inscrit | À faire |
 
 ## Lot 2 (livré)
@@ -129,3 +129,24 @@ une remise à la personne recommandée, Ben remercie l'ancien lui-même.
   `?code=`) et prix remisé affiché ; la caisse recalcule tout côté serveur.
 - `/admin/promos` : codes, inscriptions payées par code, montants, qui a fait
   inscrire qui, lien WhatsApp pour envoyer son code à chaque ancien.
+
+## Lot 7 (livré)
+
+- Publication LinkedIn programmée : dans Marketing, Ben donne un jour (et un
+  visuel) à une publication de la bibliothèque ; la tâche quotidienne la
+  publie ce jour-là (`lib/marketing/schedule.ts`). Un refus reste affiché sur
+  la publication et part une fois par e-mail ; rien n'est réessayé à l'aveugle.
+- Rythme de contenu (playbook, Essai par défaut car il appelle l'IA) : pour une
+  cohorte en campagne sur LinkedIn avec moins de 3 publications dans la
+  semaine, le Studio écrit 3 propositions sur le pilier le moins traité depuis
+  30 jours (`lib/marketing/rhythm.ts`), au plus une série par cohorte et par
+  semaine, une cohorte par passage. Elles arrivent dans la bibliothèque
+  « proposé automatiquement » et dans la file d'actions ; rien ne part sans
+  un jour donné par Ben. L'appel IA tourne dans sa propre fonction
+  (`/api/cron/content`), lancée après la tâche quotidienne.
+- Séquences e-mail : la suite des e-mails automatiques existe déjà avec les
+  playbooks (résultat, ouverture, prospect chaud, inscription non finalisée,
+  dernier appel), sous le plafond de pression ; pas de séquence en plus.
+- WhatsApp préparé : messages prêts dans la file (inscriptions non finalisées,
+  relances, soldes) et dans l'e-mail de fin de cohorte.
+- Facebook : en attente de la validation de l'application par Meta.

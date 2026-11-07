@@ -895,7 +895,16 @@ model MarketingPost {
   publishedAt DateTime? @map("published_at")
   createdAt   DateTime  @default(now()) @map("created_at")
 
+  /// Lot 7: LinkedIn publication planned for this day (the daily cron publishes it), with its generated image.
+  scheduledFor     DateTime? @map("scheduled_for")
+  scheduledImageId Int?      @map("scheduled_image_id")
+  /// Why the planned publication failed; it waits for Ben then.
+  publishError     String?   @map("publish_error") @db.VarChar(300)
+  /// Proposed by the content rhythm playbook, not yet validated by Ben.
+  autoDraft        Boolean   @default(false) @map("auto_draft")
+
   @@index([cohortId, createdAt])
+  @@index([scheduledFor])
   @@map("marketing_posts")
 }
 
