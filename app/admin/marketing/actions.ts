@@ -13,6 +13,7 @@ import { ALL_DESTINATIONS, ALL_PILLARS, CHANNELS, FORMATS, IA_SEGMENTS, type Mar
 import { ACTIVITIES, HOURS, type IaDiagnosis, TASKS, TOOLS } from "@/lib/ia-diagnostic";
 import { loadMarketingSettings, saveMarketingSettings } from "@/lib/marketing/settings";
 import { MAX_IMAGE_BYTES, publishOnLinkedin } from "@/lib/linkedin";
+import { scheduleDay } from "@/lib/marketing/schedule";
 import { put } from "@vercel/blob";
 
 import { CANVAS, HEADLINE_MAX } from "@/lib/marketing/brand";
@@ -422,4 +423,27 @@ export async function generateVisual(input: { postId: number; scene: string; hea
 async function imagesOf(postId: number): Promise<ImageRow[]> {
   const rows = await prisma.marketingImage.findMany({ where: { postId }, orderBy: { createdAt: "desc" }, take: 12 });
   return rows.map((i) => ({ id: i.id, headline: i.headline, createdAt: i.createdAt.toISOString() }));
+}
+
+/**
+ * Lot 7: Ben validates a LinkedIn post by giving it a day (and an image);
+ * the daily cron publishes it. Also clears a previous failure.
+ */
+export async function schedulePost(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const postId = id.parse(formData.get("postId"));
+  const day = scheduleDay(String(formData.get("day") ?? ""), new Date());
+  const imageId = id.safeParse(formData.get("imageId"));
+  const post = await prisma.marketingPost.findUnique({ where: { id: postId }, select: { channel: true, linkedinUrn: true, publishedAt: true } });
+  if (!post || post.channel !== "linkedin" || post.linkedinUrn || post.publishedAt || !day) return;
+  await prisma.marketingPost.update({ where: { id: postId }, data: { scheduledFor: day, scheduledImageId: imageId.success ? imageId.data : null, publishError: null, autoDraft: false } });
+  revalidatePath("/admin/marketing");
+  revalidatePath("/admin");
+}
+
+export async function unschedulePost(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const postId = id.parse(formData.get("postId"));
+  await prisma.marketingPost.update({ where: { id: postId }, data: { scheduledFor: null, scheduledImageId: null, publishError: null } }).catch(() => undefined);
+  revalidatePath("/admin/marketing");
 }

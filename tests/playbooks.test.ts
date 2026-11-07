@@ -26,7 +26,7 @@ const ago = (days: number) => new Date(now.getTime() - days * DAY);
 
 describe("rules", () => {
   it("defaults: alerts on, the prospect e-mail in trial until Ben reads it", () => {
-    const defaults = { health: "on", unfinished: "trial", late: "on", opening: "trial", hot: "trial", last_call: "trial", full: "on", wrapup: "on" };
+    const defaults = { health: "on", unfinished: "trial", late: "on", opening: "trial", hot: "trial", last_call: "trial", full: "on", wrapup: "on", content: "trial" };
     expect(resolveModes(null)).toEqual(defaults);
     expect(resolveModes({ unfinished: "on", late: "nope" })).toEqual(defaults);
     expect(resolveModes({ unfinished: "on" })).toEqual({ ...defaults, unfinished: "on" });

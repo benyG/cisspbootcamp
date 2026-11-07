@@ -30,6 +30,7 @@ export default async function AdminHomePage() {
     balance: items.filter((i) => i.kind === "balance"),
     unfinished: items.filter((i) => i.kind === "unfinished"),
     campaign: items.filter((i) => i.kind === "campaign"),
+    drafts: items.filter((i) => i.kind === "drafts"),
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
     personal: items.filter((i) => i.kind === "personal"),
@@ -120,6 +121,15 @@ export default async function AdminHomePage() {
               <button className={primary}>Confirmer</button>
             </form>
           </Row>
+        ))}
+      </Group>
+
+      <Group icon={Megaphone} title="Publications proposées à relire" count={groups.drafts.length}>
+        {groups.drafts.map((i) => i.kind === "drafts" && (
+          <li key={`d${i.cohortId}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white px-3.5 py-3">
+            <span className="text-sm"><b>{i.count} publication{i.count > 1 ? "s" : ""} LinkedIn proposée{i.count > 1 ? "s" : ""}</b><span className="block text-xs text-muted">{i.cohortName} · gardez-en une, donnez-lui un jour, supprimez les autres</span></span>
+            <Link href={`/admin/marketing?cohorte=${i.cohortId}`} className={primary}>Relire</Link>
+          </li>
         ))}
       </Group>
 

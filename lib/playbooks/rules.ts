@@ -6,7 +6,7 @@ import { z } from "zod";
  * runner (cron), the Playbooks page and the tests. Constants are Ben's.
  */
 
-export const PLAYBOOK_IDS = ["health", "unfinished", "late", "opening", "hot", "last_call", "full", "wrapup"] as const;
+export const PLAYBOOK_IDS = ["health", "unfinished", "late", "opening", "hot", "last_call", "full", "wrapup", "content"] as const;
 export type PlaybookId = (typeof PLAYBOOK_IDS)[number];
 export const MODES = ["on", "trial", "off"] as const;
 export type Mode = (typeof MODES)[number];
@@ -54,6 +54,13 @@ export const PLAYBOOKS: Record<PlaybookId, { title: string; trigger: string; act
     trigger: "Toutes les places sont payées",
     action: "Vous prévient ; les playbooks n’écrivent plus pour cette cohorte et vous indiquent la suivante",
     defaultMode: "on",
+  },
+  content: {
+    title: "Rythme de contenu",
+    trigger: "Une cohorte en campagne sur LinkedIn a moins de 3 publications cette semaine",
+    action: "Le Studio écrit 3 propositions sur le pilier le moins traité ; elles attendent dans Marketing que vous les relisiez et leur donniez un jour de publication",
+    // Each run calls the AI: Ben switches it on.
+    defaultMode: "trial",
   },
   wrapup: {
     title: "Fin de cohorte",
