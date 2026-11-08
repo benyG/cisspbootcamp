@@ -14,7 +14,7 @@ export function IaTopbar() {
           <span className="grid size-[30px] place-items-center rounded-lg bg-ink text-white"><Bot className="size-[18px]" aria-hidden /></span>
           Bâtisseur <span className="text-[#0B6E56]">IA</span>
         </Link>
-        <Link href={iaPath("/ia/diagnostic")} className="inline-flex items-center rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold">Diagnostic gratuit</Link>
+        <Link href={iaPath("/ia/inscription")} className="inline-flex items-center rounded-full border border-line bg-white px-4 py-2.5 text-[.92rem] font-bold">Réserver ma place</Link>
       </div>
     </header>
   );

@@ -5,22 +5,22 @@ import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { BuildScrubber } from "@/components/ia/landing/BuildScrubber";
 import { Dock } from "@/components/ia/landing/Dock";
 import { IaQuote } from "@/components/ia/landing/IaQuote";
-import { LiveSession } from "@/components/ia/landing/LiveSession";
+import { AutopilotConsole } from "@/components/ia/landing/AutopilotConsole";
 import { TrackView } from "@/components/tracking/TrackView";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { IA_DEFAULT_CAPACITY, IA_DEFAULT_START, IA_ZONE, JOURNEES, journeeSlot, shortDate } from "@/lib/ia-days";
 import { openIaEntries } from "@/lib/ia-days-server";
 import { iaDomain, iaPath } from "@/lib/ia-domain";
-import { DAY_DEMO, DAY_PLAN, IA_FAQ, SITE_LOG } from "@/lib/ia-landing";
+import { AUTONOMY_LEVELS, DAY_DEMO, DAY_PLAN, GARTNER, IA_FAQ, SITE_RUNS } from "@/lib/ia-landing";
 import { PROGRAMS } from "@/lib/programs";
 import { loadRates } from "@/lib/registration";
 
 import { IA_COMPANY } from "@/lib/ia-brand";
 import "./landing.css";
 
-const TITLE = "Bâtisseur IA : le bootcamp pratique pour construire votre application avec l’IA";
-const DESCRIPTION = "Formation en direct, en français, le week-end : en 6 journées, construisez vous-même l’application de votre entreprise avec Claude Code. Sans savoir coder.";
+const TITLE = "Bâtisseur IA : bâtissez votre entreprise autonome avec l’IA";
+const DESCRIPTION = "Formation bootcamp en direct, en français, le week-end : en 6 journées, construisez vous-même le système qui fait tourner votre entreprise. Sans savoir coder.";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
@@ -34,10 +34,12 @@ export const dynamic = "force-dynamic";
 const clock = (d: Date, timeZone: string) => d.toLocaleTimeString("fr-FR", { timeZone, hour: "numeric", minute: "2-digit", hourCycle: "h23" }).replace(":", " h ").replace(" h 00", " h");
 
 /**
- * Bâtisseur IA (Ben, 05/11, from the validated prototype): a hands-on
- * bootcamp, said in the first line. The diagnostic button comes first, then
- * a day hour by hour, the programme, this site's own build log, the price
- * and the next entries.
+ * Bâtisseur IA (Ben, 05/11; repositioned 08/11 on the autonomous business,
+ * from the validated prototype): a bootcamp where people build the system
+ * that runs their business. Booking a seat is the main action everywhere;
+ * the diagnostic is offered to those who hesitate. Then a day hour by hour,
+ * the programme, what an autonomous business is, our own site as proof,
+ * the price and the next entries.
  */
 export default async function IaPage() {
   const program = PROGRAMS.ia;
@@ -52,6 +54,10 @@ export default async function IaPage() {
   const slot = journeeSlot(first?.date ?? "2027-01-23", first?.start ?? IA_DEFAULT_START);
   const at = (minutes: number) => clock(new Date(slot.startsAt.getTime() + minutes * 60_000), IA_ZONE);
   const diagnostic = iaPath("/ia/diagnostic");
+  // The main action: book the next group; with no open date, hear about the next one through the diagnostic.
+  const book = first ? iaPath(`/ia/inscription?entree=${first.cohortId}`) : diagnostic;
+  const bookLabel = first ? "Réserver ma place" : "Recevoir la prochaine date";
+  const firstDay = first ? shortDate(first.date) : "";
   const days = JOURNEES.map((j, i) => ({ ...j, ...DAY_DEMO[i] }));
 
   return (
@@ -62,20 +68,29 @@ export default async function IaPage() {
         <div className="hero">
           <div className="wrap hero-grid">
             <div>
-              <div className="kicker"><span>Bootcamp pratique</span><span>en direct</span><span>en français</span></div>
-              <h1>Apprenez à construire <em>votre</em> application avec l’IA.</h1>
-              <p className="lede">Une formation {IA_COMPANY} en direct, en petit groupe. En {program.days} journées, <b>vous construisez vous-même</b> l’application de votre entreprise avec Claude Code, étape par étape, et vous repartez en sachant la faire évoluer. <b>Sans savoir coder.</b></p>
+              <div className="kicker"><span>Formation bootcamp</span><span>en direct</span><span>en français</span></div>
+              <h1>Bâtissez votre entreprise <em>autonome</em> avec l’IA.</h1>
+              <p className="lede">Une formation {IA_COMPANY}. En {program.days} journées, <b>vous construisez vous-même le système qui fait tourner votre entreprise</b> : il vend, encaisse, communique et vous alerte. Vous gardez les commandes. <b>Sans savoir coder.</b></p>
               <ul className="facts">
                 <li><b>{program.days}</b> journées de 5 h</li>
                 <li><b>{IA_DEFAULT_CAPACITY}</b> places par groupe</li>
                 <li>Le week-end, <b>à vos dates</b></li>
                 <li><b>30 jours</b> de suivi</li>
               </ul>
-              <div className="dig-cta" id="diagnostic">
-                <Link className="btn btn-go btn-big" href={diagnostic}>Voir ce que j’apprendrai à automatiser →</Link>
+              <div className="hero-cta" id="reserver">
+                <Link className="btn btn-go btn-big" href={book}>{bookLabel} →</Link>
+                {first && <span className="next-group">Prochain groupe : {firstDay} · <b>{first.left} place{first.left > 1 ? "s" : ""} sur {first.capacity}</b></span>}
+                <p className="soft">Vous hésitez encore ? <Link href={diagnostic}>Mesurez l’autonomie de votre entreprise</Link> en 3 minutes.</p>
               </div>
             </div>
-            <LiveSession journee={{ n: 3, title: JOURNEES[2].title }} />
+            <AutopilotConsole />
+          </div>
+        </div>
+
+        <div className="audiences" aria-label="Pour qui">
+          <div className="wrap">
+            <p><b>Vous avez une activité</b><span>Elle tourne sans vous à chaque étape.</span></p>
+            <p><b>Vous lancez la vôtre</b><span>Elle démarre déjà organisée.</span></p>
           </div>
         </div>
 
@@ -84,7 +99,7 @@ export default async function IaPage() {
             <div className="sec-head">
               <span className="label">Une journée de formation</span>
               <h2 id="journee-type">On vous montre. Vous construisez. On vérifie ensemble.</h2>
-              <p>Chaque journée suit le même rythme : une étape montrée en direct, puis vous la refaites sur votre propre projet, avec quelqu’un pour vous débloquer.</p>
+              <p>Une étape montrée en direct, puis vous la refaites sur votre projet, avec quelqu’un pour vous débloquer.</p>
             </div>
             <div className="dayplan">
               {DAY_PLAN.map((s) => (
@@ -107,6 +122,29 @@ export default async function IaPage() {
               <p>Votre projet passe du plan à l’application en ligne. En bleu : ce qui reste à construire. En blanc : ce que vous avez déjà construit. Exemple : le projet d’Adjoa, une couturière de Lomé, pendant la formation.</p>
             </div>
             <BuildScrubber days={days} />
+            <div className="again"><Link className="btn btn-go" href={book}>{bookLabel}</Link>{first && <span className="next-group">Démarrage le {firstDay}</span>}</div>
+          </div>
+        </section>
+
+        <section className="block" style={{ paddingTop: 0 }} aria-labelledby="autonome">
+          <div className="wrap">
+            <div className="sec-head">
+              <span className="label">L’entreprise autonome</span>
+              <h2 id="autonome">Elle agit seule. Vous décidez.</h2>
+            </div>
+            <div className="autonomy">
+              <div>
+                <blockquote>{GARTNER.text}</blockquote>
+                <cite>{GARTNER.source} · <a href={GARTNER.url} target="_blank" rel="noopener">gartner.com</a> · traduction libre</cite>
+              </div>
+              <div className="levels" aria-label="Trois niveaux d’autonomie">
+                {AUTONOMY_LEVELS.map((l, i) => <div key={l.name} className={`l${i + 1}`}><b>{l.name}</b><span>{l.text}</span></div>)}
+              </div>
+            </div>
+            <div className="hesitate" id="diagnostic">
+              <p>Où en est votre entreprise, ou votre projet ?<span>5 questions, 3 minutes : votre niveau et les 3 tâches à automatiser d’abord.</span></p>
+              <Link className="btn btn-line" href={diagnostic}>Faire le diagnostic gratuit</Link>
+            </div>
           </div>
         </section>
 
@@ -114,32 +152,28 @@ export default async function IaPage() {
           <div className="wrap">
             <div className="sec-head">
               <span className="label">Notre preuve</span>
-              <h2 id="preuve">Ce site est notre chantier. Voici son journal.</h2>
-              <p>Il a été construit avec Claude Code par l’équipe qui vous forme, sans agence. On ne le cache pas : c’est la méthode que la formation vous transmet.</p>
+              <h2 id="preuve">Notre propre entreprise tourne déjà ainsi.</h2>
+              <p>Ce site a été construit avec Claude Code par l’équipe qui vous forme, sans agence. Il pilote seul nos cohortes.</p>
             </div>
             <div className="tallies">
               <div><b>21 sept.</b><span>premier jour en ligne</span></div>
-              <div><b>100+</b><span>changements livrés depuis</span></div>
-              <div><b>450+</b><span>tests automatiques à chaque livraison</span></div>
+              <div><b>120+</b><span>changements livrés depuis</span></div>
+              <div><b>500+</b><span>tests automatiques à chaque livraison</span></div>
               <div><b>0</b><span>agence, 0 développeur salarié</span></div>
             </div>
-            <ol className="log">
-              {SITE_LOG.map((e) => (
-                <li key={e.date} className={e.incident ? "incident" : undefined}>
-                  <time dateTime={e.date}>{e.label}</time>
-                  <p>{e.text} <span className="stamp">{e.incident ? "réparé" : "livré"}</span></p>
-                </li>
-              ))}
-            </ol>
-            <p className="proof-foot">Dates et chiffres tirés de l’historique réel du code de ce site.</p>
+            <div className="runs">
+              <div><h3>Il fait seul</h3><ul>{SITE_RUNS.alone.map((t) => <li key={t}>{t}</li>)}</ul></div>
+              <div className="hand"><h3>Il nous laisse</h3><ul>{SITE_RUNS.ours.map((t) => <li key={t}>{t}</li>)}</ul></div>
+            </div>
+            <p className="proof-foot">Chiffres tirés de l’historique réel du code de ce site.</p>
           </div>
         </section>
 
         <section className="block" aria-labelledby="prix">
           <div className="wrap">
             <div className="sec-head">
-              <span className="label">Le prix de la formation</span>
-              <h2 id="prix">Ce que coûte la formation. Tout, sans surprise.</h2>
+              <span className="label">Prix et prochains groupes</span>
+              <h2 id="prix">Choisissez votre J1. Réservez votre place.</h2>
             </div>
             <div className="quote-grid">
               <IaQuote
@@ -165,8 +199,7 @@ export default async function IaPage() {
                   }) : <p className="empty">Les prochaines dates arrivent. Faites le diagnostic : nous vous écrivons dès l’ouverture.</p>}
                 </div>
                 <div className="cta-stack">
-                  <Link className="btn btn-go" href={diagnostic}>Faire le diagnostic d’abord</Link>
-                  {entries.length > 0 && <Link className="btn btn-line" href={iaPath("/ia/inscription")}>Réserver ma place</Link>}
+                  <Link className="btn btn-go" href={entries.length ? iaPath("/ia/inscription") : diagnostic}>{bookLabel}</Link>
                 </div>
                 <p className="note">Carte bancaire, Orange Money, MTN MoMo. Reçu par e-mail.</p>
               </div>
@@ -186,7 +219,7 @@ export default async function IaPage() {
             </div>
           </div>
         </section>
-        <Dock href={diagnostic} watch="diagnostic" />
+        <Dock href={book} watch="reserver" title={first ? `Groupe du ${firstDay.replace(/^\S+ /, "")}` : "Prochaine date"} sub={first ? `${first.left} place${first.left > 1 ? "s" : ""} sur ${first.capacity}` : "Annoncée par e-mail"} action={first ? "Réserver" : "Recevoir"} />
       </main>
       <IaFooter />
     </div>
