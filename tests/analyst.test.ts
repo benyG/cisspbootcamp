@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const db = vi.hoisted(() => ({
-  analystReport: { findUnique: vi.fn(async () => null as unknown), upsert: vi.fn(async () => ({})) },
+  analystReport: { findUnique: vi.fn(async () => null as unknown), upsert: vi.fn<(args: unknown) => Promise<unknown>>(async () => ({})) },
   siteSetting: { findUnique: vi.fn(async () => null as unknown) },
 }));
 vi.mock("@/lib/db", () => ({ prisma: db }));
@@ -70,7 +70,7 @@ describe("analyst run", () => {
     const call = ai.create.mock.calls[0]![0] as { messages: Array<{ content: string }>; output_config: { format: { type: string } } };
     expect(call.output_config.format.type).toBe("json_schema");
     expect(call.messages[0]!.content).toContain("PHOTO de la semaine");
-    const saved = db.analystReport.upsert.mock.calls[0]![0] as { where: { weekKey: string }; create: { output: AnalystOutput; decisions: object } };
+    const saved = db.analystReport.upsert.mock.calls[0]![0] as unknown as { where: { weekKey: string }; create: { output: AnalystOutput; decisions: object } };
     expect(saved.where.weekKey).toBe("2026-11-09");
     expect(saved.create.output.bets.map((b) => b.title)).toEqual(["Rappeler les analyses prêtes sans appel"]);
     expect(saved.create.decisions).toEqual({});
