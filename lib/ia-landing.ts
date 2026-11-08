@@ -1,8 +1,8 @@
 /**
  * Copy of the Bâtisseur IA landing page (Ben, 05/11, from the validated
  * prototype): what a participant writes and learns each journée, the day's
- * timetable, the site's own build log as proof, the questions people ask.
- * Facts only: the log comes from the repository history.
+ * timetable, what our own site runs alone as proof (Ben, 08/11: the
+ * autonomous business), the questions people ask. Facts only.
  */
 
 /** Per journée, beside JOURNEES (lib/ia-days.ts): a tab label, the example prompt, the skills. */
@@ -21,26 +21,40 @@ export const DAY_DEMO: ReadonlyArray<{ short: string; prompt: string; skills: re
  */
 export const DAY_PLAN: ReadonlyArray<{ at: number; title: string; text: string; kind: "show" | "you" | "pause" | "review" }> = [
   { at: 0, title: "Démonstration", text: "L’étape du jour est construite en direct, sur un projet d’exemple.", kind: "show" },
-  { at: 45, title: "Vous construisez", text: "Même étape, sur votre application. On passe d’un écran à l’autre pour vous débloquer.", kind: "you" },
+  { at: 45, title: "Vous construisez", text: "Même étape, sur votre projet. On passe d’un écran à l’autre pour vous débloquer.", kind: "you" },
   { at: 150, title: "Pause", text: "1 heure.", kind: "pause" },
-  { at: 210, title: "Vous construisez", text: "Vous terminez, vous testez, vous mettez en ligne.", kind: "you" },
-  { at: 315, title: "Revue en groupe", text: "Chacun montre ce qui marche. Ce qui bloque se règle ensemble.", kind: "review" },
+  { at: 210, title: "Vous construisez", text: "Vous terminez, vous testez, vous mettez en route.", kind: "you" },
+  { at: 315, title: "Revue en groupe", text: "Chacun montre ce qui tourne. Ce qui bloque se règle ensemble.", kind: "review" },
 ];
 
-/** The build log of this site (git history of the repository), in plain words. */
-export const SITE_LOG: ReadonlyArray<{ date: string; label: string; text: string; incident?: boolean }> = [
-  { date: "2026-09-21", label: "21 sept. 2026", text: "Premier jour : le site est en ligne, avec son analyse de profil." },
-  { date: "2026-09-22", label: "22 sept.", text: "La file d’actions du coach : chaque matin, qui relancer, qui appeler, quoi valider." },
-  { date: "2026-09-24", label: "24 sept.", text: "Prise de rendez-vous : le créneau d’abord, le paiement ensuite, le rappel la veille." },
-  { date: "2026-09-28", label: "28 sept.", text: "Un studio marketing avec Claude : posts, visuels, relances personnalisées." },
-  { date: "2026-10-27", label: "27 oct.", text: "Google coupe l’accès à l’agenda. La page de rendez-vous plante. Diagnostiquée, corrigée, testée, remise en ligne le jour même.", incident: true },
-  { date: "2026-11-03", label: "3 nov.", text: "Le Bâtisseur IA : programme, diagnostic, inscription, calendrier des journées. En une journée." },
-  { date: "2026-11-04", label: "4 nov.", text: "Paiement en deux fois, avec rappels du solde et reçu mis à jour." },
+/** What this site runs alone, and what it leaves to us (lots 2 to 8 of docs/PILOTAGE.md): facts only. */
+export const SITE_RUNS: { alone: readonly string[]; ours: readonly string[] } = {
+  alone: [
+    "Suit chaque cohorte face à son objectif.",
+    "Relance les paiements commencés.",
+    "Prévient d’un retard, avec un plan de rattrapage.",
+    "Écrit les publications et le rapport du lundi.",
+  ],
+  ours: ["Les prix et les dates.", "Chaque publication, relue.", "Les appels."],
+};
+
+/** The definition we quote (Ben, 08/11): Gartner's public article, paraphrased in French and linked. No forecast figure. */
+export const GARTNER = {
+  text: "Gartner la décrit comme une entreprise qui s’appuie sur une technologie capable d’apprendre pour décider, agir et créer de la valeur, en donnant plus d’autonomie aux machines et aux personnes.",
+  source: "Gartner, « Autonomous Business Is Coming, Powered by AI »",
+  url: "https://www.gartner.com/en/articles/what-is-autonomous-business",
+} as const;
+
+export const AUTONOMY_LEVELS: ReadonlyArray<{ name: string; text: string }> = [
+  { name: "Manuel", text: "Vous faites tout." },
+  { name: "Assisté", text: "Il prépare, vous validez." },
+  { name: "Autonome", text: "Il agit selon vos règles." },
 ];
 
 export const IA_FAQ: ReadonlyArray<{ q: string; a: string }> = [
-  { q: "Construisez-vous l’application pour moi ?", a: "Non : c’est une formation. Vous la construisez vous-même, en direct : chaque étape vous est montrée, puis on vous débloque sur votre projet. À la fin, l’application est à vous, et vous savez la faire évoluer seul." },
-  { q: "Je ne sais pas coder.", a: "C’est prévu. Vous décrivez ce que vous voulez en français, Claude Code écrit le code, vous vérifiez le résultat à l’écran. Si l’ordinateur vous intimide, une séance d’accueil d’une heure installe tout avec vous avant la J1." },
-  { q: "Ma connexion coupe souvent.", a: "Claude Code tourne aussi dans le cloud : si votre connexion coupe, le travail continue et vous le retrouvez en vous reconnectant." },
-  { q: "Je ne suis pas libre tous les week-ends.", a: "Vous entrez par une J1, puis vous choisissez vos J2 à J6 parmi les samedis et dimanches suivants, sur votre calendrier personnel." },
+  { q: "Une entreprise sans humains ?", a: "Non. Les tâches qui reviennent tournent seules, selon vos règles. Les décisions, les prix et tout ce qui est public restent à vous." },
+  { q: "Je n’ai pas encore d’entreprise.", a: "Venez avec votre projet. Vous construisez le système autour de votre offre : votre entreprise démarre déjà organisée." },
+  { q: "Je ne sais pas coder.", a: "C’est prévu. Vous décrivez en français, Claude Code écrit le code, vous vérifiez à l’écran. Une séance d’accueil d’une heure installe tout avec vous avant la J1 si besoin." },
+  { q: "Construisez-vous le système pour moi ?", a: "Non : c’est une formation. Vous le construisez vous-même, en direct. À la fin, il est à vous et vous savez le faire évoluer." },
+  { q: "Je ne suis pas libre tous les week-ends.", a: "Vous entrez par une J1, puis vous choisissez vos J2 à J6 parmi les samedis et dimanches suivants." },
 ];

@@ -8,17 +8,18 @@ import { JOURNEES } from "@/lib/ia-days";
 import { SHARE_SIZE } from "@/lib/og/share-image";
 
 /**
- * Bâtisseur IA share image: the site's colours and fonts, its own promise,
+ * Bâtisseur IA share image: the site's colours and fonts, its own promise
+ * (the autonomous business, Ben 08/11),
  * the six journées, signed ExamBoot. No portrait: the IA side speaks for the
  * company, not for Ben (05/11).
  */
-export const IA_SHARE_ALT = `Bâtisseur IA : apprenez à construire votre application avec l’IA, en ${JOURNEES.length} journées en direct, une formation ${IA_COMPANY}`;
+export const IA_SHARE_ALT = `Bâtisseur IA : bâtissez votre entreprise autonome avec l’IA, formation bootcamp en ${JOURNEES.length} journées en direct, par ${IA_COMPANY}`;
 
 const C = { night: "#071A33", night2: "#14324F", panel: "#0B2440", paper: "#F7F8F6", green: "#17B890", muted: "#9FB0C2" };
 const read = (...p: string[]) => readFile(join(process.cwd(), ...p));
 
 /** Short names of the journées, as on the share card. */
-const SHORT = ["Votre application en ligne", "Vos données et tableau de bord", "Devis, factures, paiements", "Publications Facebook, LinkedIn", "Référencement et marché", "Un agent IA sur vos données"] as const;
+const SHORT = ["La vitrine qui vend", "Clients et chiffres", "Ventes et paiements", "Publications proposées", "Veille du marché", "Le pilote automatique"] as const;
 
 export async function iaShareImage(): Promise<ImageResponse> {
   const [display, sans] = await Promise.all([
@@ -30,13 +31,13 @@ export async function iaShareImage(): Promise<ImageResponse> {
     (
       <div style={{ width: 1200, height: 630, display: "flex", position: "relative", backgroundImage: `linear-gradient(135deg, ${C.night} 0%, ${C.night} 55%, ${C.night2} 100%)`, fontFamily: "Inter" }}>
         <div style={{ position: "absolute", left: 64, top: 56, bottom: 56, width: 600, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 20, color: C.green, fontWeight: 600, letterSpacing: "0.04em" }}>BOOTCAMP PRATIQUE · EN DIRECT · EN FRANÇAIS</span>
+          <span style={{ fontSize: 20, color: C.green, fontWeight: 600, letterSpacing: "0.04em" }}>FORMATION BOOTCAMP · EN DIRECT · EN FRANÇAIS</span>
           <div style={{ display: "flex", flexWrap: "wrap", columnGap: 16, fontFamily: "Inter Tight", fontWeight: 800, fontSize: 64, lineHeight: 1.04, letterSpacing: "-0.04em", color: C.paper }}>
-            {["Apprenez", "à", "construire"].map((w) => <span key={w}>{w}</span>)}
-            <span style={{ color: C.green }}>votre</span>
-            {["application", "avec", "l’IA."].map((w) => <span key={w}>{w}</span>)}
+            {["Bâtissez", "votre", "entreprise"].map((w) => <span key={w}>{w}</span>)}
+            <span style={{ color: C.green }}>autonome</span>
+            {["avec", "l’IA."].map((w) => <span key={w}>{w}</span>)}
           </div>
-          <span style={{ fontSize: 23, color: C.muted, lineHeight: 1.4 }}>Avec Claude Code · le week-end · sans savoir coder</span>
+          <span style={{ fontSize: 23, color: C.muted, lineHeight: 1.4 }}>Elle vend, encaisse, communique · vous gardez les commandes</span>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ fontSize: 30, color: C.paper, fontWeight: 600 }}>Bâtisseur IA</span>
             <span style={{ fontSize: 22, color: C.muted }}>{`Une formation ${IA_COMPANY} · batisseur-ia.com`}</span>

@@ -25,7 +25,7 @@ import { IA_COMPANY } from "@/lib/ia-brand";
 export const metadata: Metadata = {
   title: "Réserver ma place · Bâtisseur IA",
   robots: { index: false, follow: true },
-  openGraph: { title: "Bâtisseur IA : réservez votre place", description: "6 journées le week-end pour construire votre application avec Claude Code.", siteName: "Bâtisseur IA" },
+  openGraph: { title: "Bâtisseur IA : réservez votre place", description: "6 journées le week-end pour bâtir votre entreprise autonome avec l’IA.", siteName: "Bâtisseur IA" },
   twitter: { title: "Bâtisseur IA : réservez votre place" },
 };
 export const dynamic = "force-dynamic";

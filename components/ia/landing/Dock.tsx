@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-/** On phones, the diagnostic stays a thumb away once the hero's button has scrolled out of view. */
-export function Dock({ href, watch }: { href: string; watch: string }) {
+/** On phones, the hero's action (book a seat, Ben 08/11) stays a thumb away once its button has scrolled out of view. */
+export function Dock({ href, watch, title, sub, action }: { href: string; watch: string; title: string; sub: string; action: string }) {
   const [on, setOn] = useState(false);
   useEffect(() => {
     const target = document.getElementById(watch);
@@ -15,8 +15,8 @@ export function Dock({ href, watch }: { href: string; watch: string }) {
   }, [watch]);
   return (
     <div className={"dock" + (on ? " on" : "")} aria-hidden={!on}>
-      <p><b>Diagnostic gratuit</b>3 minutes, résultat immédiat</p>
-      <Link className="btn btn-go btn-sm" href={href} tabIndex={on ? 0 : -1}>Commencer</Link>
+      <p><b>{title}</b>{sub}</p>
+      <Link className="btn btn-go btn-sm" href={href} tabIndex={on ? 0 : -1}>{action}</Link>
     </div>
   );
 }
