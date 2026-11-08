@@ -23,6 +23,8 @@ export type ReportInput = {
   posts: Array<{ channel: string; topic: string; visitors: number }>;
   /** Active paid campaigns (lot 8): one line each, from real counts. */
   ads?: Array<{ name: string; verdict: string; text: string }>;
+  /** The analyst's paragraph of the week (lib/analyst/rules.ts reportParagraph), if any. */
+  analyst?: string[];
   appUrl: string;
 };
 
@@ -70,6 +72,7 @@ export function mondayReport(input: ReportInput): { subject: string; text: strin
     ...(weekLines.length ? weekLines : ["- Aucune visite mesurée."]),
     "",
     ...(postLines.length ? ["Les publications qui ont amené le plus de visites :", ...postLines, ""] : []),
+    ...(input.analyst ?? []),
     ...(input.ads?.length ? ["Pub payante :", ...input.ads.map((a) => `- ${a.name} (${a.verdict}) : ${a.text}`), `  Saisir la dépense : ${base}/admin/publicite`, ""] : []),
     `Le pilotage : ${base}/admin/pilotage`,
     `Votre file d’actions : ${base}/admin`,

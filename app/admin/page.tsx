@@ -1,4 +1,4 @@
-import { BadgeDollarSign, BellRing, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BadgeDollarSign, BellRing, Lightbulb, LineChart, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -10,6 +10,7 @@ import { balanceUrl } from "@/lib/registration";
 
 import { confirmBalancePayment, confirmManualPayment, unfinishedHandled, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
 import { markCampaignDone } from "./cohortes/actions";
+import { markBetDone } from "./analyste/actions";
 import { markSessionOutcome, remindSessionBooking } from "./conseil/actions";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ export default async function AdminHomePage() {
     balance: items.filter((i) => i.kind === "balance"),
     unfinished: items.filter((i) => i.kind === "unfinished"),
     campaign: items.filter((i) => i.kind === "campaign"),
+    analyst: items.filter((i) => i.kind === "analyst"),
     drafts: items.filter((i) => i.kind === "drafts"),
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
@@ -133,6 +135,22 @@ export default async function AdminHomePage() {
         ))}
       </Group>
 
+      <Group icon={Lightbulb} title="Orientations retenues de l’analyste" count={groups.analyst.length}>
+        {groups.analyst.map((i) => i.kind === "analyst" && (
+          <li key={`a${i.week}-${i.rank}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white px-3.5 py-3">
+            <span className="min-w-0 text-sm"><b>{i.title}</b><span className="block text-xs text-muted">{i.action}</span><span className="block text-xs text-muted">À suivre : {i.watch}</span></span>
+            <span className="flex gap-1.5">
+              <Link href={`/admin/analyste?s=${i.week}#o${i.rank}`} className={ghost}>Ouvrir</Link>
+              <form action={markBetDone}>
+                <input type="hidden" name="week" value={i.week} />
+                <input type="hidden" name="rank" value={i.rank} />
+                <button className={primary}>Fait</button>
+              </form>
+            </span>
+          </li>
+        ))}
+      </Group>
+
       <Group icon={Rocket} title="Plan de campagne : à faire" count={groups.campaign.length}>
         {groups.campaign.map((i) => i.kind === "campaign" && (
           <li key={`k${i.cohortId}-${i.key}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white px-3.5 py-3">
@@ -229,6 +247,7 @@ export default async function AdminHomePage() {
 /** The admin sections, each with its icon (Ben, 25/09). */
 const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/pilotage", label: "Pilotage", icon: Gauge },
+  { href: "/admin/analyste", label: "Analyste", icon: LineChart },
   { href: "/admin/playbooks", label: "Playbooks", icon: Workflow },
   { href: "/admin/promos", label: "Codes promo", icon: TicketPercent },
   { href: "/admin/publicite", label: "Pub payante", icon: BadgeDollarSign },

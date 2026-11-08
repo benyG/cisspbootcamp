@@ -178,3 +178,24 @@ une remise à la personne recommandée, Ben remercie l'ancien lui-même.
   à J-30.
 - Pas de connexion aux API publicitaires (Meta n'a pas validé l'application) :
   la dépense est saisie à la main.
+
+## Analyste de la semaine (livré, 08/11)
+
+Prototype validé par Ben le 08/11.
+
+- `lib/analyst/snapshot.ts` : la photo de la semaine, sans IA et sans personne
+  (comptes, taux, libellés) : cohortes face à leur objectif, tunnel CISSP/CC et
+  Bâtisseur IA (7 jours contre les 7 d'avant), sources, publications, pub
+  payante, codes promo, envois automatiques, orientations retenues la semaine
+  d'avant.
+- `lib/analyst/server.ts` : Claude lit la photo et rend un diagnostic, 3
+  orientations au plus (chiffres, confiance, action, indicateur à suivre) et le
+  bilan des orientations retenues. `lib/analyst/rules.ts` retire tout chiffre
+  absent de la photo, et toute orientation restée sans chiffre.
+- Chaque dimanche (playbook « Analyste de la semaine », actif par défaut),
+  `/api/cron/analyst` est lancé après la tâche quotidienne ; le rapport du lundi
+  reprend le diagnostic et les orientations.
+- `/admin/analyste` : Retenir (l'orientation va dans la file d'actions pendant
+  14 jours, jusqu'à « Fait ») ou Écarter ; « Lancer l'analyse maintenant ».
+- Pas encore branché : impressions LinkedIn, Search Console, ouvertures des
+  e-mails, dépense Meta en direct.

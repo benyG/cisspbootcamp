@@ -1112,3 +1112,20 @@ model AdCampaign {
   @@index([cohortId])
   @@map("ad_campaigns")
 }
+
+/// The analyst of the week (Ben, 08/11): the snapshot it read (counts and
+/// rates only, never a person), its orientations, and Ben's decisions.
+model AnalystReport {
+  id        Int      @id @default(autoincrement())
+  /// The Monday it is for (YYYY-MM-DD).
+  weekKey   String   @unique @map("week_key") @db.VarChar(10)
+  snapshot  Json
+  output    Json
+  /// Rank → kept or dropped, and when.
+  decisions Json?
+  model     String   @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("analyst_reports")
+}
