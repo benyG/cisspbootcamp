@@ -1,4 +1,4 @@
-import { BellRing, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BadgeDollarSign, BellRing, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -231,6 +231,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/pilotage", label: "Pilotage", icon: Gauge },
   { href: "/admin/playbooks", label: "Playbooks", icon: Workflow },
   { href: "/admin/promos", label: "Codes promo", icon: TicketPercent },
+  { href: "/admin/publicite", label: "Pub payante", icon: BadgeDollarSign },
   { href: "/admin/leads", label: "Tous les leads", icon: Users },
   { href: "/admin/tunnel", label: "Tunnel", icon: Filter },
   { href: "/admin/cohortes", label: "Cohortes", icon: GraduationCap },

@@ -207,7 +207,7 @@ export async function planLate(now: Date): Promise<Step[]> {
           "Pack de rattrapage proposé (rien ne part sans vous) :",
           ...pack.map((p) => `• ${p}`),
           "",
-          `Le pilotage : ${base}/admin/pilotage?c=${c.id}`,
+          `Le rattrapage, en un clic : ${base}/admin/pilotage?c=${c.id}#rattrapage`,
           `Votre file d’actions : ${base}/admin`,
         ].join("\n"),
       },

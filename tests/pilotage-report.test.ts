@@ -32,6 +32,7 @@ describe("Monday report text", () => {
       ],
       week: [{ program: "CISSP Bootcamp", steps: [{ unit: "visites", count: 1240 }, { unit: "analyses de profil", count: 21 }] }, { program: "Bâtisseur IA", steps: [{ unit: "visites", count: 0 }] }],
       posts: [{ channel: "linkedin", topic: "Mini-cas : le budget sécurité", visitors: 31 }],
+      ads: [{ name: "Relance décembre", verdict: "Rentable", text: "Rentable : une place coûte 150 USD de pub, 13 % du prix payé." }],
       appUrl: "https://x.test/",
     });
     // French number formatting uses a narrow no-break space (1 240).
@@ -43,6 +44,8 @@ describe("Monday report text", () => {
     expect(text).toContain("- CISSP Bootcamp : 1 240 visites, 21 analyses de profil");
     expect(text).not.toContain("- Bâtisseur IA :");
     expect(text).toContain("- « Mini-cas : le budget sécurité » (LinkedIn) : 31 visites");
+    expect(text).toContain("- Relance décembre (Rentable) : Rentable : une place coûte 150 USD");
+    expect(text).toContain("Saisir la dépense : https://x.test/admin/publicite");
     expect(text).toContain("Le pilotage : https://x.test/admin/pilotage");
     expect(text).not.toMatch(/\d{1,2} ?h ?\d{0,2}\b|\d{1,2}:\d{2}/);
   });

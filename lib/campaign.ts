@@ -84,7 +84,10 @@ export function buildCampaignPlan(cohort: { program: string; startsAt: Date; end
     for (let d = -56; d < close; d += 7) add({ key: `posts${d}`, day: d, kind: "validate", by: "Studio marketing", href: "/admin/marketing", text: `Valider les publications de la semaine (${social})` });
   }
   if (promo.referral) add({ key: "referral", day: -45, kind: "validate", by: "Codes promo", href: "/admin/promos", text: "Créer les codes de parrainage des anciens et les leur envoyer", note: "remise pour la personne recommandée" });
-  if (channels.ads) add({ key: "ads", day: -45, kind: "validate", by: "Pub payante", href: "/admin/marketing", text: `Préparer la campagne payante${campaign.adsBudgetUsd ? ` (budget ${usd(campaign.adsBudgetUsd)})` : ""} : textes, visuels, liens suivis ; vous la lancez dans Meta ou LinkedIn` });
+  if (channels.ads) {
+    add({ key: "ads", day: -45, kind: "validate", by: "Pub payante", href: "/admin/publicite", text: `Préparer la campagne payante${campaign.adsBudgetUsd ? ` (budget ${usd(campaign.adsBudgetUsd)})` : ""} : la créer dans Pub payante pour son lien suivi, puis la lancer dans Meta ou LinkedIn` });
+    add({ key: "ads-measure", day: -30, kind: "measure", by: "Pub payante", href: "/admin/publicite", text: "Saisir la dépense de la pub et lire son coût par inscrit : continuer, changer le visuel ou arrêter" });
+  }
   add({ key: "check-20", day: -45, kind: "measure", by: "Pilotage", text: `Point d’étape : ${seats(0.2)} attendue${Math.round(goal * 0.2) > 1 ? "s" : ""} (20 %)`, note: "en retard : alerte et pack de rattrapage" });
   if (promo.early) {
     const end = Math.floor((new Date(`${promo.early.until}T00:00:00Z`).getTime() - cohort.startsAt.getTime()) / DAY_MS);

@@ -252,6 +252,7 @@ model Cohort {
   replayGrants      ReplayGrant[]
   replayAccesses    ReplayAccess[]
   evaluations       Evaluation[]
+  adCampaigns       AdCampaign[]
 
   @@index([program, status, startsAt])
   @@map("cohorts")
@@ -1085,4 +1086,29 @@ model PromoCode {
 
   @@index([referrerLeadId])
   @@map("promo_codes")
+}
+
+/// A paid campaign Ben runs in Meta, LinkedIn or Google (lot 8): its tracked
+/// link carries `code` as utm_campaign; he types what he has spent so far.
+model AdCampaign {
+  id             Int       @id @default(autoincrement())
+  /// utm_campaign of the tracked link ("pub-relance-decembre-3f9a").
+  code           String    @unique @db.VarChar(48)
+  name           String    @db.VarChar(80)
+  /// facebook | linkedin | google | tiktok | other
+  channel        String    @db.VarChar(16)
+  /// scanner | cc | ia: where the ad sends people.
+  destination    String    @db.VarChar(16)
+  cohortId       Int?      @map("cohort_id")
+  budgetUsd      Int?      @map("budget_usd")
+  /// Spent so far, as Ben read it in the ad tool, USD cents.
+  spentCents     Int       @default(0) @map("spent_cents")
+  spentUpdatedAt DateTime? @map("spent_updated_at")
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  cohort Cohort? @relation(fields: [cohortId], references: [id], onDelete: SetNull)
+
+  @@index([cohortId])
+  @@map("ad_campaigns")
 }

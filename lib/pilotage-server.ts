@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 
+import { VERDICT_LABEL, verdictText } from "@/lib/ads";
+import { loadAdCampaigns } from "@/lib/ads-server";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
@@ -140,7 +142,7 @@ export const cohortTitle = (c: { program: string; name: string }) => `${PROGRAMS
 /** Everything the Monday report needs, read from the database. */
 export async function mondayReportInput(now: Date, appUrl: string) {
   const since = new Date(now.getTime() - 7 * DAY_MS);
-  const [cohorts, funnels, posts] = await Promise.all([loadPilotCohorts(now), programFunnels(since, now), topPosts(since, now)]);
+  const [cohorts, funnels, posts, ads] = await Promise.all([loadPilotCohorts(now), programFunnels(since, now), topPosts(since, now), loadAdCampaigns({ active: true }).catch(() => [])]);
   const programs = [...new Set(cohorts.map((c) => c.program))];
   return {
     cohorts,
@@ -149,6 +151,7 @@ export async function mondayReportInput(now: Date, appUrl: string) {
       cohorts: cohorts.map((c) => ({ title: cohortTitle(c), startsAt: c.startsAt, pilot: c.pilot, pendingRecent: c.pendingRecent, held: c.held })),
       week: programs.map((p) => ({ program: PROGRAMS[p].name, steps: funnels[p] })),
       posts,
+      ads: ads.map((a) => ({ name: a.name, verdict: VERDICT_LABEL[a.metrics.verdict], text: verdictText(a.metrics) })),
       appUrl,
     }),
   };

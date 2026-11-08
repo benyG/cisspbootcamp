@@ -41,7 +41,7 @@ des admissions (jamais sous les places déjà payées).
 | 5 | Lancer une cohorte : assistant et plan de campagne J-60 → J0 | Livré |
 | 6 | Promo : tarif de lancement, codes partenaires, parrainage | Livré |
 | 7 | Communication automatisée : rythme de contenu, publication programmée, séquences e-mail, WhatsApp préparé | Livré |
-| 8 | Ajustement et pub : rattrapage, suivi des campagnes payantes, coût par inscrit | À faire |
+| 8 | Ajustement et pub : rattrapage, suivi des campagnes payantes, coût par inscrit | Livré |
 
 ## Lot 2 (livré)
 
@@ -150,3 +150,31 @@ une remise à la personne recommandée, Ben remercie l'ancien lui-même.
 - WhatsApp préparé : messages prêts dans la file (inscriptions non finalisées,
   relances, soldes) et dans l'e-mail de fin de cohorte.
 - Facebook : en attente de la validation de l'application par Meta.
+
+## Lot 8 (livré)
+
+- Rattrapage en un clic (`lib/playbooks/catchup.ts`) : sur la page Pilotage,
+  pour une cohorte en campagne qui n'a pas atteint son objectif (mise en
+  avant quand elle est en retard). Ben lit l'e-mail puis l'envoie aux
+  prospects consentants du programme (90 derniers jours) : places restantes,
+  vraie date de fermeture, tarif de lancement s'il court. Une fois par
+  personne et par cohorte, sous le plafond de pression (`catchup_email`
+  compte parmi les messages automatiques), 25 par clic. Bloqué si les
+  inscriptions sont fermées, la cohorte pleine ou les admissions closes.
+  « Écrire 3 publications » lance le Studio tout de suite ; les paiements
+  commencés et les anciens renvoient à la file d'actions et aux codes promo.
+  L'alerte « En retard » pointe vers ce rattrapage.
+- Pub payante (`lib/ads.ts`, `/admin/publicite`) : Ben déclare la campagne
+  (où, vers quelle page, cohorte, budget) et reçoit son lien suivi
+  (`utm_medium=paid`, `utm_campaign=pub-…`). Il la lance lui-même dans Meta,
+  LinkedIn ou Google et saisit la dépense à ce jour. Visites, prospects
+  (premier contact) et places payées viennent du lien ; coût par visite, par
+  prospect, par inscrit, et ce que rapporte chaque dollar. Verdict comparé au
+  prix réellement payé : rentable jusqu'à 15 %, à surveiller jusqu'à 35 %,
+  trop cher au-delà ; pas de verdict sous 50 USD dépensés sans inscrit.
+  Constantes en tête de `lib/ads.ts`.
+- Le rapport du lundi ajoute une ligne par campagne payante active ; le plan
+  de campagne (canal « pub ») renvoie vers Pub payante et ajoute la mesure
+  à J-30.
+- Pas de connexion aux API publicitaires (Meta n'a pas validé l'application) :
+  la dépense est saisie à la main.

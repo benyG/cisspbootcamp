@@ -86,7 +86,7 @@ export const MODE_LABEL: Record<Mode, string> = { on: "Actif", trial: "Essai", o
 /** At most one automatic message to a prospect every this many days, all playbooks and automatic e-mails together. */
 export const PRESSURE_DAYS = 4;
 /** Logged types that are automatic messages to a prospect (actions_log.type). */
-export const AUTO_MESSAGE_TYPES = ["playbook_unfinished", "playbook_opening", "playbook_hot", "playbook_last_call", "result_reminder", "after_call_email"] as const;
+export const AUTO_MESSAGE_TYPES = ["playbook_unfinished", "playbook_opening", "playbook_hot", "playbook_last_call", "catchup_email", "result_reminder", "after_call_email"] as const;
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
