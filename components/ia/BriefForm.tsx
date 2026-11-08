@@ -53,7 +53,7 @@ export function BriefForm({ token, initial, savedAt }: { token: string; initial:
             </label>
           ))}
           <fieldset className="grid gap-2">
-            <legend className="mb-1 text-[.9rem] font-bold">Encaisser en ligne avec votre application ?</legend>
+            <legend className="mb-1 text-[.9rem] font-bold">Encaisser en ligne avec votre système ?</legend>
             {Object.entries(PAYMENTS).map(([value, label]) => (
               <label key={value} className="flex items-center gap-2.5 rounded-xl border border-line px-3.5 py-2.5 text-[.92rem] has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
                 <input type="radio" name="payments" value={value} defaultChecked={initial?.payments === value} className="size-4 accent-accent" />{label}

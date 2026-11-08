@@ -20,6 +20,6 @@ describe("subject of the week", () => {
   });
 
   it("speaks to the Bâtisseur IA audience with its own pillars", () => {
-    expect(["cas_usage", "construire", "outils", "garde_fous", "entrepreneur"]).toContain(chooseSubject("ia", [], 0).pillar);
+    expect(chooseSubject("ia", [], 0).pillar).toBe("autonome");
   });
 });

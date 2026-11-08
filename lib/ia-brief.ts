@@ -7,7 +7,7 @@
 
 export const BRIEF_FIELDS = [
   { key: "business", label: "Votre activité, en une phrase", hint: "Ex. : cabinet de formation en gestion, 3 personnes, à Douala.", rows: 2, max: 400, required: true },
-  { key: "users", label: "Qui utilisera l’application ?", hint: "Vous, votre équipe, vos clients, vos partenaires…", rows: 2, max: 400, required: true },
+  { key: "users", label: "Qui utilisera votre système ?", hint: "Vous, votre équipe, vos clients, vos partenaires…", rows: 2, max: 400, required: true },
   { key: "tasks", label: "Les trois tâches qu’elle doit faire en premier", hint: "Ex. : relancer les prospects, faire les devis, savoir qui a payé.", rows: 4, max: 800, required: true },
   { key: "data", label: "Vos données aujourd’hui, et où elles sont", hint: "Clients, devis, stock, rendez-vous… dans Excel, WhatsApp, un cahier, un logiciel.", rows: 3, max: 800, required: true },
   { key: "inspiration", label: "Une application ou un site que vous aimez (facultatif)", hint: "Un lien ou un nom, pour l’allure ou le fonctionnement.", rows: 2, max: 400, required: false },

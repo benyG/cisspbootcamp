@@ -159,7 +159,7 @@ export async function sendIaReminders(now = new Date()): Promise<number> {
         seat.day.meetUrl ? `Le lien de la visio : ${seat.day.meetUrl} (il est aussi dans l’invitation de votre agenda, à l’heure de votre fuseau).` : "Le lien de la visio est dans l’invitation de votre agenda, à l’heure de votre fuseau.",
         seat.journee === 1
           ? `Avant de commencer, vérifiez que vos comptes Claude, GitHub et Vercel sont prêts : ${iaUrl("/ia/guide", appUrl())}`
-          : "Ayez votre ordinateur chargé, votre compte Claude ouvert et votre application sous la main.",
+          : "Ayez votre ordinateur chargé, votre compte Claude ouvert et votre projet sous la main.",
         ...(plan ? ["", `Votre calendrier : ${iaPlanUrl(plan.token)}`] : []),
         "",
         "À demain,",
