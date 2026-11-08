@@ -42,6 +42,7 @@ export default async function PlaybooksPage() {
     unfinishedConverted(since),
   ]);
   const count = (type: string) => logs.filter((l) => l.type === type).length;
+  const lastAnalysis = await prisma.analystReport.findFirst({ orderBy: { weekKey: "desc" }, select: { weekKey: true } }).catch(() => null);
   const week: Record<PlaybookId, string> = {
     health: count("playbook_health") ? `${count("playbook_health")} alerte(s)` : "Aucune alerte",
     unfinished: count("playbook_unfinished") ? `${count("playbook_unfinished")} e-mail(s) · ${converted} inscription(s) finalisée(s) ensuite` : "Aucun e-mail",
@@ -52,6 +53,7 @@ export default async function PlaybooksPage() {
     full: count("playbook_full") ? `${count("playbook_full")} cohorte(s) pleine(s)` : "Rien",
     wrapup: count("playbook_wrapup") ? `${count("playbook_wrapup")} fin(s) de cohorte` : "Rien",
     content: count("playbook_content") ? `${count("playbook_content")} série(s) de propositions` : "Rien",
+    analyst: lastAnalysis ? `Dernière analyse : semaine du ${lastAnalysis.weekKey.split("-").reverse().join("/")}` : "Pas encore d’analyse",
   };
 
   return (

@@ -219,7 +219,7 @@ export async function planLate(now: Date): Promise<Step[]> {
 
 /* ---------- Runner ---------- */
 
-const PLANNERS: Record<PlaybookId, (now: Date) => Promise<Step[]>> = { health: planHealth, unfinished: planUnfinished, late: planLate, opening: planOpening, hot: planHot, last_call: planLastCall, full: planFull, wrapup: planWrapup, content: planContent };
+const PLANNERS: Record<PlaybookId, (now: Date) => Promise<Step[]>> = { health: planHealth, unfinished: planUnfinished, late: planLate, opening: planOpening, hot: planHot, last_call: planLastCall, full: planFull, wrapup: planWrapup, content: planContent, analyst: async () => [] };
 
 /** What every playbook would do now, whatever its mode. Writes nothing. */
 export async function planAll(now = new Date()): Promise<Record<PlaybookId, Step[]>> {
@@ -241,6 +241,8 @@ export async function runPlaybooks(now = new Date()): Promise<Record<PlaybookId,
     if (modes[id] !== "on") { out[id] = modes[id]; continue; }
     // The content rhythm calls the AI: it runs in its own function (/api/cron/content).
     if (id === "content") { out[id] = "on"; continue; }
+    // The analyst calls the AI on Sundays: /api/cron/analyst.
+    if (id === "analyst") { out[id] = "on"; continue; }
     const steps = await PLANNERS[id](now).catch((error) => { console.error(`[playbook] ${id}`, error); return [] as Step[]; });
     let done = 0;
     for (const step of steps) {

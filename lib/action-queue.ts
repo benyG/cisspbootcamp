@@ -9,6 +9,7 @@ import { env } from "@/lib/env";
 import { HOT_LEAD_THRESHOLD, REVIEW_SLA_HOURS, hoursSince } from "@/lib/followups";
 import { BALANCE_ALERT_DAYS, balanceAlert, firstDueUsd } from "@/lib/installments";
 import { leadVars, loadTemplate, renderTemplate, waMeLink } from "@/lib/messaging/templates";
+import { KEEP_DAYS, outputSchema, readDecisions } from "@/lib/analyst/rules";
 import { buildCampaignPlan, dueActions, readCampaign } from "@/lib/campaign";
 import { unfinishedCallDue } from "@/lib/playbooks/rules";
 import { countryLabel, quoteSummary } from "@/lib/quotes";
@@ -27,6 +28,7 @@ export type QueueItem =
   | { kind: "unfinished"; registrationId: number; leadId: number; name: string; reference: string; cohortName: string; days: number; waLink: string | null; email: string }
   | { kind: "drafts"; cohortId: number; cohortName: string; count: number }
   | { kind: "campaign"; cohortId: number; key: string; cohortName: string; text: string; by: string; href: string | null; dueLabel: string }
+  | { kind: "analyst"; week: string; rank: number; title: string; action: string; watch: string }
   | { kind: "balance"; registrationId: number; leadId: number; name: string; reference: string; balanceUsd: number; cohortName: string; startsAt: Date; started: boolean; whatsapp: string | null }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
   | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
@@ -130,6 +132,7 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
 
   // Campaign plans (lot 5): the actions to validate whose date has come.
   for (const c of await campaignActions(now)) items.push(c);
+  for (const a of await analystActions(now).catch(() => [])) items.push(a);
 
   // Playbook "inscription non finalisée" (lot 3): e-mailed 3 days ago, still unpaid: Ben calls.
   for (const u of await unfinishedCalls(now)) items.push(u);
@@ -217,6 +220,19 @@ async function unfinishedCalls(now: Date): Promise<QueueItem[]> {
       ? `Bonjour ${r.lead.firstName}, vous avez commencé votre inscription au Bâtisseur IA sans la terminer. Un souci de paiement ou une question ? Nous pouvons vous aider.`
       : `Bonjour ${r.lead.firstName}, vous avez commencé votre inscription (${r.cohort.name}) sans la terminer. Un souci de paiement ou une question ? Je peux vous aider.`;
     return [{ kind: "unfinished" as const, registrationId: r.id, leadId: r.lead.id, name: `${r.lead.firstName} ${r.lead.lastName}`, reference: r.reference, cohortName: r.cohort.name, days: Math.floor((now.getTime() - log.createdAt.getTime()) / 86_400_000), waLink: r.lead.whatsapp ? waMeLink(r.lead.whatsapp, text) : null, email: r.lead.email }];
+  });
+}
+
+/** The orientations Ben kept from the analyst (08/11), for two weeks, until marked done. */
+async function analystActions(now: Date): Promise<QueueItem[]> {
+  const reports = await prisma.analystReport.findMany({ where: { createdAt: { gte: new Date(now.getTime() - KEEP_DAYS * 86_400_000) } }, select: { weekKey: true, output: true, decisions: true } });
+  if (!reports.length) return [];
+  const done = new Set((await prisma.actionLog.findMany({ where: { type: "analyst_done" }, select: { payload: true } })).map((d) => { const p = d.payload as { week?: string; rank?: number } | null; return `${p?.week}#${p?.rank}`; }));
+  return reports.flatMap((r) => {
+    const out = outputSchema.safeParse(r.output);
+    if (!out.success) return [];
+    const decisions = readDecisions(r.decisions);
+    return out.data.bets.flatMap((b, i) => (decisions[String(i + 1)]?.status === "kept" && !done.has(`${r.weekKey}#${i + 1}`) ? [{ kind: "analyst" as const, week: r.weekKey, rank: i + 1, title: b.title, action: b.action, watch: `${b.watch.metric} : ${b.watch.target}` }] : []));
   });
 }
 
