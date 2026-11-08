@@ -24,13 +24,18 @@ export const IA_DEFAULT_CAPACITY = 12;
 /** A date can be picked until this many hours before it starts. */
 export const IA_PICK_LEAD_HOURS = 24;
 
+/**
+ * The six journées (repositioned 08/11 on the autonomous business): each one
+ * puts one function of the business on autopilot. J6 teaches the autopilot
+ * itself: objectives, routines, the weekly report, an analyst agent, guardrails.
+ */
 export const JOURNEES: ReadonlyArray<{ n: number; title: string; text: string }> = [
-  { n: 1, title: "De l’idée à l’application en ligne", text: "La méthode, Claude Code et GitHub : votre application est en ligne dès le premier soir, à votre nom de domaine." },
-  { n: 2, title: "Le cœur métier et vos données", text: "Votre base de données, vos écrans, vos comptes et votre tableau de bord, testés à chaque changement." },
-  { n: 3, title: "Vendre et encaisser", text: "Page d’offre, formulaires, relances par e-mail, paiement par carte ou mobile money, devis, factures et reçus en PDF." },
-  { n: 4, title: "Communiquer", text: "Un générateur de publications Facebook et LinkedIn, avec leurs images, que vous validez avant publication." },
-  { n: 5, title: "Connaître son marché", text: "Le référencement de votre site, les mots-clés, l’analyse des concurrents : un rapport qui guide votre positionnement et vos contenus." },
-  { n: 6, title: "Un agent IA branché sur votre entreprise", text: "Un serveur MCP sur vos données : un agent qui analyse ventes, clients et marché, vos routines, vos garde-fous, et la démo devant le groupe." },
+  { n: 1, title: "La vitrine qui vend jour et nuit", text: "La méthode, Claude Code et GitHub : votre offre est en ligne dès le premier soir, à votre nom de domaine, et prend les demandes sans vous." },
+  { n: 2, title: "Le cœur de l’entreprise et ses chiffres", text: "Vos clients, vos commandes, vos comptes et votre tableau de bord : tout est enregistré et mesuré, testé à chaque changement." },
+  { n: 3, title: "Vendre et encaisser en pilote automatique", text: "Devis, factures et reçus en PDF, paiement par carte ou mobile money, relances qui partent seules." },
+  { n: 4, title: "La communication proposée chaque semaine", text: "Vos publications Facebook et LinkedIn, avec leurs images, proposées chaque semaine : vous validez avant publication." },
+  { n: 5, title: "La veille du marché", text: "Référencement, mots-clés, concurrents : votre marché observé pour vous, et un plan de contenu qui en découle." },
+  { n: 6, title: "Le pilote automatique", text: "Vos objectifs et leur courbe, des routines qui relancent et alertent, un rapport chaque semaine, un agent IA analyste sur vos données (MCP, lecture seule) et vos garde-fous." },
 ];
 
 export type IaDay = { id: number; date: string; journee: number; capacity: number; seats: number; closed: boolean; start: string };

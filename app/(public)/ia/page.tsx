@@ -114,12 +114,12 @@ export default async function IaPage() {
           </div>
         </section>
 
-        <section className="block" aria-labelledby="programme" id="programme">
+        <section className="block" aria-labelledby="programme-title" id="programme">
           <div className="wrap">
             <div className="sec-head">
               <span className="label">Le programme</span>
-              <h2 id="programme-title">Ce que vous apprenez, et construisez, chaque journée.</h2>
-              <p>Votre projet passe du plan à l’application en ligne. En bleu : ce qui reste à construire. En blanc : ce que vous avez déjà construit. Exemple : le projet d’Adjoa, une couturière de Lomé, pendant la formation.</p>
+              <h2 id="programme-title">Chaque journée, une fonction de plus tourne seule.</h2>
+              <p>En bleu : ce qui reste à construire. En blanc : ce qui tourne déjà.</p>
             </div>
             <BuildScrubber days={days} />
             <div className="again"><Link className="btn btn-go" href={book}>{bookLabel}</Link>{first && <span className="next-group">Démarrage le {firstDay}</span>}</div>

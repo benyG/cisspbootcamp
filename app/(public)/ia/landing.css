@@ -292,3 +292,20 @@
 .ial .runs .hand h3 { color: #FFC857; }
 .ial .runs ul { margin: 8px 0 0; padding-left: 1.1em; display: grid; gap: 4px; color: var(--on-night); }
 .ial .dock .btn { min-height: 42px; padding: 0 14px; font-size: .92rem; }
+/* Programme (08/11): the two examples alternate; J6 is the autopilot. */
+.ial .examples { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-width: 460px; border: 1.5px solid var(--line); border-radius: 14px; padding: 3px; background: var(--sheet); margin-bottom: 12px; }
+.ial .examples button { border: 0; background: transparent; color: var(--ink); font: 600 .84rem/1.2 var(--body); padding: 9px 8px; border-radius: 11px; cursor: pointer; }
+.ial .examples button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.ial .day.last:not([aria-selected="true"]) { border-color: var(--green); }
+.ial .social { display: flex; gap: 10px; align-items: center; font-size: .82rem; }
+.ial .social b { display: block; }
+.ial .thumb { flex: none; width: 42px; height: 42px; border-radius: 8px; background: linear-gradient(135deg, #F5B700, #C2410C 60%, #0B6E56); }
+.ial .part.pilot[data-state="built"] { background: var(--night); border-color: var(--night); color: var(--on-night); }
+.ial .pilot .ph { display: flex; justify-content: space-between; gap: 8px; font: 600 .66rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--on-night-2); }
+.ial .pilot .ph b { color: var(--green); white-space: nowrap; }
+.ial .pilot .ph b.late { color: #FFC857; }
+.ial .pilot .meter { height: 6px; border-radius: 3px; background: #1E3550; margin: 8px 0; overflow: hidden; }
+.ial .pilot .meter i { display: block; height: 100%; background: var(--green); }
+.ial .pilot .meter i.late { background: #FFC857; }
+.ial .pilot .pl { display: grid; gap: 3px; font: 400 .72rem/1.4 var(--mono); }
+.ial .pilot .pl .w { color: #FFC857; }

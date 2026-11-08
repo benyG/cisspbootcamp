@@ -14,9 +14,9 @@ type Option = { value: string; label: string };
 type Step = { id: keyof IaAnswers; q: string; hint?: string; multi?: boolean; options: Record<string, string> | Record<string, { label: string }> };
 
 const STEPS: Step[] = [
-  { id: "activity", q: "Quelle est votre activité ?", options: ACTIVITIES },
-  { id: "tasks", q: "Qu’est-ce qui vous prend le plus de temps ?", hint: "Plusieurs réponses possibles", multi: true, options: TASKS },
-  { id: "hours", q: "Combien d’heures par semaine y passez-vous ?", options: HOURS },
+  { id: "activity", q: "Où en êtes-vous ?", hint: "Une activité qui existe, ou un projet", options: ACTIVITIES },
+  { id: "tasks", q: "Qu’est-ce qui vous prend le plus de temps ?", hint: "Pour un projet : ce qui vous en prendra. Plusieurs réponses possibles.", multi: true, options: TASKS },
+  { id: "hours", q: "Combien d’heures par semaine y passez-vous ?", hint: "Pour un projet : une estimation suffit.", options: HOURS },
   { id: "tools", q: "Avec quoi travaillez-vous aujourd’hui ?", options: TOOLS },
   { id: "ease", q: "Installer un logiciel, créer un compte, retrouver un fichier : votre aisance ?", options: EASE },
 ];
@@ -25,7 +25,7 @@ const labelOf = (v: string | { label: string }) => (typeof v === "string" ? v : 
 const field = "w-full rounded-xl border border-line bg-white px-3.5 py-3 text-base";
 const label = "grid gap-1.5 text-[.9rem] font-bold";
 
-/** The Bâtisseur IA automation diagnostic (Ben, 03/11): five questions, then the contact step. */
+/** The Bâtisseur IA autonomy diagnostic (Ben, 03/11; 08/11): five questions, then the contact step. */
 export function Diagnostic({ countries }: { countries: Option[] }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
