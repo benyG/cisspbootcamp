@@ -38,7 +38,7 @@ async function upcomingCohorts(now: Date): Promise<CohortRow[]> {
 const seatsLeft = (c: CohortRow) => Math.max(0, c.capacity - c.paid - c.held);
 
 /** Consenting prospects of a programme, not registered in it, not written to too recently, not already reached by this playbook for this cohort. */
-async function prospectsFor(program: string, since: Date, cohortId: number, type: string, now: Date) {
+export async function prospectsFor(program: string, since: Date, cohortId: number, type: string, now: Date) {
   const ia = program === "ia";
   const leads = await prisma.lead.findMany({
     where: {

@@ -2,12 +2,19 @@ import { Gauge as GaugeIcon } from "lucide-react";
 import Link from "next/link";
 
 import { PilotChart } from "@/components/admin/pilotage/PilotChart";
+import { VERDICT_LABEL, adMetrics, adTotals, usdCents, verdictText } from "@/lib/ads";
+import { type AdRow, loadAdCampaigns } from "@/lib/ads-server";
 import { type PilotState, closeDayFor, forecastSentence, stateLabel } from "@/lib/pilotage";
 import { env } from "@/lib/env";
 import { type PilotCohort, mondayReportInput, programFunnels } from "@/lib/pilotage-server";
+import { type CatchUpPlan, planCatchUp } from "@/lib/playbooks/catchup";
 import { PROGRAMS } from "@/lib/programs";
 
+import { catchUpDrafts, catchUpEmails } from "./actions";
+
 export const dynamic = "force-dynamic";
+// "Écrire 3 publications" calls the AI, as the Studio does.
+export const maxDuration = 300;
 
 const STATE_STYLE: Record<PilotState, string> = {
   not_open: "bg-slate-100 text-muted",
@@ -26,11 +33,12 @@ const DAY_MS = 86_400_000;
  * to start, its goal, the target curve, the paid seats and the forecast,
  * then the funnel of its programme. Read in ten seconds: is it on track?
  */
-export default async function PilotagePage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
+export default async function PilotagePage({ searchParams }: { searchParams: Promise<{ c?: string; ok?: string; erreur?: string }> }) {
   const now = new Date();
-  const { c } = await searchParams;
+  const { c, ok, erreur } = await searchParams;
   const [{ cohorts, report }, funnels] = await Promise.all([mondayReportInput(now, env.NEXT_PUBLIC_APP_URL), programFunnels(new Date(now.getTime() - 30 * DAY_MS), now)]);
   const current = cohorts.find((x) => String(x.id) === c) ?? cohorts.find((x) => x.pilot.state !== "not_open") ?? cohorts[0];
+  const [catchUp, ads] = current ? await Promise.all([CATCH_UP_STATES.has(current.pilot.state) ? planCatchUp(current.id, now) : null, loadAdCampaigns({ cohortId: current.id })]) : [null, [] as AdRow[]];
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">
@@ -46,6 +54,11 @@ export default async function PilotagePage({ searchParams }: { searchParams: Pro
             {cohorts.map((x) => <CohortCard key={x.id} cohort={x} active={x.id === current.id} />)}
           </ul>
           <Detail cohort={current} funnel={funnels[current.program]} now={now} />
+          {(ok || erreur) && <p className={"mt-5 rounded-lg px-3 py-2 text-sm " + (ok ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-800")}>{ok ?? erreur}</p>}
+          <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            {catchUp ? <CatchUp plan={catchUp} late={current.pilot.state === "late"} behind={current.pilot.behind} /> : <div className="hidden lg:block" />}
+            <Ads cohortId={current.id} rows={ads} />
+          </div>
         </>
       )}
 
@@ -138,6 +151,54 @@ function Detail({ cohort, funnel, now }: { cohort: PilotCohort; funnel: Array<{ 
         </section>
       </div>
     </div>
+  );
+}
+
+/** Cohorts the catch-up is offered for: campaign open, goal not reached. */
+const CATCH_UP_STATES = new Set<PilotState>(["late", "on_track", "ahead"]);
+
+function CatchUp({ plan, late, behind }: { plan: CatchUpPlan; late: boolean; behind: number }) {
+  const ready = plan.steps.length;
+  return (
+    <section id="rattrapage" className={"rounded-xl border bg-white p-4 " + (late ? "border-amber-300" : "border-line")}>
+      <h2 className="font-bold">Rattrapage</h2>
+      <p className="mt-0.5 text-sm text-muted">{late ? `${behind} place${behind > 1 ? "s" : ""} de retard sur la courbe. ` : ""}Chaque action part sur votre clic, à partir des vrais chiffres.</p>
+      <ol className="mt-3 grid gap-3 text-sm">
+        <li className="grid gap-1.5">
+          <b>Relancer les prospects consentants (90 derniers jours)</b>
+          {plan.blocked ? <span className="text-muted">{plan.blocked}</span> : ready ? (
+            <>
+              <span className="text-ink-2">{plan.eligible} personne{plan.eligible > 1 ? "s" : ""} à qui écrire{plan.eligible > ready ? ` ; ${ready} par clic` : ""}, avec les {plan.seatsLeft} places restantes et la vraie date de fermeture.{plan.alreadySent ? ` Déjà relancées pour cette cohorte : ${plan.alreadySent}.` : ""}</span>
+              <details className="rounded-lg bg-slate-50 px-3 py-2"><summary className="cursor-pointer text-xs font-semibold">Lire l’e-mail ({plan.steps[0]!.email.subject})</summary><pre className="mt-2 whitespace-pre-wrap font-sans text-xs text-ink-2">{plan.steps[0]!.email.text}</pre></details>
+              <form action={catchUpEmails}><input type="hidden" name="cohortId" value={plan.cohortId} /><button className="rounded-lg bg-[var(--color-accent)] px-4 py-2 font-semibold text-white">Envoyer {ready} e-mail{ready > 1 ? "s" : ""}</button></form>
+            </>
+          ) : <span className="text-muted">Personne à relancer : chaque prospect consentant a déjà reçu un message récent ou cette relance{plan.alreadySent ? ` (${plan.alreadySent} relancé${plan.alreadySent > 1 ? "s" : ""})` : ""}.</span>}
+        </li>
+        <li className="grid gap-1.5">
+          <b>Publier plus cette semaine</b>
+          <span className="text-ink-2">Le Studio écrit 3 publications LinkedIn sur le pilier le moins traité ; vous les relisez et leur donnez un jour dans Marketing.</span>
+          <form action={catchUpDrafts}><input type="hidden" name="cohortId" value={plan.cohortId} /><button className="rounded-lg border border-line px-4 py-2 font-semibold">Écrire 3 publications</button></form>
+        </li>
+        {plan.unfinished > 0 && <li className="grid gap-1"><b>{plan.unfinished === 1 ? "1 paiement commencé" : `${plan.unfinished} paiements commencés`} sans être terminé{plan.unfinished > 1 ? "s" : ""}</b><span className="text-ink-2">Le message WhatsApp est prêt dans votre <Link href="/admin" className="underline">file d’actions</Link>.</span></li>}
+        {plan.alumni > 0 && <li className="grid gap-1"><b>{plan.alumni === 1 ? "1 ancien participant" : `${plan.alumni} anciens participants`}</b><span className="text-ink-2">Envoyez à chacun son code de parrainage par WhatsApp depuis <Link href="/admin/promos" className="underline">Codes promo</Link>.</span></li>}
+      </ol>
+    </section>
+  );
+}
+
+function Ads({ cohortId, rows }: { cohortId: number; rows: AdRow[] }) {
+  const total = adMetrics(adTotals(rows.map((r) => r.metrics)));
+  return (
+    <section className="rounded-xl border border-line bg-white p-4">
+      <h2 className="font-bold">Pub payante</h2>
+      {rows.length ? (
+        <>
+          <p className="mt-1 text-sm tabular-nums">{usdCents(total.spentCents)} dépensés · {total.leads} prospect{total.leads > 1 ? "s" : ""} · {total.paid} place{total.paid > 1 ? "s" : ""} payée{total.paid > 1 ? "s" : ""}{total.costPerSignupCents ? ` · ${usdCents(total.costPerSignupCents)} par inscrit` : ""}</p>
+          <ul className="mt-2 grid gap-1.5 text-sm">{rows.map((r) => <li key={r.id}><b>{r.name}</b> · {VERDICT_LABEL[r.metrics.verdict]} <span className="block text-xs text-muted">{verdictText(r.metrics)}</span></li>)}</ul>
+        </>
+      ) : <p className="mt-1 text-sm text-muted">Aucune campagne payante liée à cette cohorte.</p>}
+      <p className="mt-3 text-sm"><Link href={`/admin/publicite?c=${cohortId}`} className="font-semibold underline">{rows.length ? "Saisir la dépense, voir les liens" : "Créer une campagne et son lien suivi"}</Link></p>
+    </section>
   );
 }
 

@@ -42,6 +42,8 @@ describe("plan", () => {
     expect(full.filter((a) => a.key.startsWith("posts"))).toHaveLength(7); // J-56 to J-14, weekly, before the close
     expect(full.find((a) => a.key === "early-end")!.date.toISOString().slice(0, 10)).toBe("2027-01-08");
     expect(full.find((a) => a.key === "ads")!.text).toContain("300 USD");
+    expect(full.find((a) => a.key === "ads")!.href).toBe("/admin/publicite");
+    expect(full.find((a) => a.key === "ads-measure")).toMatchObject({ day: -30, kind: "measure", href: "/admin/publicite" });
     expect(full.find((a) => a.key === "content-plan")!.text).toContain("LinkedIn et Facebook");
     expect(planCounts(full).validate).toBeGreaterThan(planCounts(quiet).validate);
   });
