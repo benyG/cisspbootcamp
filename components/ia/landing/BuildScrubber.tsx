@@ -1,54 +1,87 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
+
+import { EXAMPLES, type ExampleKey } from "@/lib/ia-landing";
 
 /**
- * The programme (Ben, 05/11): pick a journée, see what you write to Claude
- * Code, what you know afterwards, and an example project on a phone where
- * what is still on the plan is blue and what is built is white. Tours the
- * journées until the reader takes over.
+ * The programme (Ben, 05/11; two examples 08/11): pick a journée, see what
+ * you write to Claude Code, what you know afterwards, and an example project
+ * on a phone where what is still on the plan is blue and what runs is white.
+ * Tours J1 to J6 for Adjoa (an existing workshop), then for Kofi (a business
+ * that starts), and again, until the reader takes over.
  */
-export type ScrubDay = { n: number; title: string; text: string; short: string; prompt: string; skills: readonly string[] };
+export type ScrubDay = { n: number; title: string; text: string; short: string; skills: readonly string[] };
 
-const PARTS: ReadonlyArray<{ day: number; plan: string; className?: string; content: ReactNode }> = [
-  { day: 1, plan: "J1 · mise en ligne", className: "url", content: <><span>atelier-adjoa.com</span><span className="live">en ligne</span></> },
-  { day: 1, plan: "J1 · page d’accueil", content: <><div className="shop">Atelier Adjoa<small>Couture sur mesure · Lomé</small></div><span className="mini-btn">Prendre rendez-vous pour mes mesures</span></> },
-  { day: 2, plan: "J2 · clientes et tableau de bord", content: <><div className="rows"><div><span>Afi K. · robe de cérémonie</span><span className="pill ok">prête</span></div><div><span>Kossi A. · 3 chemises</span><span className="pill">mesures</span></div></div><div className="bars" aria-hidden="true">{[35, 52, 44, 70, 62, 88].map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}</div></> },
-  { day: 3, plan: "J3 · paiement et factures", content: <><div className="rows"><div><b>Acompte · 15 000 FCFA</b><span className="pill ok">F-0042.pdf</span></div></div><div className="pay"><span className="om">Orange Money</span><span className="mtn">MTN MoMo</span><span>Carte</span></div></> },
-  { day: 4, plan: "J4 · publications", className: "social", content: <><span className="thumb" aria-hidden="true" /><span><b>LinkedIn · Facebook</b>« Nouveaux modèles en wax pour les fêtes » · image prête, à valider</span></> },
-  { day: 5, plan: "J5 · référencement", content: <div className="rows"><div><b>couture sur mesure Lomé</b><span className="pill ok">mot-clé suivi</span></div><div><span>3 sujets à publier ce mois</span><span className="pill">plan de contenu</span></div></div> },
-  { day: 6, plan: "J6 · votre agent IA", className: "agent", content: <><b>Analyse du lundi, via MCP</b>4 clientes à relancer ; les ensembles en pagne se vendent le mieux ce mois. À valider avant envoi.</> },
-];
+type Part = { day: number; plan: string; className?: string; content: ReactNode };
+
+const bars = (heights: number[]) => <div className="bars" aria-hidden="true">{heights.map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}</div>;
+const PLAN = ["J1 · mise en ligne", "J1 · page d’accueil", "J2 · clients et chiffres", "J3 · paiements et relances", "J4 · publications", "J5 · veille du marché", "J6 · pilote automatique"];
+const DAY_OF = [1, 1, 2, 3, 4, 5, 6];
+
+const CONTENT: Record<ExampleKey, ReactNode[]> = {
+  adjoa: [
+    <Fragment key="k0"><span>atelier-adjoa.com</span><span className="live">en ligne</span></Fragment>,
+    <Fragment key="k1"><div className="shop">Atelier Adjoa<small>Couture sur mesure · Lomé</small></div><span className="mini-btn">Prendre rendez-vous</span></Fragment>,
+    <Fragment key="k2"><div className="rows"><div><span>Afi K. · robe de cérémonie</span><span className="pill ok">prête</span></div><div><span>Kossi A. · 3 chemises</span><span className="pill">mesures</span></div></div>{bars([35, 52, 44, 70, 62, 88])}</Fragment>,
+    <Fragment key="k3"><div className="rows"><div><b>Acompte · 15 000 FCFA</b><span className="pill ok">F-0042.pdf</span></div><div><span>Devis D-118 relancé</span><span className="pill ok">auto</span></div></div><div className="pay"><span className="om">Orange Money</span><span className="mtn">MTN MoMo</span><span>Carte</span></div></Fragment>,
+    <Fragment key="k4"><span className="thumb" aria-hidden="true" /><span><b>LinkedIn · Facebook</b>« Nouveaux modèles en wax » · à valider</span></Fragment>,
+    <div key="k5" className="rows"><div><b>couture sur mesure Lomé</b><span className="pill ok">suivi</span></div><div><span>3 sujets ce mois</span><span className="pill">plan</span></div></div>,
+    <Fragment key="k6"><div className="ph"><span>Objectif · 20 commandes</span><b>13 · en avance</b></div><div className="meter"><i style={{ width: "65%" }} /></div><div className="pl"><span>✓ 4 relances préparées</span><span className="w">● 3 à valider</span></div></Fragment>,
+  ],
+  kofi: [
+    <Fragment key="k7"><span>kofi-traiteur.ci</span><span className="live">en ligne</span></Fragment>,
+    <Fragment key="k8"><div className="shop">Kofi Traiteur<small>Repas d’entreprise · Abidjan</small></div><span className="mini-btn">Demander un devis</span></Fragment>,
+    <Fragment key="k9"><div className="rows"><div><span>Cabinet Kouassi · 40 repas</span><span className="pill ok">confirmé</span></div><div><span>Courses de jeudi</span><span className="pill">liste prête</span></div></div>{bars([20, 30, 45, 40, 60, 72])}</Fragment>,
+    <Fragment key="k10"><div className="rows"><div><b>Acompte · 120 000 FCFA</b><span className="pill ok">D-007.pdf</span></div><div><span>Relance agence Yao</span><span className="pill ok">auto</span></div></div><div className="pay"><span className="om">Orange Money</span><span className="mtn">MTN MoMo</span><span>Carte</span></div></Fragment>,
+    <Fragment key="k11"><span className="thumb" aria-hidden="true" /><span><b>LinkedIn</b>« Le menu de la semaine » · à valider</span></Fragment>,
+    <div key="k12" className="rows"><div><b>traiteur entreprise Abidjan</b><span className="pill ok">suivi</span></div><div><span>12 entreprises repérées</span><span className="pill">à contacter</span></div></div>,
+    <Fragment key="k13"><div className="ph"><span>Objectif · 8 contrats</span><b className="late">3 · en retard</b></div><div className="meter"><i className="late" style={{ width: "38%" }} /></div><div className="pl"><span>✓ Plan de rattrapage prêt</span><span className="w">● attend votre accord</span></div></Fragment>,
+  ],
+};
+
+const parts = (who: ExampleKey): Part[] => CONTENT[who].map((content, i) => ({ day: DAY_OF[i]!, plan: PLAN[i]!, className: i === 0 ? "url" : i === 4 ? "social" : i === 6 ? "pilot" : undefined, content }));
+const ORDER: ExampleKey[] = ["adjoa", "kofi"];
 
 export function BuildScrubber({ days }: { days: readonly ScrubDay[] }) {
-  const [index, setIndex] = useState(0);
-  const [typed, setTyped] = useState(days[0]?.prompt.length ?? 0);
+  const [{ who, index }, setStep] = useState<{ who: ExampleKey; index: number }>({ who: "adjoa", index: 0 });
+  const prompt = EXAMPLES[who].prompts[index] ?? "";
+  const [typed, setTyped] = useState(prompt.length);
   const touring = useRef(true);
   const still = useRef(false);
-  const day = days[index];
+  const day = days[index]!;
 
+  // J1 to J6 for one example, then the other, and again.
   useEffect(() => {
     still.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (still.current) return;
-    const timer = window.setInterval(() => { if (touring.current) setIndex((i) => (i + 1) % days.length); }, 5200);
+    const timer = window.setInterval(() => {
+      if (!touring.current) return;
+      setStep((s) => (s.index < days.length - 1 ? { ...s, index: s.index + 1 } : { who: ORDER[(ORDER.indexOf(s.who) + 1) % ORDER.length]!, index: 0 }));
+    }, 5200);
     return () => window.clearInterval(timer);
   }, [days.length]);
 
   // Types the journée's prompt, as in the terminal.
   useEffect(() => {
-    if (still.current) { setTyped(day.prompt.length); return; }
+    if (still.current) { setTyped(prompt.length); return; }
     setTyped(0);
-    const timer = window.setInterval(() => setTyped((n) => { if (n >= day.prompt.length) { window.clearInterval(timer); return n; } return n + 1; }), 22);
+    const timer = window.setInterval(() => setTyped((n) => { if (n >= prompt.length) { window.clearInterval(timer); return n; } return n + 1; }), 22);
     return () => window.clearInterval(timer);
-  }, [day.prompt]);
+  }, [prompt]);
 
-  const pick = (i: number) => { touring.current = false; setIndex(i); };
+  const pick = (i: number) => { touring.current = false; setStep((s) => ({ ...s, index: i })); };
+  // Picking an example starts its tour from J1; the tour goes on by itself.
+  const choose = (k: ExampleKey) => { setStep({ who: k, index: 0 }); touring.current = !still.current; };
 
   return (
     <>
+      <div className="examples" role="group" aria-label="Le projet d’exemple">
+        {ORDER.map((k) => <button key={k} type="button" aria-pressed={who === k} onClick={() => choose(k)}>{EXAMPLES[k].tab}</button>)}
+      </div>
       <div className="days" role="tablist" aria-label={`Les ${days.length} journées`}>
         {days.map((d, i) => (
-          <button key={d.n} type="button" role="tab" id={`journee-${d.n}`} aria-selected={i === index} aria-controls="journee-panel" className={"day" + (i < index ? " done" : "")} onClick={() => pick(i)}>
+          <button key={d.n} type="button" role="tab" id={`journee-${d.n}`} aria-selected={i === index} aria-controls="journee-panel" className={"day" + (i < index ? " done" : "") + (d.n === days.length ? " last" : "")} onClick={() => pick(i)}>
             <b>J{d.n}</b><span>{d.short}</span>
           </button>
         ))}
@@ -62,19 +95,19 @@ export function BuildScrubber({ days }: { days: readonly ScrubDay[] }) {
           <p>{day.text}</p>
           <span className="label" style={{ display: "block", marginTop: 18 }}>Ce que vous écrivez à Claude Code</span>
           <div className="prompt" style={{ marginTop: 8 }}>
-            <span className="who">vous ›</span> {day.prompt.slice(0, typed)}<span className="caret" aria-hidden="true" />
+            <span className="who">vous ›</span> {prompt.slice(0, typed)}<span className="caret" aria-hidden="true" />
           </div>
           <span className="label" style={{ display: "block", marginTop: 18 }}>Vous savez désormais</span>
           <ul className="delivered" style={{ marginTop: 8 }}>{day.skills.map((s) => <li key={s}>{s}</li>)}</ul>
-          <p className="example-tag">Atelier Adjoa : projet d’exemple. Les étapes sont celles du programme.</p>
+          <p className="example-tag">{EXAMPLES[who].note} Les étapes sont celles du programme.</p>
         </div>
 
         <div className="phone" aria-label={`Le projet d’exemple à la fin de la journée ${day.n}`}>
           <div className="screen">
-            {PARTS.map((p, i) => {
+            {parts(who).map((p, i) => {
               const built = p.day <= day.n;
               return (
-                <div key={i} className={"part" + (p.className ? ` ${p.className}` : "") + (built && p.day === day.n ? " fresh" : "")} data-state={built ? "built" : "plan"} data-plan={p.plan}>
+                <div key={`${who}-${i}`} className={"part" + (p.className ? ` ${p.className}` : "") + (built && p.day === day.n ? " fresh" : "")} data-state={built ? "built" : "plan"} data-plan={p.plan}>
                   {p.content}
                 </div>
               );

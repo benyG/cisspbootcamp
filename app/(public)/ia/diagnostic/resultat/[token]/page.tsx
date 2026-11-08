@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { btnGhost, btnPrimary, eyebrow, shell } from "@/components/landing/sections";
 import { openIaEntries } from "@/lib/ia-days-server";
+import { AUTONOMY } from "@/lib/ia-diagnostic";
 import { diagnosticByToken } from "@/lib/ia-diagnostic-server";
 import { iaPath } from "@/lib/ia-domain";
 
@@ -26,9 +27,14 @@ export default async function IaResultPage({ params }: { params: Promise<{ token
       <main className={shell + " grid max-w-[720px] grid-cols-[minmax(0,1fr)] gap-5 pt-2 pb-16"}>
         <div className={eyebrow + " w-fit"}>Votre résultat</div>
         <h1 className="display text-[clamp(1.8rem,4vw,2.8rem)] leading-[1.04] font-black tracking-[-.05em]">
-          {lead.firstName ? `${lead.firstName}, v` : "V"}oici ce que votre application fera à votre place.
+          {lead.firstName ? `${lead.firstName}, v` : "V"}oici où en est l’autonomie de votre {d.project ? "projet" : "entreprise"}.
         </h1>
-        <p className="-mt-2 text-ink-2">Vous déclarez <b>{d.hoursPhrase} par semaine</b> sur ces tâches. Dans l’ordre où nous les construirons :</p>
+        <div className="grid gap-1 rounded-[18px] border border-line bg-white p-4">
+          <span className="text-[.8rem] font-extrabold tracking-[.08em] text-muted uppercase">Aujourd’hui</span>
+          <b className="display text-[1.6rem] leading-none font-black">{AUTONOMY[d.autonomy].label}</b>
+          <p className="text-ink-2">{AUTONOMY[d.autonomy].text}</p>
+        </div>
+        <p className="text-ink-2">{d.project ? "Vous estimez" : "Vous déclarez"} <b>{d.hoursPhrase} par semaine</b> sur ces tâches. Les trois à mettre en pilote automatique d’abord :</p>
         <ol className="grid gap-2.5">
           {d.priorities.map((p, i) => (
             <li key={p.code} className="flex gap-3 rounded-[18px] border border-line bg-white p-4">

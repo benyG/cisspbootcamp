@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
-import { type IaAnswers, type IaDiagnosis, diagnose, diagnosisSummary } from "@/lib/ia-diagnostic";
+import { AUTONOMY, type IaAnswers, type IaDiagnosis, diagnose, diagnosisSummary } from "@/lib/ia-diagnostic";
 import { iaAnswersSchema } from "@/lib/ia-diagnostic-schema";
 import { sendEmail } from "@/lib/messaging/email";
 import { resolveTierCode } from "@/lib/pricing";
@@ -42,11 +42,13 @@ export const resultUrl = (token: string) => iaUrl(`/ia/diagnostic/resultat/${tok
 
 export function resultEmail(firstName: string, d: IaDiagnosis, token: string, unsubscribeToken: string): { subject: string; text: string } {
   return {
-    subject: `Votre diagnostic d’automatisation · ${PROGRAMS.ia.name}`,
+    subject: `Votre diagnostic d’autonomie · ${PROGRAMS.ia.name}`,
     text: [
       `Bonjour ${firstName},`,
       "",
-      `Vous déclarez ${d.hoursPhrase} par semaine sur des tâches répétitives. Voici ce que votre application peut faire à votre place, dans cet ordre :`,
+      `Où en est l’autonomie de votre ${d.project ? "projet" : "entreprise"} : ${AUTONOMY[d.autonomy].label}. ${AUTONOMY[d.autonomy].text}`,
+      "",
+      `${d.project ? "Vous estimez" : "Vous déclarez"} ${d.hoursPhrase} par semaine sur des tâches répétitives. Les trois à mettre en pilote automatique d’abord :`,
       "",
       ...d.priorities.map((p, i) => `${i + 1}. ${p.title} (${p.how})`),
       "",

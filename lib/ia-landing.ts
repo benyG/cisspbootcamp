@@ -5,15 +5,48 @@
  * autonomous business), the questions people ask. Facts only.
  */
 
-/** Per journée, beside JOURNEES (lib/ia-days.ts): a tab label, the example prompt, the skills. */
-export const DAY_DEMO: ReadonlyArray<{ short: string; prompt: string; skills: readonly string[] }> = [
-  { short: "En ligne", prompt: "Crée le site de mon atelier de couture avec une page de prise de rendez-vous, et mets-le en ligne sur mon nom de domaine.", skills: ["Mettre une application en ligne", "Décrire une page à Claude Code et la corriger", "Sauvegarder votre code sur GitHub"] },
-  { short: "Cœur métier", prompt: "Ajoute la liste de mes clientes avec leurs mesures, l’état de chaque commande et le tableau de bord du mois.", skills: ["Créer votre base de données et vos écrans", "Construire votre tableau de bord", "Faire tester chaque changement"] },
-  { short: "Vendre", prompt: "Ajoute un acompte par Orange Money ou carte, la facture en PDF, et relance un devis resté trois jours sans réponse.", skills: ["Brancher le paiement mobile money et carte", "Produire devis, factures et reçus en PDF", "Programmer des relances par e-mail"] },
-  { short: "Communiquer", prompt: "Chaque semaine, propose-moi trois publications LinkedIn et Facebook sur mes nouveaux modèles, avec leur image.", skills: ["Générer des publications à votre ton", "Créer leurs images automatiquement", "Tout valider avant publication"] },
-  { short: "Marché", prompt: "Analyse les recherches sur la couture sur mesure à Lomé et ce que publient mes concurrents, puis propose-moi un plan de contenu.", skills: ["Améliorer le référencement de votre site", "Collecter mots-clés et pages des concurrents", "Tirer un plan de contenu de ces données"] },
-  { short: "Agent IA", prompt: "Branche un agent sur ma base en lecture seule : chaque lundi, il me dit quelles clientes relancer et quels modèles se vendent.", skills: ["Ouvrir vos données à un agent avec MCP", "Programmer des analyses automatiques", "Poser des garde-fous : lecture seule, rien ne part sans vous"] },
+/** Per journée, beside JOURNEES (lib/ia-days.ts): a tab label and what the participant knows afterwards. */
+export const DAY_DEMO: ReadonlyArray<{ short: string; skills: readonly string[] }> = [
+  { short: "En ligne", skills: ["Mettre une application en ligne", "Décrire une page à Claude Code et la corriger", "Sauvegarder votre code sur GitHub"] },
+  { short: "Cœur et chiffres", skills: ["Créer votre base de données et vos écrans", "Construire votre tableau de bord", "Faire tester chaque changement"] },
+  { short: "Vendre", skills: ["Brancher mobile money et carte", "Produire devis, factures et reçus en PDF", "Programmer les relances"] },
+  { short: "Communiquer", skills: ["Générer des publications à votre ton", "Créer leurs images", "Tout valider avant publication"] },
+  { short: "Marché", skills: ["Améliorer votre référencement", "Suivre mots-clés et concurrents", "En tirer un plan de contenu"] },
+  { short: "Pilote auto", skills: ["Fixer des objectifs et leur courbe cible", "Programmer des routines qui relancent et alertent", "Brancher un agent IA analyste, avec vos garde-fous"] },
 ];
+
+/**
+ * The two example projects of the programme (Ben, 08/11: both audiences),
+ * fictitious and said so: an existing workshop, a business that starts.
+ * What each writes to Claude Code, journée by journée.
+ */
+export type ExampleKey = "adjoa" | "kofi";
+export const EXAMPLES: Record<ExampleKey, { tab: string; note: string; prompts: readonly string[] }> = {
+  adjoa: {
+    tab: "Adjoa · atelier existant",
+    note: "Atelier Adjoa : activité existante, exemple fictif.",
+    prompts: [
+      "Crée le site de mon atelier avec une page de prise de rendez-vous, et mets-le en ligne sur mon nom de domaine.",
+      "Ajoute mes clientes avec leurs mesures, l’état de chaque commande et le tableau de bord du mois.",
+      "Ajoute un acompte par Orange Money ou carte, la facture en PDF, et relance un devis resté trois jours sans réponse.",
+      "Chaque semaine, propose-moi trois publications sur mes nouveaux modèles, avec leur image.",
+      "Analyse les recherches sur la couture sur mesure à Lomé et ce que publient mes concurrents.",
+      "Chaque lundi, dis-moi si je suis en avance sur mes 20 commandes du mois et prépare les relances des clientes silencieuses.",
+    ],
+  },
+  kofi: {
+    tab: "Kofi · traiteur qui démarre",
+    note: "Kofi Traiteur : entreprise qui démarre, exemple fictif.",
+    prompts: [
+      "Crée la page de mon service de traiteur pour entreprises, avec mes menus et une demande de devis en ligne.",
+      "Ajoute mes clients, les commandes de la semaine, les quantités à acheter et le tableau de bord du mois.",
+      "Envoie le devis en PDF, encaisse l’acompte par mobile money et relance l’entreprise qui n’a pas répondu.",
+      "Chaque lundi, propose-moi le menu de la semaine en publication LinkedIn, avec sa photo.",
+      "Repère les entreprises d’Abidjan qui cherchent un traiteur et ce que proposent mes concurrents.",
+      "Si je suis en retard sur mes 8 contrats du trimestre, propose-moi un plan de rattrapage et attends mon accord.",
+    ],
+  },
+};
 
 /**
  * A training day, in minutes from the start (10 h Montréal by default): 5 h
