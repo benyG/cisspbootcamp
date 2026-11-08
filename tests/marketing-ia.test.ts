@@ -40,7 +40,7 @@ describe("marketing Bâtisseur IA, deux publics (Ben, 04/11)", () => {
     expect(b.byPillar.offre).toBe(2);
     expect(b.byDestination.ia_inscription).toBe(2);
     expect(b.advice).toContain("place à la valeur");
-    expect(b.advice).toContain(IA_PILLARS.construire.label);
+    expect(b.advice).toContain(IA_PILLARS.autonome.label);
     expect(editorialBalance([], "ia").advice).toContain("cas d'usage");
     // An old post without a pillar counts as selling.
     expect(pillarOf({ pillar: null, angle: "x", destination: "ia_page" }, "ia")).toBe("offre");

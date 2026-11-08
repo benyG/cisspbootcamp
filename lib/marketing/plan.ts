@@ -70,8 +70,8 @@ export const DESTINATIONS = {
 
 /** Where a Bâtisseur IA post sends people (Ben, 04/11). */
 export const IA_DESTINATIONS = {
-  ia_diagnostic: { label: "Diagnostic IA", path: "/ia/diagnostic", forModel: "le diagnostic d'automatisation gratuit (5 questions, 3 minutes) : les trois automatisations que son application peut prendre en charge en premier" },
-  ia_page: { label: "Page Bâtisseur IA", path: "/ia", forModel: "la page du Bâtisseur IA : programme des 6 journées le week-end, prix selon le pays, prochaines dates d'entrée" },
+  ia_diagnostic: { label: "Diagnostic IA", path: "/ia/diagnostic", forModel: "le diagnostic d'autonomie gratuit (5 questions, 3 minutes), pour une activité ou un projet : où en est l'entreprise (projet, manuel, assisté) et les trois tâches à mettre en pilote automatique d'abord" },
+  ia_page: { label: "Page Bâtisseur IA", path: "/ia", forModel: "la page du Bâtisseur IA : bâtir son entreprise autonome avec l'IA, programme des 6 journées le week-end (chacune met une fonction de l'entreprise en pilote automatique), prix selon le pays, prochaines dates d'entrée" },
   ia_inscription: { label: "Inscription IA", path: "/ia/inscription", forModel: "l'inscription au Bâtisseur IA : choix de la date d'entrée (J1), paiement par carte ou mobile money" },
 } as const;
 
@@ -105,13 +105,14 @@ export const PILLARS = {
   offre: { label: "Offre et cohorte", destination: "cohorte", examples: ["Places limitées, date de clôture", "Paiement par carte ou mobile money", "Un coach qui tient le rythme avec vous"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
 
-/** Bâtisseur IA pillars (Ben, 04/11): about four value posts for one selling post, like the certifications. */
+/** Bâtisseur IA pillars (Ben, 04/11; the autonomous business 08/11): about four value posts for one selling post, like the certifications. */
 export const IA_PILLARS = {
+  autonome: { label: "L'entreprise autonome", destination: "ia_page", examples: ["Une entreprise autonome, ce n'est pas une entreprise sans humains", "Ce que notre site fait seul chaque nuit, et ce qu'il nous laisse", "Manuel, assisté, autonome : où en est votre entreprise ?"] },
   cas_usage: { label: "Cas d'usage", destination: "ia_diagnostic", examples: ["Relancer ses prospects sans y penser", "Savoir qui a payé, sans chercher", "Des devis et factures en un clic"] },
-  construire: { label: "Construire avec Claude Code", destination: "ia_page", examples: ["Ce site a été construit avec Claude Code", "Une panne corrigée et remise en ligne le jour même", "Les tests automatiques, l'assurance d'une application"] },
+  construire: { label: "Construire avec Claude Code", destination: "ia_page", examples: ["Ce site a été construit avec Claude Code", "Une panne corrigée et remise en ligne le jour même", "Les tests automatiques, l'assurance d'un système qui tourne seul"] },
   outils: { label: "Les outils expliqués", destination: "ia_page", examples: ["GitHub expliqué à un chef d'entreprise", "Mettre une application en ligne avec Vercel", "Ce que coûte vraiment une application sur mesure"] },
   garde_fous: { label: "Méthode et garde-fous", destination: "ia_diagnostic", examples: ["Ne jamais confier ses mots de passe à une IA", "Relire ce que l'IA a écrit avant de publier", "Commencer petit : une tâche, puis la suivante"] },
-  entrepreneur: { label: "Vie d'entrepreneur", destination: "ia_diagnostic", examples: ["Le temps perdu dans WhatsApp", "Quand Excel ne suffit plus", "Confier les tâches répétitives à un outil"] },
+  entrepreneur: { label: "Vie d'entrepreneur", destination: "ia_diagnostic", examples: ["Le temps perdu dans WhatsApp", "Quand Excel ne suffit plus", "Lancer son entreprise déjà organisée"] },
   offre: { label: "Offre et dates", destination: "ia_inscription", examples: ["Les prochaines entrées J1", "6 journées le week-end, aux dates de votre choix", "Paiement par carte ou mobile money"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
 
@@ -186,7 +187,7 @@ export function editorialBalance(posts: BalancePost[], kind: MarketingKind = "ce
     byPillar[pillarOf(p, kind)]++;
     if (p.destination in byDestination) byDestination[p.destination as Destination]++;
   }
-  if (posts.length === 0) return { byPillar, byDestination, advice: kind === "ia" ? "Aucun post sur 30 jours : commencez par un post de valeur (un cas d'usage)." : "Aucun post sur 30 jours : commencez par un post de valeur (méthode ou carrière)." };
+  if (posts.length === 0) return { byPillar, byDestination, advice: kind === "ia" ? "Aucun post sur 30 jours : commencez par un post de valeur (l'entreprise autonome, ou un cas d'usage)." : "Aucun post sur 30 jours : commencez par un post de valeur (méthode ou carrière)." };
   const missing = (Object.keys(pillars) as Pillar[]).filter((k) => k !== "offre" && byPillar[k] === 0);
   const firstValue = kind === "ia" ? "cas_usage" : "methode";
   let advice: string | null = null;

@@ -40,7 +40,7 @@ export const PLAYBOOKS: Record<PlaybookId, { title: string; trigger: string; act
   hot: {
     title: "Prospect chaud (Bâtisseur IA)",
     trigger: "Diagnostic fait il y a 2 à 7 jours, sans inscription",
-    action: "Un e-mail avec sa première automatisation conseillée et la prochaine date d’entrée (le CISSP a déjà sa relance après l’analyse de profil)",
+    action: "Un e-mail avec la première tâche à mettre en pilote automatique et la prochaine date d’entrée (le CISSP a déjà sa relance après l’analyse de profil)",
     defaultMode: "trial",
   },
   last_call: {

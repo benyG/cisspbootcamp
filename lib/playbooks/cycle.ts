@@ -145,7 +145,7 @@ export async function planHot(now: Date): Promise<Step[]> {
         text: [
           `Bonjour ${l.firstName},`,
           "",
-          first ? `Vous avez fait le diagnostic du Bâtisseur IA. La première automatisation conseillée pour vous : « ${first} ». Pendant la formation, vous la construisez vous-même, sur votre propre application.` : "Vous avez fait le diagnostic du Bâtisseur IA : pendant la formation, vous construisez vous-même votre application et ses automatisations.",
+          first ? `Vous avez fait le diagnostic du Bâtisseur IA. La première tâche à mettre en pilote automatique pour vous : « ${first} ». Pendant la formation, vous la construisez vous-même, dans le système de votre entreprise.` : "Vous avez fait le diagnostic du Bâtisseur IA : pendant la formation, vous construisez vous-même le système qui fait tourner votre entreprise.",
           "",
           `Prochaine entrée : ${longDate(next.startsAt)}. Pour choisir votre date et vous inscrire : ${link}`,
           "",
