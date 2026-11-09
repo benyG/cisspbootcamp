@@ -37,7 +37,8 @@ export default async function AuthorizeMcpPage({ searchParams }: { searchParams:
         <p><b>{client.name}</b> demande à piloter l’application avec votre compte admin.</p>
         <p className="mt-2 text-muted">Retour vers : <b className="break-all text-ink">{host}</b></p>
         <ul className="mt-3 grid gap-1 text-ink-2">
-          <li>Il pourra lire les cohortes, prospects, paiements et rapports.</li>
+          <li>Il pourra lire les cohortes, prospects, paiements et rapports, et faire les actions réversibles (notes, relances, brouillons, codes promo…).</li>
+          <li>Il ne pourra ni encaisser, ni supprimer, ni publier tout de suite.</li>
           <li>Chaque appel est noté dans Admin › Prise MCP.</li>
           <li>Vous pouvez le déconnecter à tout moment.</li>
         </ul>

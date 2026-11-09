@@ -4,11 +4,11 @@ import { CORS_HEADERS, json, preflight } from "@/lib/mcp/http";
 import { endpoints, requestBase } from "@/lib/mcp/oauth";
 import { verifyAccessToken } from "@/lib/mcp/oauth-server";
 import { handleMessage } from "@/lib/mcp/protocol";
-import { MCP_TOOLS } from "@/lib/mcp/tools";
+import { ALL_TOOLS } from "@/lib/mcp/catalog";
 
 export const dynamic = "force-dynamic";
-// health_check calls every outside service; the rest answers in a second or two.
-export const maxDuration = 60;
+// Reading answers in a second or two; writing posts or re-running the analyst calls the AI (about a minute).
+export const maxDuration = 300;
 
 /** Without a valid token: where to get one (RFC 9728), so Claude starts the OAuth dance. */
 function unauthorized(request: Request, expired: boolean): Response {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const message = await request.json().catch(() => undefined);
   if (message === undefined) return json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }, 400);
 
-  const response = await handleMessage(message, { clientId: client.clientId, clientName: client.name, now: new Date() }, MCP_TOOLS, (tool, ok) =>
+  const response = await handleMessage(message, { clientId: client.clientId, clientName: client.name, now: new Date() }, ALL_TOOLS, (tool, ok) =>
     prisma.actionLog.create({ data: { type: "mcp_call", payload: { tool, ok, client: client.name, clientId: client.clientId } } }).then(() => undefined, () => undefined),
   );
   if (!response) return new Response(null, { status: 202, headers: CORS_HEADERS });
