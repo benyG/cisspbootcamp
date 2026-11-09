@@ -5,10 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
 import { markLeadLost, restartFollowup, updateLeadFields } from "@/lib/admin-ops/leads";
 import { sendOnboardingDocuments } from "@/lib/onboarding";
-import { registerByAdmin } from "@/lib/registration";
+import { PAYMENT_MODES, deleteLeadCore, registerDirect } from "@/lib/admin-ops/sensitive";
 
 async function requireAdmin() {
   const session = await auth();
@@ -36,7 +35,7 @@ const directSchema = z.object({
   leadId: id,
   cohortId: id,
   amountUsd: z.coerce.number().min(0).max(100_000),
-  paymentMode: z.enum(["virement", "espèces", "mobile money hors application", "carte hors application", "offert", "autre"]),
+  paymentMode: z.enum(PAYMENT_MODES),
   paymentDetail: z.string().trim().max(150).optional().default(""),
   notify: z.literal("on").optional(),
   onboard: z.literal("on").optional(),
@@ -53,25 +52,11 @@ export async function registerDirectly(formData: FormData): Promise<void> {
   if (!leadId.success) return;
   if (!parsed.success) redirect(`/admin/leads/${leadId.data}?inscription=${encodeURIComponent("Cohorte, montant et mode de paiement sont requis.")}`);
   const { cohortId, amountUsd, paymentMode, paymentDetail, notify, onboard } = parsed.data;
-  const result = await registerByAdmin({
-    leadId: leadId.data,
-    cohortId,
-    amountUsdCents: Math.round(amountUsd * 100),
-    paymentNote: [paymentMode, paymentDetail].filter(Boolean).join(" · "),
-    notify: notify === "on",
-  });
-  let message = result.ok ? `Inscription confirmée (${result.reference}).${result.emailSent ? " E-mail « place réservée » envoyé avec le reçu." : notify ? " L’e-mail « place réservée » n’est pas parti." : ""}` : result.error;
-  // Same step, when ticked: the preparation e-mail with every active document of the programme.
-  if (result.ok && onboard) {
-    const cohort = await prisma.cohort.findUnique({ where: { id: cohortId }, select: { program: true } });
-    const documents = cohort ? await prisma.document.findMany({ where: { program: cohort.program, active: true }, select: { id: true } }) : [];
-    const sent = await sendOnboardingDocuments({ leadId: leadId.data, documentIds: documents.map((d) => d.id) });
-    message += sent.ok ? " Documents de préparation envoyés." : ` Documents non envoyés : ${sent.error}`;
-  }
+  const result = await registerDirect({ leadId: leadId.data, cohortId, amountUsdCents: Math.round(amountUsd * 100), paymentMode, paymentDetail, notify: notify === "on", onboard: onboard === "on" });
   revalidatePath(`/admin/leads/${leadId.data}`);
   revalidatePath("/admin");
   revalidatePath("/admin/cohortes");
-  redirect(`/admin/leads/${leadId.data}?inscription=${encodeURIComponent((result.ok ? "ok:" : "") + message)}`);
+  redirect(`/admin/leads/${leadId.data}?inscription=${encodeURIComponent(result.ok ? `ok:${result.message}` : result.error)}`);
 }
 
 export async function markLost(formData: FormData): Promise<void> {
@@ -97,7 +82,7 @@ export async function deleteLead(formData: FormData): Promise<void> {
   await requireAdmin();
   const leadId = id.safeParse(formData.get("leadId"));
   if (!leadId.success) return;
-  await prisma.lead.delete({ where: { id: leadId.data } });
+  await deleteLeadCore(leadId.data);
   revalidatePath("/admin");
   revalidatePath("/admin/leads");
   redirect("/admin/leads?supprime=1");

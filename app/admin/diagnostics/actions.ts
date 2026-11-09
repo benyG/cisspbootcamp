@@ -4,11 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
-import { recommendedProgram } from "@/lib/programs";
-import { env } from "@/lib/env";
-import { examBootEnabled } from "@/lib/examboot/client";
-import { sendEmail } from "@/lib/messaging/email";
+import { sendDiagnosis, setDiagnosisAside } from "@/lib/admin-ops/sensitive";
 
 const reviewSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -29,92 +25,19 @@ async function requireAdmin() {
  */
 export async function approveDiagnosis(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
-
-  const parsed = reviewSchema.safeParse({
-    id: formData.get("id"),
-    message: formData.get("message"),
-  });
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
-  }
-
-  const { id, message } = parsed.data;
-  const response = await prisma.scannerResponse.findUnique({
-    where: { id },
-    include: { lead: true },
-  });
-  if (!response) return { ok: false, error: "Diagnostic introuvable" };
-  if (response.lead.unsubscribedAt) {
-    return { ok: false, error: "Ce prospect s'est désinscrit : envoi impossible." };
-  }
-
-  const now = new Date();
-  const resultUrl = `${env.NEXT_PUBLIC_APP_URL}/scanner/resultat/${response.resultToken}`;
-  const unsubscribeUrl = `${env.NEXT_PUBLIC_APP_URL}/desinscription/${response.lead.unsubscribeToken}`;
-
-  await prisma.scannerResponse.update({
-    where: { id },
-    data: { coachMessage: message, status: "approved", reviewedAt: now },
-  });
-
-  const email = await sendEmail({
-    to: response.lead.email,
-    subject: `${response.lead.firstName}, la suite après votre analyse CISSP`,
-    text:
-      `${message}\n\n` +
-      (response.readiness === "not_yet"
-        ? (recommendedProgram("not_yet", response.answers as { experience: "none" | "one_two" | "three_four" | "five_plus"; professionalStatus: "employed" | "student" | "career_change" | "freelance" }) === "cc"
-            ? `La formation CC en 15 jours : ${env.NEXT_PUBLIC_APP_URL}/demarrer?t=${response.resultToken}\n`
-            : "") +
-          `Réserver une séance de conseil carrière : ${env.NEXT_PUBLIC_APP_URL}/conseil?t=${response.resultToken}\n`
-        : `Réserver 15 minutes : ${env.NEXT_PUBLIC_APP_URL}/rdv?t=${response.resultToken}\n`) +
-      (examBootEnabled() ? `Tester votre raisonnement sur 5 questions d'entraînement CISSP : ${env.NEXT_PUBLIC_APP_URL}/test-cissp?t=${response.resultToken}&from=relance\n` : "") +
-      `Revoir votre analyse : ${resultUrl}\n\n` +
-      `—\nPour ne plus recevoir de messages : ${unsubscribeUrl}`,
-  });
-
-  await prisma.$transaction([
-    prisma.scannerResponse.update({
-      where: { id },
-      data: email.sent ? { status: "sent", sentAt: now } : {},
-    }),
-    prisma.lead.update({
-      where: { id: response.leadId },
-      data: { status: "contacted" },
-    }),
-    prisma.actionLog.create({
-      data: {
-        leadId: response.leadId,
-        type: email.sent ? "diagnosis_sent" : "diagnosis_approved_email_failed",
-        channel: "email",
-        payload: email.sent ? { emailId: email.id } : { reason: email.reason },
-      },
-    }),
-  ]);
-
+  const parsed = reviewSchema.safeParse({ id: formData.get("id"), message: formData.get("message") });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
+  const result = await sendDiagnosis(parsed.data.id, parsed.data.message);
   revalidatePath("/admin/diagnostics");
-  revalidatePath(`/admin/diagnostics/${id}`);
-
-  if (!email.sent) {
-    return {
-      ok: false,
-      error: `Validé, mais l'e-mail n'est pas parti (${email.reason}). La page de résultat est en ligne.`,
-    };
-  }
-  return { ok: true };
+  revalidatePath(`/admin/diagnostics/${parsed.data.id}`);
+  return result.ok ? { ok: true } : result;
 }
 
 export async function setAsideDiagnosis(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
-
   const id = z.coerce.number().int().positive().safeParse(formData.get("id"));
   if (!id.success) return { ok: false, error: "Identifiant invalide" };
-
-  await prisma.scannerResponse.update({
-    where: { id: id.data },
-    data: { status: "set_aside", reviewedAt: new Date() },
-  });
-
+  const result = await setDiagnosisAside(id.data);
   revalidatePath("/admin/diagnostics");
-  return { ok: true };
+  return result.ok ? { ok: true } : result;
 }

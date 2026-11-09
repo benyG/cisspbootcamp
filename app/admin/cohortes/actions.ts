@@ -1,16 +1,14 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { auth } from "@/auth";
+import { deleteCohortCore, sendCohortDocuments } from "@/lib/admin-ops/sensitive";
 import { createCohort as createCohortCore, markCampaignDone as markCampaignDoneCore, updateCohort as updateCohortCore } from "@/lib/admin-ops/cohorts";
 import { campaignFromForm } from "@/lib/campaign";
-import { cohortDeletionProblem } from "@/lib/cohorts";
-import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
-import { sendOnboardingDocuments } from "@/lib/onboarding";
 
 async function requireAdmin() {
   const session = await auth();
@@ -49,47 +47,12 @@ export async function deleteCohort(formData: FormData): Promise<void> {
   const id = z.coerce.number().int().positive().safeParse(formData.get("id"));
   if (!id.success) redirect("/admin/cohortes");
   const targetId = z.coerce.number().int().positive().safeParse(formData.get("targetId"));
-  const fail = (message: string): never => redirect(`/admin/cohortes/${id.data}?erreur=${encodeURIComponent(message)}`);
-
-  const now = new Date();
-  const source = await prisma.cohort.findUnique({
-    where: { id: id.data },
-    include: {
-      registrations: { select: { id: true, leadId: true, status: true, reference: true } },
-      seatHolds: { where: { releasedAt: null, expiresAt: { gt: now } }, select: { id: true, leadId: true } },
-    },
-  });
-  if (!source) redirect("/admin/cohortes");
-  const target = targetId.success ? await prisma.cohort.findUnique({ where: { id: targetId.data } }) : null;
-  const leadIds = [...new Set([...source.registrations.map((r) => r.leadId), ...source.seatHolds.map((h) => h.leadId)])];
-  const people = leadIds.length;
-  const problem = cohortDeletionProblem({
-    sourceId: source.id,
-    sourceProgram: source.program,
-    people,
-    target: target ? { id: target.id, program: target.program, status: target.status } : null,
-    acknowledged: formData.get("confirm") === "on",
-  });
-  if (problem) fail(problem);
-
-  await prisma.$transaction(async (tx) => {
-    if (target && people > 0) {
-      await tx.registration.updateMany({ where: { cohortId: source.id }, data: { cohortId: target.id } });
-      await tx.seatHold.updateMany({ where: { id: { in: source.seatHolds.map((h) => h.id) } }, data: { cohortId: target.id } });
-      await tx.actionLog.createMany({
-        data: leadIds.map((leadId) => ({ leadId, type: "moved_to_cohort", payload: { from: source.name, to: target.name, targetCohortId: target.id } })),
-      });
-      const paid = await tx.registration.count({ where: { cohortId: target.id, status: "paid" } });
-      if (paid >= target.capacity && target.status === "open") await tx.cohort.update({ where: { id: target.id }, data: { status: "full" } });
-    }
-    await tx.cohort.delete({ where: { id: source.id } });
-  });
-
+  const result = await deleteCohortCore({ cohortId: id.data, targetId: targetId.success ? targetId.data : null, acknowledged: formData.get("confirm") === "on" });
+  if (!result.ok) redirect(result.error.startsWith("Aucune cohorte") ? "/admin/cohortes" : `/admin/cohortes/${id.data}?erreur=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/cohortes");
   revalidatePath("/admin");
-  if (target) revalidatePath(`/admin/cohortes/${target.id}`);
-  revalidateTag(COHORTS_CACHE_TAG);
-  redirect(`/admin/cohortes?supprime=${encodeURIComponent(source.name)}${target && people > 0 ? `&vers=${encodeURIComponent(target.name)}&n=${people}` : ""}`);
+  if (targetId.success) revalidatePath(`/admin/cohortes/${targetId.data}`);
+  redirect(`/admin/cohortes?supprime=${encodeURIComponent(result.sourceName ?? "")}${result.targetName && result.people ? `&vers=${encodeURIComponent(result.targetName)}&n=${result.people}` : ""}`);
 }
 
 /**
@@ -103,33 +66,10 @@ export async function sendCohortOnboarding(formData: FormData): Promise<void> {
   const cohortId = z.coerce.number().int().positive().safeParse(formData.get("cohortId"));
   if (!cohortId.success) redirect("/admin/cohortes");
   const onlyLead = z.coerce.number().int().positive().safeParse(formData.get("leadId"));
-  const cohort = await prisma.cohort.findUnique({
-    where: { id: cohortId.data },
-    include: { registrations: { where: { status: "paid", ...(onlyLead.success ? { leadId: onlyLead.data } : {}) }, select: { id: true, leadId: true } } },
-  });
-  if (!cohort) redirect("/admin/cohortes");
-
-  const sentTo = onlyLead.success ? new Set<number>() : await registrationsAlreadyOnboarded(cohort.registrations.map((r) => r.leadId));
-  const targets = cohort.registrations.filter((r) => !sentTo.has(r.id));
-  const documents = await prisma.document.findMany({ where: { program: cohort.program, active: true }, select: { id: true } });
-
-  let sent = 0;
-  const failures: string[] = [];
-  for (const r of targets) {
-    const result = await sendOnboardingDocuments({ leadId: r.leadId, documentIds: documents.map((d) => d.id) });
-    if (result.ok) sent++;
-    else failures.push(result.error);
-  }
-  revalidatePath(`/admin/cohortes/${cohort.id}`);
-  const message = targets.length === 0 ? "Tous les inscrits ont déjà reçu les documents." : `Documents envoyés à ${sent} inscrit${sent > 1 ? "s" : ""}.${failures.length ? ` Échec pour ${failures.length} : ${failures[0]}` : ""}`;
-  redirect(`/admin/cohortes/${cohort.id}?envoi=${encodeURIComponent(message)}`);
-}
-
-/** Registrations whose onboarding e-mail already went out, read from the leads' logs. */
-async function registrationsAlreadyOnboarded(leadIds: number[]): Promise<Set<number>> {
-  if (leadIds.length === 0) return new Set();
-  const logs = await prisma.actionLog.findMany({ where: { leadId: { in: leadIds }, type: "onboarding_sent" }, select: { payload: true } });
-  return new Set(logs.map((l) => (l.payload as { registrationId?: number } | null)?.registrationId).filter((id): id is number => typeof id === "number"));
+  const result = await sendCohortDocuments(cohortId.data, onlyLead.success ? onlyLead.data : undefined);
+  if (!result.ok && result.error.startsWith("Aucune cohorte")) redirect("/admin/cohortes");
+  revalidatePath(`/admin/cohortes/${cohortId.data}`);
+  redirect(`/admin/cohortes/${cohortId.data}?envoi=${encodeURIComponent(result.ok ? result.message : result.error)}`);
 }
 
 /** "Lancer une cohorte" on an existing cohort (lot 5): its channels and promo. */
