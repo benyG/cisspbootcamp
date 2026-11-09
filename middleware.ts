@@ -12,7 +12,7 @@ const adminGuard = auth((request) => {
 
   if (!request.auth && !isSignInPage) {
     const signInUrl = new URL("/admin/connexion", request.nextUrl.origin);
-    signInUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    signInUrl.searchParams.set("callbackUrl", request.nextUrl.pathname + request.nextUrl.search);
     return NextResponse.redirect(signInUrl);
   }
 
