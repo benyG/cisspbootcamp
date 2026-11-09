@@ -143,7 +143,7 @@ export function healthProblems(input: { calendar: "ok" | "not_connected" | "revo
     const what = input.calendar === "revoked" ? "Google a déconnecté votre agenda" : input.calendar === "not_connected" ? "L’agenda Google n’est pas connecté" : "L’agenda Google ne répond pas";
     out.push({ code: "calendar", text: `${what} : la prise de rendez-vous est fermée sur le site.`, fix: `${base}/admin/parametres/google` });
   }
-  if (!input.emailConfigured) out.push({ code: "email", text: "L’envoi d’e-mails n’est pas configuré : aucun e-mail ne part.", fix: `${base}/admin` });
+  if (!input.emailConfigured) out.push({ code: "email", text: "L’envoi d’e-mails n’est pas configuré : aucun e-mail ne part.", fix: `${base}/admin/sante` });
   if (input.linkedinExpiresAt && input.linkedinExpiresAt.getTime() - now.getTime() < LINKEDIN_WARN_DAYS * DAY_MS) {
     const expired = input.linkedinExpiresAt.getTime() <= now.getTime();
     out.push({ code: "linkedin", text: expired ? "La connexion LinkedIn a expiré : plus de publication depuis l’admin." : "La connexion LinkedIn expire dans moins d’une semaine.", fix: `${base}/admin/parametres/linkedin` });
