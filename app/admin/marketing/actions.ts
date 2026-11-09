@@ -5,10 +5,10 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { env } from "@/lib/env";
 import { marketingKind } from "@/lib/marketing/plan";
 import { saveMarketingSettings } from "@/lib/marketing/settings";
-import { MAX_IMAGE_BYTES, publishOnLinkedin } from "@/lib/linkedin";
+import { MAX_IMAGE_BYTES } from "@/lib/linkedin";
+import { publishPostNow, sendLeadEmail } from "@/lib/admin-ops/sensitive";
 import { planPost, scheduleDay } from "@/lib/marketing/schedule";
 import { draftLeadFollowup, generateStudioPosts, saveStudioPost, topicIdeas } from "@/lib/marketing/studio";
 import { put } from "@vercel/blob";
@@ -16,7 +16,6 @@ import { put } from "@vercel/blob";
 import { CANVAS, HEADLINE_MAX } from "@/lib/marketing/brand";
 import { composeVisual } from "@/lib/marketing/compose";
 import { generatePhoto, readBytes, startVideo, syncVideo } from "@/lib/minimax";
-import { sendEmail } from "@/lib/messaging/email";
 
 async function requireAdmin() {
   const session = await auth();
@@ -80,17 +79,9 @@ export async function sendFollowupEmail(input: { leadId: number; subject: string
   await requireAdmin();
   const parsed = z.object({ leadId: id, subject: z.string().trim().min(3).max(160), text: z.string().trim().min(20).max(5000) }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "Objet et message requis." };
-  const lead = await prisma.lead.findUnique({ where: { id: parsed.data.leadId } });
-  if (!lead || !lead.consentAt || lead.unsubscribedAt) return { ok: false, error: "Cette personne n'a pas accepté d'être recontactée." };
-  const result = await sendEmail({
-    to: lead.email,
-    subject: parsed.data.subject,
-    text: `${parsed.data.text}\n\n—\nPour ne plus recevoir de messages : ${env.NEXT_PUBLIC_APP_URL}/desinscription/${lead.unsubscribeToken}`,
-  });
-  if (!result.sent) return { ok: false, error: `E-mail non envoyé : ${result.reason}` };
-  await prisma.actionLog.create({ data: { leadId: lead.id, type: "marketing_followup_sent", channel: "email", payload: { subject: parsed.data.subject } } });
+  const result = await sendLeadEmail(parsed.data.leadId, parsed.data.subject, parsed.data.text);
   revalidatePath("/admin/marketing");
-  return { ok: true };
+  return result.ok ? { ok: true } : result;
 }
 
 /** WhatsApp leaves from Ben's phone: he marks it sent once he has. */
@@ -110,32 +101,17 @@ export async function publishPostOnLinkedin(formData: FormData): Promise<{ ok: t
   await requireAdmin();
   const postId = id.safeParse(formData.get("postId"));
   if (!postId.success) return { ok: false, error: "Post introuvable." };
-  const post = await prisma.marketingPost.findUnique({ where: { id: postId.data } });
-  if (!post) return { ok: false, error: "Post introuvable." };
-  if (post.linkedinUrn) return { ok: false, error: "Ce post est déjà publié sur LinkedIn." };
   const file = formData.get("image");
   const generated = id.safeParse(formData.get("imageId"));
-  const brief = (() => { try { return (JSON.parse(post.visualBrief) as { onScreenText?: string }).onScreenText ?? ""; } catch { return ""; } })();
-  let image: { bytes: Uint8Array; type: string; alt: string } | null = null;
+  let image: Parameters<typeof publishPostNow>[1] = null;
   if (file instanceof File && file.size > 0) {
     if (!["image/jpeg", "image/png"].includes(file.type)) return { ok: false, error: "Image en JPG ou PNG seulement." };
     if (file.size > MAX_IMAGE_BYTES) return { ok: false, error: "Image trop lourde : 4 Mo au plus." };
-    image = { bytes: new Uint8Array(await file.arrayBuffer()), type: file.type, alt: brief || "Visuel CISSP Bootcamp" };
-  } else if (generated.success) {
-    const row = await prisma.marketingImage.findFirst({ where: { id: generated.data, postId: post.id } });
-    const bytes = row ? await readBytes(row.imagePathname) : null;
-    if (!row || !bytes) return { ok: false, error: "Image générée introuvable." };
-    image = { bytes, type: "image/png", alt: row.headline || brief || "Visuel CISSP Bootcamp" };
-  }
-  try {
-    const published = await publishOnLinkedin({ text: post.text, image });
-    await prisma.marketingPost.update({ where: { id: post.id }, data: { linkedinUrn: published.urn || null, publishedAt: new Date() } });
-    revalidatePath("/admin/marketing");
-    return { ok: true, url: published.url };
-  } catch (error) {
-    console.error("[linkedin] publication", error);
-    return { ok: false, error: error instanceof Error ? error.message : "Publication refusée par LinkedIn." };
-  }
+    image = { upload: { bytes: new Uint8Array(await file.arrayBuffer()), type: file.type } };
+  } else if (generated.success) image = { imageId: generated.data };
+  const result = await publishPostNow(postId.data, image);
+  revalidatePath("/admin/marketing");
+  return result.ok ? { ok: true, url: result.url } : result;
 }
 
 export type VideoRow = { id: number; status: string; error: string | null; prompt: string; ready: boolean; createdAt: string };

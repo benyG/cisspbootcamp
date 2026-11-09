@@ -4,10 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { markServiceOrderPaid } from "@/lib/consulting";
+import { confirmServiceOrder, remindSessionBookingCore } from "@/lib/admin-ops/sensitive";
 import { prisma } from "@/lib/db";
-import { env } from "@/lib/env";
-import { sendEmail } from "@/lib/messaging/email";
 import { isServiceCode } from "@/lib/services";
 
 async function requireAdmin() {
@@ -46,10 +44,7 @@ export async function confirmServicePayment(formData: FormData): Promise<void> {
   await requireAdmin();
   const parsed = z.object({ orderId: id, transactionId: z.string().trim().max(120).optional().or(z.literal("")) }).safeParse({ orderId: formData.get("orderId"), transactionId: formData.get("transactionId") });
   if (!parsed.success) return;
-  const order = await prisma.serviceOrder.findUnique({ where: { id: parsed.data.orderId } });
-  if (!order) return;
-  await markServiceOrderPaid({ reference: order.reference, amountPaidUsdCents: order.amountUsd, paidAt: new Date(), netticketTransactionId: parsed.data.transactionId || `manuel-${Date.now()}` });
-  await prisma.actionLog.create({ data: { leadId: order.leadId, type: "payment_confirmed_manually", payload: { orderId: order.id } } });
+  await confirmServiceOrder(parsed.data.orderId, parsed.data.transactionId || null);
   revalidatePath("/admin");
   revalidatePath("/admin/conseil");
 }
@@ -59,19 +54,7 @@ export async function remindSessionBooking(formData: FormData): Promise<void> {
   await requireAdmin();
   const orderId = id.safeParse(formData.get("orderId"));
   if (!orderId.success) return;
-  const order = await prisma.serviceOrder.findUnique({ where: { id: orderId.data }, include: { lead: true, service: true } });
-  if (!order || order.status !== "paid" || order.lead.unsubscribedAt) return;
-  const base = env.NEXT_PUBLIC_APP_URL;
-  const result = await sendEmail({
-    to: order.lead.email,
-    subject: `Votre séance « ${order.service.name} » vous attend`,
-    text:
-      `Bonjour ${order.lead.firstName},\n\n` +
-      `Votre séance est réglée mais aucun créneau n'est encore choisi. Il suffit d'un clic : ${base}/conseil/rdv/${order.bookingToken}\n\n` +
-      `Les créneaux ouverts sont le mercredi soir ; si aucun ne vous convient, répondez à ce message et on trouve une autre heure.\n\n` +
-      `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${order.lead.unsubscribeToken}`,
-  });
-  await prisma.actionLog.create({ data: { leadId: order.leadId, type: "session_booking_reminded", channel: "email", payload: { orderId: order.id, sent: result.sent } } });
+  await remindSessionBookingCore(orderId.data);
   revalidatePath("/admin");
   revalidatePath("/admin/conseil");
 }

@@ -1170,3 +1170,25 @@ model McpToken {
   @@index([expiresAt])
   @@map("mcp_tokens")
 }
+
+/// A sensitive action Claude prepared through the MCP plug (lot 3, docs/MCP.md):
+/// it runs only when Ben clicks "Valider" in the admin.
+model McpRequest {
+  id         Int       @id @default(autoincrement())
+  /// payment | registration | diagnosis | email | catch_up | linkedin | cohort_send | price | deletion
+  kind       String    @db.VarChar(24)
+  /// The validated arguments, re-checked when it runs.
+  payload    Json
+  /// What Ben reads before clicking, in French.
+  summary    String    @db.Text
+  /// pending | running | done | failed | rejected | expired
+  status     String    @default("pending") @db.VarChar(12)
+  result     String?   @db.Text
+  clientName String    @map("client_name") @db.VarChar(120)
+  expiresAt  DateTime  @map("expires_at")
+  decidedAt  DateTime? @map("decided_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@map("mcp_requests")
+}

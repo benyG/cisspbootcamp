@@ -6,7 +6,7 @@ import { CopyLink } from "@/components/admin/CopyLink";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { endpoints, requestBase } from "@/lib/mcp/oauth";
-import { ALL_TOOLS, READ_TOOLS, WRITE_TOOLS } from "@/lib/mcp/catalog";
+import { ALL_TOOLS, READ_TOOLS, REQUEST_TOOLS, WRITE_TOOLS } from "@/lib/mcp/catalog";
 
 import { disconnectMcpClient } from "./actions";
 
@@ -22,9 +22,10 @@ const fmt = (d: Date | null) => (d ? when.format(d) : "jamais");
 export default async function McpPage({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
   const { ok } = await searchParams;
   const url = endpoints(requestBase(await headers(), env.NEXT_PUBLIC_APP_URL)).resource;
-  const [clients, calls] = await Promise.all([
+  const [clients, calls, pending] = await Promise.all([
     prisma.mcpClient.findMany({ where: { authorizedAt: { not: null } }, orderBy: { authorizedAt: "desc" } }),
     prisma.actionLog.findMany({ where: { type: "mcp_call" }, orderBy: { createdAt: "desc" }, take: 20, select: { id: true, payload: true, createdAt: true } }),
+    prisma.mcpRequest.count({ where: { status: "pending", expiresAt: { gt: new Date() } } }),
   ]);
   const titles = new Map(ALL_TOOLS.map((t) => [t.name, t.title]));
 
@@ -32,7 +33,8 @@ export default async function McpPage({ searchParams }: { searchParams: Promise<
     <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Administration</Link>
       <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Plug className="size-6 shrink-0 text-accent" aria-hidden />Prise MCP</h1>
-      <p className="mt-1 text-sm text-muted">Pilotez l’application depuis Claude (ou un autre outil MCP) : « Où en est la cohorte de janvier ? », « Qui dois-je rappeler aujourd’hui ? ». « Ajoute une note sur ce prospect », « Crée un code promo de 10 % ». Elle ne paie, ne supprime, ne publie tout de suite et n’écrit à aucun prospect sans vous.</p>
+      <p className="mt-1 text-sm text-muted">Pilotez l’application depuis Claude (ou un autre outil MCP) : « Où en est la cohorte de janvier ? », « Qui dois-je rappeler aujourd’hui ? ». « Ajoute une note sur ce prospect », « Crée un code promo de 10 % ». Pour encaisser, envoyer, publier tout de suite, changer un prix ou supprimer, Claude prépare une demande : rien ne se fait sans votre clic.</p>
+      <Link href="/admin/mcp/demandes" className={"mt-4 flex items-center justify-between rounded-xl border px-4 py-3 text-sm " + (pending ? "border-amber-300 bg-amber-50" : "border-line bg-white")}><b>Demandes de Claude à valider</b><span className="rounded-full bg-white px-2.5 py-0.5 font-semibold">{pending}</span></Link>
       {ok && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{ok}</p>}
 
       <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
@@ -65,7 +67,7 @@ export default async function McpPage({ searchParams }: { searchParams: Promise<
 
       <section className="mt-4 rounded-xl border border-line bg-white p-4 text-sm">
         <h2 className="font-bold">Ce que Claude peut faire ({ALL_TOOLS.length} outils)</h2>
-        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+        <div className="mt-2 grid gap-3 sm:grid-cols-3">
           <div>
             <p className="text-xs font-semibold tracking-wide text-muted uppercase">Lire ({READ_TOOLS.length})</p>
             <ul className="mt-1 grid gap-0.5 text-ink-2">{READ_TOOLS.map((t) => <li key={t.name}>{t.title}</li>)}</ul>
@@ -74,8 +76,12 @@ export default async function McpPage({ searchParams }: { searchParams: Promise<
             <p className="text-xs font-semibold tracking-wide text-muted uppercase">Agir, de façon réversible ({WRITE_TOOLS.length})</p>
             <ul className="mt-1 grid gap-0.5 text-ink-2">{WRITE_TOOLS.map((t) => <li key={t.name}>{t.title}</li>)}</ul>
           </div>
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-muted uppercase">Préparer, vous validez ({REQUEST_TOOLS.length})</p>
+            <ul className="mt-1 grid gap-0.5 text-ink-2">{REQUEST_TOOLS.map((t) => <li key={t.name}>{t.title}</li>)}</ul>
+          </div>
         </div>
-        <p className="mt-2 text-xs text-muted">Une seule action écrit à un prospect : enregistrer « veut s’inscrire » ou « à relancer » après un appel envoie l’e-mail d’après-appel, comme le bouton de la file. Prochain lot : les actions sensibles (paiements, envois, publication immédiate, suppressions), préparées par Claude et validées par vous ici.</p>
+        <p className="mt-2 text-xs text-muted">Une seule action écrit à un prospect : enregistrer « veut s’inscrire » ou « à relancer » après un appel envoie l’e-mail d’après-appel, comme le bouton de la file. Les actions sensibles attendent votre clic dans « Demandes de Claude à valider » et expirent au bout de 7 jours.</p>
       </section>
 
       <section className="mt-4 rounded-xl border border-line bg-white p-4 text-sm">

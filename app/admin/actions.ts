@@ -7,8 +7,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { CALL_OUTCOMES, markUnfinishedHandled, postponeFollowup, recordCallOutcome, recordFollowupSent } from "@/lib/admin-ops/leads";
 import { nextFollowupAt } from "@/lib/followups";
-import { firstDueUsd } from "@/lib/installments";
-import { markBalancePaid, markRegistrationPaid } from "@/lib/registration";
+import { confirmBalance, confirmRegistrationPayment } from "@/lib/admin-ops/sensitive";
 import { holdSeat, releaseHold } from "@/lib/seat-holds";
 
 async function requireAdmin() {
@@ -53,16 +52,7 @@ export async function confirmManualPayment(formData: FormData): Promise<void> {
   const parsed = z.object({ registrationId: id, transactionId: z.string().trim().max(120).optional().or(z.literal("")) })
     .safeParse({ registrationId: formData.get("registrationId"), transactionId: formData.get("transactionId") });
   if (!parsed.success) return;
-  const registration = await prisma.registration.findUnique({ where: { id: parsed.data.registrationId } });
-  if (!registration) return;
-
-  await markRegistrationPaid({
-    reference: registration.reference,
-    amountPaidUsdCents: firstDueUsd(registration),
-    paidAt: new Date(),
-    netticketTransactionId: parsed.data.transactionId || `manuel-${Date.now()}`,
-  });
-  await prisma.actionLog.create({ data: { leadId: registration.leadId, type: "payment_confirmed_manually", payload: { registrationId: registration.id } } });
+  await confirmRegistrationPayment(parsed.data.registrationId, parsed.data.transactionId || null);
   revalidatePath("/admin");
   revalidatePath("/admin/cohortes");
 }
@@ -76,12 +66,12 @@ export async function confirmBalancePayment(formData: FormData): Promise<void> {
   const parsed = z.object({ registrationId: id, note: z.string().trim().max(200).optional().or(z.literal("")) })
     .safeParse({ registrationId: formData.get("registrationId"), note: formData.get("note") ?? "" });
   if (!parsed.success) return;
-  const registration = await prisma.registration.findUnique({ where: { id: parsed.data.registrationId } });
-  if (!registration || registration.balanceUsd <= 0 || registration.balancePaidAt) return;
-  const result = await markBalancePaid({ reference: registration.reference, amountPaidUsdCents: registration.balanceUsd, paidAt: new Date(), method: "manual", note: parsed.data.note || "confirmé par Ben" });
-  if (result.ok && !result.alreadyPaid) await prisma.actionLog.create({ data: { leadId: registration.leadId, type: "balance_confirmed_manually", payload: { registrationId: registration.id } } });
+  const result = await confirmBalance(parsed.data.registrationId, parsed.data.note || null);
   revalidatePath("/admin");
-  revalidatePath(`/admin/leads/${registration.leadId}`);
+  if (result.ok) {
+    const r = await prisma.registration.findUnique({ where: { id: parsed.data.registrationId }, select: { leadId: true } });
+    if (r) revalidatePath(`/admin/leads/${r.leadId}`);
+  }
 }
 
 /** "Inviter à réserver": logged as a contact; the message itself goes via wa.me. */

@@ -29,6 +29,7 @@ export type QueueItem =
   | { kind: "drafts"; cohortId: number; cohortName: string; count: number }
   | { kind: "campaign"; cohortId: number; key: string; cohortName: string; text: string; by: string; href: string | null; dueLabel: string }
   | { kind: "analyst"; week: string; rank: number; title: string; action: string; watch: string }
+  | { kind: "mcp"; count: number; oldest: Date }
   | { kind: "balance"; registrationId: number; leadId: number; name: string; reference: string; balanceUsd: number; cohortName: string; startsAt: Date; started: boolean; whatsapp: string | null }
   | { kind: "hot"; leadId: number; name: string; heat: number; readiness: string | null; waLink: string | null; email: string; inviteBody: string }
   | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
@@ -188,6 +189,12 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
   for (const q of quotes) {
     items.push({ kind: "quote", quoteId: q.id, organization: q.organization, summary: quoteSummary(q as Parameters<typeof quoteSummary>[0]), contact: `${q.contactName} · ${countryLabel(q.country)}`, note: q.need ?? "" });
   }
+
+  // Sensitive actions Claude prepared through the MCP plug (lot 3), waiting for Ben.
+  const mcp = await Promise.resolve()
+    .then(() => prisma.mcpRequest.findMany({ where: { status: "pending", expiresAt: { gt: now } }, orderBy: { createdAt: "asc" }, select: { createdAt: true } }))
+    .catch(() => []);
+  if (mcp.length) items.unshift({ kind: "mcp", count: mcp.length, oldest: mcp[0]!.createdAt });
 
   return {
     items,

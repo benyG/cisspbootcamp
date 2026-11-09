@@ -1,4 +1,4 @@
-import { BadgeDollarSign, Plug, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -32,6 +32,7 @@ export default async function AdminHomePage() {
     unfinished: items.filter((i) => i.kind === "unfinished"),
     campaign: items.filter((i) => i.kind === "campaign"),
     analyst: items.filter((i) => i.kind === "analyst"),
+    mcp: items.filter((i) => i.kind === "mcp"),
     drafts: items.filter((i) => i.kind === "drafts"),
     hot: items.filter((i) => i.kind === "hot"),
     hold: items.filter((i) => i.kind === "hold"),
@@ -63,6 +64,15 @@ export default async function AdminHomePage() {
       </div>
 
       {items.length === 0 && <p className="mt-8 rounded-xl border border-line bg-white p-4 text-muted">Rien à faire aujourd&apos;hui. La prospection continue : deux publications par semaine, les groupes, les anciens participants.</p>}
+
+      <Group icon={ShieldCheck} title="Demandes de Claude à valider" count={groups.mcp.reduce((n, i) => n + (i.kind === "mcp" ? i.count : 0), 0)}>
+        {groups.mcp.map((i) => i.kind === "mcp" && (
+          <li key="mcp" className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white px-3.5 py-3">
+            <span className="text-sm"><b>{i.count} demande{i.count > 1 ? "s" : ""} préparée{i.count > 1 ? "s" : ""} par Claude</b><span className="block text-xs text-muted">paiement, envoi, publication, prix ou suppression : rien ne se fait sans votre clic</span></span>
+            <Link href="/admin/mcp/demandes" className={primary}>Relire</Link>
+          </li>
+        ))}
+      </Group>
 
       <Group icon={MessageSquareText} title="Messages de relance à valider" count={groups.review.length}>
         {groups.review.map((i) => i.kind === "review" && (
