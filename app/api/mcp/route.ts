@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { CORS_HEADERS, json, preflight } from "@/lib/mcp/http";
-import { endpoints } from "@/lib/mcp/oauth";
+import { endpoints, requestBase } from "@/lib/mcp/oauth";
 import { verifyAccessToken } from "@/lib/mcp/oauth-server";
 import { handleMessage } from "@/lib/mcp/protocol";
 import { MCP_TOOLS } from "@/lib/mcp/tools";
@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /** Without a valid token: where to get one (RFC 9728), so Claude starts the OAuth dance. */
-function unauthorized(expired: boolean): Response {
-  const metadata = endpoints(env.NEXT_PUBLIC_APP_URL).resourceMetadata;
+function unauthorized(request: Request, expired: boolean): Response {
+  const metadata = endpoints(requestBase(request.headers, env.NEXT_PUBLIC_APP_URL)).resourceMetadata;
   // Header text stays ASCII; the body carries the French.
   const header = expired ? `Bearer resource_metadata="${metadata}", error="invalid_token", error_description="Token invalid or expired"` : `Bearer resource_metadata="${metadata}"`;
   return json({ error: "invalid_token", error_description: expired ? "Jeton invalide ou expiré" : "Connexion requise" }, 401, { "WWW-Authenticate": header });
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const header = request.headers.get("authorization") ?? "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
   const client = token ? await verifyAccessToken(token) : null;
-  if (!client) return unauthorized(!!token);
+  if (!client) return unauthorized(request, !!token);
 
   const message = await request.json().catch(() => undefined);
   if (message === undefined) return json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }, 400);

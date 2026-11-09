@@ -155,3 +155,15 @@ describe("MCP tool catalogue", () => {
     for (const t of toolListing(MCP_TOOLS)) expect(t.inputSchema.type).toBe("object");
   });
 });
+
+describe("MCP public address", () => {
+  it("announces the host that answered, never the redirecting bare domain", async () => {
+    const { publicBase } = await import("@/lib/mcp/oauth");
+    const fallback = "https://cisspbootcamp.online/";
+    expect(publicBase("www.cisspbootcamp.online", fallback)).toBe("https://www.cisspbootcamp.online");
+    expect(publicBase("cisspbootcamp-git-x-cissp-bootcamp.vercel.app", fallback)).toBe("https://cisspbootcamp-git-x-cissp-bootcamp.vercel.app");
+    expect(publicBase("localhost:3311", fallback)).toBe("http://localhost:3311");
+    expect(publicBase("evil.example", fallback)).toBe("https://cisspbootcamp.online");
+    expect(publicBase(null, fallback)).toBe("https://cisspbootcamp.online");
+  });
+});
