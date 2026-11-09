@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { nextFollowupAt } from "@/lib/followups";
+import { markLeadLost, restartFollowup, updateLeadFields } from "@/lib/admin-ops/leads";
 import { sendOnboardingDocuments } from "@/lib/onboarding";
 import { registerByAdmin } from "@/lib/registration";
 
@@ -27,17 +27,7 @@ export async function updateLead(formData: FormData): Promise<void> {
   }).safeParse({ leadId: formData.get("leadId"), status: formData.get("status"), notes: formData.get("notes"), tags: formData.get("tags"), nextFollowupAt: formData.get("nextFollowupAt") });
   if (!parsed.success) return;
   const { leadId, status, notes, tags, nextFollowupAt: due } = parsed.data;
-  // "Inscrit" follows a paid seat; the dropdown alone never makes someone a participant.
-  const keepStatus = status === "registered" && (await prisma.registration.count({ where: { leadId, status: "paid" } })) === 0;
-  await prisma.lead.update({
-    where: { id: leadId },
-    data: {
-      ...(keepStatus ? {} : { status }),
-      notes: notes || null,
-      tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-      nextFollowupAt: due ? new Date(due) : null,
-    },
-  });
+  await updateLeadFields(leadId, { status, notes: notes || null, tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [], nextFollowupAt: due ? new Date(due) : null });
   revalidatePath(`/admin/leads/${leadId}`);
   revalidatePath("/admin");
 }
@@ -88,10 +78,7 @@ export async function markLost(formData: FormData): Promise<void> {
   await requireAdmin();
   const leadId = id.safeParse(formData.get("leadId"));
   if (!leadId.success) return;
-  await prisma.$transaction([
-    prisma.lead.update({ where: { id: leadId.data }, data: { status: "lost", nextFollowupAt: null } }),
-    prisma.actionLog.create({ data: { leadId: leadId.data, type: "marked_lost" } }),
-  ]);
+  await markLeadLost(leadId.data);
   revalidatePath(`/admin/leads/${leadId.data}`);
   revalidatePath("/admin");
 }
@@ -100,7 +87,7 @@ export async function scheduleFollowup(formData: FormData): Promise<void> {
   await requireAdmin();
   const leadId = id.safeParse(formData.get("leadId"));
   if (!leadId.success) return;
-  await prisma.lead.update({ where: { id: leadId.data }, data: { nextFollowupAt: nextFollowupAt("afterCall", 0, new Date()), followupCount: 0 } });
+  await restartFollowup(leadId.data);
   revalidatePath(`/admin/leads/${leadId.data}`);
   revalidatePath("/admin");
 }

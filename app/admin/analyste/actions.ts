@@ -6,8 +6,8 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { generateAnalysis } from "@/lib/analyst/server";
-import { MAX_BETS, readDecisions } from "@/lib/analyst/rules";
-import { prisma } from "@/lib/db";
+import { markBetDone as markDone, toggleBetDecision } from "@/lib/admin-ops/analyst";
+import { MAX_BETS } from "@/lib/analyst/rules";
 
 async function requireAdmin() {
   const session = await auth();
@@ -23,13 +23,8 @@ export async function decideBet(formData: FormData): Promise<void> {
   const parsed = z.object({ week: weekField, rank: z.coerce.number().int().min(1).max(MAX_BETS), status: z.enum(["kept", "dropped"]) }).safeParse({ week: formData.get("week"), rank: formData.get("rank"), status: formData.get("status") });
   if (!parsed.success) back(null, "Choix invalide.");
   const { week, rank, status } = parsed.data!;
-  const row = await prisma.analystReport.findUnique({ where: { weekKey: week }, select: { decisions: true } });
-  if (!row) back(null, "Analyse introuvable.");
-  const decisions = readDecisions(row!.decisions);
-  const key = String(rank);
-  if (decisions[key]?.status === status) delete decisions[key];
-  else decisions[key] = { status, at: new Date().toISOString() };
-  await prisma.analystReport.update({ where: { weekKey: week }, data: { decisions } });
+  const result = await toggleBetDecision(week, rank, status);
+  if (!result.ok) back(null, result.error);
   revalidatePath("/admin/analyste");
   revalidatePath("/admin");
   redirect(`/admin/analyste?s=${week}#o${rank}`);
@@ -50,6 +45,6 @@ export async function markBetDone(formData: FormData): Promise<void> {
   await requireAdmin();
   const parsed = z.object({ week: weekField, rank: z.coerce.number().int().min(1).max(MAX_BETS) }).safeParse({ week: formData.get("week"), rank: formData.get("rank") });
   if (!parsed.success) return;
-  await prisma.actionLog.create({ data: { type: "analyst_done", leadId: null, payload: { week: parsed.data.week, rank: parsed.data.rank } } });
+  await markDone(parsed.data.week, parsed.data.rank);
   revalidatePath("/admin");
 }

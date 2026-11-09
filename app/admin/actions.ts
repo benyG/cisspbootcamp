@@ -5,11 +5,11 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { nextFollowupAt, postponedAt } from "@/lib/followups";
+import { CALL_OUTCOMES, markUnfinishedHandled, postponeFollowup, recordCallOutcome, recordFollowupSent } from "@/lib/admin-ops/leads";
+import { nextFollowupAt } from "@/lib/followups";
 import { firstDueUsd } from "@/lib/installments";
 import { markBalancePaid, markRegistrationPaid } from "@/lib/registration";
 import { holdSeat, releaseHold } from "@/lib/seat-holds";
-import { sendAfterCallEmail } from "@/lib/followups-auto";
 
 async function requireAdmin() {
   const session = await auth();
@@ -21,32 +21,12 @@ const id = z.coerce.number().int().positive();
 /** After the call (SPECS A3): the outcome drives the lead's next state. */
 export async function markCallOutcome(formData: FormData): Promise<void> {
   await requireAdmin();
-  const parsed = z.object({ bookingId: id, outcome: z.enum(["registered", "to_follow_up", "not_now", "not_qualified", "no_show"]) })
+  const parsed = z.object({ bookingId: id, outcome: z.enum(CALL_OUTCOMES) })
     .safeParse({ bookingId: formData.get("bookingId"), outcome: formData.get("outcome") });
   if (!parsed.success) return;
-  const { bookingId, outcome } = parsed.data;
-  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
-  if (!booking) return;
-
-  const now = new Date();
-  const leadUpdate =
-    outcome === "registered" ? { status: "called" as const, nextFollowupAt: nextFollowupAt("unpaid", 0, now), followupCount: 0 }
-    : outcome === "to_follow_up" ? { status: "called" as const, nextFollowupAt: nextFollowupAt("afterCall", 0, now), followupCount: 0 }
-    : outcome === "not_now" ? { status: "nurture" as const, nextFollowupAt: new Date(now.getTime() + 90 * 86_400_000), followupCount: 0 }
-    : outcome === "not_qualified" ? { status: "lost" as const, nextFollowupAt: null }
-    : { status: "contacted" as const, nextFollowupAt: nextFollowupAt("scanner", 0, now), followupCount: 0 }; // no_show → back to the scanner track
-
-  await prisma.$transaction([
-    prisma.booking.update({ where: { id: bookingId }, data: { status: outcome === "no_show" ? "no_show" : "done", outcome } }),
-    prisma.lead.update({ where: { id: booking.leadId }, data: leadUpdate }),
-    prisma.actionLog.create({ data: { leadId: booking.leadId, type: "call_outcome", payload: { bookingId, outcome } } }),
-  ]);
-  // The payment link leaves the same day, whatever Ben's longer message says later.
-  if (booking.kind === "discovery" && (outcome === "registered" || outcome === "to_follow_up")) {
-    await sendAfterCallEmail(booking.leadId, outcome);
-  }
+  const result = await recordCallOutcome(parsed.data.bookingId, parsed.data.outcome);
   revalidatePath("/admin");
-  revalidatePath(`/admin/leads/${booking.leadId}`);
+  if (result.ok && result.leadId) revalidatePath(`/admin/leads/${result.leadId}`);
 }
 
 /** "Envoyé": Ben pressed send in WhatsApp or his mailer; advance the sequence. */
@@ -54,28 +34,16 @@ export async function followupSent(formData: FormData): Promise<void> {
   await requireAdmin();
   const parsed = z.object({ leadId: id, channel: z.enum(["whatsapp", "email"]) }).safeParse({ leadId: formData.get("leadId"), channel: formData.get("channel") });
   if (!parsed.success) return;
-  const lead = await prisma.lead.findUnique({ where: { id: parsed.data.leadId }, include: { registrations: { where: { status: { in: ["pending", "pending_manual"] } }, take: 1 } } });
-  if (!lead) return;
-
-  const track = lead.registrations.length ? "unpaid" : lead.status === "called" ? "afterCall" : "scanner";
-  const count = lead.followupCount + 1;
-  const now = new Date();
-  await prisma.$transaction([
-    prisma.lead.update({ where: { id: lead.id }, data: { followupCount: count, nextFollowupAt: nextFollowupAt(track, count, now), status: lead.status === "new" ? "contacted" : lead.status } }),
-    prisma.actionLog.create({ data: { leadId: lead.id, type: "followup_sent", channel: parsed.data.channel, payload: { track, count } } }),
-  ]);
+  await recordFollowupSent(parsed.data.leadId, parsed.data.channel);
   revalidatePath("/admin");
-  revalidatePath(`/admin/leads/${lead.id}`);
+  revalidatePath(`/admin/leads/${parsed.data.leadId}`);
 }
 
 export async function followupPostpone(formData: FormData): Promise<void> {
   await requireAdmin();
   const leadId = id.safeParse(formData.get("leadId"));
   if (!leadId.success) return;
-  await prisma.$transaction([
-    prisma.lead.update({ where: { id: leadId.data }, data: { nextFollowupAt: postponedAt(new Date()) } }),
-    prisma.actionLog.create({ data: { leadId: leadId.data, type: "followup_postponed" } }),
-  ]);
+  await postponeFollowup(leadId.data);
   revalidatePath("/admin");
 }
 
@@ -144,9 +112,7 @@ export async function holdSeatAction(formData: FormData): Promise<void> {
 export async function unfinishedHandled(formData: FormData): Promise<void> {
   const session = await auth();
   if (!session?.user?.email) throw new Error("Non autorisé");
-  const registrationId = id.parse(formData.get("registrationId"));
-  const leadId = id.parse(formData.get("leadId"));
-  await prisma.actionLog.create({ data: { type: "playbook_unfinished_done", leadId, payload: { registrationId } } });
+  await markUnfinishedHandled(id.parse(formData.get("registrationId")));
   revalidatePath("/admin");
 }
 
