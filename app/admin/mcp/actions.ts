@@ -1,10 +1,12 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { authorizeSchema, redirectWith } from "@/lib/mcp/oauth";
 import { findClient, issueCode, revokeClient } from "@/lib/mcp/oauth-server";
+import { decideRequest } from "@/lib/mcp/requests";
 
 async function requireAdmin() {
   const session = await auth();
@@ -41,4 +43,16 @@ export async function disconnectMcpClient(formData: FormData) {
   const clientId = String(formData.get("clientId") ?? "");
   if (clientId) await revokeClient(clientId);
   redirect("/admin/mcp?ok=" + encodeURIComponent("Application déconnectée."));
+}
+
+/** "Valider" or "Refuser" on a request Claude prepared (lot 3): only then does it run. */
+export async function decideMcpRequestAction(formData: FormData) {
+  await requireAdmin();
+  const requestId = Number(formData.get("requestId"));
+  const approve = formData.get("decision") === "approve";
+  if (!Number.isInteger(requestId) || requestId <= 0) redirect("/admin/mcp/demandes");
+  const result = await decideRequest(requestId, approve);
+  revalidatePath("/admin");
+  revalidatePath("/admin/mcp/demandes");
+  redirect(`/admin/mcp/demandes?${result.ok ? "ok" : "erreur"}=${encodeURIComponent(`Demande n°${requestId} : ${result.ok ? result.message : result.error}`)}`);
 }

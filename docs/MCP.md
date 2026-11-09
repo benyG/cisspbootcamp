@@ -66,19 +66,24 @@ Les outils appellent les mêmes fonctions que l'admin, avec la même validation 
 
 Les outils et les boutons de l'admin appellent le même code (`lib/admin-ops/`, `lib/marketing/studio.ts`, `lib/marketing/schedule.ts`).
 
-### Lot 3 — Actions sensibles (préparées par Claude, validées par Ben)
+### Lot 3 — Actions sensibles (en ligne : préparées par Claude, validées par Ben)
 
-| Outil | Actions de l'admin couvertes |
-|---|---|
-| `request_payment_confirmation` | Confirmer un paiement manuel, un solde, un paiement de conseil |
-| `request_direct_registration` | Inscrire directement un prospect dans une cohorte |
-| `request_diagnosis_send` | Valider et envoyer une analyse (ou la mettre de côté) |
-| `request_email` | Envoyer à un prospect : relance, invitation à réserver, rappel de séance, accueil |
-| `request_catch_up` | Rattrapage en un clic d'une cohorte en retard |
-| `request_linkedin_publish` | Publier un post LinkedIn maintenant |
-| `request_cohort_send` | Envoyer accueil, sessions et calendriers personnels d'une cohorte |
-| `request_price_change` | Modifier un palier ou le prix d'un programme |
-| `request_deletion` | Supprimer un prospect (RGPD) ou une cohorte vide |
+Chaque outil vérifie ce qu'il peut, écrit en clair ce qui va se passer et crée une **demande** (`McpRequest`). Elle apparaît en tête de la file d'actions et dans Admin › Prise MCP › Demandes. « Valider » l'exécute une seule fois (réservation atomique), avec le même code que le bouton de l'admin, et vérifie tout à nouveau. « Refuser » ne fait rien. Une demande non traitée expire au bout de 7 jours.
+
+| Outil | Ce que fait la validation | Action de l'admin |
+|---|---|---|
+| `request_payment_confirmation` | Confirme un paiement reçu hors application : inscription, solde, séance de conseil | « Confirmer » (file, fiche, Conseil) |
+| `request_direct_registration` | Inscrit un prospect dans une cohorte, place payée ; e-mail « place réservée » et documents en option | Fiche › Inscription directe |
+| `request_diagnosis_send` | Envoie l'analyse du scanner (message tel quel ou réécrit), ou la met de côté | Analyses › Valider et envoyer |
+| `request_email` | Envoie une relance à un prospect consentant, ou le rappel de réserver une séance payée | Studio › Envoyer, Conseil › Renvoyer le lien |
+| `request_catch_up` | Envoie les e-mails de rattrapage d'une cohorte en retard | Pilotage › Rattrapage |
+| `request_linkedin_publish` | Publie un post sur LinkedIn tout de suite | Studio › Publier |
+| `request_cohort_send` | Documents de préparation ou invitations aux séances, aux inscrits payés | Cohorte › Documents, Sessions |
+| `request_price_change` | Change le montant d'un programme pour un palier | Paramètres › Prix |
+| `request_deletion` | Supprime un prospect (RGPD) ou une cohorte vide ou dont les inscrits sont déplacés | Fiche › Supprimer, Cohorte › Supprimer |
+| `list_requests` | (lecture) Les demandes en attente et le résultat des dernières | — |
+
+Le statut `paid` ne vient donc jamais de Claude : il vient du clic de Ben sur la demande, qui est sa confirmation manuelle (CLAUDE.md, Paiement).
 
 ### Restent dans l'admin seulement
 
