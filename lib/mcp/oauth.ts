@@ -77,6 +77,22 @@ export function basicCredentials(header: string | null): { id: string; secret: s
   return { id: decodeURIComponent(decoded.slice(0, i)), secret: decodeURIComponent(decoded.slice(i + 1)) };
 }
 
+/**
+ * The site's address as the client reached it. The bare domain redirects to
+ * www (308) and MCP clients do not follow redirects mid-handshake, so every
+ * address the plug announces must be the one actually answering. Unknown
+ * hosts fall back to the configured URL.
+ */
+export function publicBase(host: string | null | undefined, fallback: string): string {
+  const h = (host ?? "").trim().toLowerCase();
+  if (/^(localhost|127\.0\.0\.1)(:\d{2,5})?$/.test(h)) return `http://${h}`;
+  if (/^(www\.cisspbootcamp\.online|[a-z0-9-]+\.vercel\.app)$/.test(h)) return `https://${h}`;
+  return fallback.replace(/\/+$/, "");
+}
+
+/** The address the request came in on (Vercel passes the original host). */
+export const requestBase = (headers: Headers, fallback: string) => publicBase(headers.get("x-forwarded-host") ?? headers.get("host"), fallback);
+
 /** Where everything lives, from the public URL of the site. */
 export function endpoints(appUrl: string) {
   const base = appUrl.replace(/\/+$/, "");

@@ -1,10 +1,11 @@
 import { Plug } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { CopyLink } from "@/components/admin/CopyLink";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
-import { endpoints } from "@/lib/mcp/oauth";
+import { endpoints, requestBase } from "@/lib/mcp/oauth";
 import { MCP_TOOLS } from "@/lib/mcp/tools";
 
 import { disconnectMcpClient } from "./actions";
@@ -20,7 +21,7 @@ const fmt = (d: Date | null) => (d ? when.format(d) : "jamais");
  */
 export default async function McpPage({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
   const { ok } = await searchParams;
-  const url = endpoints(env.NEXT_PUBLIC_APP_URL).resource;
+  const url = endpoints(requestBase(await headers(), env.NEXT_PUBLIC_APP_URL)).resource;
   const [clients, calls] = await Promise.all([
     prisma.mcpClient.findMany({ where: { authorizedAt: { not: null } }, orderBy: { authorizedAt: "desc" } }),
     prisma.actionLog.findMany({ where: { type: "mcp_call" }, orderBy: { createdAt: "desc" }, take: 20, select: { id: true, payload: true, createdAt: true } }),
