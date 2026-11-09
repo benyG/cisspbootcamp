@@ -1129,3 +1129,44 @@ model AnalystReport {
 
   @@map("analyst_reports")
 }
+
+/// An application allowed to ask for the MCP plug (docs/MCP.md): Claude,
+/// Claude Code or another MCP client, registered by itself (OAuth dynamic
+/// client registration). It reaches nothing until Ben authorises it.
+model McpClient {
+  id           Int       @id @default(autoincrement())
+  clientId     String    @unique @map("client_id") @db.VarChar(64)
+  name         String    @db.VarChar(120)
+  redirectUris Json      @map("redirect_uris")
+  /// sha256 of the client secret, for clients that asked for one.
+  secretHash   String?   @map("secret_hash") @db.VarChar(64)
+  /// When Ben last authorised it; null = registered, never authorised.
+  authorizedAt DateTime? @map("authorized_at")
+  lastUsedAt   DateTime? @map("last_used_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  tokens McpToken[]
+
+  @@index([createdAt])
+  @@map("mcp_clients")
+}
+
+/// OAuth codes and tokens of the MCP plug, stored as sha256 only.
+model McpToken {
+  id            Int       @id @default(autoincrement())
+  /// code | access | refresh
+  kind          String    @db.VarChar(8)
+  hash          String    @unique @db.VarChar(64)
+  clientId      String    @map("client_id") @db.VarChar(64)
+  client        McpClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  expiresAt     DateTime  @map("expires_at")
+  /// Authorisation codes only: PKCE challenge (S256) and the redirect it was issued for.
+  codeChallenge String?   @map("code_challenge") @db.VarChar(128)
+  redirectUri   String?   @map("redirect_uri") @db.VarChar(512)
+  usedAt        DateTime? @map("used_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([clientId, kind])
+  @@index([expiresAt])
+  @@map("mcp_tokens")
+}
