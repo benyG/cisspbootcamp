@@ -59,3 +59,21 @@ export async function publishDuePosts(now = new Date()): Promise<number> {
   }
   return done;
 }
+
+/**
+ * Plans a LinkedIn post for a day (lot 7), or takes it off the plan (day
+ * null). Planning validates a proposed draft; the daily cron publishes it.
+ */
+export async function planPost(postId: number, day: Date | null, imageId: number | null = null): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  const post = await prisma.marketingPost.findUnique({ where: { id: postId }, select: { channel: true, linkedinUrn: true, publishedAt: true } });
+  if (!post) return { ok: false, error: `Aucun post n°${postId}.` };
+  if (!day) {
+    await prisma.marketingPost.update({ where: { id: postId }, data: { scheduledFor: null, scheduledImageId: null, publishError: null } });
+    return { ok: true, message: "Post retiré du planning." };
+  }
+  if (post.channel !== "linkedin") return { ok: false, error: "Seuls les posts LinkedIn se programment." };
+  if (post.linkedinUrn || post.publishedAt) return { ok: false, error: "Ce post est déjà publié." };
+  if (imageId !== null && !(await prisma.marketingImage.findFirst({ where: { id: imageId, postId }, select: { id: true } }))) return { ok: false, error: "Ce visuel n’appartient pas à ce post." };
+  await prisma.marketingPost.update({ where: { id: postId }, data: { scheduledFor: day, scheduledImageId: imageId, publishError: null, autoDraft: false } });
+  return { ok: true, message: `Post programmé pour le ${day.toISOString().slice(0, 10)}.` };
+}

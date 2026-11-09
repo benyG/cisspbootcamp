@@ -4,97 +4,39 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { Prisma } from "@prisma/client";
-
 import { auth } from "@/auth";
+import { createCohort as createCohortCore, markCampaignDone as markCampaignDoneCore, updateCohort as updateCohortCore } from "@/lib/admin-ops/cohorts";
 import { campaignFromForm } from "@/lib/campaign";
-import { MANUAL_COHORT_STATUSES, automaticCohortStatus, cohortDeletionProblem, cohortHasStarted } from "@/lib/cohorts";
+import { cohortDeletionProblem } from "@/lib/cohorts";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
 import { sendOnboardingDocuments } from "@/lib/onboarding";
-import { PROGRAM_CODES } from "@/lib/programs";
-import { cisspEndsAt } from "@/lib/reading-plan/page";
 
 async function requireAdmin() {
   const session = await auth();
   if (!session?.user?.email) throw new Error("Non autorisé");
 }
 
-const cohortSchema = z
-  .object({
-    program: z.enum(PROGRAM_CODES).default("cissp"),
-    name: z.string().trim().min(1, "Nom requis").max(120),
-    startsAt: z.coerce.date(),
-    // CISSP: computed from the reading plan's calendar, whatever was typed.
-    endsAt: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.coerce.date().optional()),
-    capacity: z.coerce.number().int().min(1).max(100),
-    // Pilotage goal (lot 2): empty = the capacity.
-    targetSeats: z.preprocess((v) => (v === "" || v === null || v === undefined ? null : v), z.coerce.number().int().min(1, "Objectif : au moins 1 place").max(100).nullable()),
-    // Ben picks planned or open; full, running and done are set automatically.
-    status: z.enum(MANUAL_COHORT_STATUSES),
-  })
-  .transform((c) => ({ ...c, endsAt: c.program === "cissp" ? cisspEndsAt(c.startsAt) : c.endsAt }))
-  .refine((c): c is typeof c & { endsAt: Date } => !!c.endsAt, { message: "Date de fin requise", path: ["endsAt"] })
-  .refine((c) => c.endsAt! > c.startsAt, { message: "La fin doit suivre le début", path: ["endsAt"] });
-
-function parse(formData: FormData) {
-  return cohortSchema.safeParse({
-    program: formData.get("program") ?? "cissp",
-    name: formData.get("name"),
-    startsAt: formData.get("startsAt"),
-    endsAt: formData.get("endsAt"),
-    capacity: formData.get("capacity"),
-    targetSeats: formData.get("targetSeats"),
-    status: formData.get("status"),
-  });
-}
+const cohortFields = (formData: FormData) => Object.fromEntries(["program", "name", "startsAt", "endsAt", "capacity", "targetSeats", "status"].map((k) => [k, formData.get(k) ?? (k === "program" ? "cissp" : null)]));
 
 export async function createCohort(formData: FormData): Promise<void> {
   await requireAdmin();
-  const parsed = parse(formData);
-  if (!parsed.success) redirect(`/admin/cohortes${formData.get("hasCampaign") ? "/nouvelle" : ""}?erreur=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`);
-
   const campaign = formData.get("hasCampaign") ? campaignFromForm((name) => formData.get(name) as string | null) : null;
-  const data = { ...parsed.data, campaign: campaign ?? Prisma.JsonNull, status: automaticCohortStatus({ ...parsed.data, paid: 0 }, new Date()) as never };
-  const cohort = await prisma.cohort.create({ data });
+  const result = await createCohortCore(cohortFields(formData), campaign);
+  if (!result.ok) redirect(`/admin/cohortes${formData.get("hasCampaign") ? "/nouvelle" : ""}?erreur=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/cohortes");
-  revalidateTag(COHORTS_CACHE_TAG);
-  redirect(`/admin/cohortes/${cohort.id}`);
+  redirect(`/admin/cohortes/${result.id}`);
 }
 
 export async function updateCohort(formData: FormData): Promise<void> {
   await requireAdmin();
   const id = z.coerce.number().int().positive().safeParse(formData.get("id"));
-  const parsed = parse(formData);
   if (!id.success) redirect("/admin/cohortes");
-  const fail = (message: string): never => redirect(`/admin/cohortes/${id.data}?erreur=${encodeURIComponent(message)}`);
-  const now = new Date();
-  const existing = await prisma.cohort.findUnique({
-    where: { id: id.data },
-    select: { startsAt: true, status: true, _count: { select: { registrations: { where: { status: "paid" } }, sessions: { where: { sentAt: { not: null } } } } } },
-  });
-  if (!existing) redirect("/admin/cohortes");
-
-  let moved = 0;
-  // Started (Ben, 03/10): only the name can change; the reading plan, the
-  // Meet sessions and the e-mails already sent depend on the rest.
-  if (cohortHasStarted(existing, now)) {
-    const name = z.string().trim().min(1, "Nom requis").max(120).safeParse(formData.get("name"));
-    if (!name.success) fail(name.error.issues[0]?.message ?? "Nom invalide");
-    await prisma.cohort.update({ where: { id: id.data }, data: { name: name.data } });
-  } else {
-    if (!parsed.success) fail(parsed.error.issues[0]?.message ?? "Données invalides");
-    const data = parsed.data!;
-    // Invitations already sent stay on the old days: the sessions page flags
-    // them, and Ben replaces each one (new event, old one cancelled).
-    if (data.startsAt.getTime() !== existing.startsAt.getTime() && existing._count.sessions > 0) moved = existing._count.sessions;
-    const status = automaticCohortStatus({ ...data, paid: existing._count.registrations }, now);
-    await prisma.cohort.update({ where: { id: id.data }, data: { ...data, status: status as never } });
-  }
+  const result = await updateCohortCore(id.data, cohortFields(formData));
+  if (!result.ok) redirect(result.error.startsWith("Aucune cohorte") ? "/admin/cohortes" : `/admin/cohortes/${id.data}?erreur=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/cohortes");
   revalidatePath(`/admin/cohortes/${id.data}`);
-  revalidateTag(COHORTS_CACHE_TAG);
-  redirect(`/admin/cohortes/${id.data}?ok=1${moved ? `&arenvoyer=${moved}` : ""}`);
+  redirect(`/admin/cohortes/${id.data}?ok=1${result.moved ? `&arenvoyer=${result.moved}` : ""}`);
 }
 
 /**
@@ -206,8 +148,7 @@ export async function saveCampaign(formData: FormData): Promise<void> {
 export async function markCampaignDone(formData: FormData): Promise<void> {
   await requireAdmin();
   const cohortId = z.coerce.number().int().positive().parse(formData.get("cohortId"));
-  const key = z.string().regex(/^[a-z0-9-]{1,40}$/).parse(formData.get("key"));
-  await prisma.actionLog.create({ data: { type: "campaign_done", leadId: null, payload: { cohortId, key } } });
+  await markCampaignDoneCore(cohortId, String(formData.get("key") ?? ""));
   revalidatePath("/admin");
   revalidatePath(`/admin/cohortes/${cohortId}`);
 }

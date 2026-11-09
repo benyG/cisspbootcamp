@@ -6,7 +6,7 @@ import { CopyLink } from "@/components/admin/CopyLink";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import { endpoints, requestBase } from "@/lib/mcp/oauth";
-import { MCP_TOOLS } from "@/lib/mcp/tools";
+import { ALL_TOOLS, READ_TOOLS, WRITE_TOOLS } from "@/lib/mcp/catalog";
 
 import { disconnectMcpClient } from "./actions";
 
@@ -26,13 +26,13 @@ export default async function McpPage({ searchParams }: { searchParams: Promise<
     prisma.mcpClient.findMany({ where: { authorizedAt: { not: null } }, orderBy: { authorizedAt: "desc" } }),
     prisma.actionLog.findMany({ where: { type: "mcp_call" }, orderBy: { createdAt: "desc" }, take: 20, select: { id: true, payload: true, createdAt: true } }),
   ]);
-  const titles = new Map(MCP_TOOLS.map((t) => [t.name, t.title]));
+  const titles = new Map(ALL_TOOLS.map((t) => [t.name, t.title]));
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-8">
       <Link href="/admin" className="text-sm text-muted">← Administration</Link>
       <h1 className="mt-3 flex items-center gap-2 text-2xl font-bold"><Plug className="size-6 shrink-0 text-accent" aria-hidden />Prise MCP</h1>
-      <p className="mt-1 text-sm text-muted">Pilotez l’application depuis Claude (ou un autre outil MCP) : « Où en est la cohorte de janvier ? », « Qui dois-je rappeler aujourd’hui ? ». Pour l’instant, la prise lit seulement : elle ne modifie et n’envoie rien.</p>
+      <p className="mt-1 text-sm text-muted">Pilotez l’application depuis Claude (ou un autre outil MCP) : « Où en est la cohorte de janvier ? », « Qui dois-je rappeler aujourd’hui ? ». « Ajoute une note sur ce prospect », « Crée un code promo de 10 % ». Elle ne paie, ne supprime, ne publie tout de suite et n’écrit à aucun prospect sans vous.</p>
       {ok && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{ok}</p>}
 
       <section className="mt-5 rounded-xl border border-line bg-white p-4 text-sm">
@@ -64,11 +64,18 @@ export default async function McpPage({ searchParams }: { searchParams: Promise<
       </section>
 
       <section className="mt-4 rounded-xl border border-line bg-white p-4 text-sm">
-        <h2 className="font-bold">Ce que Claude peut faire ({MCP_TOOLS.length} outils, lecture seule)</h2>
-        <ul className="mt-2 grid gap-1 text-ink-2 sm:grid-cols-2">
-          {MCP_TOOLS.map((t) => <li key={t.name}>{t.title}</li>)}
-        </ul>
-        <p className="mt-2 text-xs text-muted">Prochains lots : actions réversibles (notes, relances, codes promo, posts programmés…), puis actions sensibles préparées par Claude et validées par vous ici.</p>
+        <h2 className="font-bold">Ce que Claude peut faire ({ALL_TOOLS.length} outils)</h2>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-muted uppercase">Lire ({READ_TOOLS.length})</p>
+            <ul className="mt-1 grid gap-0.5 text-ink-2">{READ_TOOLS.map((t) => <li key={t.name}>{t.title}</li>)}</ul>
+          </div>
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-muted uppercase">Agir, de façon réversible ({WRITE_TOOLS.length})</p>
+            <ul className="mt-1 grid gap-0.5 text-ink-2">{WRITE_TOOLS.map((t) => <li key={t.name}>{t.title}</li>)}</ul>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-muted">Une seule action écrit à un prospect : enregistrer « veut s’inscrire » ou « à relancer » après un appel envoie l’e-mail d’après-appel, comme le bouton de la file. Prochain lot : les actions sensibles (paiements, envois, publication immédiate, suppressions), préparées par Claude et validées par vous ici.</p>
       </section>
 
       <section className="mt-4 rounded-xl border border-line bg-white p-4 text-sm">

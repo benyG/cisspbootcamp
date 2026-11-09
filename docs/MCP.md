@@ -44,23 +44,27 @@ Les outils appellent les mêmes fonctions que l'admin, avec la même validation 
 | `analyst_report` | Le rapport de l'analyste de la semaine : diagnostic, orientations, décisions |
 | `health_check` | Santé des intégrations, avec quoi faire pour corriger |
 
-### Lot 2 — Actions réversibles (directes, journalisées)
+### Lot 2 — Actions réversibles (en ligne, directes, journalisées)
 
-| Outil | Actions de l'admin couvertes |
-|---|---|
-| `update_lead` | Notes, étiquettes, statut, prochaine relance, reporter, marquer perdu |
-| `record_call_outcome` | Résultat d'un appel découverte ou d'une séance de conseil |
-| `mark_followup_done` | Relance faite (WhatsApp ou e-mail envoyé à la main), inscription inachevée traitée |
-| `seat_hold` | Garder une place après un appel, la libérer |
-| `draft_followup` | Rédiger une relance personnalisée (IA), sans l'envoyer |
-| `marketing_drafts` | Idées de sujets, générer des posts en brouillon, modifier un brouillon, générer un visuel |
-| `schedule_post` | Programmer ou déprogrammer un post LinkedIn (annulable jusqu'au jour J) |
-| `promo_codes` | Créer un code partenaire ou des codes de parrainage, activer ou désactiver |
-| `ad_campaigns` | Créer une campagne suivie, mettre à jour la dépense, l'arrêter |
-| `cohorts` | Créer ou modifier une cohorte, enregistrer le plan de campagne, cocher une étape |
-| `playbooks` | Changer le mode d'un playbook (arrêt, essai, actif) |
-| `analyst` | Retenir ou écarter une orientation, la marquer faite, relancer l'analyse |
-| `send_test_email` | M'envoyer l'e-mail de test (à Ben uniquement) |
+| Outil | Ce qu'il fait | Action de l'admin |
+|---|---|---|
+| `update_lead` | Ajouter une note datée, notes, étiquettes, statut, prochaine relance, reporter, marquer perdu | Fiche prospect, « Reporter », « Perdu » |
+| `record_call_outcome` | Résultat d'un appel ; « veut s'inscrire » et « à relancer » envoient l'e-mail d'après-appel, comme le bouton | File d'actions |
+| `mark_followup_done` | Relance envoyée à la main, inscription inachevée traitée | « Envoyé », « Traité » |
+| `seat_hold` | Garder une place 48 h, la libérer | Fiche prospect |
+| `draft_followup` | Rédiger une relance personnelle (IA), sans l'envoyer | Studio › Relances |
+| `suggest_post_topics` | Dix idées de sujets (IA), actualité en option | Studio |
+| `generate_posts` | Trois variantes (IA), rangées en brouillons à valider | Studio |
+| `edit_post` | Modifier un post non publié (le lien suivi reste) | Studio |
+| `schedule_post` | Programmer ou déprogrammer un post LinkedIn | Studio › Programmer |
+| `promo_codes` | Code partenaire, codes de parrainage, activer / désactiver | Codes promo |
+| `ad_campaigns` | Créer une campagne suivie, dépense, terminer / réactiver | Pub payante |
+| `cohorts` | Créer, modifier, cocher une étape de campagne | Cohortes |
+| `set_playbook_mode` | Actif, essai ou arrêté | Playbooks |
+| `analyst` | Retenir, écarter, effacer, marquer fait, relancer l'analyse | Analyste |
+| `send_test_email` | E-mail de test à Ben uniquement | Santé des intégrations |
+
+Les outils et les boutons de l'admin appellent le même code (`lib/admin-ops/`, `lib/marketing/studio.ts`, `lib/marketing/schedule.ts`).
 
 ### Lot 3 — Actions sensibles (préparées par Claude, validées par Ben)
 
