@@ -25,14 +25,14 @@ export const ACTIVITIES = {
  * journée where it is built.
  */
 export const TASKS = {
-  relance: { label: "Relancer les prospects", title: "Relancer vos prospects sans y penser", how: "J3 et J6 : formulaire, relances qui partent seules, routines du pilote automatique" },
-  paiements: { label: "Suivre les paiements", title: "Savoir qui a payé, sans chercher", how: "J2 et J3 : tableau de bord et paiement en ligne" },
-  devis: { label: "Faire les devis et les factures", title: "Devis et factures en un clic", how: "J3 : devis, factures et reçus en PDF" },
-  rdv: { label: "Gérer les rendez-vous", title: "Des rendez-vous pris sans aller-retour", how: "J3 : réservation en ligne et rappels" },
-  chiffres: { label: "Préparer les chiffres du mois", title: "Les chiffres du mois, prêts le 1er", how: "J2 et J6 : tableau de bord, puis un rapport chaque semaine et un agent analyste" },
-  questions: { label: "Répondre aux mêmes questions", title: "Répondre aux questions fréquentes", how: "J6 : un agent qui répond depuis vos documents et vos données" },
-  seo: { label: "Être trouvé sur Google", title: "Être trouvé par vos clients sur Google", how: "J5 : référencement, mots-clés et analyse des concurrents" },
-  reseaux: { label: "Publier sur les réseaux", title: "Préparer vos publications", how: "J4 : publications Facebook et LinkedIn avec leurs images, que vous validez" },
+  relance: { label: "Relancer les prospects", title: "Relancer vos prospects sans y penser", how: "J4 et J6 : un agent qui relance seul, puis les routines du pilotage" },
+  paiements: { label: "Suivre les paiements", title: "Savoir qui a payé, sans chercher", how: "J3 et J4 : tableau de bord et paiement en ligne" },
+  devis: { label: "Faire les devis et les factures", title: "Devis et factures en un clic", how: "J4 : devis, factures et reçus en PDF, préparés par un agent" },
+  rdv: { label: "Gérer les rendez-vous", title: "Des rendez-vous pris sans aller-retour", how: "J4 : réservation en ligne et rappels" },
+  chiffres: { label: "Préparer les chiffres du mois", title: "Les chiffres du mois, prêts le 1er", how: "J3 et J6 : tableau de bord, puis un rapport chaque semaine et un agent analyste" },
+  questions: { label: "Répondre aux mêmes questions", title: "Répondre aux questions fréquentes", how: "J1 et J5 : un assistant qui répond depuis vos documents" },
+  seo: { label: "Être trouvé sur Google", title: "Être trouvé par vos clients sur Google", how: "J5 : un agent de veille : référencement, mots-clés, concurrents" },
+  reseaux: { label: "Publier sur les réseaux", title: "Préparer vos publications", how: "J5 : un agent communication : publications et images, que vous validez" },
 } as const;
 
 export const HOURS = { "2": "Moins de 2 h", "5": "De 2 à 5 h", "10": "De 5 à 10 h", "11": "Plus de 10 h" } as const;

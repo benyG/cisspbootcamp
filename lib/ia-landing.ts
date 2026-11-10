@@ -7,18 +7,18 @@
 
 /** Per journée, beside JOURNEES (lib/ia-days.ts): a tab label and what the participant knows afterwards. */
 export const DAY_DEMO: ReadonlyArray<{ short: string; skills: readonly string[] }> = [
-  { short: "En ligne", skills: ["Mettre une application en ligne", "Décrire une page à Claude Code et la corriger", "Sauvegarder votre code sur GitHub"] },
-  { short: "Cœur et chiffres", skills: ["Créer votre base de données et vos écrans", "Construire votre tableau de bord", "Faire tester chaque changement"] },
-  { short: "Vendre", skills: ["Brancher mobile money et carte", "Produire devis, factures et reçus en PDF", "Programmer les relances"] },
-  { short: "Communiquer", skills: ["Générer des publications à votre ton", "Créer leurs images", "Tout valider avant publication"] },
-  { short: "Marché", skills: ["Améliorer votre référencement", "Suivre mots-clés et concurrents", "En tirer un plan de contenu"] },
-  { short: "Pilote auto", skills: ["Fixer des objectifs et leur courbe cible", "Programmer des routines qui relancent et alertent", "Brancher un agent IA analyste, avec vos garde-fous"] },
+  { short: "Composantes de l’IA", skills: ["Comprendre modèle, prompt, contexte et RAG", "Créer une skill et un assistant sur vos documents", "Relier l’IA à vos outils (MCP)"] },
+  { short: "Processus et fondations", skills: ["Cartographier vos processus métiers", "Choisir ce qui s’automatise en premier", "Mettre en ligne avec Claude Code, GitHub et Vercel"] },
+  { short: "Activité et données", skills: ["Structurer clients, commandes et factures", "Créer votre base et vos écrans", "Construire votre tableau de bord, testé"] },
+  { short: "Système d’agents", skills: ["Construire des agents qui agissent", "Encaisser par carte et mobile money", "Fixer leurs règles et leurs limites"] },
+  { short: "Agents spécialisés", skills: ["Un agent communication, que vous validez", "Un agent de veille du marché", "Les interfaces pour travailler avec eux"] },
+  { short: "Pilotage autonome", skills: ["Fixer des objectifs et leur courbe cible", "Programmer des routines qui relancent et alertent", "Brancher un agent IA analyste, avec vos garde-fous"] },
 ];
 
 /**
  * The two example projects of the programme (Ben, 08/11: both audiences),
  * fictitious and said so: an existing workshop, a business that starts.
- * What each writes to Claude Code, journée by journée.
+ * What each asks the AI, journée by journée (programme of 10/11).
  */
 export type ExampleKey = "adjoa" | "kofi";
 export const EXAMPLES: Record<ExampleKey, { tab: string; note: string; prompts: readonly string[] }> = {
@@ -26,11 +26,11 @@ export const EXAMPLES: Record<ExampleKey, { tab: string; note: string; prompts: 
     tab: "Adjoa · atelier existant",
     note: "Atelier Adjoa : activité existante, exemple fictif.",
     prompts: [
-      "Crée le site de mon atelier avec une page de prise de rendez-vous, et mets-le en ligne sur mon nom de domaine.",
+      "Lis mes tarifs et mes modèles, puis réponds aux questions de mes clientes comme je le ferais.",
+      "Voici comment je reçois, mesure et livre une commande : dis-moi quoi automatiser d’abord, et mets mon atelier en ligne à mon nom de domaine.",
       "Ajoute mes clientes avec leurs mesures, l’état de chaque commande et le tableau de bord du mois.",
-      "Ajoute un acompte par Orange Money ou carte, la facture en PDF, et relance un devis resté trois jours sans réponse.",
-      "Chaque semaine, propose-moi trois publications sur mes nouveaux modèles, avec leur image.",
-      "Analyse les recherches sur la couture sur mesure à Lomé et ce que publient mes concurrents.",
+      "Quand une cliente demande un devis, prépare-le, encaisse l’acompte par Orange Money ou carte, et relance-la après trois jours sans réponse.",
+      "Chaque semaine, propose-moi trois publications sur mes nouveaux modèles, avec leur image, et dis-moi ce que publient mes concurrentes.",
       "Chaque lundi, dis-moi si je suis en avance sur mes 20 commandes du mois et prépare les relances des clientes silencieuses.",
     ],
   },
@@ -38,11 +38,11 @@ export const EXAMPLES: Record<ExampleKey, { tab: string; note: string; prompts: 
     tab: "Kofi · traiteur qui démarre",
     note: "Kofi Traiteur : entreprise qui démarre, exemple fictif.",
     prompts: [
-      "Crée la page de mon service de traiteur pour entreprises, avec mes menus et une demande de devis en ligne.",
+      "À partir de mes menus et de mes prix, réponds aux demandes des entreprises comme je le ferais.",
+      "Voici le circuit d’une commande, de la demande à la livraison : dis-moi quoi automatiser d’abord, et mets ma page en ligne.",
       "Ajoute mes clients, les commandes de la semaine, les quantités à acheter et le tableau de bord du mois.",
-      "Envoie le devis en PDF, encaisse l’acompte par mobile money et relance l’entreprise qui n’a pas répondu.",
-      "Chaque lundi, propose-moi le menu de la semaine en publication LinkedIn, avec sa photo.",
-      "Repère les entreprises d’Abidjan qui cherchent un traiteur et ce que proposent mes concurrents.",
+      "Prépare le devis en PDF, encaisse l’acompte par mobile money et relance l’entreprise qui n’a pas répondu.",
+      "Chaque lundi, propose-moi le menu de la semaine en publication LinkedIn, avec sa photo, et dis-moi ce que proposent mes concurrents.",
       "Si je suis en retard sur mes 8 contrats du trimestre, propose-moi un plan de rattrapage et attends mon accord.",
     ],
   },

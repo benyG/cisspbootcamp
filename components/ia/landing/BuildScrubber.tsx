@@ -6,7 +6,7 @@ import { EXAMPLES, type ExampleKey } from "@/lib/ia-landing";
 
 /**
  * The programme (Ben, 05/11; two examples 08/11): pick a journée, see what
- * you write to Claude Code, what you know afterwards, and an example project
+ * you ask the AI, what you know afterwards, and an example project
  * on a phone where what is still on the plan is blue and what runs is white.
  * Tours J1 to J6 for Adjoa (an existing workshop), then for Kofi (a business
  * that starts), and again, until the reader takes over.
@@ -16,11 +16,13 @@ export type ScrubDay = { n: number; title: string; text: string; short: string; 
 type Part = { day: number; plan: string; className?: string; content: ReactNode };
 
 const bars = (heights: number[]) => <div className="bars" aria-hidden="true">{heights.map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}</div>;
-const PLAN = ["J1 · mise en ligne", "J1 · page d’accueil", "J2 · clients et chiffres", "J3 · paiements et relances", "J4 · publications", "J5 · veille du marché", "J6 · pilote automatique"];
-const DAY_OF = [1, 1, 2, 3, 4, 5, 6];
+const PLAN = ["J1 · assistant sur vos documents", "J2 · mise en ligne", "J2 · page d’accueil", "J3 · clients et chiffres", "J4 · agents : paiements et relances", "J5 · agent communication", "J5 · agent de veille", "J6 · pilotage autonome"];
+const DAY_OF = [1, 2, 2, 3, 4, 5, 5, 6];
+const CLASS_OF: Array<string | undefined> = [undefined, "url", undefined, undefined, undefined, "social", undefined, "pilot"];
 
 const CONTENT: Record<ExampleKey, ReactNode[]> = {
   adjoa: [
+    <div key="a1" className="rows"><div><b>« Délai pour une robe ? »</b><span className="pill ok">répondu</span></div><div><span>D’après tarifs-atelier.pdf</span><span className="pill">source</span></div></div>,
     <Fragment key="k0"><span>atelier-adjoa.com</span><span className="live">en ligne</span></Fragment>,
     <Fragment key="k1"><div className="shop">Atelier Adjoa<small>Couture sur mesure · Lomé</small></div><span className="mini-btn">Prendre rendez-vous</span></Fragment>,
     <Fragment key="k2"><div className="rows"><div><span>Afi K. · robe de cérémonie</span><span className="pill ok">prête</span></div><div><span>Kossi A. · 3 chemises</span><span className="pill">mesures</span></div></div>{bars([35, 52, 44, 70, 62, 88])}</Fragment>,
@@ -30,17 +32,18 @@ const CONTENT: Record<ExampleKey, ReactNode[]> = {
     <Fragment key="k6"><div className="ph"><span>Objectif · 20 commandes</span><b>13 · en avance</b></div><div className="meter"><i style={{ width: "65%" }} /></div><div className="pl"><span>✓ 4 relances préparées</span><span className="w">● 3 à valider</span></div></Fragment>,
   ],
   kofi: [
+    <div key="a2" className="rows"><div><b>« Prix pour 40 repas ? »</b><span className="pill ok">répondu</span></div><div><span>D’après menus-entreprise.pdf</span><span className="pill">source</span></div></div>,
     <Fragment key="k7"><span>kofi-traiteur.ci</span><span className="live">en ligne</span></Fragment>,
     <Fragment key="k8"><div className="shop">Kofi Traiteur<small>Repas d’entreprise · Abidjan</small></div><span className="mini-btn">Demander un devis</span></Fragment>,
     <Fragment key="k9"><div className="rows"><div><span>Cabinet Kouassi · 40 repas</span><span className="pill ok">confirmé</span></div><div><span>Courses de jeudi</span><span className="pill">liste prête</span></div></div>{bars([20, 30, 45, 40, 60, 72])}</Fragment>,
     <Fragment key="k10"><div className="rows"><div><b>Acompte · 120 000 FCFA</b><span className="pill ok">D-007.pdf</span></div><div><span>Relance agence Yao</span><span className="pill ok">auto</span></div></div><div className="pay"><span className="om">Orange Money</span><span className="mtn">MTN MoMo</span><span>Carte</span></div></Fragment>,
     <Fragment key="k11"><span className="thumb" aria-hidden="true" /><span><b>LinkedIn</b>« Le menu de la semaine » · à valider</span></Fragment>,
-    <div key="k12" className="rows"><div><b>traiteur entreprise Abidjan</b><span className="pill ok">suivi</span></div><div><span>12 entreprises repérées</span><span className="pill">à contacter</span></div></div>,
+    <div key="k12" className="rows"><div><b>traiteur entreprise Abidjan</b><span className="pill ok">suivi</span></div><div><span>3 concurrents suivis</span><span className="pill">plan</span></div></div>,
     <Fragment key="k13"><div className="ph"><span>Objectif · 8 contrats</span><b className="late">3 · en retard</b></div><div className="meter"><i className="late" style={{ width: "38%" }} /></div><div className="pl"><span>✓ Plan de rattrapage prêt</span><span className="w">● attend votre accord</span></div></Fragment>,
   ],
 };
 
-const parts = (who: ExampleKey): Part[] => CONTENT[who].map((content, i) => ({ day: DAY_OF[i]!, plan: PLAN[i]!, className: i === 0 ? "url" : i === 4 ? "social" : i === 6 ? "pilot" : undefined, content }));
+const parts = (who: ExampleKey): Part[] => CONTENT[who].map((content, i) => ({ day: DAY_OF[i]!, plan: PLAN[i]!, className: CLASS_OF[i], content }));
 const ORDER: ExampleKey[] = ["adjoa", "kofi"];
 
 export function BuildScrubber({ days }: { days: readonly ScrubDay[] }) {
@@ -93,7 +96,7 @@ export function BuildScrubber({ days }: { days: readonly ScrubDay[] }) {
           <span className="label">Journée {day.n} sur {days.length}</span>
           <h3>{day.title}</h3>
           <p>{day.text}</p>
-          <span className="label" style={{ display: "block", marginTop: 18 }}>Ce que vous écrivez à Claude Code</span>
+          <span className="label" style={{ display: "block", marginTop: 18 }}>Ce que vous demandez à l’IA</span>
           <div className="prompt" style={{ marginTop: 8 }}>
             <span className="who">vous ›</span> {prompt.slice(0, typed)}<span className="caret" aria-hidden="true" />
           </div>

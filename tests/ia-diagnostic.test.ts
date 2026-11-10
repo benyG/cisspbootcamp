@@ -11,7 +11,7 @@ describe("diagnostic d’autonomie (Ben, 03/11 ; 08/11)", () => {
     expect(d.priorities.map((p) => p.code)).toEqual(["relance", "devis", "chiffres"]);
     expect(d.priorities).toHaveLength(PRIORITY_COUNT);
     expect(d.priorities[0]).toMatchObject({ title: "Relancer vos prospects sans y penser" });
-    expect(d.priorities[0].how).toMatch(/^J3/);
+    expect(d.priorities[0].how).toMatch(/^J4/);
   });
 
   it("keeps fewer priorities when fewer tasks are ticked", () => {

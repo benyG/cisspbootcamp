@@ -209,10 +209,17 @@ async function main() {
       await prisma.programPrice.upsert({ where: { program_tier: { program, tier } }, update: {}, create: { program, tier, amountUsd, installmentUsd: PROGRAM_INSTALLMENTS[program]?.[tier as "africa" | "international"] ?? null } });
     }
   }
-  const ccCohortName = "Session CC novembre 2026";
+  // Dated from today (first Monday at least 4 weeks out) so admissions are
+  // open whenever the seed runs: a fixed date closed them in CI on 9/11/2026.
   if (!(await prisma.cohort.findFirst({ where: { program: "cc" } }))) {
+    const startsAt = new Date();
+    startsAt.setUTCDate(startsAt.getUTCDate() + 28);
+    startsAt.setUTCDate(startsAt.getUTCDate() + ((8 - startsAt.getUTCDay()) % 7));
+    startsAt.setUTCHours(18, 0, 0, 0);
+    const endsAt = new Date(startsAt.getTime() + 14 * 24 * 3600_000 + 2 * 3600_000);
+    const ccCohortName = `Session CC ${startsAt.toLocaleDateString("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" })}`;
     await prisma.cohort.create({
-      data: { program: "cc", name: ccCohortName, startsAt: new Date("2026-11-16T18:00:00.000Z"), endsAt: new Date("2026-11-30T20:00:00.000Z"), capacity: 15, status: CohortStatus.open },
+      data: { program: "cc", name: ccCohortName, startsAt, endsAt, capacity: 15, status: CohortStatus.open },
     });
     console.log(`Cohorte CC créée : ${ccCohortName}`);
   }
