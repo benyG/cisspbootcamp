@@ -19,7 +19,7 @@ const C = { night: "#071A33", night2: "#14324F", panel: "#0B2440", paper: "#F7F8
 const read = (...p: string[]) => readFile(join(process.cwd(), ...p));
 
 /** Short names of the journées, as on the share card. */
-const SHORT = ["La vitrine qui vend", "Clients et chiffres", "Ventes et paiements", "Publications proposées", "Veille du marché", "Le pilote automatique"] as const;
+const SHORT = ["Composantes de l’IA", "Processus et fondations", "Activité et données", "Système d’agents", "Agents spécialisés", "Pilotage autonome"] as const;
 
 export async function iaShareImage(): Promise<ImageResponse> {
   const [display, sans] = await Promise.all([

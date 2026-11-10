@@ -80,7 +80,7 @@ describe("Bâtisseur IA, calendrier du participant (Ben, 03/11)", () => {
     google.createSessionEvent.mockResolvedValue({ eventId: "ev1", meetUrl: "https://meet.google.com/abc" });
     expect(await syncDayInvites(2, now)).toBe(1);
     const created = google.createSessionEvent.mock.calls[0][0];
-    expect(created).toMatchObject({ summary: "Bâtisseur IA · J2 · Le cœur de l’entreprise et ses chiffres", timeZone: "America/Toronto", attendees: [{ email: "awa@x.test", name: "Awa Diop" }] });
+    expect(created).toMatchObject({ summary: "Bâtisseur IA · J2 · Identification des processus métiers et fondations architecturales", timeZone: "America/Toronto", attendees: [{ email: "awa@x.test", name: "Awa Diop" }] });
     expect(created.start.toISOString()).toBe("2027-01-24T15:00:00.000Z");
     expect(db.iaDay.update).toHaveBeenCalledWith({ where: { id: 2 }, data: { eventId: "ev1", meetUrl: "https://meet.google.com/abc" } });
     expect(db.iaSeat.updateMany).toHaveBeenCalledWith({ where: { id: { in: [50] } }, data: { invitedAt: now } });

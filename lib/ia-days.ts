@@ -25,17 +25,19 @@ export const IA_DEFAULT_CAPACITY = 12;
 export const IA_PICK_LEAD_HOURS = 24;
 
 /**
- * The six journées (repositioned 08/11 on the autonomous business): each one
- * puts one function of the business on autopilot. J6 teaches the autopilot
- * itself: objectives, routines, the weekly report, an analyst agent, guardrails.
+ * The six journées (Ben, 10/11: the programme of the roll-up). J1 lays the
+ * ground every non-developer needs (model, prompt, context, RAG, skills,
+ * agents, tools, MCP); J2 maps the business and sets the foundations; J3 to
+ * J5 build the data, then the agents, then the specialised agents and their
+ * interfaces; J6 puts the business under autonomous steering.
  */
 export const JOURNEES: ReadonlyArray<{ n: number; title: string; text: string }> = [
-  { n: 1, title: "La vitrine qui vend jour et nuit", text: "La méthode, Claude Code et GitHub : votre offre est en ligne dès le premier soir, à votre nom de domaine, et prend les demandes sans vous." },
-  { n: 2, title: "Le cœur de l’entreprise et ses chiffres", text: "Vos clients, vos commandes, vos comptes et votre tableau de bord : tout est enregistré et mesuré, testé à chaque changement." },
-  { n: 3, title: "Vendre et encaisser en pilote automatique", text: "Devis, factures et reçus en PDF, paiement par carte ou mobile money, relances qui partent seules." },
-  { n: 4, title: "La communication proposée chaque semaine", text: "Vos publications Facebook et LinkedIn, avec leurs images, proposées chaque semaine : vous validez avant publication." },
-  { n: 5, title: "La veille du marché", text: "Référencement, mots-clés, concurrents : votre marché observé pour vous, et un plan de contenu qui en découle." },
-  { n: 6, title: "Le pilote automatique", text: "Vos objectifs et leur courbe, des routines qui relancent et alertent, un rapport chaque semaine, un agent IA analyste sur vos données (MCP, lecture seule) et vos garde-fous." },
+  { n: 1, title: "Introduction aux composantes d’une IA", text: "Modèle, prompt, contexte, RAG, skills, agents, outils, MCP : vous comprenez chaque brique et vous l’essayez sur votre entreprise. Le soir, votre premier assistant répond à partir de vos propres documents." },
+  { n: 2, title: "Identification des processus métiers et fondations architecturales", text: "Vous cartographiez vos processus (vendre, livrer, encaisser, communiquer, piloter), vous choisissez ce qui s’automatise, et vous posez les fondations avec Claude Code, GitHub et Vercel : votre vitrine est en ligne à votre nom." },
+  { n: 3, title: "Structuration de l’activité et de ses données", text: "Clients, commandes, factures : vos données prennent une structure, une base, des écrans et un tableau de bord. Chaque changement est testé." },
+  { n: 4, title: "Construction du système d’agents IA", text: "Des agents qui agissent : ils traitent une demande, préparent un devis, encaissent par carte ou mobile money et relancent. Vous fixez leurs règles et ce qu’ils ne font jamais sans vous." },
+  { n: 5, title: "Spécialisation des agents IA et interfaces", text: "Un agent par métier : communication (publications et images à valider), veille du marché, réponses aux clients. Et les interfaces pour travailler avec eux : votre espace d’administration, l’e-mail, un assistant sur votre site." },
+  { n: 6, title: "Pilotage autonome de l’entreprise", text: "Vos objectifs et leur courbe, des routines qui relancent et alertent, un rapport chaque semaine, un agent IA analyste sur vos données (MCP, lecture seule) et vos garde-fous." },
 ];
 
 export type IaDay = { id: number; date: string; journee: number; capacity: number; seats: number; closed: boolean; start: string };
