@@ -28,11 +28,13 @@ export const TASKS = {
   relance: { label: "Relancer les prospects", title: "Relancer vos prospects sans y penser", how: "J4 et J6 : un agent qui relance seul, puis les routines du pilotage" },
   paiements: { label: "Suivre les paiements", title: "Savoir qui a payé, sans chercher", how: "J3 et J4 : tableau de bord et paiement en ligne" },
   devis: { label: "Faire les devis et les factures", title: "Devis et factures en un clic", how: "J4 : devis, factures et reçus en PDF, préparés par un agent" },
-  rdv: { label: "Gérer les rendez-vous", title: "Des rendez-vous pris sans aller-retour", how: "J4 : réservation en ligne et rappels" },
+  rdv: { label: "Gérer les rendez-vous", title: "Des rendez-vous pris sans aller-retour", how: "J4 : l’agent vente propose les créneaux et rappelle le rendez-vous" },
   chiffres: { label: "Préparer les chiffres du mois", title: "Les chiffres du mois, prêts le 1er", how: "J3 et J6 : tableau de bord, puis un rapport chaque semaine et un agent analyste" },
-  questions: { label: "Répondre aux mêmes questions", title: "Répondre aux questions fréquentes", how: "J1 et J5 : un assistant qui répond depuis vos documents" },
+  questions: { label: "Répondre aux mêmes questions", title: "Répondre aux questions fréquentes", how: "J1 et J5 : un agent service client qui répond depuis vos documents" },
   seo: { label: "Être trouvé sur Google", title: "Être trouvé par vos clients sur Google", how: "J5 : un agent de veille : référencement, mots-clés, concurrents" },
   reseaux: { label: "Publier sur les réseaux", title: "Préparer vos publications", how: "J5 : un agent communication : publications et images, que vous validez" },
+  livraisons: { label: "Organiser production et livraisons", title: "Production et livraisons planifiées", how: "J5 : un agent opérations : planning, stock, livraisons, selon votre activité" },
+  administratif: { label: "Comptabilité et échéances", title: "Pièces comptables et échéances à jour", how: "J6 : un agent administratif : pièces rangées, échéances rappelées, données personnelles suivies" },
 } as const;
 
 export const HOURS = { "2": "Moins de 2 h", "5": "De 2 à 5 h", "10": "De 5 à 10 h", "11": "Plus de 10 h" } as const;
@@ -45,10 +47,10 @@ export const TOOLS = {
   rien: "Rien d’organisé",
 } as const;
 const TOOLS_NOTE: Record<keyof typeof TOOLS, string> = {
-  excel: "Vos fichiers Excel ou Google Sheets servent de point de départ : leurs données sont reprises dans votre système à la J2.",
-  whatsapp: "Vos échanges WhatsApp et votre cahier deviennent des fiches clients rangées, dès la J2.",
+  excel: "Vos fichiers Excel ou Google Sheets servent de point de départ : leurs données sont reprises dans votre système à la J3.",
+  whatsapp: "Vos échanges WhatsApp et votre cahier deviennent des fiches clients rangées, dès la J3.",
   logiciel: "Votre système complète votre logiciel de gestion ; si celui-ci le permet, on les relie à la J6, avec un agent IA.",
-  rien: "On part d’une page blanche : c’est le cas le plus simple, tout est rangé dès la J2.",
+  rien: "On part d’une page blanche : c’est le cas le plus simple, tout est rangé dès la J3.",
 };
 
 export const EASE = {

@@ -11,8 +11,8 @@ export const DAY_DEMO: ReadonlyArray<{ short: string; skills: readonly string[] 
   { short: "Processus et fondations", skills: ["Cartographier vos processus métiers", "Choisir ce qui s’automatise en premier", "Mettre en ligne avec Claude Code, GitHub et Vercel"] },
   { short: "Activité et données", skills: ["Structurer clients, commandes et factures", "Créer votre base et vos écrans", "Construire votre tableau de bord, testé"] },
   { short: "Système d’agents", skills: ["Construire des agents qui agissent", "Encaisser par carte et mobile money", "Fixer leurs règles et leurs limites"] },
-  { short: "Agents spécialisés", skills: ["Un agent communication, que vous validez", "Un agent de veille du marché", "Les interfaces pour travailler avec eux"] },
-  { short: "Pilotage autonome", skills: ["Fixer des objectifs et leur courbe cible", "Programmer des routines qui relancent et alertent", "Brancher un agent IA analyste, avec vos garde-fous"] },
+  { short: "Agents spécialisés", skills: ["Des agents communication et service client", "Un agent de veille, et un agent opérations selon votre activité", "Les interfaces pour travailler avec eux"] },
+  { short: "Pilotage autonome", skills: ["Fixer des objectifs, des routines et un rapport", "Un agent analyste et un agent administratif", "Vos garde-fous, et la carte complète de vos agents"] },
 ];
 
 /**

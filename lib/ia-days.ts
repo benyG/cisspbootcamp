@@ -33,11 +33,11 @@ export const IA_PICK_LEAD_HOURS = 24;
  */
 export const JOURNEES: ReadonlyArray<{ n: number; title: string; text: string }> = [
   { n: 1, title: "Introduction aux composantes d’une IA", text: "Modèle, prompt, contexte, RAG, skills, agents, outils, MCP : vous comprenez chaque brique et vous l’essayez sur votre entreprise. Le soir, votre premier assistant répond à partir de vos propres documents." },
-  { n: 2, title: "Identification des processus métiers et fondations architecturales", text: "Vous cartographiez vos processus (vendre, livrer, encaisser, communiquer, piloter), vous choisissez ce qui s’automatise, et vous posez les fondations avec Claude Code, GitHub et Vercel : votre vitrine est en ligne à votre nom." },
+  { n: 2, title: "Identification des processus métiers et fondations architecturales", text: "Vous cartographiez vos processus (attirer, vendre, encaisser, servir, livrer, administrer, piloter), vous choisissez ce qui s’automatise, et vous posez les fondations avec Claude Code, GitHub et Vercel : votre vitrine est en ligne à votre nom." },
   { n: 3, title: "Structuration de l’activité et de ses données", text: "Clients, commandes, factures : vos données prennent une structure, une base, des écrans et un tableau de bord. Chaque changement est testé." },
   { n: 4, title: "Construction du système d’agents IA", text: "Des agents qui agissent : ils traitent une demande, préparent un devis, encaissent par carte ou mobile money et relancent. Vous fixez leurs règles et ce qu’ils ne font jamais sans vous." },
-  { n: 5, title: "Spécialisation des agents IA et interfaces", text: "Un agent par métier : communication (publications et images à valider), veille du marché, réponses aux clients. Et les interfaces pour travailler avec eux : votre espace d’administration, l’e-mail, un assistant sur votre site." },
-  { n: 6, title: "Pilotage autonome de l’entreprise", text: "Vos objectifs et leur courbe, des routines qui relancent et alertent, un rapport chaque semaine, un agent IA analyste sur vos données (MCP, lecture seule) et vos garde-fous." },
+  { n: 5, title: "Spécialisation des agents IA et interfaces", text: "Un agent par métier : communication (publications et images à valider), service client, veille du marché, et selon votre activité un agent opérations (production, stock, livraisons). Et les interfaces pour travailler avec eux : votre espace d’administration, l’e-mail, un assistant sur votre site." },
+  { n: 6, title: "Pilotage autonome de l’entreprise", text: "Vos objectifs et leur courbe, des routines qui relancent et alertent, un rapport chaque semaine, un agent IA analyste sur vos données (MCP, lecture seule), un agent administratif (pièces comptables, échéances, données personnelles) et vos garde-fous." },
 ];
 
 export type IaDay = { id: number; date: string; journee: number; capacity: number; seats: number; closed: boolean; start: string };
