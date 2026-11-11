@@ -6,6 +6,10 @@ import { iaAnswersSchema } from "@/lib/ia-diagnostic-schema";
 const base: IaAnswers = { activity: "tpe", tasks: ["reseaux", "relance", "devis", "chiffres"], hours: "10", tools: "excel", ease: "3" };
 
 describe("diagnostic d’autonomie (Ben, 03/11 ; 08/11)", () => {
+  it("places the operations and administrative agents of the autonomous business (Ben, 11/11)", () => {
+    const d = diagnose({ ...base, tasks: ["livraisons", "administratif"] });
+    expect(d.priorities.map((p) => p.how.slice(0, 2))).toEqual(["J5", "J6"]);
+  });
   it("ranks the ticked tasks by impact, whatever the order they were ticked in", () => {
     const d = diagnose(base);
     expect(d.priorities.map((p) => p.code)).toEqual(["relance", "devis", "chiffres"]);
