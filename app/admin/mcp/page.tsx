@@ -57,7 +57,7 @@ export default async function McpPage({ searchParams }: { searchParams: Promise<
           <ul className="mt-2 grid gap-2">
             {clients.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-line pb-2">
-                <span><b>{c.name}</b><span className="block text-xs text-muted">Autorisée le {fmt(c.authorizedAt)} · dernier usage : {fmt(c.lastUsedAt)}</span></span>
+                <span><b>{c.name}</b><span className="block text-xs text-muted">{c.readOnly ? "Lecture seule" : "Lecture et actions"} · autorisée le {fmt(c.authorizedAt)} · dernier usage : {fmt(c.lastUsedAt)}</span></span>
                 <form action={disconnectMcpClient}><input type="hidden" name="clientId" value={c.clientId} /><button className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold">Déconnecter</button></form>
               </li>
             ))}

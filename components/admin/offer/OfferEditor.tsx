@@ -32,7 +32,8 @@ export function OfferEditor({ initial, ctx, quoteId }: { initial: Offer; ctx: Of
     if (!quoteId) return;
     start(async () => {
       const r = await saveOfferAction({ quoteId, offer: o, markSent });
-      setNote(r.ok ? (markSent ? "Offre enregistrée, demande marquée « Devis envoyé »." : "Offre enregistrée.") : r.error);
+      if (r.ok) setO((prev) => ({ ...prev, reference: r.number }));
+      setNote(r.ok ? `${markSent ? "Offre enregistrée, demande marquée « Devis envoyé »" : "Offre enregistrée"} : n° ${r.number}.` : r.error);
     });
   }
 
@@ -40,7 +41,7 @@ export function OfferEditor({ initial, ctx, quoteId }: { initial: Offer; ctx: Of
     <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
       <style>{`@page { size: A4; margin: 12mm } @media print { body * { visibility: hidden } #offer-doc, #offer-doc * { visibility: visible } #offer-doc { position: absolute; inset: 0 auto auto 0; width: 100% } }`}</style>
       <form onSubmit={(e) => e.preventDefault()} className="grid content-start gap-3 rounded-xl border border-line bg-white p-4 print:hidden xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-auto">
-        <div className="grid grid-cols-2 gap-2">{text("reference", "Référence")}<label className={label}>Date<input type="date" value={o.issuedOn} onChange={(e) => e.target.value && set("issuedOn", e.target.value)} className={field} /></label></div>
+        <div className="grid grid-cols-2 gap-2"><label className={label}>Numéro<input value={o.reference} readOnly className={field + " bg-slate-50"} title="Donné à l’enregistrement, continu (DEV-000001…)" /></label><label className={label}>Date<input type="date" value={o.issuedOn} onChange={(e) => e.target.value && set("issuedOn", e.target.value)} className={field} /></label></div>
         {num("validDays", "Validité (jours)")}
         <fieldset className="grid gap-2 border-t border-line pt-3"><legend className="text-xs font-bold text-muted uppercase">Destinataire</legend>
           {text("organization", "Entreprise")}

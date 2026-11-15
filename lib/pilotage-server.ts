@@ -1,3 +1,5 @@
+import { latestWatch } from "@/lib/watch-server";
+import { watchParagraph } from "@/lib/watch";
 import { Prisma } from "@prisma/client";
 
 import { VERDICT_LABEL, verdictText } from "@/lib/ads";
@@ -143,9 +145,10 @@ export const cohortTitle = (c: { program: string; name: string }) => `${PROGRAMS
 /** Everything the Monday report needs, read from the database. */
 export async function mondayReportInput(now: Date, appUrl: string) {
   const since = new Date(now.getTime() - 7 * DAY_MS);
-  const [cohorts, funnels, posts, ads, analyst] = await Promise.all([
+  const [cohorts, funnels, posts, ads, analyst, watch] = await Promise.all([
     loadPilotCohorts(now), programFunnels(since, now), topPosts(since, now), loadAdCampaigns({ active: true }).catch(() => []),
     Promise.resolve().then(() => prisma.analystReport.findUnique({ where: { weekKey: analystWeekKey(now) }, select: { output: true } })).catch(() => null),
+    latestWatch(now),
   ]);
   const analystOutput = analyst ? outputSchema.safeParse(analyst.output) : null;
   const programs = [...new Set(cohorts.map((c) => c.program))];
@@ -158,6 +161,7 @@ export async function mondayReportInput(now: Date, appUrl: string) {
       posts,
       ads: ads.map((a) => ({ name: a.name, verdict: VERDICT_LABEL[a.metrics.verdict], text: verdictText(a.metrics) })),
       analyst: analystOutput?.success ? reportParagraph(analystOutput.data, `${appUrl.replace(/\/$/, "")}/admin/analyste`) : [],
+      watch: watchParagraph(watch),
       appUrl,
     }),
   };

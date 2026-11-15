@@ -12,8 +12,9 @@ qui dit s'il faut accélérer, et une seule **file « à valider »** pour Ben.
   rappel, échéance), à une personne qui a donné son accord.
 - À valider par Ben : tout ce qui est public ou personnel (publications,
   relances WhatsApp, prix, promos).
-- Garde-fous : consentement vérifié à chaque envoi ; plafond d'un message
-  automatique par personne tous les 4 jours ; aucun import de contacts ;
+- Garde-fous : consentement vérifié à chaque envoi ; plafond de messages
+  automatiques par personne et par semaine (2 par défaut, réglable dans
+  Garde-fous) ; aucun import de contacts ;
   aucun chiffre, témoignage ou urgence inventés ; jamais d'heure dans les
   e-mails ; `paid` uniquement par paiement vérifié ; interrupteur et mode
   essai par playbook ; chaque action tracée. Voix : Ben (CISSP, CC), l'équipe
@@ -199,3 +200,26 @@ Prototype validé par Ben le 08/11.
   14 jours, jusqu'à « Fait ») ou Écarter ; « Lancer l'analyse maintenant ».
 - Pas encore branché : impressions LinkedIn, Search Console, ouvertures des
   e-mails, dépense Meta en direct.
+
+## Entreprise autonome (lots A à D, 15/11/2026)
+
+L'application applique à elle-même ce que la formation Bâtisseur IA enseigne.
+
+- **Garde-fous** (`/admin/garde-fous`) : arrêt général, un interrupteur par
+  automatisation, plafond de pression, budget IA mensuel (30 USD par défaut,
+  e-mail à 80 % et 100 %, chaque appel tracé). Paiements, reçus, places
+  tenues et statuts de cohorte ne s'arrêtent jamais.
+- **Administratif** (`/admin/administratif`) : reçus numérotés REC-000001
+  sans trou, export CSV mensuel pour le comptable, identité de l'entreprise
+  sur les reçus, échéances avec rappels J-15 et J-3, demandes sur les
+  données (un mois), conservation (3 ans sans paiement ni activité),
+  anonymisation au lieu de suppression quand quelque chose a été payé,
+  registre des traitements. Mentions et durées à valider avec le comptable.
+- **Assistant du site** : sous la FAQ des deux pages, il répond uniquement à
+  partir du site, cite ses sources et transmet le reste à l'équipe (e-mail +
+  consentement). 20 messages par conversation, conversations effacées après
+  30 jours.
+- **Interfaces et veille** : e-mail du matin (rien les jours calmes), veille
+  du marché le dimanche dans le rapport du lundi (seuls les liens issus de la
+  recherche sont gardés), prise MCP en lecture seule par défaut, devis
+  numérotés DEV-000001, journal unique (`/admin/journal`).

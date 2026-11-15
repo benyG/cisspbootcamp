@@ -37,7 +37,8 @@ export default async function AuthorizeMcpPage({ searchParams }: { searchParams:
         <p><b>{client.name}</b> demande à piloter l’application avec votre compte admin.</p>
         <p className="mt-2 text-muted">Retour vers : <b className="break-all text-ink">{host}</b></p>
         <ul className="mt-3 grid gap-1 text-ink-2">
-          <li>Il pourra lire les cohortes, prospects, paiements et rapports, et faire les actions réversibles (notes, relances, brouillons, codes promo…).</li>
+          <li><b>Lecture seule</b> : il lit les cohortes, prospects, paiements et rapports, sans rien modifier. À choisir par défaut.</li>
+          <li><b>Lecture et actions</b> : il fait aussi les actions réversibles (notes, relances, brouillons, codes promo…).</li>
           <li>Pour encaisser, envoyer, publier tout de suite ou supprimer, il prépare une demande que vous validez dans l’admin.</li>
           <li>Chaque appel est noté dans Admin › Prise MCP.</li>
           <li>Vous pouvez le déconnecter à tout moment.</li>
@@ -45,9 +46,10 @@ export default async function AuthorizeMcpPage({ searchParams }: { searchParams:
       </section>
       <p className="mt-3 text-xs text-muted">Si vous n’êtes pas en train de connecter Claude ou un de vos outils, refusez.</p>
       <div className="mt-5 flex gap-2">
-        <form action={approveMcpAccess}>
+        <form action={approveMcpAccess} className="flex flex-wrap gap-2">
           {hidden.map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
-          <button className="rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-white">Autoriser</button>
+          <button name="access" value="read" className="rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-white">Autoriser en lecture seule</button>
+          <button name="access" value="full" className="rounded-lg border border-ink px-4 py-2.5 text-sm font-semibold">Lecture et actions</button>
         </form>
         <form action={denyMcpAccess}>
           {hidden.map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}

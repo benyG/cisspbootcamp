@@ -19,6 +19,13 @@ export function formatReceiptNumber(n: number): string {
   return `REC-${String(n).padStart(6, "0")}`;
 }
 
+export const QUOTE_SEQUENCE = "quote";
+
+/** DEV-000001: the quotes' own continuous numbering (lot D). */
+export function formatQuoteNumber(n: number): string {
+  return `DEV-${String(n).padStart(6, "0")}`;
+}
+
 export type ReceiptKind = "registration" | "balance" | "service";
 
 /** One receipt per payment: the first payment, the balance, a consulting order. */

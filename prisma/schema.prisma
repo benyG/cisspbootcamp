@@ -985,6 +985,8 @@ model QuoteRequest {
   note          String?  @db.Text
   /// The service offer Ben prepared for this request (lib/offer.ts), kept to print it again.
   offer         Json?
+  /// DEV-000001: continuous, given the first time an offer is saved (lot D).
+  quoteNumber   String?  @unique @map("quote_number") @db.VarChar(20)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -1147,6 +1149,8 @@ model McpClient {
   secretHash   String?   @map("secret_hash") @db.VarChar(64)
   /// When Ben last authorised it; null = registered, never authorised.
   authorizedAt DateTime? @map("authorized_at")
+  /// Lot D: Ben authorised reading only; write and request tools are hidden and refused.
+  readOnly     Boolean   @default(false) @map("read_only")
   lastUsedAt   DateTime? @map("last_used_at")
   createdAt    DateTime  @default(now()) @map("created_at")
 

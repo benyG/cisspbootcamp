@@ -45,10 +45,10 @@ export async function findClient(clientId: string) {
 }
 
 /** After Ben clicked "Autoriser": the one-time code sent back to the client. */
-export async function issueCode(input: { clientId: string; redirectUri: string; codeChallenge: string }, now = new Date()): Promise<string> {
+export async function issueCode(input: { clientId: string; redirectUri: string; codeChallenge: string; readOnly?: boolean }, now = new Date()): Promise<string> {
   const code = newSecret();
   await prisma.$transaction([
-    prisma.mcpClient.update({ where: { clientId: input.clientId }, data: { authorizedAt: now } }),
+    prisma.mcpClient.update({ where: { clientId: input.clientId }, data: { authorizedAt: now, readOnly: input.readOnly ?? false } }),
     prisma.mcpToken.create({ data: { kind: "code", hash: sha256(code), clientId: input.clientId, expiresAt: new Date(now.getTime() + CODE_TTL_MS), codeChallenge: input.codeChallenge, redirectUri: input.redirectUri } }),
   ]);
   return code;
@@ -101,14 +101,14 @@ export async function refreshTokens(input: { refreshToken: string; clientId?: st
 }
 
 /** The client behind a bearer token, or null. */
-export async function verifyAccessToken(token: string, now = new Date()): Promise<{ clientId: string; name: string } | null> {
+export async function verifyAccessToken(token: string, now = new Date()): Promise<{ clientId: string; name: string; readOnly: boolean } | null> {
   if (!token || token.length > 256) return null;
-  const row = await prisma.mcpToken.findUnique({ where: { hash: sha256(token) }, include: { client: { select: { name: true, authorizedAt: true, lastUsedAt: true } } } });
+  const row = await prisma.mcpToken.findUnique({ where: { hash: sha256(token) }, include: { client: { select: { name: true, authorizedAt: true, lastUsedAt: true, readOnly: true } } } });
   if (!row || row.kind !== "access" || row.expiresAt <= now || !row.client.authorizedAt) return null;
   if (!row.client.lastUsedAt || now.getTime() - row.client.lastUsedAt.getTime() > 5 * 60_000) {
     await prisma.mcpClient.update({ where: { clientId: row.clientId }, data: { lastUsedAt: now } }).catch(() => undefined);
   }
-  return { clientId: row.clientId, name: row.client.name };
+  return { clientId: row.clientId, name: row.client.name, readOnly: row.client.readOnly };
 }
 
 /** "Déconnecter" on /admin/mcp: the client and all its tokens go. */

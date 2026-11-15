@@ -26,7 +26,7 @@ async function readRequest(formData: FormData) {
 export async function approveMcpAccess(formData: FormData) {
   await requireAdmin();
   const req = await readRequest(formData);
-  const code = await issueCode({ clientId: req.client_id, redirectUri: req.redirect_uri, codeChallenge: req.code_challenge });
+  const code = await issueCode({ clientId: req.client_id, redirectUri: req.redirect_uri, codeChallenge: req.code_challenge, readOnly: formData.get("access") !== "full" });
   redirect(redirectWith(req.redirect_uri, { code, state: req.state }));
 }
 
