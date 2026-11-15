@@ -132,10 +132,15 @@ model Lead {
   /// One-click unsubscribe (SPECS A10, Partie D).
   unsubscribeToken String    @unique @map("unsubscribe_token") @db.VarChar(64)
   unsubscribedAt   DateTime? @map("unsubscribed_at")
+  /// Deletion asked while paid records must be kept (lot B): identity erased,
+  /// registrations and receipts kept for the accounts.
+  anonymizedAt     DateTime? @map("anonymized_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  receipts             Receipt[]
+  privacyRequests      PrivacyRequest[]
   scannerResponses     ScannerResponse[]
   funnelEvents         FunnelEvent[]
   seatHolds            SeatHold[]
@@ -1191,4 +1196,82 @@ model McpRequest {
 
   @@index([status, createdAt])
   @@map("mcp_requests")
+}
+
+/// Gap-free counters (lot B): receipts are numbered 1, 2, 3… with no hole.
+model Sequence {
+  name  String @id @db.VarChar(32)
+  value Int    @default(0)
+
+  @@map("sequences")
+}
+
+/// One numbered receipt per payment received (lot B): a first payment, a
+/// balance or a consulting order. The buyer and the line are copied at issue,
+/// so the archive stays whole when a lead is anonymised.
+model Receipt {
+  id     Int    @id @default(autoincrement())
+  /// REC-000001, continuous.
+  number String @unique @db.VarChar(20)
+  /// reg:<id> | bal:<id> | svc:<id>: one receipt per payment, never two.
+  source String @unique @db.VarChar(32)
+  /// registration | balance | service
+  kind   String @db.VarChar(12)
+
+  leadId         Int?   @map("lead_id")
+  lead           Lead?  @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  registrationId Int?   @map("registration_id")
+  serviceOrderId Int?   @map("service_order_id")
+  /// Our payment reference (CB-…, CS-…).
+  reference      String @db.VarChar(40)
+
+  buyerName    String        @map("buyer_name") @db.VarChar(170)
+  buyerEmail   String        @map("buyer_email") @db.VarChar(180)
+  buyerCountry String        @map("buyer_country") @db.VarChar(2)
+  label        String        @db.VarChar(255)
+  /// USD cents actually received with this payment.
+  amountUsd    Int           @map("amount_usd")
+  method       PaymentMethod
+  paymentNote  String?       @map("payment_note") @db.VarChar(200)
+  paidAt       DateTime      @map("paid_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@index([paidAt])
+  @@index([leadId])
+  @@map("receipts")
+}
+
+/// A request about personal data (lot B): access, rectification, deletion or
+/// opposition, answered within the month.
+model PrivacyRequest {
+  id         Int       @id @default(autoincrement())
+  leadId     Int?      @map("lead_id")
+  lead       Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  email      String    @db.VarChar(180)
+  /// access | rectification | deletion | opposition
+  kind       String    @db.VarChar(16)
+  note       String?   @db.Text
+  receivedAt DateTime  @map("received_at")
+  dueAt      DateTime  @map("due_at")
+  doneAt     DateTime? @map("done_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([doneAt, dueAt])
+  @@map("privacy_requests")
+}
+
+/// An administrative deadline (lot B): tax return, insurance, domain…
+/// Ben is reminded at J-15 and J-3; a recurring one comes back once done.
+model AdminDeadline {
+  id         Int       @id @default(autoincrement())
+  title      String    @db.VarChar(160)
+  dueAt      DateTime  @map("due_at")
+  /// none | monthly | quarterly | yearly
+  recurrence String    @default("none") @db.VarChar(10)
+  note       String?   @db.Text
+  doneAt     DateTime? @map("done_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([doneAt, dueAt])
+  @@map("admin_deadlines")
 }

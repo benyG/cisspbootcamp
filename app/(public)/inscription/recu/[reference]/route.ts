@@ -7,6 +7,7 @@ import { firstDueUsd } from "@/lib/installments";
 import { formatLocal } from "@/lib/pricing";
 import { balanceDeadline } from "@/lib/registration";
 import { IA_ISSUER } from "@/lib/ia-brand";
+import { loadBusiness } from "@/lib/admin-records-server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ ref
     return new NextResponse("Reçu introuvable", { status: 404 });
   }
 
+  const [business, receipts] = await Promise.all([
+    loadBusiness(),
+    prisma.receipt.findMany({ where: { registrationId: registration.id }, orderBy: { number: "asc" }, select: { number: true } }).catch(() => []),
+  ]);
   const pdf = await buildReceiptPdf({
+    numbers: receipts.map((r) => r.number),
+    business,
     reference: registration.reference,
     paidAt: registration.paidAt,
     method: registration.method,

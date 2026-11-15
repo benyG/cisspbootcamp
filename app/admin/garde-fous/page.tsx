@@ -91,7 +91,7 @@ export default async function GuardrailsPage() {
             );
           })}
         </ul>
-        <p className="mt-2 text-xs text-muted">Ne s’arrêtent jamais : confirmations de paiement, expiration des places tenues, statuts de cohorte, synchronisation des vidéos et des tests.</p>
+        <p className="mt-2 text-xs text-muted">Ne s’arrêtent jamais : confirmations de paiement, numérotation des reçus, expiration des places tenues, statuts de cohorte, synchronisation des vidéos et des tests.</p>
       </section>
 
       <p className="mt-4 flex flex-wrap gap-2 text-xs">

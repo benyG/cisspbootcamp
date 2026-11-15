@@ -77,7 +77,7 @@ export async function scheduleFollowup(formData: FormData): Promise<void> {
   revalidatePath("/admin");
 }
 
-/** Full deletion (SPECS A10): cascades through responses, bookings, registrations, log. */
+/** Deletion (SPECS A10, lot B): full, or anonymisation when something was paid. */
 export async function deleteLead(formData: FormData): Promise<void> {
   await requireAdmin();
   const leadId = id.safeParse(formData.get("leadId"));
