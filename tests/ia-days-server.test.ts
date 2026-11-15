@@ -10,7 +10,7 @@ vi.mock("@/lib/replays-server", () => ({ cohortDays: () => [] }));
 const reg = vi.hoisted(() => ({ loadOpenCohorts: vi.fn(async () => [] as unknown[]) }));
 vi.mock("@/lib/registration", () => reg);
 
-import { deleteIaDay, iaCohortName, openIaDates, openIaEntries, updateIaDay } from "@/lib/ia-days-server";
+import { deleteIaDay, iaCohortName, openIaDates, openIaEntries, openIaEntry, updateIaDay } from "@/lib/ia-days-server";
 
 const now = new Date("2027-01-10T12:00:00Z");
 
@@ -33,6 +33,26 @@ describe("Bâtisseur IA, dates (Ben, 03/11)", () => {
     expect(cohort).toMatchObject({ program: "ia", name: "Entrée du samedi 23 janvier 2027", capacity: 12, status: "open" });
     expect(cohort.startsAt.toISOString()).toBe("2027-01-23T15:00:00.000Z");
     expect(cohort.endsAt > cohort.startsAt).toBe(true);
+  });
+
+  it("opens one entry from « Lancer une cohorte », with its goal and campaign (Ben, 15/11)", async () => {
+    db.iaDay.findUnique.mockResolvedValue(null);
+    const campaign = { channels: { email: true } } as never;
+    const r = await openIaEntry({ date: "2027-01-23", start: "10:00", capacity: 12, targetSeats: 8, campaign }, now);
+    expect(r).toEqual({ ok: true, cohortId: 101 });
+    expect(db.tx.cohort.create.mock.calls[0][0].data).toMatchObject({ program: "ia", name: "Entrée du samedi 23 janvier 2027", capacity: 12, targetSeats: 8, campaign });
+    expect(db.tx.iaDay.create.mock.calls[0][0].data).toEqual({ date: "2027-01-23", journee: 1, start: "10:00", capacity: 12, cohortId: 101 });
+  });
+
+  it("refuses an entry on a weekday, in the past, over capacity or on a date already open", async () => {
+    db.iaDay.findUnique.mockResolvedValue(null);
+    const base = { start: "10:00", capacity: 12, targetSeats: null, campaign: null };
+    expect(await openIaEntry({ ...base, date: "2027-01-20" }, now)).toEqual({ ok: false, error: "La J1 tombe un samedi ou un dimanche." });
+    expect(await openIaEntry({ ...base, date: "2027-01-09" }, now)).toEqual({ ok: false, error: "Choisissez une date à venir." });
+    expect(await openIaEntry({ ...base, date: "2027-01-23", targetSeats: 20 }, now)).toMatchObject({ ok: false });
+    db.iaDay.findUnique.mockResolvedValue({ journee: 3, cohort: null });
+    expect(await openIaEntry({ ...base, date: "2027-01-23" }, now)).toEqual({ ok: false, error: "Cette date porte déjà la J3 : changez-la dans Admin › Bâtisseur IA." });
+    expect(db.tx.cohort.create).not.toHaveBeenCalled();
   });
 
   it("keeps Saturdays only and skips dates already open", async () => {

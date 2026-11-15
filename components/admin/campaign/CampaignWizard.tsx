@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { CampaignPlan } from "@/components/admin/campaign/CampaignPlan";
 import { type Campaign, DEFAULT_CAMPAIGN, buildCampaignPlan, campaignFromForm, planCounts } from "@/lib/campaign";
+import { IA_DEFAULT_CAPACITY, IA_DEFAULT_START, isWeekendDate } from "@/lib/ia-days";
 
 const input = "w-full min-w-0 rounded-lg border border-line bg-white px-3 py-2 text-sm";
 
@@ -13,7 +15,8 @@ type CohortFields = { program: string; name: string; startsAt: string; endsAt: s
  * "Lancer une cohorte" (lot 5, validated on the prototype): the cohort, its
  * goal, the promo and the channels, with the dated plan updated as Ben
  * types. In "edit" mode, only the campaign of an existing cohort. The form
- * posts plain fields to the server action, which parses them again.
+ * posts plain fields to the server action, which parses them again. For the
+ * Bâtisseur IA, the cohort is an entry: a J1 weekend date (Ben, 15/11).
  */
 export function CampaignWizard({
   mode,
@@ -33,6 +36,9 @@ export function CampaignWizard({
   campaign?: Campaign;
 }) {
   const [c, setC] = useState(initial);
+  const [start, setStart] = useState(IA_DEFAULT_START);
+  const ia = c.program === "ia";
+  const pickProgram = (program: string) => setC((prev) => ({ ...prev, program, capacity: program === "ia" ? IA_DEFAULT_CAPACITY : prev.program === "ia" ? initial.capacity : prev.capacity }));
   const [values, setValues] = useState<Record<string, string>>(() => ({
     chEmail: campaign.channels.email ? "on" : "",
     chLinkedin: campaign.channels.linkedin ? "on" : "",
@@ -68,35 +74,54 @@ export function CampaignWizard({
         {mode === "create" && (
           <>
             <label className="grid gap-1 text-sm"><span className="font-medium">Programme</span>
-              <select name="program" value={c.program} onChange={(e) => setC({ ...c, program: e.target.value })} className={input}>
+              <select name="program" value={c.program} onChange={(e) => pickProgram(e.target.value)} className={input}>
                 {programs.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
               </select>
             </label>
-            <label className="grid gap-1 text-sm"><span className="font-medium">Nom</span>
-              <input name="name" required value={c.name} onChange={(e) => setC({ ...c, name: e.target.value })} placeholder="Cohorte de février 2027" className={input} />
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="grid gap-1 text-sm"><span className="font-medium">Premier jour</span>
-                <input name="startsAt" type="date" required value={c.startsAt} onChange={(e) => setC({ ...c, startsAt: e.target.value })} className={input} />
-              </label>
-              <label className="grid gap-1 text-sm"><span className="font-medium">Dernier jour</span>
-                <input name="endsAt" type="date" value={c.endsAt} onChange={(e) => setC({ ...c, endsAt: e.target.value })} className={input} />
-              </label>
-            </div>
-            {c.program === "cissp" && <p className="-mt-2 text-xs text-muted">CISSP : le dernier jour est calculé à l’enregistrement.</p>}
+            {ia ? (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="grid gap-1 text-sm"><span className="font-medium">Date de la J1</span>
+                    <input name="startsAt" type="date" required value={c.startsAt} onChange={(e) => setC({ ...c, startsAt: e.target.value })} className={input} />
+                  </label>
+                  <label className="grid gap-1 text-sm"><span className="font-medium">Début (Montréal)</span>
+                    <input name="start" type="time" required step={1800} value={start} onChange={(e) => setStart(e.target.value)} className={input} />
+                  </label>
+                </div>
+                {c.startsAt && !isWeekendDate(c.startsAt) && <p className="-mt-2 text-xs text-red-700">La J1 tombe un samedi ou un dimanche.</p>}
+                <p className="-mt-2 text-xs text-muted">Cette date devient une entrée (J1), nommée d’après sa date. Les J2 à J6 s’ouvrent ensuite dans <Link href="/admin/ia" className="underline">Bâtisseur IA</Link>.</p>
+              </>
+            ) : (
+              <>
+                <label className="grid gap-1 text-sm"><span className="font-medium">Nom</span>
+                  <input name="name" required value={c.name} onChange={(e) => setC({ ...c, name: e.target.value })} placeholder="Cohorte de février 2027" className={input} />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="grid gap-1 text-sm"><span className="font-medium">Premier jour</span>
+                    <input name="startsAt" type="date" required value={c.startsAt} onChange={(e) => setC({ ...c, startsAt: e.target.value })} className={input} />
+                  </label>
+                  <label className="grid gap-1 text-sm"><span className="font-medium">Dernier jour</span>
+                    <input name="endsAt" type="date" value={c.endsAt} onChange={(e) => setC({ ...c, endsAt: e.target.value })} className={input} />
+                  </label>
+                </div>
+                {c.program === "cissp" && <p className="-mt-2 text-xs text-muted">CISSP : le dernier jour est calculé à l’enregistrement.</p>}
+              </>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <label className="grid gap-1 text-sm"><span className="font-medium">Capacité</span>
-                <input name="capacity" type="number" min={1} max={100} value={c.capacity} onChange={(e) => setC({ ...c, capacity: Number(e.target.value) })} className={input} />
+                <input name="capacity" type="number" min={1} max={ia ? 50 : 100} value={c.capacity} onChange={(e) => setC({ ...c, capacity: Number(e.target.value) })} className={input} />
               </label>
               <label className="grid gap-1 text-sm"><span className="font-medium">Objectif de places</span>
-                <input name="targetSeats" type="number" min={1} max={100} value={c.targetSeats} placeholder="= capacité" onChange={(e) => setC({ ...c, targetSeats: e.target.value })} className={input} />
+                <input name="targetSeats" type="number" min={1} max={ia ? 50 : 100} value={c.targetSeats} placeholder="= capacité" onChange={(e) => setC({ ...c, targetSeats: e.target.value })} className={input} />
               </label>
             </div>
-            <label className="grid gap-1 text-sm"><span className="font-medium">Inscriptions</span>
-              <select name="status" value={c.status} onChange={(e) => setC({ ...c, status: e.target.value })} className={input}>
-                {statuses?.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-              </select>
-            </label>
+            {!ia && (
+              <label className="grid gap-1 text-sm"><span className="font-medium">Inscriptions</span>
+                <select name="status" value={c.status} onChange={(e) => setC({ ...c, status: e.target.value })} className={input}>
+                  {statuses?.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </label>
+            )}
           </>
         )}
 
@@ -124,7 +149,7 @@ export function CampaignWizard({
           {values.chAds === "on" && <label className="grid gap-1 pl-6 text-xs text-muted">Budget (USD)<input name="adsBudgetUsd" type="number" min={0} value={values.adsBudgetUsd} onChange={(e) => set("adsBudgetUsd", e.target.value)} className={input} /></label>}
         </fieldset>
 
-        <button type="submit" className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 font-semibold text-white">{mode === "create" ? "Lancer la cohorte" : "Enregistrer la campagne"}</button>
+        <button type="submit" className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 font-semibold text-white">{mode === "create" ? (ia ? "Ouvrir l’entrée" : "Lancer la cohorte") : "Enregistrer la campagne"}</button>
         <p className="text-xs text-muted">Les actions « à valider » arrivent dans votre file d’actions à leur date. Les autres partent seules, dans les limites des garde-fous des playbooks.</p>
       </form>
 
@@ -135,7 +160,7 @@ export function CampaignWizard({
             <p className="mt-1 text-sm text-muted">{counts.auto} actions automatiques · {counts.validate} à valider · de J-60 à une semaine après le dernier jour</p>
             <div className="mt-3"><CampaignPlan plan={plan} hideLinks /></div>
           </>
-        ) : <p className="mt-2 text-sm text-muted">Choisissez le premier jour pour voir le plan.</p>}
+        ) : <p className="mt-2 text-sm text-muted">{ia ? "Choisissez la date de la J1 pour voir le plan." : "Choisissez le premier jour pour voir le plan."}</p>}
       </section>
     </div>
   );

@@ -8,6 +8,8 @@ import { auth } from "@/auth";
 import { deleteCohortCore, sendCohortDocuments } from "@/lib/admin-ops/sensitive";
 import { createCohort as createCohortCore, markCampaignDone as markCampaignDoneCore, updateCohort as updateCohortCore } from "@/lib/admin-ops/cohorts";
 import { campaignFromForm } from "@/lib/campaign";
+import { isClock } from "@/lib/cohort-sessions";
+import { openIaEntry } from "@/lib/ia-days-server";
 import { prisma } from "@/lib/db";
 
 async function requireAdmin() {
@@ -17,9 +19,26 @@ async function requireAdmin() {
 
 const cohortFields = (formData: FormData) => Object.fromEntries(["program", "name", "startsAt", "endsAt", "capacity", "targetSeats", "status"].map((k) => [k, formData.get(k) ?? (k === "program" ? "cissp" : null)]));
 
+const iaEntrySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date de la J1 requise"),
+  start: z.string().refine(isClock, "Heure invalide (HH:MM)"),
+  capacity: z.coerce.number().int().min(1, "Au moins 1 place").max(50, "50 places au plus"),
+  targetSeats: z.preprocess((v) => (v === "" || v === null ? null : v), z.coerce.number().int().min(1, "Objectif : au moins 1 place").max(50).nullable()),
+});
+
 export async function createCohort(formData: FormData): Promise<void> {
   await requireAdmin();
   const campaign = formData.get("hasCampaign") ? campaignFromForm((name) => formData.get(name) as string | null) : null;
+  // Bâtisseur IA (Ben, 15/11): the entry is a J1 date, opened with its campaign.
+  if (formData.get("program") === "ia") {
+    const parsed = iaEntrySchema.safeParse({ date: formData.get("startsAt"), start: formData.get("start"), capacity: formData.get("capacity"), targetSeats: formData.get("targetSeats") });
+    if (!parsed.success) redirect(`/admin/cohortes/nouvelle?erreur=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Données invalides")}`);
+    const result = await openIaEntry({ ...parsed.data, campaign });
+    if (!result.ok) redirect(`/admin/cohortes/nouvelle?erreur=${encodeURIComponent(result.error)}`);
+    revalidatePath("/admin/cohortes");
+    revalidatePath("/admin/ia");
+    redirect(`/admin/cohortes/${result.cohortId}`);
+  }
   const result = await createCohortCore(cohortFields(formData), campaign);
   if (!result.ok) redirect(`/admin/cohortes${formData.get("hasCampaign") ? "/nouvelle" : ""}?erreur=${encodeURIComponent(result.error)}`);
   revalidatePath("/admin/cohortes");
