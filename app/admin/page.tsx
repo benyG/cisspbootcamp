@@ -1,4 +1,4 @@
-import { MessageCircleQuestion, Landmark, ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { ScrollText, MessageCircleQuestion, Landmark, ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -301,6 +301,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/playbooks", label: "Playbooks", icon: Workflow },
   { href: "/admin/garde-fous", label: "Garde-fous", icon: ShieldAlert },
   { href: "/admin/administratif", label: "Administratif", icon: Landmark },
+  { href: "/admin/journal", label: "Journal", icon: ScrollText },
   { href: "/admin/sante", label: "Santé des intégrations", icon: Stethoscope },
   { href: "/admin/mcp", label: "Prise MCP (Claude)", icon: Plug },
   { href: "/admin/promos", label: "Codes promo", icon: TicketPercent },

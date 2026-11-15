@@ -25,6 +25,8 @@ export type ReportInput = {
   ads?: Array<{ name: string; verdict: string; text: string }>;
   /** The analyst's paragraph of the week (lib/analyst/rules.ts reportParagraph), if any. */
   analyst?: string[];
+  /** The market watch of the week (lib/watch.ts watchParagraph), if any. */
+  watch?: string[];
   appUrl: string;
 };
 
@@ -73,6 +75,7 @@ export function mondayReport(input: ReportInput): { subject: string; text: strin
     "",
     ...(postLines.length ? ["Les publications qui ont amené le plus de visites :", ...postLines, ""] : []),
     ...(input.analyst ?? []),
+    ...(input.watch ?? []),
     ...(input.ads?.length ? ["Pub payante :", ...input.ads.map((a) => `- ${a.name} (${a.verdict}) : ${a.text}`), `  Saisir la dépense : ${base}/admin/publicite`, ""] : []),
     `Le pilotage : ${base}/admin/pilotage`,
     `Votre file d’actions : ${base}/admin`,

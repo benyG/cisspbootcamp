@@ -28,7 +28,9 @@ export async function POST(request: Request) {
   const message = await request.json().catch(() => undefined);
   if (message === undefined) return json({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } }, 400);
 
-  const response = await handleMessage(message, { clientId: client.clientId, clientName: client.name, now: new Date() }, ALL_TOOLS, (tool, ok) =>
+  // A read-only client (lot D) sees and may call the read tools only.
+  const tools = client.readOnly ? ALL_TOOLS.filter((t) => t.level === "read") : ALL_TOOLS;
+  const response = await handleMessage(message, { clientId: client.clientId, clientName: client.name, now: new Date() }, tools, (tool, ok) =>
     prisma.actionLog.create({ data: { type: "mcp_call", payload: { tool, ok, client: client.name, clientId: client.clientId } } }).then(() => undefined, () => undefined),
   );
   if (!response) return new Response(null, { status: 202, headers: CORS_HEADERS });

@@ -21,6 +21,7 @@ import { automationRuns } from "@/lib/guardrails";
 import { guarded, loadGuardrails } from "@/lib/guardrails-server";
 import { issueMissingReceipts, sendAdminReminders } from "@/lib/admin-records-server";
 import { purgeConversations } from "@/lib/assistant-server";
+import { sendMorningDigest } from "@/lib/morning-server";
 
 /** Drive copies of the replays use up to 45 s of each run. */
 export const maxDuration = 60;
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
   // Guardrails (lot A): the general stop and the switch of each automation.
   // Payment confirmations, seat holds, cohort statuses and syncs always run.
   const g = await loadGuardrails();
-  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders, mondayReport, playbooks, scheduledPosts, receipts, adminReminders, conversations] = await Promise.all([
+  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders, mondayReport, playbooks, scheduledPosts, receipts, adminReminders, conversations, morningDigest] = await Promise.all([
     guarded(g, "bookingReminders", () => sendDueReminders()),
     processSeatHolds(),
     sweepPendingTests(),
@@ -58,11 +59,14 @@ export async function GET(request: NextRequest) {
     guarded(g, "adminReminders", () => sendAdminReminders().catch(() => -1)),
     // The assistant's conversations are deleted after 30 days, stopped or not.
     purgeConversations().catch(() => -1),
+    guarded(g, "morningDigest", () => sendMorningDigest().catch(() => "failed" as const)),
   ]);
   const base = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
   // The content rhythm (AI) runs in its own function, so it gets its own minute.
   if (automationRuns(g, "content")) after(() => fetch(`${base}/api/cron/content`, { headers: { authorization: `Bearer ${env.CRON_SECRET}` } }).then(() => undefined, () => undefined));
   // On Sundays, the analyst of the week (AI) for the Monday report, in its own function too.
+  // On Sundays too, the market watch (AI, web search) for the same report.
+  if (new Date().getUTCDay() === 0 && automationRuns(g, "watch")) after(() => fetch(`${base}/api/cron/watch`, { headers: { authorization: `Bearer ${env.CRON_SECRET}` } }).then(() => undefined, () => undefined));
   if (new Date().getUTCDay() === 0 && automationRuns(g, "analyst")) after(() => fetch(`${base}/api/cron/analyst`, { headers: { authorization: `Bearer ${env.CRON_SECRET}` } }).then(() => undefined, () => undefined));
-  return NextResponse.json({ stopped: g.stopped, bookingReminders: reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders, mondayReport, playbooks, scheduledPosts, receipts, adminReminders, conversations });
+  return NextResponse.json({ stopped: g.stopped, bookingReminders: reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders, mondayReport, playbooks, scheduledPosts, receipts, adminReminders, conversations, morningDigest });
 }

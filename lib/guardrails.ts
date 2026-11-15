@@ -33,6 +33,8 @@ export const AUTOMATIONS = {
   content: { label: "Rythme de contenu (IA)", detail: "Brouillons de publications de la semaine", global: true },
   analyst: { label: "Analyste de la semaine (IA)", detail: "Analyse du dimanche pour le rapport du lundi", global: true },
   mondayReport: { label: "Rapport du lundi", detail: "Vous seul le recevez : il continue pendant l’arrêt général", global: false },
+  morningDigest: { label: "E-mail du matin", detail: "Ce qui est à faire aujourd’hui et le bilan d’hier : pour vous seul", global: false },
+  watch: { label: "Veille du marché (IA)", detail: "Le dimanche, concurrents et nouveautés, pour le rapport du lundi", global: true },
   adminReminders: { label: "Rappels administratifs", detail: "Échéances et demandes sur les données, à J-15 et J-3 : pour vous seul", global: false },
 } as const;
 

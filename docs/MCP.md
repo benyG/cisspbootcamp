@@ -14,6 +14,7 @@ On l'ajoute dans Claude comme **connecteur personnalisé** (Paramètres → Conn
 
 - **Même porte que l'admin.** La première connexion ouvre la page de connexion Google de l'admin : seule l'adresse `ADMIN_EMAIL` passe. Ben voit ensuite quel outil demande l'accès (son nom, son adresse de retour) et clique « Autoriser ».
 - **Jetons.** Jeton d'accès valable 1 h, renouvelé automatiquement (jeton de renouvellement 30 jours, changé à chaque usage). Seule leur empreinte est stockée. PKCE obligatoire (OAuth 2.1).
+- **Lecture seule (par défaut).** À l'autorisation, Ben choisit « Autoriser en lecture seule » (bouton principal) ou « Lecture et actions ». Un outil en lecture seule ne voit et n'appelle que les outils de lecture ; `/admin/mcp` affiche le mode de chaque application.
 - **Déconnexion.** `/admin/mcp` liste les outils connectés ; « Déconnecter » coupe l'accès immédiatement.
 - **Journal.** Chaque appel d'outil est noté (outil, application, date) et visible sur `/admin/mcp`.
 - **Trois niveaux d'outils :**
