@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { runAnalyst } from "@/lib/analyst/server";
 import { env } from "@/lib/env";
 import { safeEquals } from "@/lib/tokens";
+import { automationState } from "@/lib/guardrails";
+import { loadGuardrails } from "@/lib/guardrails-server";
 
 /** The analyst's AI call takes a while: it runs on its own, after the daily cron. */
 export const maxDuration = 300;
@@ -14,5 +16,7 @@ export async function GET(request: NextRequest) {
   if (!env.CRON_SECRET || !safeEquals(header, `Bearer ${env.CRON_SECRET}`)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  const state = automationState(await loadGuardrails(), "analyst");
+  if (state !== "on") return NextResponse.json({ analyst: state });
   return NextResponse.json({ analyst: await runAnalyst().catch(() => "failed") });
 }

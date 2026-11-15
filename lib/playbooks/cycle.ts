@@ -5,7 +5,8 @@ import { iaUrl } from "@/lib/ia-domain";
 import { waMeLink } from "@/lib/messaging/templates";
 import { closeDayFor, dayFromStart } from "@/lib/pilotage";
 import { cohortTitle } from "@/lib/pilotage-server";
-import { AUTO_MESSAGE_TYPES, HOT_MAX_DAYS, HOT_MIN_DAYS, LAST_CALL_LOOKBACK_DAYS, MAX_PROSPECT_EMAILS_PER_RUN, OPENING_LOOKBACK_DAYS, PRESSURE_DAYS, WRAPUP_AFTER_DAYS, lastCallDue, mayContact, openingDue, programOfReadiness, underPressure } from "@/lib/playbooks/rules";
+import { leadsUnderPressure } from "@/lib/guardrails-server";
+import { HOT_MAX_DAYS, HOT_MIN_DAYS, LAST_CALL_LOOKBACK_DAYS, MAX_PROSPECT_EMAILS_PER_RUN, OPENING_LOOKBACK_DAYS, WRAPUP_AFTER_DAYS, lastCallDue, mayContact, openingDue, programOfReadiness } from "@/lib/playbooks/rules";
 import type { Step } from "@/lib/playbooks/server";
 import { admissionDeadline, resumeUrl } from "@/lib/playbooks/server";
 import { PROGRAMS, type ProgramCode } from "@/lib/programs";
@@ -56,14 +57,12 @@ export async function prospectsFor(program: string, since: Date, cohortId: numbe
   const candidates = leads.filter((l) => mayContact(l) && (ia || programOfReadiness(l.readiness) === program) && !l.registrations.some((r) => r.status === "paid" && r.cohort.program === program));
   if (!candidates.length) return [];
   const ids = candidates.map((l) => l.id);
-  const [done, recent] = await Promise.all([
+  const [done, pressured] = await Promise.all([
     prisma.actionLog.findMany({ where: { type, leadId: { in: ids } }, select: { leadId: true, payload: true } }),
-    prisma.actionLog.findMany({ where: { type: { in: [...AUTO_MESSAGE_TYPES] }, leadId: { in: ids }, createdAt: { gte: new Date(now.getTime() - PRESSURE_DAYS * DAY_MS) } }, orderBy: { createdAt: "desc" }, select: { leadId: true, createdAt: true } }),
+    leadsUnderPressure(ids, now),
   ]);
   const reached = new Set(done.filter((d) => (d.payload as { cohortId?: number } | null)?.cohortId === cohortId || type === "playbook_hot").map((d) => d.leadId));
-  const last = new Map<number, Date>();
-  for (const r of recent) if (r.leadId && !last.has(r.leadId)) last.set(r.leadId, r.createdAt);
-  return candidates.filter((l) => !reached.has(l.id) && !underPressure(last.get(l.id), now));
+  return candidates.filter((l) => !reached.has(l.id) && !pressured.has(l.id));
 }
 
 function footer(program: string, unsubscribeToken: string): string[] {

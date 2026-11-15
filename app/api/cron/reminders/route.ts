@@ -17,6 +17,8 @@ import { sendMondayReport } from "@/lib/pilotage-server";
 import { runPlaybooks } from "@/lib/playbooks/server";
 import { publishDuePosts } from "@/lib/marketing/schedule";
 import { safeEquals } from "@/lib/tokens";
+import { automationRuns } from "@/lib/guardrails";
+import { guarded, loadGuardrails } from "@/lib/guardrails-server";
 
 /** Drive copies of the replays use up to 45 s of each run. */
 export const maxDuration = 60;
@@ -29,10 +31,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders, mondayReport, playbooks, scheduledPosts] = await Promise.all([sendDueReminders(), processSeatHolds(), sweepPendingTests(), sendResultReminders(), sendSessionReminders(), syncPendingVideos(), syncCohortStatuses(new Date(), { revalidate: true }), sendPersonalReminders(), syncReplays(), syncEvaluations(), syncIaInvites().catch(() => -1), sendIaReminders().catch(() => -1), sendBalanceReminders().catch(() => -1), sendMondayReport().catch(() => "failed" as const), runPlaybooks().catch(() => "failed" as const), publishDuePosts().catch(() => -1)]);
+  // Guardrails (lot A): the general stop and the switch of each automation.
+  // Payment confirmations, seat holds, cohort statuses and syncs always run.
+  const g = await loadGuardrails();
+  const [reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders, mondayReport, playbooks, scheduledPosts] = await Promise.all([
+    guarded(g, "bookingReminders", () => sendDueReminders()),
+    processSeatHolds(),
+    sweepPendingTests(),
+    guarded(g, "resultReminders", () => sendResultReminders()),
+    guarded(g, "sessionReminders", () => sendSessionReminders()),
+    syncPendingVideos(),
+    syncCohortStatuses(new Date(), { revalidate: true }),
+    guarded(g, "personalReminders", () => sendPersonalReminders()),
+    guarded(g, "replays", () => syncReplays()),
+    guarded(g, "evaluations", () => syncEvaluations()),
+    guarded(g, "iaParticipants", () => syncIaInvites().catch(() => -1)),
+    guarded(g, "iaParticipants", () => sendIaReminders().catch(() => -1)),
+    guarded(g, "balanceReminders", () => sendBalanceReminders().catch(() => -1)),
+    guarded(g, "mondayReport", () => sendMondayReport().catch(() => "failed" as const)),
+    guarded(g, "playbooks", () => runPlaybooks().catch(() => "failed" as const)),
+    guarded(g, "scheduledPosts", () => publishDuePosts().catch(() => -1)),
+  ]);
+  const base = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
   // The content rhythm (AI) runs in its own function, so it gets its own minute.
-  after(() => fetch(`${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/cron/content`, { headers: { authorization: `Bearer ${env.CRON_SECRET}` } }).then(() => undefined, () => undefined));
+  if (automationRuns(g, "content")) after(() => fetch(`${base}/api/cron/content`, { headers: { authorization: `Bearer ${env.CRON_SECRET}` } }).then(() => undefined, () => undefined));
   // On Sundays, the analyst of the week (AI) for the Monday report, in its own function too.
-  if (new Date().getUTCDay() === 0) after(() => fetch(`${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/cron/analyst`, { headers: { authorization: `Bearer ${env.CRON_SECRET}` } }).then(() => undefined, () => undefined));
-  return NextResponse.json({ ...reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders, mondayReport, playbooks, scheduledPosts });
+  if (new Date().getUTCDay() === 0 && automationRuns(g, "analyst")) after(() => fetch(`${base}/api/cron/analyst`, { headers: { authorization: `Bearer ${env.CRON_SECRET}` } }).then(() => undefined, () => undefined));
+  return NextResponse.json({ stopped: g.stopped, bookingReminders: reminders, holds, tests, resultReminders, sessionReminders, videos, cohorts, personalReminders, replays, evaluations, iaInvites, iaReminders, balanceReminders, mondayReport, playbooks, scheduledPosts });
 }

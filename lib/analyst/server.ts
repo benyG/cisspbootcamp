@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+
+import { aiBudgetGate, recordAiUsage } from "@/lib/ai-usage-server";
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
@@ -35,6 +37,8 @@ export async function generateAnalysis(now = new Date()): Promise<AnalystResult>
   const weekKey = analystWeekKey(now);
   const snapshot = await buildSnapshot(now);
   let output: AnalystOutput;
+  const gate = await aiBudgetGate("analyst", now);
+  if (!gate.ok) return { ok: false, error: gate.error };
   try {
     const client = new Anthropic();
     const response = await client.beta.messages.create({
@@ -46,6 +50,7 @@ export async function generateAnalysis(now = new Date()): Promise<AnalystResult>
       output_config: { effort: "medium", format: { type: "json_schema", schema: OUTPUT_JSON_SCHEMA } },
       messages: [{ role: "user", content: `Niveaux de confiance : ${CONFIDENCE_HELP}.\n\nPHOTO de la semaine (JSON) :\n${JSON.stringify(snapshot, null, 1)}` }],
     });
+    await recordAiUsage("analyst", response, now);
     if (response.stop_reason === "refusal") return { ok: false, error: "Le modèle a refusé l’analyse." };
     if (response.stop_reason === "max_tokens") return { ok: false, error: "Réponse coupée. Relancez l’analyse." };
     const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("");

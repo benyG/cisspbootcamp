@@ -9,7 +9,8 @@ import { iaUrl } from "@/lib/ia-domain";
 import { sendEmail } from "@/lib/messaging/email";
 import { forecastSentence, stateLabel } from "@/lib/pilotage";
 import { cohortTitle, loadPilotCohorts } from "@/lib/pilotage-server";
-import { AUTO_MESSAGE_TYPES, HEALTH_REPEAT_HOURS, MAX_PROSPECT_EMAILS_PER_RUN, type Mode, PLAYBOOK_IDS, PLAYBOOKS, type PlaybookId, PRESSURE_DAYS, UNFINISHED_MAX_DAYS, catchUpPack, healthProblems, lateAlertDue, mayContact, resolveModes, underPressure, unfinishedDue } from "@/lib/playbooks/rules";
+import { leadsUnderPressure } from "@/lib/guardrails-server";
+import { HEALTH_REPEAT_HOURS, MAX_PROSPECT_EMAILS_PER_RUN, type Mode, PLAYBOOK_IDS, PLAYBOOKS, type PlaybookId, UNFINISHED_MAX_DAYS, catchUpPack, healthProblems, lateAlertDue, mayContact, resolveModes, unfinishedDue } from "@/lib/playbooks/rules";
 import { planContent } from "@/lib/playbooks/content";
 import { planFull, planHot, planLastCall, planOpening, planWrapup } from "@/lib/playbooks/cycle";
 import { PROGRAMS, type ProgramCode } from "@/lib/programs";
@@ -136,13 +137,11 @@ export async function planUnfinished(now: Date): Promise<Step[]> {
   });
   if (!registrations.length) return [];
   const leadIds = [...new Set(registrations.map((r) => r.lead.id))];
-  const [sent, recentAuto] = await Promise.all([
+  const [sent, pressured] = await Promise.all([
     prisma.actionLog.findMany({ where: { type: "playbook_unfinished", leadId: { in: leadIds } }, select: { leadId: true, payload: true } }),
-    prisma.actionLog.findMany({ where: { type: { in: [...AUTO_MESSAGE_TYPES] }, leadId: { in: leadIds }, createdAt: { gte: new Date(now.getTime() - PRESSURE_DAYS * DAY_MS) } }, orderBy: { createdAt: "desc" }, select: { leadId: true, createdAt: true } }),
+    leadsUnderPressure(leadIds, now),
   ]);
   const done = new Set(sent.map((s) => `${s.leadId}:${(s.payload as { cohortId?: number } | null)?.cohortId}`));
-  const lastAuto = new Map<number, Date>();
-  for (const a of recentAuto) if (a.leadId && !lastAuto.has(a.leadId)) lastAuto.set(a.leadId, a.createdAt);
 
   const steps: Step[] = [];
   const seen = new Set<string>();
@@ -150,7 +149,7 @@ export async function planUnfinished(now: Date): Promise<Step[]> {
     const key = `${r.lead.id}:${r.cohort.id}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    if (done.has(key) || !unfinishedDue(r.createdAt, now) || !mayContact(r.lead) || underPressure(lastAuto.get(r.lead.id), now)) continue;
+    if (done.has(key) || !unfinishedDue(r.createdAt, now) || !mayContact(r.lead) || pressured.has(r.lead.id)) continue;
     if (!admissionOpen(r.cohort.program, r.cohort.startsAt, now)) continue;
     if (r.lead.registrations.some((p) => p.cohort.program === r.cohort.program)) continue;
     const link = resumeUrl(r.cohort.program, r.cohort.id, { scanner: r.lead.scannerResponses[0]?.resultToken ?? null, ia: r.lead.iaDiagnostics[0]?.token ?? null }, env.NEXT_PUBLIC_APP_URL);
