@@ -1,5 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { revalidateTag } from "next/cache";
 
+import type { Campaign } from "@/lib/campaign";
 import { automaticCohortStatus, remainingSeats } from "@/lib/cohorts";
 import { COHORTS_CACHE_TAG } from "@/lib/cohorts-admin";
 import { prisma } from "@/lib/db";
@@ -72,6 +74,31 @@ export async function openIaDates(input: { from: string; to: string; which: "bot
   revalidateTag(COHORTS_CACHE_TAG);
   const entries = fresh.filter((d) => d.journee === 1).length;
   return { ok: true, message: `${fresh.length} date${fresh.length > 1 ? "s" : ""} ouverte${fresh.length > 1 ? "s" : ""}${entries ? `, dont ${entries} entrée${entries > 1 ? "s" : ""} (J1)` : ""}.` };
+}
+
+/**
+ * Opens one entry from « Lancer une cohorte » (Ben, 15/11): a J1 on the chosen
+ * weekend date, with its goal and campaign. The J2 to J6 dates are opened
+ * from Admin › Bâtisseur IA, where the rotation resumes after this J1.
+ */
+export async function openIaEntry(
+  input: { date: string; start: string; capacity: number; targetSeats: number | null; campaign: Campaign | null },
+  now = new Date(),
+): Promise<{ ok: true; cohortId: number } | { ok: false; error: string }> {
+  if (!isWeekendDate(input.date)) return { ok: false, error: "La J1 tombe un samedi ou un dimanche." };
+  if (input.date <= now.toISOString().slice(0, 10)) return { ok: false, error: "Choisissez une date à venir." };
+  if (input.targetSeats !== null && input.targetSeats > input.capacity) return { ok: false, error: "L’objectif ne peut pas dépasser le nombre de places." };
+  const existing = await prisma.iaDay.findUnique({ where: { date: input.date }, select: { journee: true, cohort: { select: { name: true } } } });
+  if (existing) {
+    return { ok: false, error: existing.journee === 1 ? `Cette date est déjà une entrée : ${existing.cohort?.name ?? iaCohortName(input.date)}.` : `Cette date porte déjà la J${existing.journee} : changez-la dans Admin › Bâtisseur IA.` };
+  }
+  const cohort = await prisma.$transaction(async (tx) => {
+    const created = await tx.cohort.create({ data: { ...cohortData(input.date, input.start, input.capacity, now), targetSeats: input.targetSeats, campaign: (input.campaign ?? Prisma.JsonNull) as never } });
+    await tx.iaDay.create({ data: { date: input.date, journee: 1, start: input.start, capacity: input.capacity, cohortId: created.id } });
+    return created;
+  });
+  revalidateTag(COHORTS_CACHE_TAG);
+  return { ok: true, cohortId: cohort.id };
 }
 
 /** Changes a date. Its journée only moves while nobody holds a seat on it. */
