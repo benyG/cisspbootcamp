@@ -89,18 +89,15 @@ export const MODE_LABEL: Record<Mode, string> = { on: "Actif", trial: "Essai", o
 
 /* ---------- Guardrails ---------- */
 
-/** At most one automatic message to a prospect every this many days, all playbooks and automatic e-mails together. */
-export const PRESSURE_DAYS = 4;
-/** Logged types that are automatic messages to a prospect (actions_log.type). */
+/**
+ * Logged types that are automatic messages to a prospect (actions_log.type).
+ * The pressure cap counts them, all automations together: at most
+ * « N par personne et par semaine », set in Garde-fous (lib/guardrails.ts).
+ */
 export const AUTO_MESSAGE_TYPES = ["playbook_unfinished", "playbook_opening", "playbook_hot", "playbook_last_call", "catchup_email", "result_reminder", "after_call_email"] as const;
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
-
-/** True when the person had an automatic message too recently to get another one. */
-export function underPressure(lastAutoMessageAt: Date | null | undefined, now: Date): boolean {
-  return !!lastAutoMessageAt && now.getTime() - lastAutoMessageAt.getTime() < PRESSURE_DAYS * DAY_MS;
-}
 
 /** The person can be written to automatically: explicit consent, not unsubscribed. */
 export function mayContact(lead: { consentAt: Date | null; unsubscribedAt: Date | null }): boolean {

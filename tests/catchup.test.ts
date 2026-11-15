@@ -49,10 +49,10 @@ describe("Rattrapage en un clic", () => {
     expect([plan.unfinished, plan.alumni, plan.alreadySent]).toEqual([1, 4, 1]);
   });
 
-  it("never writes to someone written to in the last 4 days", async () => {
+  it("never writes to someone at the weekly pressure cap", async () => {
     db.cohort.findUnique.mockResolvedValue(cohort());
     db.lead.findMany.mockResolvedValue([lead()]);
-    db.actionLog.findMany.mockImplementation(async (args?: unknown) => (typeof (args as { where: { type: unknown } }).where.type === "object" ? [{ leadId: 5, createdAt: inDays(-2) }] : []));
+    db.actionLog.findMany.mockImplementation(async (args?: unknown) => (typeof (args as { where: { type: unknown } }).where.type === "object" ? [{ leadId: 5, createdAt: inDays(-2) }, { leadId: 5, createdAt: inDays(-5) }] : []));
     expect((await planCatchUp(3, now))!.steps).toEqual([]);
   });
 

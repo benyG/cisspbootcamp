@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+import { aiBudgetGate, recordAiUsage } from "@/lib/ai-usage-server";
+
 import type { ProfileAnalysis } from "@/lib/analysis";
 import type { CohortCandidate } from "@/lib/cohorts";
 import { formatCohortMonth } from "@/lib/cohorts";
@@ -88,6 +90,8 @@ export async function draftSalesMessage(input: DraftInput): Promise<DraftResult>
   });
 
   if (!process.env.ANTHROPIC_API_KEY) return fallback();
+  // Over the month's AI budget (lot A): the written template, no AI.
+  if (!(await aiBudgetGate("scanner")).ok) return fallback();
 
   try {
     const client = new Anthropic();
@@ -98,6 +102,7 @@ export async function draftSalesMessage(input: DraftInput): Promise<DraftResult>
       output_config: { effort: "medium" },
       messages: [{ role: "user", content: buildPrompt(input) }],
     });
+    await recordAiUsage("scanner", response);
 
     if (response.stop_reason === "refusal") return fallback();
     const text = response.content

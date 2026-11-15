@@ -2,7 +2,8 @@ import { Workflow } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
-import { MODE_LABEL, MODES, PLAYBOOK_IDS, PLAYBOOKS, PRESSURE_DAYS, type PlaybookId } from "@/lib/playbooks/rules";
+import { loadGuardrails } from "@/lib/guardrails-server";
+import { MODE_LABEL, MODES, PLAYBOOK_IDS, PLAYBOOKS, type PlaybookId } from "@/lib/playbooks/rules";
 import { loadModes, planAll } from "@/lib/playbooks/server";
 
 import { setPlaybookMode } from "./actions";
@@ -35,11 +36,12 @@ const JOURNAL: Record<string, string> = {
 export default async function PlaybooksPage() {
   const now = new Date();
   const since = new Date(now.getTime() - 7 * DAY_MS);
-  const [modes, plans, logs, converted] = await Promise.all([
+  const [modes, plans, logs, converted, guardrails] = await Promise.all([
     loadModes(),
     planAll(now),
     prisma.actionLog.findMany({ where: { type: { startsWith: "playbook_" }, createdAt: { gte: since } }, orderBy: { createdAt: "desc" }, take: 40, include: { lead: { select: { id: true, firstName: true, lastName: true } } } }),
     unfinishedConverted(since),
+    loadGuardrails(),
   ]);
   const count = (type: string) => logs.filter((l) => l.type === type).length;
   const lastAnalysis = await prisma.analystReport.findFirst({ orderBy: { weekKey: "desc" }, select: { weekKey: true } }).catch(() => null);
@@ -102,7 +104,7 @@ export default async function PlaybooksPage() {
       </ul>
 
       <p className="mt-4 flex flex-wrap gap-2 text-xs">
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-muted">Au plus un message automatique par personne tous les {PRESSURE_DAYS} jours</span>
+        <Link href="/admin/garde-fous" className="rounded-full bg-slate-100 px-2.5 py-1 text-muted underline-offset-2 hover:underline">Au plus {guardrails.pressurePerWeek} message{guardrails.pressurePerWeek > 1 ? "s" : ""} automatique{guardrails.pressurePerWeek > 1 ? "s" : ""} par personne et par semaine</Link>
         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-muted">Consentement vérifié, désinscription respectée</span>
         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-muted">Rien de public ni de prix sans vous</span>
       </p>

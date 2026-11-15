@@ -1,9 +1,10 @@
-import { BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
 import { loadQueue } from "@/lib/action-queue";
 import { calendarHealth } from "@/lib/calendar/google";
+import { loadGuardrails } from "@/lib/guardrails-server";
 import { waMeLink } from "@/lib/messaging/templates";
 import { formatUsdCents } from "@/lib/pricing";
 import { balanceUrl } from "@/lib/registration";
@@ -22,7 +23,7 @@ const READINESS: Record<string, string> = { ready: "Éligible", conditional: "As
  * priority order, each with its button. Nothing else to open to run the day.
  */
 export default async function AdminHomePage() {
-  const [session, { items, kpis }, agenda] = await Promise.all([auth(), loadQueue(), calendarHealth()]);
+  const [session, { items, kpis }, agenda, guardrails] = await Promise.all([auth(), loadQueue(), calendarHealth(), loadGuardrails()]);
   const groups = {
     review: items.filter((i) => i.kind === "review"),
     call: items.filter((i) => i.kind === "call"),
@@ -48,6 +49,13 @@ export default async function AdminHomePage() {
         <h1 className="flex items-center gap-2 text-2xl font-bold"><LayoutDashboard className="size-6 text-accent" aria-hidden />Aujourd&apos;hui</h1>
         <span className="text-xs text-muted">{session?.user?.email}</span>
       </div>
+
+      {guardrails.stopped && (
+        <p role="alert" className="mt-4 rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-900">
+          <b>Arrêt général en cours : aucun message automatique ne part.</b>{" "}
+          <Link href="/admin/garde-fous" className="font-semibold underline">Relancer dans Garde-fous</Link>
+        </p>
+      )}
 
       {agenda !== "ok" && (
         <p role="alert" className="mt-4 rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-900">
@@ -259,6 +267,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/pilotage", label: "Pilotage", icon: Gauge },
   { href: "/admin/analyste", label: "Analyste", icon: LineChart },
   { href: "/admin/playbooks", label: "Playbooks", icon: Workflow },
+  { href: "/admin/garde-fous", label: "Garde-fous", icon: ShieldAlert },
   { href: "/admin/sante", label: "Santé des intégrations", icon: Stethoscope },
   { href: "/admin/mcp", label: "Prise MCP (Claude)", icon: Plug },
   { href: "/admin/promos", label: "Codes promo", icon: TicketPercent },

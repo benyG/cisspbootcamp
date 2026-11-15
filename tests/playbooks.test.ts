@@ -17,7 +17,8 @@ vi.mock("@/lib/env", () => ({ env: { NEXT_PUBLIC_APP_URL: "https://x.test", ADMI
 const calendar = vi.hoisted(() => ({ calendarHealth: vi.fn(async () => "ok" as string) }));
 vi.mock("@/lib/calendar/google", () => calendar);
 
-import { catchUpPack, healthProblems, lateAlertDue, mayContact, resolveModes, underPressure, unfinishedCallDue, unfinishedDue } from "@/lib/playbooks/rules";
+import { pressureReached } from "@/lib/guardrails";
+import { catchUpPack, healthProblems, lateAlertDue, mayContact, resolveModes, unfinishedCallDue, unfinishedDue } from "@/lib/playbooks/rules";
 import { planHealth, planLate, planUnfinished, resumeUrl, runPlaybooks } from "@/lib/playbooks/server";
 
 const DAY = 86_400_000;
@@ -32,10 +33,11 @@ describe("rules", () => {
     expect(resolveModes({ unfinished: "on" })).toEqual({ ...defaults, unfinished: "on" });
   });
 
-  it("caps automatic messages at one every 4 days, and needs consent", () => {
-    expect(underPressure(ago(3), now)).toBe(true);
-    expect(underPressure(ago(4), now)).toBe(false);
-    expect(underPressure(null, now)).toBe(false);
+  it("caps automatic messages per person and per week (Garde-fous), and needs consent", () => {
+    expect(pressureReached([ago(1), ago(5)], now, 2)).toBe(true);
+    expect(pressureReached([ago(1), ago(8)], now, 2)).toBe(false);
+    expect(pressureReached([ago(1)], now, 1)).toBe(true);
+    expect(pressureReached([], now, 2)).toBe(false);
     expect(mayContact({ consentAt: ago(10), unsubscribedAt: null })).toBe(true);
     expect(mayContact({ consentAt: null, unsubscribedAt: null })).toBe(false);
     expect(mayContact({ consentAt: ago(10), unsubscribedAt: ago(1) })).toBe(false);
@@ -108,7 +110,7 @@ describe("Inscription non finalisée", () => {
     db.actionLog.findMany.mockImplementation(async (args: { where: { type: unknown } }) => (args.where.type === "playbook_unfinished" ? [{ leadId: 5, payload: { cohortId: 3 } }] : []));
     expect(await planUnfinished(now)).toEqual([]);
 
-    db.actionLog.findMany.mockImplementation(async (args: { where: { type: unknown } }) => (args.where.type === "playbook_unfinished" ? [] : [{ leadId: 5, createdAt: ago(1) }]));
+    db.actionLog.findMany.mockImplementation(async (args: { where: { type: unknown } }) => (args.where.type === "playbook_unfinished" ? [] : [{ leadId: 5, createdAt: ago(1) }, { leadId: 5, createdAt: ago(3) }]));
     expect(await planUnfinished(now)).toEqual([]);
 
     db.actionLog.findMany.mockResolvedValue([]);

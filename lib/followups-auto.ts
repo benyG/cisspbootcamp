@@ -1,3 +1,4 @@
+import { leadsUnderPressure } from "@/lib/guardrails-server";
 import { formatAdmissionDeadline, formatCohortMonth, selectRegistrationCohort } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -72,9 +73,12 @@ export async function sendResultReminders(now = new Date()): Promise<number> {
     take: 50,
   });
 
+  // Pressure cap (Garde-fous): never more automatic messages a week than allowed.
+  const pressured = await leadsUnderPressure([...new Set(responses.map((r) => r.lead.id))], now);
   let sent = 0;
   for (const response of responses) {
     const { lead } = response;
+    if (pressured.has(lead.id) || !lead.consentAt) continue;
     const base = env.NEXT_PUBLIC_APP_URL;
     const result = await sendEmail({
       to: lead.email,

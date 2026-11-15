@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+import { aiBudgetGate, recordAiUsage } from "@/lib/ai-usage-server";
+
 import { ALL_DESTINATIONS, ALL_PILLARS, ANGLES, ART_DIRECTION, type Angle, CHANNELS, type Channel, type Destination, FORMATS, type Format, IA_ART_DIRECTION, type MarketingKind, type Pillar, destinationsFor, formatRule, pillarsFor } from "./plan";
 
 /**
@@ -159,6 +161,8 @@ export async function generateVariants(input: GenerateInput): Promise<StudioResu
   ].filter((l): l is string => l !== null).join("\n");
 
   try {
+    const gate = await aiBudgetGate("studio");
+    if (!gate.ok) return { ok: false, error: gate.error };
     const client = new Anthropic();
     const response = await client.beta.messages.create({
       model: MARKETING_MODEL,
@@ -169,6 +173,7 @@ export async function generateVariants(input: GenerateInput): Promise<StudioResu
       output_config: { effort: "medium", format: { type: "json_schema", schema: VARIANTS_SCHEMA } },
       messages: [{ role: "user", content: prompt }],
     });
+    await recordAiUsage("studio", response);
     if (response.stop_reason === "refusal") return { ok: false, error: "Le modèle a refusé cette demande. Reformulez la consigne." };
     if (response.stop_reason === "max_tokens") return { ok: false, error: "Réponse trop longue, coupée. Réessayez avec une consigne plus courte." };
     const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("");
@@ -202,6 +207,8 @@ export type FollowupInput = { facts: string; channel: "whatsapp" | "email"; pers
 export async function draftFollowup(input: FollowupInput): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
   try {
+    const gate = await aiBudgetGate("followup");
+    if (!gate.ok) return { ok: false, error: gate.error };
     const client = new Anthropic();
     const response = await client.beta.messages.create({
       model: MARKETING_MODEL,
@@ -212,6 +219,7 @@ export async function draftFollowup(input: FollowupInput): Promise<{ ok: true; t
       output_config: { effort: "low" },
       messages: [{ role: "user", content: `FAITS SUR ${input.kind === "ia" ? "L'ENTRÉE" : "LA COHORTE"} :\n${input.facts}\n\nLA PERSONNE :\n${input.person}\n\nPourquoi on la relance : ${input.segment}\nCe qu'on lui propose : ${input.offer}\nLe lien [LIEN] mène à : ${input.link}\nCanal : ${input.channel === "whatsapp" ? "WhatsApp (pas d'objet, ton oral)" : "e-mail (commence par une ligne « Objet : … »)"}.\n\nÉcris le message. Le lien s'écrit [LIEN].` }],
     });
+    await recordAiUsage("followup", response);
     if (response.stop_reason === "refusal") return { ok: false, error: "Le modèle a refusé cette demande." };
     const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("").trim();
     return text.length > 30 ? { ok: true, text } : { ok: false, error: "Message vide. Réessayez." };
@@ -302,6 +310,8 @@ export async function suggestTopics(input: { facts: string; insights: string; re
     "Propose 10 sujets.",
   ].join("\n");
   try {
+    const gate = await aiBudgetGate("ideas");
+    if (!gate.ok) return { ok: false, error: gate.error };
     const client = new Anthropic();
     const response = await client.beta.messages.create({
       model: MARKETING_MODEL,
@@ -312,6 +322,7 @@ export async function suggestTopics(input: { facts: string; insights: string; re
       output_config: { effort: "medium", format: { type: "json_schema", schema: ideasSchema(input.kind ?? "cert") } },
       messages: [{ role: "user", content: prompt }],
     });
+    await recordAiUsage("ideas", response);
     if (response.stop_reason === "refusal") return { ok: false, error: "Le modèle a refusé cette demande." };
     if (response.stop_reason === "max_tokens") return { ok: false, error: "Réponse coupée. Réessayez." };
     const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("");
@@ -358,6 +369,8 @@ export function parseNews(text: string): NewsItem[] {
 export async function searchNews(kind: MarketingKind = "cert"): Promise<{ ok: true; items: NewsItem[] } | { ok: false; error: string }> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
   try {
+    const gate = await aiBudgetGate("news");
+    if (!gate.ok) return { ok: false, error: gate.error };
     const client = new Anthropic();
     const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content: `Nous sommes le ${new Date().toISOString().slice(0, 10)}. Fais la veille.` }];
     let text = "";
@@ -372,6 +385,7 @@ export async function searchNews(kind: MarketingKind = "cert"): Promise<{ ok: tr
         output_config: { effort: "low" },
         messages,
       });
+      await recordAiUsage("news", response);
       text += response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("");
       if (response.stop_reason !== "pause_turn") break;
       messages.push({ role: "assistant", content: response.content });
