@@ -15,7 +15,7 @@ export const GUARDRAILS_KEY = "guardrails";
  * suspends it. The Monday report only writes to Ben, so it keeps running
  * while everything else is stopped: he still sees where things stand.
  * Not listed, and never stopped: payment confirmations, seat holds expiring,
- * cohort statuses, exchange rates, video and test syncs. Stopping them would
+ * cohort statuses, exchange rates, video and test syncs, receipt numbering. Stopping them would
  * leave seats blocked or payments unconfirmed.
  */
 export const AUTOMATIONS = {
@@ -32,6 +32,7 @@ export const AUTOMATIONS = {
   content: { label: "Rythme de contenu (IA)", detail: "Brouillons de publications de la semaine", global: true },
   analyst: { label: "Analyste de la semaine (IA)", detail: "Analyse du dimanche pour le rapport du lundi", global: true },
   mondayReport: { label: "Rapport du lundi", detail: "Vous seul le recevez : il continue pendant l’arrêt général", global: false },
+  adminReminders: { label: "Rappels administratifs", detail: "Échéances et demandes sur les données, à J-15 et J-3 : pour vous seul", global: false },
 } as const;
 
 export type AutomationKey = keyof typeof AUTOMATIONS;

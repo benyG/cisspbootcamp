@@ -1,3 +1,4 @@
+import { issueReceipt } from "@/lib/admin-records-server";
 import { randomUUID } from "node:crypto";
 
 import { CalendarNotConnectedError, createCallEvent } from "@/lib/calendar/google";
@@ -195,6 +196,7 @@ export async function markServiceOrderPaid(input: {
     prisma.actionLog.create({ data: { leadId: order.leadId, type: "service_paid", payload: { reference: input.reference, service: order.serviceCode, method: order.method } } }),
   ]);
   await recordEvent({ name: "service_paid", leadId: order.leadId, label: order.serviceCode, country: order.lead.country });
+  await issueReceipt("service", order.id);
 
   // The slot chosen before paying becomes the first session, if it is still free.
   let bookedSession: { ok: true; bookingId: number; rescheduleToken: string } | null = null;

@@ -1,9 +1,10 @@
-import { ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { Landmark, ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
 import { loadQueue } from "@/lib/action-queue";
 import { calendarHealth } from "@/lib/calendar/google";
+import { prisma } from "@/lib/db";
 import { loadGuardrails } from "@/lib/guardrails-server";
 import { waMeLink } from "@/lib/messaging/templates";
 import { formatUsdCents } from "@/lib/pricing";
@@ -23,7 +24,17 @@ const READINESS: Record<string, string> = { ready: "Éligible", conditional: "As
  * priority order, each with its button. Nothing else to open to run the day.
  */
 export default async function AdminHomePage() {
-  const [session, { items, kpis }, agenda, guardrails] = await Promise.all([auth(), loadQueue(), calendarHealth(), loadGuardrails()]);
+  const soon = new Date(Date.now() + 3 * 86_400_000);
+  const [session, { items, kpis }, agenda, guardrails, adminDue] = await Promise.all([
+    auth(),
+    loadQueue(),
+    calendarHealth(),
+    loadGuardrails(),
+    Promise.all([
+      prisma.adminDeadline.count({ where: { doneAt: null, dueAt: { lte: soon } } }),
+      prisma.privacyRequest.count({ where: { doneAt: null, dueAt: { lte: new Date(Date.now() + 7 * 86_400_000) } } }),
+    ]).catch(() => [0, 0] as const),
+  ]);
   const groups = {
     review: items.filter((i) => i.kind === "review"),
     call: items.filter((i) => i.kind === "call"),
@@ -54,6 +65,13 @@ export default async function AdminHomePage() {
         <p role="alert" className="mt-4 rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-900">
           <b>Arrêt général en cours : aucun message automatique ne part.</b>{" "}
           <Link href="/admin/garde-fous" className="font-semibold underline">Relancer dans Garde-fous</Link>
+        </p>
+      )}
+
+      {adminDue[0] + adminDue[1] > 0 && (
+        <p role="alert" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-sm text-amber-950">
+          <b>{[adminDue[0] ? `${adminDue[0]} échéance${adminDue[0] > 1 ? "s" : ""} dans moins de 3 jours` : "", adminDue[1] ? `${adminDue[1]} demande${adminDue[1] > 1 ? "s" : ""} sur les données à traiter cette semaine` : ""].filter(Boolean).join(" · ")}.</b>{" "}
+          <Link href="/admin/administratif" className="font-semibold underline">Ouvrir Administratif</Link>
         </p>
       )}
 
@@ -268,6 +286,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/analyste", label: "Analyste", icon: LineChart },
   { href: "/admin/playbooks", label: "Playbooks", icon: Workflow },
   { href: "/admin/garde-fous", label: "Garde-fous", icon: ShieldAlert },
+  { href: "/admin/administratif", label: "Administratif", icon: Landmark },
   { href: "/admin/sante", label: "Santé des intégrations", icon: Stethoscope },
   { href: "/admin/mcp", label: "Prise MCP (Claude)", icon: Plug },
   { href: "/admin/promos", label: "Codes promo", icon: TicketPercent },

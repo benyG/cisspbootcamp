@@ -1,3 +1,4 @@
+import { issueReceipt } from "@/lib/admin-records-server";
 import { randomBytes } from "node:crypto";
 
 import type { Prisma } from "@prisma/client";
@@ -371,6 +372,7 @@ export async function markRegistrationPaid(input: {
   // The public gauge must reflect this seat now, not in 60 s.
   revalidateTag(COHORTS_CACHE_TAG);
   await recordEvent({ name: "paid", leadId: registration.leadId, label: registration.method });
+  await issueReceipt("registration", registration.id);
 
   const planUrl = program === "ia" ? await afterEntryPaid(registration.leadId, target?.id ?? registration.cohortId) : undefined;
   await sendSeatConfirmation({
@@ -428,6 +430,7 @@ export async function markBalancePaid(input: {
   if (updated.count === 0) return { ok: true, alreadyPaid: true };
   await prisma.actionLog.create({ data: { leadId: registration.leadId, type: "balance_paid", payload: { reference: input.reference, method: input.method, amountUsd: registration.balanceUsd } } });
   await recordEvent({ name: "paid", leadId: registration.leadId, label: `${input.method}:solde` });
+  await issueReceipt("balance", registration.id);
 
   const cohortName = `${PROGRAMS[registration.cohort.program].name} — ${registration.cohort.name}`;
   await sendEmail({
@@ -531,6 +534,8 @@ export async function registerByAdmin(input: { leadId: number; cohortId: number;
 
   revalidateTag(COHORTS_CACHE_TAG);
   await recordEvent({ name: "paid", leadId: lead.id, label: "manual" });
+  const created = await prisma.registration.findUnique({ where: { reference }, select: { id: true } }).catch(() => null);
+  if (created) await issueReceipt("registration", created.id);
   const planUrl = cohort.program === "ia" ? await afterEntryPaid(lead.id, cohort.id) : undefined;
   const email = input.notify
     ? await sendSeatConfirmation({ lead, amountUsd: input.amountUsdCents, creditUsd: 0, reference, program: cohort.program, cohort, planUrl })

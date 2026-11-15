@@ -26,6 +26,12 @@ export type ReceiptData = {
   program?: ProgramCode;
   issuerName: string;
   issuerEmail: string;
+  /** The line as archived (lot B), instead of programme + cohort. */
+  label?: string;
+  /** Numbered receipts of this registration (lot B): first payment, then the balance. */
+  numbers?: string[];
+  /** Business identity from /admin/administratif: address, registration, tax id, mentions. */
+  business?: { legalName: string; address: string; country: string; registration: string; taxId: string; mentions: string } | null;
 };
 
 export async function buildReceiptPdf(data: ReceiptData): Promise<Uint8Array> {
@@ -44,14 +50,19 @@ export async function buildReceiptPdf(data: ReceiptData): Promise<Uint8Array> {
 
   text("REÇU", { size: 22, font: bold, color: accent });
   y -= 18;
-  text(`N° ${data.reference}`, { color: muted });
+  text(data.numbers?.length ? `N° ${data.numbers.join(" et ")} · référence ${data.reference}` : `Référence ${data.reference}`, { color: muted });
   y -= 14;
   text(`Émis le ${data.paidAt.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`, { color: muted });
 
   y -= 40;
   text("Émetteur", { font: bold, size: 10, color: muted });
   y -= 16;
-  text(data.issuerName, { font: bold });
+  const biz = data.business;
+  text(biz?.legalName || data.issuerName, { font: bold });
+  for (const line of [biz?.address, biz?.country, biz?.registration, biz?.taxId ? `Identifiant fiscal : ${biz.taxId}` : ""].filter(Boolean) as string[]) {
+    y -= 14;
+    text(line, { size: 10 });
+  }
   y -= 14;
   text(data.issuerEmail, { color: muted });
 
@@ -88,11 +99,11 @@ export async function buildReceiptPdf(data: ReceiptData): Promise<Uint8Array> {
   };
   const titleSize = data.program === "cc" ? 10 : 11;
   text(formatUsdCents(data.amountUsdCents), { font: bold, x: 440 });
-  wrap(`${program.productName} — ${data.cohortName}`, bold, titleSize).forEach((line, i) => {
+  wrap(data.label ?? `${program.productName} — ${data.cohortName}`, bold, titleSize).forEach((line, i) => {
     if (i > 0) y -= 13;
     text(line, { font: bold, size: titleSize });
   });
-  for (const line of wrap(program.productLine, regular, 9)) {
+  for (const line of data.label ? [] : wrap(program.productLine, regular, 9)) {
     y -= 12;
     text(line, { size: 9, color: muted });
   }
@@ -127,7 +138,10 @@ export async function buildReceiptPdf(data: ReceiptData): Promise<Uint8Array> {
   y -= 40;
   text(program.receiptExamNote, { size: 9, color: muted });
   y -= 12;
-  text("Ce reçu atteste du paiement de la formation. Il ne constitue pas une facture avec TVA.", { size: 9, color: muted });
+  for (const line of wrap(biz?.mentions || "Ce reçu atteste du paiement de la formation. Il ne constitue pas une facture avec TVA.", regular, 9, 480)) {
+    text(line, { size: 9, color: muted });
+    y -= 12;
+  }
 
   return pdf.save();
 }

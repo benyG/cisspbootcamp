@@ -305,7 +305,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       <form action={deleteLead} className="mt-10 border-t border-line pt-4">
         <input type="hidden" name="leadId" value={lead.id} />
         <button className="text-sm text-red-700 underline">Supprimer ce lead et tout son historique</button>
-        <p className="mt-1 text-xs text-muted">Irréversible. À utiliser sur demande du prospect (RGPD).</p>
+        <p className="mt-1 text-xs text-muted">Irréversible. À utiliser sur demande du prospect (RGPD). S’il a payé, il est anonymisé : ses reçus restent dans la comptabilité, sa place reste comptée. <a href={`/admin/leads/${lead.id}/donnees`} className="underline">Télécharger ses données</a></p>
       </form>
     </main>
   );

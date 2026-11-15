@@ -1,3 +1,4 @@
+import { eraseLead } from "@/lib/admin-records-server";
 import { revalidateTag } from "next/cache";
 
 import { cohortDeletionProblem } from "@/lib/cohorts";
@@ -206,12 +207,17 @@ export async function setPrice(input: { tier: string; program: "cissp" | "cc" | 
   return { ok: true, message: `Prix mis à jour : ${input.program.toUpperCase()}, palier ${input.tier}, ${input.amountUsdCents / 100} USD.` };
 }
 
-/** Full deletion (SPECS A10): cascades through responses, bookings, registrations, log. */
+/**
+ * Deletion (SPECS A10, lot B): everything goes for someone who never paid;
+ * someone who paid is anonymised, so the seat stays counted and the
+ * receipts stay in the accounts.
+ */
 export async function deleteLeadCore(leadId: number): Promise<OpResult> {
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true } });
-  if (!lead) return { ok: false, error: `Aucun prospect n°${leadId}.` };
-  await prisma.lead.delete({ where: { id: leadId } });
-  return { ok: true, message: "Prospect et toutes ses données supprimés." };
+  const outcome = await eraseLead(leadId);
+  if (outcome === "not_found") return { ok: false, error: `Aucun prospect n°${leadId}.` };
+  return outcome === "deleted"
+    ? { ok: true, message: "Prospect et toutes ses données supprimés." }
+    : { ok: true, message: "Personne anonymisée : ses paiements et reçus restent dans la comptabilité, tout le reste est effacé." };
 }
 
 /**
