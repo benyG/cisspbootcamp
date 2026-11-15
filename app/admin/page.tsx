@@ -1,4 +1,4 @@
-import { Landmark, ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { MessageCircleQuestion, Landmark, ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -10,7 +10,7 @@ import { waMeLink } from "@/lib/messaging/templates";
 import { formatUsdCents } from "@/lib/pricing";
 import { balanceUrl } from "@/lib/registration";
 
-import { confirmBalancePayment, confirmManualPayment, unfinishedHandled, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
+import { markQuestionAnswered, confirmBalancePayment, confirmManualPayment, unfinishedHandled, followupPostpone, followupSent, inviteToBook, markCallOutcome, releaseHoldAction } from "./actions";
 import { markCampaignDone } from "./cohortes/actions";
 import { markBetDone } from "./analyste/actions";
 import { markSessionOutcome, remindSessionBooking } from "./conseil/actions";
@@ -35,6 +35,7 @@ export default async function AdminHomePage() {
       prisma.privacyRequest.count({ where: { doneAt: null, dueAt: { lte: new Date(Date.now() + 7 * 86_400_000) } } }),
     ]).catch(() => [0, 0] as const),
   ]);
+  const questions = await prisma.siteQuestion.findMany({ where: { answeredAt: null }, orderBy: { createdAt: "asc" }, take: 20 }).catch(() => []);
   const groups = {
     review: items.filter((i) => i.kind === "review"),
     call: items.filter((i) => i.kind === "call"),
@@ -90,6 +91,19 @@ export default async function AdminHomePage() {
       </div>
 
       {items.length === 0 && <p className="mt-8 rounded-xl border border-line bg-white p-4 text-muted">Rien à faire aujourd&apos;hui. La prospection continue : deux publications par semaine, les groupes, les anciens participants.</p>}
+
+      <div id="questions" />
+      <Group icon={MessageCircleQuestion} title="Questions des visiteurs" count={questions.length}>
+        {questions.map((q) => (
+          <li key={`q${q.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-white px-3.5 py-3">
+            <span className="min-w-0 text-sm"><b>{q.email}</b><span className="block text-xs text-muted">{q.question.length > 160 ? `${q.question.slice(0, 160)}…` : q.question}</span></span>
+            <span className="flex gap-1.5">
+              <a href={`mailto:${q.email}?subject=${encodeURIComponent("Votre question")}&body=${encodeURIComponent(`Bonjour,\n\nVous nous avez demandé : « ${q.question.slice(0, 300)} »\n\n`)}`} className={primary}>Répondre</a>
+              <form action={markQuestionAnswered}><input type="hidden" name="id" value={q.id} /><button className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold">Répondu</button></form>
+            </span>
+          </li>
+        ))}
+      </Group>
 
       <Group icon={ShieldCheck} title="Demandes de Claude à valider" count={groups.mcp.reduce((n, i) => n + (i.kind === "mcp" ? i.count : 0), 0)}>
         {groups.mcp.map((i) => i.kind === "mcp" && (

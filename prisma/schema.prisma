@@ -1275,3 +1275,39 @@ model AdminDeadline {
   @@index([doneAt, dueAt])
   @@map("admin_deadlines")
 }
+
+/// One conversation with the site assistant (lot C). The transcript is kept
+/// on the server (the browser only holds the id) and deleted after 30 days.
+model AssistantConversation {
+  id         String   @id @db.VarChar(32)
+  /// cissp | ia: the page it started on.
+  program    String   @db.VarChar(8)
+  /// Salted hash of the visitor's IP: the daily cap, never the address itself.
+  ipHash     String   @map("ip_hash") @db.VarChar(64)
+  turns      Int      @default(0)
+  transcript Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  questions SiteQuestion[]
+
+  @@index([ipHash, createdAt])
+  @@index([createdAt])
+  @@map("assistant_conversations")
+}
+
+/// A question the assistant handed over to Ben (lot C), with the visitor's
+/// explicit consent to be answered by e-mail.
+model SiteQuestion {
+  id             Int                    @id @default(autoincrement())
+  conversationId String?                @map("conversation_id") @db.VarChar(32)
+  conversation   AssistantConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  email          String                 @db.VarChar(180)
+  question       String                 @db.Text
+  consentAt      DateTime               @map("consent_at")
+  answeredAt     DateTime?              @map("answered_at")
+  createdAt      DateTime               @default(now()) @map("created_at")
+
+  @@index([answeredAt, createdAt])
+  @@map("site_questions")
+}

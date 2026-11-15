@@ -38,6 +38,13 @@ const TREATMENTS = [
     keep: `${RETENTION_YEARS} ans après la fin de la cohorte`,
   },
   {
+    name: "Assistant du site",
+    purpose: "Répondre aux questions des visiteurs à partir de la FAQ ; transmettre à l’équipe ce qu’il ne sait pas",
+    data: "Messages de la conversation, empreinte salée de l’adresse IP (limite quotidienne) ; e-mail seulement si la personne transmet sa question, avec son accord",
+    basis: "Intérêt légitime pour la conversation ; consentement pour la réponse par e-mail",
+    keep: "Conversations : 30 jours ; questions transmises : le temps de répondre, puis 3 ans",
+  },
+  {
     name: "Messages automatiques",
     purpose: "Rappels, relances et informations sur les cohortes",
     data: "Prénom, e-mail, étape du parcours",
@@ -53,7 +60,7 @@ const PROCESSORS = [
   ["Stripe", "Paiement par carte"],
   ["Netticket", "Paiement mobile money"],
   ["Google", "Agenda, liens de visio, stockage des replays"],
-  ["Anthropic (Claude)", "Rédaction de messages et analyses ; reçoit le prénom et les réponses au questionnaire, jamais l’e-mail"],
+  ["Anthropic (Claude)", "Rédaction de messages, analyses et assistant du site ; reçoit le prénom, les réponses au questionnaire et les messages de l’assistant, jamais l’e-mail"],
 ] as const;
 
 export default function RegistrePage() {
