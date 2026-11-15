@@ -1,3 +1,4 @@
+import { AssistantPanel } from "@/components/assistant/AssistantPanel";
 import { Activity, BadgeCheck, Brain, Briefcase, Building2, CalendarCheck, CalendarClock, Check, ChevronDown, CircleHelp, CirclePlay, ClipboardCheck, CodeXml, Compass, Database, Flag, GraduationCap, KeyRound, Layers, type LucideIcon, MessageSquareQuote, Network, ScanSearch, ShieldAlert, ShieldCheck, Target, Timer, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -306,6 +307,7 @@ export function Faq({ settings }: { settings: SiteSettings }) {
             </TrackFaq>
           ))}
         </div>
+        <div className="mt-4"><AssistantPanel program="cissp" /></div>
       </div>
     </section>
   );

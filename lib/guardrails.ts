@@ -29,6 +29,7 @@ export const AUTOMATIONS = {
   evaluations: { label: "Évaluations de fin de cohorte", detail: "Demande d’avis aux participants", global: true },
   playbooks: { label: "Playbooks", detail: "Chacun garde aussi son propre mode dans Playbooks", global: true },
   scheduledPosts: { label: "Publications programmées", detail: "Publication sur LinkedIn à la date choisie", global: true },
+  assistant: { label: "Assistant du site (IA)", detail: "Répond aux visiteurs à partir de la FAQ ; arrêté, il propose de laisser la question par e-mail", global: true },
   content: { label: "Rythme de contenu (IA)", detail: "Brouillons de publications de la semaine", global: true },
   analyst: { label: "Analyste de la semaine (IA)", detail: "Analyse du dimanche pour le rapport du lundi", global: true },
   mondayReport: { label: "Rapport du lundi", detail: "Vous seul le recevez : il continue pendant l’arrêt général", global: false },

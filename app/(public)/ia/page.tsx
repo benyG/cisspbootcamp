@@ -1,3 +1,4 @@
+import { AssistantPanel } from "@/components/assistant/AssistantPanel";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -217,6 +218,7 @@ export default async function IaPage() {
                 <p>Le Bâtisseur IA existe en groupe réservé, sur site ou en ligne, aux dates de votre entreprise. <Link className="underline" href={iaDomain() ? `${env.NEXT_PUBLIC_APP_URL}/entreprises?formation=ia` : "/entreprises?formation=ia"}>Demander un devis</Link>.</p>
               </details>
             </div>
+            <div style={{ marginTop: 16 }}><AssistantPanel program="ia" /></div>
           </div>
         </section>
         <Dock href={book} watch="reserver" title={first ? `Groupe du ${firstDay.replace(/^\S+ /, "")}` : "Prochaine date"} sub={first ? `${first.left} place${first.left > 1 ? "s" : ""} sur ${first.capacity}` : "Annoncée par e-mail"} action={first ? "Réserver" : "Recevoir"} />

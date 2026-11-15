@@ -114,3 +114,12 @@ export async function releaseHoldAction(formData: FormData): Promise<void> {
   revalidatePath(`/admin/leads/${leadId}`);
   revalidatePath("/admin");
 }
+
+/** A visitor's question answered by e-mail (lot C): it leaves the queue. */
+export async function markQuestionAnswered(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const id = z.coerce.number().int().positive().safeParse(formData.get("id"));
+  if (!id.success) return;
+  await prisma.siteQuestion.update({ where: { id: id.data }, data: { answeredAt: new Date() } }).catch(() => undefined);
+  revalidatePath("/admin");
+}

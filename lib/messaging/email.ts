@@ -21,6 +21,8 @@ export async function sendEmail(input: {
   attachments?: EmailAttachment[];
   /** Display name instead of the default one (Bâtisseur IA e-mails); same address. */
   fromName?: string;
+  /** Where "Reply" goes: the visitor of a hand-over question, for Ben. */
+  replyTo?: string;
 }): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = withSenderName(process.env.EMAIL_FROM ?? "CISSP Bootcamp <bonjour@cisspbootcamp.online>", input.fromName);
@@ -38,6 +40,7 @@ export async function sendEmail(input: {
     text: input.text,
     html: input.html ?? textToHtml(input.text),
     attachments: input.attachments?.map((a) => ({ filename: a.filename, content: a.content })),
+    ...(input.replyTo ? { replyTo: input.replyTo } : {}),
   });
 
   if (error) {
