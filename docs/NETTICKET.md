@@ -1,5 +1,8 @@
 # Netticket — notes d'intégration (étape 4)
 
+> **Désactivé le 16/11/2026** : les paiements Orange Money et MTN MoMo via Netticket ne fonctionnent pas. Le site prend uniquement la carte. Pour réactiver : `MOBILE_MONEY_ENABLED = true` dans `lib/payments/netticket.ts`, après un paiement réel testé de bout en bout.
+
+
 Source : https://netticket.net/developers, transmise par Ben le 19/09/2026.
 Ce fichier est la référence de travail pour l'étape 4 ; il note aussi les
 décisions et les angles morts repérés à la lecture.

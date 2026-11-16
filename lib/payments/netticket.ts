@@ -18,10 +18,18 @@ export const MODALITY = { mtn: 3, orange: 4 } as const;
 export type Operator = keyof typeof MODALITY;
 
 /** Countries where Netticket's operators and currency (XAF) apply. */
+/**
+ * Ben, 16/11/2026: Netticket's Orange Money and MTN MoMo payments do not
+ * work. The site takes cards only (Stripe); nothing mobile money is offered
+ * or started. The code stays for the day it works: set this to true.
+ * Payments already started keep their webhook and status check.
+ */
+export const MOBILE_MONEY_ENABLED = false;
+
 export const NETTICKET_COUNTRIES = new Set(["CM", "GA", "CG", "TD", "CF", "GQ"]);
 
 export function mobileMoneyAvailable(country: string | null | undefined, ticketCode: string | null | undefined): boolean {
-  return Boolean(ticketCode) && Boolean(process.env.NETTICKET_API_KEY) && NETTICKET_COUNTRIES.has((country ?? "").toUpperCase());
+  return MOBILE_MONEY_ENABLED && Boolean(ticketCode) && Boolean(process.env.NETTICKET_API_KEY) && NETTICKET_COUNTRIES.has((country ?? "").toUpperCase());
 }
 
 export class NetticketNotConfiguredError extends Error {
@@ -54,6 +62,7 @@ export async function createMobilePayment(input: {
   operator: Operator;
   name: string;
 }): Promise<MobilePaymentResult> {
+  if (!MOBILE_MONEY_ENABLED) throw new NetticketNotConfiguredError();
   const response = await fetch(`${BASE}/payment/mobile`, {
     method: "POST",
     headers: headers(),
@@ -118,7 +127,7 @@ export function parseWebhook(rawBody: string, verifHash: string | null): Nettick
 /** Fallback (SPECS A4): Netticket's own purchase page, our reference carried along. */
 export function fallbackUrl(reference: string): string | null {
   const base = process.env.NETTICKET_FALLBACK_URL;
-  if (!base) return null;
+  if (!MOBILE_MONEY_ENABLED || !base) return null;
   const url = new URL(base);
   url.searchParams.set("ref", reference);
   return url.toString();

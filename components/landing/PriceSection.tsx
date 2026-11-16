@@ -108,7 +108,7 @@ export function PriceSection({ settings, tiers, rates, cohort }: Props) {
             {offer.included.map((i) => <li key={i} className="flex items-start gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={3} aria-hidden />{i}</li>)}
           </ul>
           <TrackLink href="#evaluation" label="prix" className={btnPrimary + " mt-5 w-full"}><ScanSearch className="size-5" aria-hidden />Analyser mon profil →</TrackLink>
-          <p className="mt-3 text-[.86rem] font-bold text-ink-2">Carte · Orange Money · MTN MoMo</p>
+          <p className="mt-3 text-[.86rem] font-bold text-ink-2">Carte Visa ou Mastercard</p>
           {startsAt && (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 text-[.86rem] text-muted">
               Admissions jusqu’au {formatAdmissionDeadline(startsAt)}<span className="text-[.8rem]"><AdmissionCountdown closesAt={admissionClosesAt(startsAt).toISOString()} compact /></span>

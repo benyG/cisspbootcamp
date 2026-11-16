@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MODALITY, mobileMoneyAvailable, parseWebhook } from "@/lib/payments/netticket";
+import { MOBILE_MONEY_ENABLED, MODALITY, NetticketNotConfiguredError, createMobilePayment, fallbackUrl, mobileMoneyAvailable, parseWebhook } from "@/lib/payments/netticket";
+import { showMaxItTip } from "@/lib/payments/card-only";
 
 const SECRET = "hash-partage";
 const payload = (over: Record<string, unknown> = {}) =>
@@ -39,18 +40,34 @@ describe("parseWebhook", () => {
 });
 
 describe("mobileMoneyAvailable", () => {
-  it("exige la clé, un code de ticket et un pays de la zone XAF", () => {
+  it("est coupé tant que Netticket ne fonctionne pas (16/11), même avec clé et ticket", () => {
     process.env.NETTICKET_API_KEY = "k";
-    expect(mobileMoneyAvailable("CM", "TCK")).toBe(true);
-    expect(mobileMoneyAvailable("SN", "TCK")).toBe(false);
-    expect(mobileMoneyAvailable("CM", null)).toBe(false);
-    delete process.env.NETTICKET_API_KEY;
+    expect(MOBILE_MONEY_ENABLED).toBe(false);
     expect(mobileMoneyAvailable("CM", "TCK")).toBe(false);
+    delete process.env.NETTICKET_API_KEY;
+  });
+
+  it("ne lance aucun paiement mobile ni page de secours", async () => {
+    process.env.NETTICKET_API_KEY = "k";
+    process.env.NETTICKET_FALLBACK_URL = "https://netticket.net/achat";
+    await expect(createMobilePayment({ email: "a@b.c", phone: "677123456", ticketCode: "T", operator: "orange", name: "A" })).rejects.toBeInstanceOf(NetticketNotConfiguredError);
+    expect(fallbackUrl("CB-AAAA-BBBB")).toBeNull();
+    delete process.env.NETTICKET_API_KEY;
+    delete process.env.NETTICKET_FALLBACK_URL;
   });
 });
 
 describe("MODALITY", () => {
   it("suit la documentation Netticket", () => {
     expect(MODALITY).toEqual({ mtn: 3, orange: 4 });
+  });
+});
+
+describe("carte uniquement : astuce Max it", () => {
+  it("s’affiche dans les pays où Orange Money est utilisé", () => {
+    expect(showMaxItTip("CM")).toBe(true);
+    expect(showMaxItTip("ci")).toBe(true);
+    expect(showMaxItTip("FR")).toBe(false);
+    expect(showMaxItTip(null)).toBe(false);
   });
 });

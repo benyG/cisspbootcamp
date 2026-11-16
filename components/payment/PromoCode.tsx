@@ -11,7 +11,7 @@ export function PromoCode({ promo, error, code, listUsdCents, page, keep }: { pr
     <div className="grid gap-2">
       {promo && (
         <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent-ink">
-          <b>{promo.label} : -{promo.percent} %.</b> Par carte, en une fois : <b>{formatUsdCents(promo.amountUsdCents)}</b> au lieu de {formatUsdCents(listUsdCents)}. En mobile money ou en deux fois, le prix reste {formatUsdCents(listUsdCents)}.
+          <b>{promo.label} : -{promo.percent} %.</b> Par carte, en une fois : <b>{formatUsdCents(promo.amountUsdCents)}</b> au lieu de {formatUsdCents(listUsdCents)}. En deux fois, le prix reste {formatUsdCents(listUsdCents)}.
         </p>
       )}
       <form method="get" action={page} className="flex flex-wrap items-center gap-2 text-sm">

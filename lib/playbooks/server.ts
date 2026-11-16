@@ -100,7 +100,7 @@ export function unfinishedEmail(input: { program: string; firstName: string; coh
       "",
       `Vous avez commencé votre inscription à ${programName} (${input.cohortName}) sans la terminer : votre place n’est pas encore réservée.`,
       "",
-      `Pour la finaliser, par carte ou par mobile money : ${input.link}`,
+      `Pour la finaliser, par carte bancaire : ${input.link}`,
       `Les inscriptions pour cette date ferment le ${admissionDeadline(input.program, input.startsAt)}.`,
       "",
       `Un souci de paiement ou une question ? Répondez simplement à ce message${ia ? ", nous vous aidons" : ", je vous aide"}.`,

@@ -202,7 +202,7 @@ export default async function IaPage() {
                 <div className="cta-stack">
                   <Link className="btn btn-go" href={entries.length ? iaPath("/ia/inscription") : diagnostic}>{bookLabel}</Link>
                 </div>
-                <p className="note">Carte bancaire, Orange Money, MTN MoMo. Reçu par e-mail.</p>
+                <p className="note">Carte bancaire Visa ou Mastercard. Reçu par e-mail.</p>
               </div>
             </div>
           </div>

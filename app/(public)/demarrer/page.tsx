@@ -71,7 +71,7 @@ export default async function StartPage({ searchParams }: { searchParams: Promis
                 </div>
                 <div className="mt-4"><CohortGauge gauge={cohort.gauge} /></div>
                 <TrackLink href={register} event="cta_click" label="demarrer-inscription" className={btnPrimary + " mt-5 w-full"}>Réserver ma place →</TrackLink>
-                <p className="mt-3 text-[.82rem] text-muted">Carte bancaire ou mobile money. Place confirmée dès réception du paiement, reçu par e-mail.</p>
+                <p className="mt-3 text-[.82rem] text-muted">Carte bancaire Visa ou Mastercard. Place confirmée dès réception du paiement, reçu par e-mail.</p>
               </>
             ) : (
               <>

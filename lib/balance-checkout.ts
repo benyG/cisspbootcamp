@@ -73,7 +73,7 @@ export async function balanceMobileCheckout(formData: FormData): Promise<never> 
   // Fallback mode: Netticket's own page, with the balance reference; Ben confirms from the lead sheet.
   if (!process.env.NETTICKET_API_KEY) {
     const url = fallbackUrl(balanceReference(registration.reference));
-    if (!url) return fail("Le paiement mobile n'est pas encore activé.");
+    if (!url) return fail("Le paiement se fait par carte bancaire (Visa ou Mastercard).");
     redirect(url);
   }
   const ticketCode = await installmentTicket(registration.cohort.program, registration.tier);
@@ -83,7 +83,7 @@ export async function balanceMobileCheckout(formData: FormData): Promise<never> 
   try {
     result = await createMobilePayment({ email: registration.lead.email, phone: mobile.data.phone, ticketCode, operator: mobile.data.operator, name: `${registration.lead.firstName} ${registration.lead.lastName}`.trim() });
   } catch (error) {
-    if (error instanceof NetticketNotConfiguredError) return fail("Le paiement mobile n'est pas encore activé.");
+    if (error instanceof NetticketNotConfiguredError) return fail("Le paiement se fait par carte bancaire (Visa ou Mastercard).");
     console.error("[solde] Netticket", error);
     return fail("Impossible de lancer le paiement mobile. Réessayez dans un instant.");
   }

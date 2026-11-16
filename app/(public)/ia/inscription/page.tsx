@@ -12,7 +12,8 @@ import { prisma } from "@/lib/db";
 import { IA_ZONE, journeeSlot, longDate } from "@/lib/ia-days";
 import { twoPaymentPlan } from "@/lib/installments";
 import { openIaEntries } from "@/lib/ia-days-server";
-import { mobileMoneyAvailable } from "@/lib/payments/netticket";
+import { MOBILE_MONEY_ENABLED, mobileMoneyAvailable } from "@/lib/payments/netticket";
+import { CardOnlyNote } from "@/components/payment/CardOnlyNote";
 import { convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { PROGRAMS } from "@/lib/programs";
 import { loadRates } from "@/lib/registration";
@@ -59,7 +60,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
 
   const promo = price && selected ? await promoPreview({ program: "ia", cohortId: selected, listUsdCents: price.amountUsd, code }) : null;
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
-  const mobileReady = mobileMoneyAvailable(country, price?.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
+  const mobileReady = MOBILE_MONEY_ENABLED && (mobileMoneyAvailable(country, price?.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL));
 
   return (
     <>
@@ -115,7 +116,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
                   plan={plan}
                   firstLocal={firstLocal !== null ? formatLocal(firstLocal, currency) : null}
                   deadline="votre J1"
-                  mobileTwo={Boolean(price.netticketInstallmentCode) || !process.env.NETTICKET_API_KEY}
+                  mobileTwo={!MOBILE_MONEY_ENABLED || Boolean(price.netticketInstallmentCode) || !process.env.NETTICKET_API_KEY}
                 />
               )}
 
@@ -161,7 +162,7 @@ export default async function IaRegistrationPage({ searchParams }: { searchParam
                   </div>
                 </details>
               ) : (
-                <p className="text-center text-sm text-muted">Mobile money : disponible pour la zone CEMAC. Pour les autres pays, carte bancaire.</p>
+                <CardOnlyNote country={country} />
               )}
               <p className="text-xs text-muted">Paiement sécurisé par Stripe. Votre place est confirmée dès réception du paiement, par e-mail, avec votre reçu.</p>
             </form>

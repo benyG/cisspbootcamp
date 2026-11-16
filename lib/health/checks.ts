@@ -1,3 +1,4 @@
+import { MOBILE_MONEY_ENABLED } from "@/lib/payments/netticket";
 import { list } from "@vercel/blob";
 
 import { fetchBusy, getCredential } from "@/lib/calendar/google";
@@ -99,6 +100,7 @@ export const CHECKS: Check[] = [
     name: "Mobile money (Netticket)",
     role: "Orange Money, MTN MoMo",
     run: async () => {
+      if (!MOBILE_MONEY_ENABLED) return { status: "off", detail: "Désactivé (16/11) : le site prend uniquement la carte. Rien à faire.", fix: [] };
       if (!set("NETTICKET_API_KEY")) return { status: set("NETTICKET_FALLBACK_URL") ? "warn" : "off", detail: set("NETTICKET_FALLBACK_URL") ? "Pas de clé : seule la page d’achat de secours fonctionne, confirmation manuelle." : "Non configuré : pas de mobile money.", fix: ["Clé fournie par Netticket (docs/NETTICKET.md).", vercelEnv(["NETTICKET_API_KEY", "NETTICKET_WEBHOOK_SECRET"])] };
       const res = await timed("https://netticket.net/api/payment/sante-0/check", { headers: { "x-api-key": process.env.NETTICKET_API_KEY!, Accept: "application/json" } });
       if (res.status === 401 || res.status === 403) return { status: "fail", detail: "Netticket refuse la clé.", fix: ["Demandez une clé valide à Netticket.", vercelEnv(["NETTICKET_API_KEY"])] };

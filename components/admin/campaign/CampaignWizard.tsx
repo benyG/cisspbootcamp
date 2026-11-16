@@ -136,7 +136,7 @@ export function CampaignWizard({
           )}
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="promoPartners" checked={values.promoPartners === "on"} onChange={check("promoPartners")} className="mt-1 accent-[var(--color-accent)]" /><span>Codes partenaires</span></label>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="promoReferral" checked={values.promoReferral === "on"} onChange={check("promoReferral")} className="mt-1 accent-[var(--color-accent)]" /><span>Parrainage des anciens</span></label>
-          <p className="text-xs text-muted">Les promos s’appliquent au paiement par carte, en une fois, sur le prix du pays. Le mobile money reste au prix plein.</p>
+          <p className="text-xs text-muted">Les promos s’appliquent au paiement par carte en une fois, sur le prix du pays. En deux fois, le prix reste plein.</p>
         </fieldset>
 
         <fieldset className="grid gap-2">
