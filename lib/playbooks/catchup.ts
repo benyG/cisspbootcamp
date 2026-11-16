@@ -60,7 +60,7 @@ export function catchUpEmail(input: { program: string; firstName: string; cohort
       `${ia ? "Nous revenons" : "Je reviens"} vers vous : il reste ${plural(input.seatsLeft, "place")} à ${programName(input.program)} (${input.cohortName}), démarrage le ${longDate(input.startsAt)}. Les inscriptions ferment le ${deadline}.`,
       ...(input.launch ? ["", `Tarif de lancement : -${input.launch.percent} % en payant par carte, jusqu’au ${new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${input.launch.until}T12:00:00Z`))}.`] : []),
       "",
-      `Pour réserver, par carte ou par mobile money : ${input.link}`,
+      `Pour réserver, par carte bancaire : ${input.link}`,
       "",
       ia ? "Une question avant de vous décider ? Répondez simplement à ce message." : "Une question avant de vous décider ? Répondez simplement à ce message, je vous réponds moi-même.",
       "",

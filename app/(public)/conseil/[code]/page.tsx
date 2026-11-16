@@ -6,7 +6,8 @@ import { Footer, Topbar, eyebrow, shell } from "@/components/landing/sections";
 import { TrackView } from "@/components/tracking/TrackView";
 import { buildServiceOffer } from "@/lib/consulting";
 import { prisma } from "@/lib/db";
-import { mobileMoneyAvailable } from "@/lib/payments/netticket";
+import { MOBILE_MONEY_ENABLED, mobileMoneyAvailable } from "@/lib/payments/netticket";
+import { CardOnlyNote } from "@/components/payment/CardOnlyNote";
 import { COUNTRIES } from "@/lib/scanner/questions";
 import { isServiceCode } from "@/lib/services";
 import { SITE_DEFAULTS, loadSiteSettings } from "@/lib/site-settings";
@@ -51,7 +52,7 @@ export default async function ServiceOrderPage({
   const listing = held ? null : await listSlots(new Date(), { kind: "consulting", sessionMinutes: service.sessionMinutes }).catch(() => null);
 
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
-  const mobileReady = mobileMoneyAvailable(country, offer.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
+  const mobileReady = MOBILE_MONEY_ENABLED && (mobileMoneyAvailable(country, offer.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL));
 
   return (
     <>
@@ -151,7 +152,7 @@ export default async function ServiceOrderPage({
                 </div>
               </details>
             ) : (
-              <p className="text-center text-sm text-muted">Mobile money : disponible pour la zone CEMAC. Pour les autres pays, carte bancaire.</p>
+              <CardOnlyNote country={country} />
             )}
             <p className="text-xs text-muted">Paiement sécurisé par Stripe. Dès la confirmation, votre séance est réservée et l’invitation arrive par e-mail.</p>
           </form>

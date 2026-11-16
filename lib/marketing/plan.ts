@@ -20,7 +20,7 @@ export const ANGLES = {
   places: "Places limitées, date de clôture",
   emploi: "Compatible avec un emploi (soirs, mercredi lecture, week-ends)",
   associate: "Sans les 5 ans : le titre Associate of ISC²",
-  mobile_money: "Paiement simple, y compris mobile money",
+  mobile_money: "Paiement simple par carte, y compris depuis Orange Money (carte Visa virtuelle Max it)",
   conseil_du_jour: "Le réflexe CISSP du jour (raisonner en manager)",
   cc: "Débuter : la certification CC en 15 jours",
   coach: "Un coach qui tient le rythme avec vous",
@@ -72,7 +72,7 @@ export const DESTINATIONS = {
 export const IA_DESTINATIONS = {
   ia_diagnostic: { label: "Diagnostic IA", path: "/ia/diagnostic", forModel: "le diagnostic d'autonomie gratuit (5 questions, 3 minutes), pour une activité ou un projet : où en est l'entreprise (projet, manuel, assisté) et les trois tâches à mettre en pilote automatique d'abord" },
   ia_page: { label: "Page Bâtisseur IA", path: "/ia", forModel: "la page du Bâtisseur IA : bâtir son entreprise autonome avec l'IA, programme des 6 journées le week-end (chacune met une fonction de l'entreprise en pilote automatique), prix selon le pays, prochaines dates d'entrée" },
-  ia_inscription: { label: "Inscription IA", path: "/ia/inscription", forModel: "l'inscription au Bâtisseur IA : choix de la date d'entrée (J1), paiement par carte ou mobile money" },
+  ia_inscription: { label: "Inscription IA", path: "/ia/inscription", forModel: "l'inscription au Bâtisseur IA : choix de la date d'entrée (J1), paiement par carte bancaire" },
 } as const;
 
 export const ALL_DESTINATIONS = { ...DESTINATIONS, ...IA_DESTINATIONS } as const;
@@ -102,7 +102,7 @@ export const PILLARS = {
   certification: { label: "Choisir sa certification", destination: "scanner", examples: ["CISSP, CISM ou CC : par où commencer ?", "Ce que le CISSP change dans une carrière", "Certification ou expérience d'abord ?"] },
   eligibilite: { label: "Éligibilité", destination: "scanner", examples: ["Les 5 ans d'expérience : ce qui compte vraiment", "Le titre Associate of ISC²", "Les domaines qui valident l'expérience"] },
   candidat: { label: "Vie du candidat", destination: "cohorte", examples: ["Préparer le CISSP en travaillant", "Le mercredi lecture et les week-ends denses", "Gérer le stress du jour J"] },
-  offre: { label: "Offre et cohorte", destination: "cohorte", examples: ["Places limitées, date de clôture", "Paiement par carte ou mobile money", "Un coach qui tient le rythme avec vous"] },
+  offre: { label: "Offre et cohorte", destination: "cohorte", examples: ["Places limitées, date de clôture", "Paiement par carte, même depuis Orange Money", "Un coach qui tient le rythme avec vous"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
 
 /** Bâtisseur IA pillars (Ben, 04/11; the autonomous business 08/11): about four value posts for one selling post, like the certifications. */
@@ -113,7 +113,7 @@ export const IA_PILLARS = {
   outils: { label: "Les outils expliqués", destination: "ia_page", examples: ["GitHub expliqué à un chef d'entreprise", "Mettre une application en ligne avec Vercel", "Ce que coûte vraiment une application sur mesure"] },
   garde_fous: { label: "Méthode et garde-fous", destination: "ia_diagnostic", examples: ["Ne jamais confier ses mots de passe à une IA", "Relire ce que l'IA a écrit avant de publier", "Commencer petit : une tâche, puis la suivante"] },
   entrepreneur: { label: "Vie d'entrepreneur", destination: "ia_diagnostic", examples: ["Le temps perdu dans WhatsApp", "Quand Excel ne suffit plus", "Lancer son entreprise déjà organisée"] },
-  offre: { label: "Offre et dates", destination: "ia_inscription", examples: ["Les prochaines entrées J1", "6 journées le week-end, aux dates de votre choix", "Paiement par carte ou mobile money"] },
+  offre: { label: "Offre et dates", destination: "ia_inscription", examples: ["Les prochaines entrées J1", "6 journées le week-end, aux dates de votre choix", "Paiement par carte, même depuis Orange Money"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
 
 export type Pillar = keyof typeof PILLARS | keyof typeof IA_PILLARS;

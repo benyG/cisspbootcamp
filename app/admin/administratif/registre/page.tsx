@@ -58,7 +58,6 @@ const PROCESSORS = [
   ["Hostinger (MySQL)", "Base de données"],
   ["Resend", "Envoi des e-mails"],
   ["Stripe", "Paiement par carte"],
-  ["Netticket", "Paiement mobile money"],
   ["Google", "Agenda, liens de visio, stockage des replays"],
   ["Anthropic (Claude)", "Rédaction de messages, analyses et assistant du site ; reçoit le prénom, les réponses au questionnaire et les messages de l’assistant, jamais l’e-mail"],
 ] as const;

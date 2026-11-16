@@ -77,6 +77,7 @@ Contraintes : mobile-first (majorité du trafic africain sur mobile), chargement
 - **Palier** déterminé par le pays du scanner (ou géolocalisation IP si accès direct, modifiable par le prospect). Table `pricing_tiers` : `africa` 625 USD, `international` 1 200 USD, `enterprise` sur devis.
 - Affichage en USD + équivalent local indicatif (FCFA, EUR, CAD) via taux mis à jour quotidiennement.
 - **Stripe Checkout** pour carte bancaire (paiement unique ; option 2 versements en V2).
+- **Mise à jour du 16/11/2026 : carte uniquement.** Les paiements Orange Money et MTN MoMo via Netticket ne fonctionnent pas : le site ne propose plus que la carte (Stripe). Les pays où Orange Money est utilisé voient une astuce : l'application Max it d'Orange crée une carte Visa virtuelle rechargée depuis Orange Money. Interrupteur dans le code : `MOBILE_MONEY_ENABLED` (`lib/payments/netticket.ts`). Ce qui suit reste pour le jour où Netticket fonctionne.
 - **Mobile money via Netticket.net** (plateforme déjà utilisée par Ben) :
   - Mode principal, **API** : création de la transaction côté serveur avec une référence unique, redirection du prospect vers le paiement Netticket, puis mise à jour du statut via notification Netticket (webhook) ou vérification de statut (polling par cron toutes les 5 min pendant 24 h). Passage en `paid` uniquement après confirmation Netticket côté serveur.
   - Mode de secours, **redirection simple** : lien vers la page d'achat de ticket Netticket portant la référence ; statut `pending_manual`, confirmation par le coach depuis l'admin.

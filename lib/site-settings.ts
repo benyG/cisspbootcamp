@@ -162,7 +162,7 @@ export const SITE_DEFAULTS: SiteSettings = {
     { q: "Le bootcamp est-il entièrement en français ?", a: "Oui. Explications, échanges et supports sont en français. Le vocabulaire technique anglais de l’examen est travaillé au fil des sessions." },
     { q: "Puis-je suivre tout en travaillant ?", a: "C’est conçu pour. En semaine, 2 h en soirée, et le mercredi reste libre pour lire ; les week-ends sont plus denses, 5 h 30 par jour. Pendant 15 jours, la préparation est la priorité." },
     { q: "L’examen CISSP est-il inclus ?", a: "Non. Les frais d’examen se règlent auprès d’ISC². Le bootcamp vous prépare et vous laisse avec un plan jusqu’à votre date d’examen." },
-    { q: "Comment payer depuis l’Afrique ?", a: "Carte bancaire, Orange Money ou MTN Mobile Money. Le prix est en USD, avec l’équivalent indicatif en FCFA. Un reçu est émis à chaque paiement." },
+    { q: "Comment payer depuis l’Afrique ?", a: "Par carte bancaire Visa ou Mastercard. Votre argent est sur Orange Money ? L’application Max it d’Orange permet de créer une carte Visa virtuelle, de la recharger depuis Orange Money, puis de payer avec. Le prix est en USD, avec l’équivalent indicatif en FCFA. Un reçu est émis à chaque paiement." },
   ],
   contact: {
     whatsapp: "",

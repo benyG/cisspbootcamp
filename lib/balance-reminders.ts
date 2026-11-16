@@ -21,7 +21,7 @@ export function balanceReminderEmail(input: { program?: string; firstName: strin
       "",
       `${input.last ? "Petit rappel avant le démarrage" : "Le démarrage approche"} : le second versement de votre inscription à la ${input.programName} — ${input.cohortName}, ${formatUsdCents(input.balanceUsd)}, est à régler avant le premier jour, le ${balanceDeadline(input.startsAt)}.`,
       "",
-      `Par carte ou mobile money, en deux minutes : ${balanceUrl(input.reference)}`,
+      `Par carte bancaire, en deux minutes : ${balanceUrl(input.reference)}`,
       "",
       "Déjà réglé, ou un souci ? Répondez à ce message.",
       "",

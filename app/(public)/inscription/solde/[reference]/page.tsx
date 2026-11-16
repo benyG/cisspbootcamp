@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 
 import { prisma } from "@/lib/db";
 import { balanceOpen, firstDueUsd } from "@/lib/installments";
-import { NETTICKET_COUNTRIES } from "@/lib/payments/netticket";
+import { MOBILE_MONEY_ENABLED, NETTICKET_COUNTRIES } from "@/lib/payments/netticket";
+import { CardOnlyNote } from "@/components/payment/CardOnlyNote";
 import { formatUsdCents } from "@/lib/pricing";
 import { PROGRAMS } from "@/lib/programs";
 import { balanceDeadline } from "@/lib/registration";
@@ -36,7 +37,7 @@ export default async function BalancePage({ params, searchParams }: { params: Pr
     ? await prisma.pricingTier.findUnique({ where: { code: registration.tier }, select: { netticketInstallmentCode: true } }).then((r) => r?.netticketInstallmentCode ?? null)
     : await prisma.programPrice.findFirst({ where: { program: registration.cohort.program, tier: registration.tier }, select: { netticketInstallmentCode: true } }).then((r) => r?.netticketInstallmentCode ?? null);
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
-  const mobileReady = NETTICKET_COUNTRIES.has(registration.lead.country.toUpperCase()) && (process.env.NETTICKET_API_KEY ? Boolean(ticket) : Boolean(process.env.NETTICKET_FALLBACK_URL));
+  const mobileReady = MOBILE_MONEY_ENABLED && (NETTICKET_COUNTRIES.has(registration.lead.country.toUpperCase()) && (process.env.NETTICKET_API_KEY ? Boolean(ticket) : Boolean(process.env.NETTICKET_FALLBACK_URL)));
   const name = `${program.name} — ${registration.cohort.name}`;
 
   return (
@@ -88,7 +89,7 @@ export default async function BalancePage({ params, searchParams }: { params: Pr
               </div>
             </details>
           ) : (
-            <p className="text-center text-sm text-muted">Mobile money : disponible pour la zone CEMAC. Pour les autres pays, carte bancaire.</p>
+            <CardOnlyNote country={registration.lead.country} />
           )}
           <p className="text-xs text-[var(--color-muted)]">Paiement sécurisé par Stripe. Vous recevez un e-mail de confirmation et votre reçu mis à jour. Une question ? Répondez simplement à l&apos;e-mail de confirmation de votre place.</p>
         </form>

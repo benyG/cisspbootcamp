@@ -42,7 +42,7 @@ export default function PrivacyPage() {
         Ben seul pour les bootcamps CISSP et CC, l&apos;équipe ExamBoot pour le
         Bâtisseur IA, et les prestataires techniques nécessaires au service : l&apos;hébergeur
         du site et de la base de données, le service d&apos;envoi d&apos;e-mails,
-        Google Calendar pour les rendez-vous, Stripe et Netticket pour les paiements.
+        Google Calendar pour les rendez-vous, Stripe pour les paiements par carte.
       </p>
       <h2>Combien de temps</h2>
       <p>

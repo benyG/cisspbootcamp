@@ -161,7 +161,7 @@ export async function programMobileCheckout(formData: FormData, opts: CheckoutOp
 
   if (!process.env.NETTICKET_API_KEY) {
     const url = fallbackUrl(registration.reference);
-    if (!url) return fail("Le paiement mobile n'est pas encore activé.");
+    if (!url) return fail("Le paiement se fait par carte bancaire (Visa ou Mastercard).");
     await prisma.registration.update({ where: { id: registration.id }, data: { status: "pending_manual" } });
     redirect(url);
   }
@@ -171,7 +171,7 @@ export async function programMobileCheckout(formData: FormData, opts: CheckoutOp
   try {
     result = await createMobilePayment({ email: lead.email, phone: mobile.data.phone, ticketCode: checkout.netticketTicketCode, operator: mobile.data.operator, name: `${lead.firstName} ${lead.lastName}`.trim() });
   } catch (error) {
-    if (error instanceof NetticketNotConfiguredError) return fail("Le paiement mobile n'est pas encore activé.");
+    if (error instanceof NetticketNotConfiguredError) return fail("Le paiement se fait par carte bancaire (Visa ou Mastercard).");
     console.error(`[${opts.program}] Netticket`, error);
     return fail("Impossible de lancer le paiement mobile. Réessayez dans un instant.");
   }

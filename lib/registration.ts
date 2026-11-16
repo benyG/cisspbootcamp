@@ -471,7 +471,7 @@ async function sendSeatConfirmation(input: {
       `Bonjour ${input.lead.firstName},\n\n` +
       (input.balanceUsd
         ? `Votre premier versement de ${formatUsdCents(input.amountUsd - input.balanceUsd)} est confirmé${input.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(input.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n` +
-          `Le second versement, ${formatUsdCents(input.balanceUsd)}, est à régler avant le premier jour, le ${balanceDeadline(input.cohort.startsAt)}, par carte ou mobile money : ${balanceUrl(input.reference)}\n${input.program === "ia" ? "Nous vous le rappelons" : "Je vous le rappelle"} par e-mail une semaine avant.\n\n`
+          `Le second versement, ${formatUsdCents(input.balanceUsd)}, est à régler avant le premier jour, le ${balanceDeadline(input.cohort.startsAt)}, par carte bancaire : ${balanceUrl(input.reference)}\n${input.program === "ia" ? "Nous vous le rappelons" : "Je vous le rappelle"} par e-mail une semaine avant.\n\n`
         : `Votre paiement de ${formatUsdCents(input.amountUsd)} est confirmé${input.creditUsd > 0 ? ` (votre heure de conseil, ${formatUsdCents(input.creditUsd)}, a été déduite)` : ""}. Votre place dans la ${cohortName} est réservée.\n\n`) +
       (input.moved
         ? `La cohorte que vous visiez s'est remplie entre-temps : votre place est sur la suivante, en ${cohortMonth}. Si cette date ne vous convient pas, répondez à ce message.\n\n`

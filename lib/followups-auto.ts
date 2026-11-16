@@ -37,7 +37,7 @@ export async function sendAfterCallEmail(leadId: number, outcome: "registered" |
       (outcome === "registered"
         ? `Merci pour notre échange. Comme convenu, voici le lien pour réserver votre place : ${base}/inscription?t=${token}\n\n`
         : `Merci pour notre échange. Prenez le temps qu'il vous faut ; quand vous serez prêt, votre place se réserve ici : ${base}/inscription?t=${token}\n\n`) +
-      `Carte bancaire ou mobile money, reçu immédiat.${deadline}\n\n` +
+      `Paiement par carte bancaire (Visa, Mastercard), reçu immédiat.${deadline}\n\n` +
       `Une question d'ici là ? Répondez simplement à ce message.\n\n` +
       SIGNATURE(lead.unsubscribeToken),
   });

@@ -11,7 +11,8 @@ import { recordServerEvent } from "@/lib/tracking/server";
 
 import { PromoCode } from "@/components/payment/PromoCode";
 import { PlanAmount, PlanChoice } from "@/components/payment/PlanChoice";
-import { mobileMoneyAvailable } from "@/lib/payments/netticket";
+import { MOBILE_MONEY_ENABLED, mobileMoneyAvailable } from "@/lib/payments/netticket";
+import { CardOnlyNote } from "@/components/payment/CardOnlyNote";
 
 import { leadIdFromToken, payByCard, payByMobileMoney } from "./actions";
 
@@ -58,7 +59,7 @@ export default async function RegistrationPage({
   const { offer } = result;
   await recordServerEvent({ name: "offer_view", leadId, label: offer.tierCode });
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
-  const mobileReady = mobileMoneyAvailable(offer.country, offer.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
+  const mobileReady = MOBILE_MONEY_ENABLED && (mobileMoneyAvailable(offer.country, offer.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL));
 
   return (
     <Shell title={`${lead.firstName}, réservez votre place.`}>
@@ -100,7 +101,7 @@ export default async function RegistrationPage({
             plan={offer.twoPayments}
             firstLocal={offer.twoPayments.firstLocalLabel}
             deadline={`le premier jour, le ${balanceDeadline(offer.cohort.startsAt)}`}
-            mobileTwo={Boolean(offer.twoPayments.netticketTicketCode) || !process.env.NETTICKET_API_KEY}
+            mobileTwo={!MOBILE_MONEY_ENABLED || Boolean(offer.twoPayments.netticketTicketCode) || !process.env.NETTICKET_API_KEY}
           />
         )}
         <button
@@ -143,7 +144,7 @@ export default async function RegistrationPage({
             </div>
           </details>
         ) : (
-          <p className="text-center text-sm text-muted">Mobile money : disponible pour la zone CEMAC. Pour les autres pays, carte bancaire.</p>
+          <CardOnlyNote country={offer.country} />
         )}
       </form>
 

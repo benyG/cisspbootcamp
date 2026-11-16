@@ -9,7 +9,8 @@ import { TrackView } from "@/components/tracking/TrackView";
 import { formatAdmissionDeadline, formatCohortMonth, remainingSeats, selectRegistrationCohort } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 import { twoPaymentPlan } from "@/lib/installments";
-import { mobileMoneyAvailable } from "@/lib/payments/netticket";
+import { MOBILE_MONEY_ENABLED, mobileMoneyAvailable } from "@/lib/payments/netticket";
+import { CardOnlyNote } from "@/components/payment/CardOnlyNote";
 import { convertUsdCents, formatLocal, formatUsdCents, isQuoteOnly, localCurrencyFor, resolveTierCode } from "@/lib/pricing";
 import { PROGRAMS } from "@/lib/programs";
 import { balanceDeadline, loadOpenCohorts, loadRates } from "@/lib/registration";
@@ -49,7 +50,7 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
 
   const promo = price && cohort ? await promoPreview({ program: "cc", cohortId: cohort.id, listUsdCents: price.amountUsd, code }) : null;
   const stripeReady = Boolean(process.env.STRIPE_SECRET_KEY);
-  const mobileReady = mobileMoneyAvailable(country, price?.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL);
+  const mobileReady = MOBILE_MONEY_ENABLED && (mobileMoneyAvailable(country, price?.netticketTicketCode) || Boolean(!process.env.NETTICKET_API_KEY && process.env.NETTICKET_FALLBACK_URL));
 
   return (
     <>
@@ -94,7 +95,7 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
                     plan={plan}
                     firstLocal={firstLocal !== null ? formatLocal(firstLocal, currency) : null}
                     deadline={`le premier jour, le ${balanceDeadline(cohort.startsAt)}`}
-                    mobileTwo={Boolean(price.netticketInstallmentCode) || !process.env.NETTICKET_API_KEY}
+                    mobileTwo={!MOBILE_MONEY_ENABLED || Boolean(price.netticketInstallmentCode) || !process.env.NETTICKET_API_KEY}
                   />
                 )}
                 {known ? (
@@ -139,7 +140,7 @@ export default async function ProgramRegistrationPage({ searchParams }: { search
                     </div>
                   </details>
                 ) : (
-                  <p className="text-center text-sm text-muted">Mobile money : disponible pour la zone CEMAC. Pour les autres pays, carte bancaire.</p>
+                  <CardOnlyNote country={country} />
                 )}
                 <p className="text-xs text-muted">Paiement sécurisé par Stripe. Votre place est confirmée dès réception du paiement, par e-mail, avec votre reçu.</p>
               </form>
