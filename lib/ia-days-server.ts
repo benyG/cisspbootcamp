@@ -65,12 +65,20 @@ export async function openIaDates(input: { from: string; to: string; which: "bot
   const existing = await prisma.iaDay.findMany({ select: { date: true, journee: true, closed: true } });
   const fresh = rotateJournees(existing, dates);
   if (!fresh.length) return { ok: false, error: "Ces dates sont déjà ouvertes." };
-  await prisma.$transaction(async (tx) => {
-    for (const { date, journee } of fresh) {
-      const cohort = journee === 1 ? await tx.cohort.create({ data: cohortData(date, input.start, input.capacity, now) }) : null;
-      await tx.iaDay.create({ data: { date, journee, start: input.start, capacity: input.capacity, cohortId: cohort?.id ?? null } });
-    }
-  });
+  // Few round trips (Ben, 16/11): two months of weekends created one by one
+  // took over 5 s against the remote database and the transaction expired.
+  // The J1 cohorts first (they need an id), then every day in one insert.
+  await prisma.$transaction(
+    async (tx) => {
+      const cohortOf = new Map<string, number>();
+      for (const { date } of fresh.filter((d) => d.journee === 1)) {
+        const cohort = await tx.cohort.create({ data: cohortData(date, input.start, input.capacity, now), select: { id: true } });
+        cohortOf.set(date, cohort.id);
+      }
+      await tx.iaDay.createMany({ data: fresh.map(({ date, journee }) => ({ date, journee, start: input.start, capacity: input.capacity, cohortId: cohortOf.get(date) ?? null })) });
+    },
+    { maxWait: 10_000, timeout: 30_000 },
+  );
   revalidateTag(COHORTS_CACHE_TAG);
   const entries = fresh.filter((d) => d.journee === 1).length;
   return { ok: true, message: `${fresh.length} date${fresh.length > 1 ? "s" : ""} ouverte${fresh.length > 1 ? "s" : ""}${entries ? `, dont ${entries} entrée${entries > 1 ? "s" : ""} (J1)` : ""}.` };

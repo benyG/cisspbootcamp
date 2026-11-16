@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const db = vi.hoisted(() => {
-  const tx = { cohort: { create: vi.fn(), update: vi.fn(), delete: vi.fn() }, iaDay: { create: vi.fn(), update: vi.fn(), delete: vi.fn() } };
-  return { tx, iaDay: { findMany: vi.fn(), findUnique: vi.fn() }, cohort: { findMany: vi.fn() }, $transaction: vi.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)) };
+  const tx = { cohort: { create: vi.fn(), update: vi.fn(), delete: vi.fn() }, iaDay: { create: vi.fn(), createMany: vi.fn(), update: vi.fn(), delete: vi.fn() } };
+  return { tx, iaDay: { findMany: vi.fn(), findUnique: vi.fn() }, cohort: { findMany: vi.fn() }, $transaction: vi.fn(async (...args: [(t: typeof tx) => Promise<unknown>, { timeout?: number }?]) => args[0](tx)) };
 });
 vi.mock("@/lib/db", () => ({ prisma: db }));
 vi.mock("next/cache", () => ({ revalidateTag: vi.fn(), unstable_cache: (fn: unknown) => fn }));
@@ -25,7 +25,10 @@ describe("Bâtisseur IA, dates (Ben, 03/11)", () => {
     db.iaDay.findMany.mockResolvedValue([]);
     const r = await openIaDates({ from: "2027-01-20", to: "2027-02-13", which: "both", start: "10:00", capacity: 12 }, now);
     expect(r).toEqual({ ok: true, message: "7 dates ouvertes, dont 2 entrées (J1)." });
-    const created = db.tx.iaDay.create.mock.calls.map((c) => c[0].data);
+    // One insert for every day, in a transaction with room for a remote database (Ben, 16/11: 5 s expired).
+    expect(db.tx.iaDay.createMany).toHaveBeenCalledTimes(1);
+    expect(db.$transaction.mock.calls.at(-1)?.[1]).toMatchObject({ timeout: 30_000 });
+    const created = db.tx.iaDay.createMany.mock.calls[0][0].data as Array<{ date: string; journee: number; cohortId: number | null }>;
     expect(created.map((d) => [d.date, d.journee])).toEqual([["2027-01-23", 1], ["2027-01-24", 2], ["2027-01-30", 3], ["2027-01-31", 4], ["2027-02-06", 5], ["2027-02-07", 6], ["2027-02-13", 1]]);
     expect(created[0].cohortId).toBe(101);
     expect(created[1].cohortId).toBeNull();
@@ -59,7 +62,7 @@ describe("Bâtisseur IA, dates (Ben, 03/11)", () => {
     db.iaDay.findMany.mockResolvedValue([{ date: "2027-01-23", journee: 1, closed: false }]);
     const r = await openIaDates({ from: "2027-01-17", to: "2027-01-31", which: "saturday", start: "10:00", capacity: 12 }, now);
     expect(r).toEqual({ ok: true, message: "1 date ouverte." });
-    expect(db.tx.iaDay.create.mock.calls[0][0].data).toMatchObject({ date: "2027-01-30", journee: 2, cohortId: null });
+    expect(db.tx.iaDay.createMany.mock.calls[0][0].data).toEqual([expect.objectContaining({ date: "2027-01-30", journee: 2, cohortId: null })]);
     expect(db.tx.cohort.create).not.toHaveBeenCalled();
   });
 
