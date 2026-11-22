@@ -215,7 +215,7 @@ export default async function IaPage() {
               {IA_FAQ.map((f, i) => <details key={f.q} open={i === 0}><summary>{f.q}</summary><p>{f.a}</p></details>)}
               <details>
                 <summary>Et pour toute une équipe ?</summary>
-                <p>Le Bâtisseur IA existe en groupe réservé, sur site ou en ligne, aux dates de votre entreprise. <Link className="underline" href={iaDomain() ? `${env.NEXT_PUBLIC_APP_URL}/entreprises?formation=ia` : "/entreprises?formation=ia"}>Demander un devis</Link>.</p>
+                <p>Le Bâtisseur IA existe en groupe réservé, sur site ou en ligne, aux dates de votre entreprise. <Link className="underline" href={iaDomain() ? `${env.NEXT_PUBLIC_APP_URL}/entreprises?formation=ia` : "/entreprises?formation=ia"}>Demander un devis</Link>. Vous préférez que nous mettions l’IA au travail chez vous ? <Link className="underline" href={iaPath("/ia/entreprises")}>Bâtisseur IA Entreprises</Link>.</p>
               </details>
             </div>
             <div style={{ marginTop: 16 }}><AssistantPanel program="ia" /></div>

@@ -9,6 +9,7 @@ export function GET() {
   const pages = [
     { path: "/ia", priority: "1.0", freq: "weekly" },
     { path: "/ia/diagnostic", priority: "0.9", freq: "monthly" },
+    { path: "/ia/entreprises", priority: "0.8", freq: "monthly" },
     { path: "/ia/guide", priority: "0.5", freq: "monthly" },
   ];
   const urls = pages.map((p) => `  <url><loc>${origin}${iaPath(p.path)}</loc><changefreq>${p.freq}</changefreq><priority>${p.priority}</priority></url>`).join("\n");
