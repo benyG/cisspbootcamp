@@ -35,7 +35,8 @@ export type QueueItem =
   | { kind: "hold"; holdId: number; leadId: number; name: string; cohortName: string; hoursLeft: number; reminded: boolean }
   | { kind: "personal"; scheduleId: number; cohortId: number; leadId: number; name: string; cohortName: string; hoursWaiting: number }
   | { kind: "replay"; accessId: number; cohortId: number; leadId: number; name: string; cohortName: string; note: string }
-  | { kind: "quote"; quoteId: number; organization: string; summary: string; contact: string; note: string };
+  | { kind: "quote"; quoteId: number; organization: string; summary: string; contact: string; note: string }
+  | { kind: "enterprise"; requestId: number; organization: string; contact: string; note: string };
 
 export type Kpis = { leadsThisWeek: number; callsThisWeek: number; confirmed: number; capacity: number; cohortName: string | null };
 
@@ -188,6 +189,12 @@ export async function loadQueue(now = new Date()): Promise<{ items: QueueItem[];
   const quotes = await prisma.quoteRequest.findMany({ where: { status: "new" }, orderBy: { createdAt: "asc" } });
   for (const q of quotes) {
     items.push({ kind: "quote", quoteId: q.id, organization: q.organization, summary: quoteSummary(q as Parameters<typeof quoteSummary>[0]), contact: `${q.contactName} · ${countryLabel(q.country)}`, note: q.need ?? "" });
+  }
+
+  // Bâtisseur IA Entreprises requests not handled yet (Ben, 22/11).
+  const enterprise = await prisma.enterpriseRequest.findMany({ where: { status: "new" }, orderBy: { createdAt: "asc" } }).catch(() => []);
+  for (const r of enterprise) {
+    items.push({ kind: "enterprise", requestId: r.id, organization: r.organization, contact: `${r.contactName} · ${countryLabel(r.country)}`, note: r.need ?? "" });
   }
 
   // Sensitive actions Claude prepared through the MCP plug (lot 3), waiting for Ben.
