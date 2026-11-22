@@ -1,3 +1,4 @@
+import { IA_SIGNATURE } from "@/lib/ia-brand";
 import { randomUUID } from "node:crypto";
 
 import { CalendarNotConnectedError, cancelCallEvent, createCallEvent, fetchBusy, getCredential, moveCallEvent } from "@/lib/calendar/google";
@@ -29,7 +30,7 @@ export type SlotListing =
   | { available: true; slots: Date[]; coachTimeZone: string }
   | { available: false; reason: "not_connected" | "no_rules" | "calendar_error" };
 
-export type BookingKind = "discovery" | "consulting";
+export type BookingKind = "discovery" | "consulting" | "enterprise";
 
 /** Which windows and which slot length: the free call, or a paid session of N minutes. */
 export type SlotFamily = { kind: "discovery" } | { kind: "consulting"; sessionMinutes: number };
@@ -102,13 +103,15 @@ export async function isSlotBookable(start: Date, now = new Date(), family: Slot
 
 /** The family a stored booking belongs to, from its kind and its length. */
 export function familyOf(booking: { kind: BookingKind; startsAt: Date; endsAt: Date }): SlotFamily {
-  if (booking.kind !== "consulting") return DISCOVERY;
+  // A company's scoping call takes the consulting windows (Bâtisseur IA Entreprises).
+  if (booking.kind === "discovery") return DISCOVERY;
   return { kind: "consulting", sessionMinutes: Math.round((booking.endsAt.getTime() - booking.startsAt.getTime()) / 60_000) };
 }
 
 /** "notre appel de 15 minutes" or "notre séance de conseil de 60 minutes". */
 export function describeBooking(booking: { kind: BookingKind; startsAt: Date; endsAt: Date }): string {
   const minutes = Math.round((booking.endsAt.getTime() - booking.startsAt.getTime()) / 60_000);
+  if (booking.kind === "enterprise") return `notre appel de cadrage de ${minutes} minutes`;
   return booking.kind === "consulting" ? `notre séance de conseil de ${minutes} minutes` : "notre appel de 15 minutes";
 }
 
@@ -275,7 +278,7 @@ export async function rescheduleCall(input: { rescheduleToken: string; start: Da
   await sendEmail({
     to: booking.lead.email,
     subject: `Nouveau créneau : ${formatWhen(input.start, input.timezone)}`,
-    text: confirmationText({ firstName: booking.lead.firstName, start: input.start, timezone: input.timezone, meetUrl: booking.meetUrl, rescheduleToken: booking.rescheduleToken, unsubscribeToken: booking.lead.unsubscribeToken, what: describeBooking({ ...booking, startsAt: input.start, endsAt: end }) }),
+    text: confirmationText({ firstName: booking.lead.firstName, start: input.start, timezone: input.timezone, meetUrl: booking.meetUrl, rescheduleToken: booking.rescheduleToken, unsubscribeToken: booking.lead.unsubscribeToken, what: describeBooking({ ...booking, startsAt: input.start, endsAt: end }), ...(booking.kind === "enterprise" ? { signature: IA_SIGNATURE } : {}) }),
   });
 
   return { ok: true, bookingId: booking.id, rescheduleToken: booking.rescheduleToken };
@@ -301,7 +304,7 @@ export async function cancelCall(rescheduleToken: string): Promise<{ ok: boolean
     ...(booking.kind === "discovery"
       ? [prisma.lead.update({ where: { id: booking.leadId }, data: { status: "contacted", nextFollowupAt: addMinutes(new Date(), 2 * 24 * 60) } })]
       : []),
-    prisma.actionLog.create({ data: { leadId: booking.leadId, type: booking.kind === "consulting" ? "session_cancelled" : "call_cancelled", payload: { bookingId: booking.id } } }),
+    prisma.actionLog.create({ data: { leadId: booking.leadId, type: booking.kind === "consulting" ? "session_cancelled" : booking.kind === "enterprise" ? "enterprise_call_cancelled" : "call_cancelled", payload: { bookingId: booking.id } } }),
   ]);
 
   return { ok: true };
@@ -318,6 +321,8 @@ export function confirmationText(input: {
   what?: string;
   /** "RDV-0042", shown so the prospect can name the booking. */
   code?: string;
+  /** Who signs: Ben by default; the Bâtisseur IA team for a company's call. */
+  signature?: string;
 }): string {
   const base = env.NEXT_PUBLIC_APP_URL;
   const what = input.what ?? "notre appel de 15 minutes";
@@ -326,7 +331,7 @@ export function confirmationText(input: {
     `${what.charAt(0).toUpperCase()}${what.slice(1)} est fixé${what.includes("séance") ? "e" : ""} au ${formatWhen(input.start, input.timezone)} (heure de ${input.timezone}).${input.code ? ` Code : ${input.code}.` : ""}\n\n` +
     (input.meetUrl ? `Lien de visio : ${input.meetUrl}\n\n` : "Le lien de visio est dans l'invitation d'agenda.\n\n") +
     `Un empêchement ? Déplacer ou annuler : ${base}/rdv/${input.rescheduleToken}\n\n` +
-    `À très vite,\nBen\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${input.unsubscribeToken}`
+    `À très vite,\n${input.signature ?? "Ben\nCoach CISSP"}\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${input.unsubscribeToken}`
   );
 }
 
@@ -359,7 +364,7 @@ export async function sendDueReminders(now = new Date()): Promise<{ sent24h: num
     if (booking.lead.unsubscribedAt) continue;
     const result = await sendEmail({
       to: booking.lead.email,
-      subject: booking.kind === "consulting" ? "Demain : notre séance de conseil" : "Demain : notre appel de 15 minutes",
+      subject: booking.kind === "enterprise" ? "Demain : notre appel de cadrage" : booking.kind === "consulting" ? "Demain : notre séance de conseil" : "Demain : notre appel de 15 minutes",
       text: reminderText(booking, "demain"),
     });
     if (result.sent) {
@@ -373,7 +378,7 @@ export async function sendDueReminders(now = new Date()): Promise<{ sent24h: num
     if (booking.lead.unsubscribedAt) continue;
     const result = await sendEmail({
       to: booking.lead.email,
-      subject: booking.kind === "consulting" ? "Dans une heure : notre séance" : "Dans une heure : notre appel",
+      subject: booking.kind === "enterprise" ? "Dans une heure : notre appel de cadrage" : booking.kind === "consulting" ? "Dans une heure : notre séance" : "Dans une heure : notre appel",
       text: reminderText(booking, "dans une heure"),
     });
     if (result.sent) {
@@ -398,7 +403,7 @@ function reminderText(
       ? `Avant l'appel, si vous avez dix minutes : cinq questions d'entraînement CISSP, pour que je cale mes conseils sur votre niveau. ${base}/test-cissp?b=${booking.rescheduleToken}&from=rappel-24h\n\n`
       : "") +
     `Un empêchement ? ${base}/rdv/${booking.rescheduleToken}\n\n` +
-    `Ben\nCoach CISSP\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${booking.lead.unsubscribeToken}`
+    `${booking.kind === "enterprise" ? IA_SIGNATURE : "Ben\nCoach CISSP"}\n\n—\nPour ne plus recevoir de messages : ${base}/desinscription/${booking.lead.unsubscribeToken}`
   );
 }
 

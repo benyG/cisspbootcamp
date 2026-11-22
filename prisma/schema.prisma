@@ -47,6 +47,8 @@ enum BookingOutcome {
 enum BookingKind {
   discovery
   consulting
+  /// The 30-minute scoping call of a Bâtisseur IA company request (Entreprises).
+  enterprise
 }
 
 /// What a cohort teaches (docs/OFFRES.md §3): the CISSP bootcamp, the
@@ -141,6 +143,7 @@ model Lead {
 
   receipts             Receipt[]
   privacyRequests      PrivacyRequest[]
+  enterpriseRequests   EnterpriseRequest[]
   scannerResponses     ScannerResponse[]
   funnelEvents         FunnelEvent[]
   seatHolds            SeatHold[]
@@ -1314,4 +1317,45 @@ model SiteQuestion {
 
   @@index([answeredAt, createdAt])
   @@map("site_questions")
+}
+
+/// A company asking Bâtisseur IA for support (Entreprises, Ben 22/11): the
+/// scoping request, its call, the numbered proposal and its deposit.
+model EnterpriseRequest {
+  id           Int      @id @default(autoincrement())
+  /// Opaque link to the request's own pages (call booking, deposit payment).
+  token        String   @unique @db.VarChar(64)
+  leadId       Int?     @map("lead_id")
+  lead         Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  organization String   @db.VarChar(160)
+  country      String   @db.VarChar(2)
+  contactName  String   @map("contact_name") @db.VarChar(120)
+  jobTitle     String?  @map("job_title") @db.VarChar(120)
+  email        String   @db.VarChar(180)
+  /// lt10 | 10-50 | 50-200 | 200+
+  size         String   @db.VarChar(8)
+  /// The functions ticked in the form (lib/enterprise.ts FUNCTIONS).
+  functions    Json
+  need         String?  @db.Text
+  consentAt    DateTime @map("consent_at")
+  /// new | call | proposal | won | lost
+  status       String   @default("new") @db.VarChar(10)
+  note         String?  @db.Text
+  /// The proposal Ben prepared (lib/enterprise.ts proposalSchema), kept to print it again.
+  proposal     Json?
+  /// DEV-000001, from the same continuous sequence as the training quotes.
+  quoteNumber  String?  @unique @map("quote_number") @db.VarChar(20)
+  /// The deposit asked with the proposal, USD cents, and how it was paid.
+  depositUsd             Int?           @map("deposit_usd")
+  /// CE-XXXX-XXXX: carried through Stripe, routes the webhook here.
+  depositReference       String?        @unique @map("deposit_reference") @db.VarChar(40)
+  depositStripeSessionId String?        @unique @map("deposit_stripe_session_id") @db.VarChar(255)
+  depositMethod          PaymentMethod? @map("deposit_method")
+  depositNote            String?        @map("deposit_note") @db.VarChar(200)
+  depositPaidAt          DateTime?      @map("deposit_paid_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("enterprise_requests")
 }
