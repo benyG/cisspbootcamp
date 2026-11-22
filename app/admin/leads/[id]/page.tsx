@@ -271,7 +271,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
 
       {(lead.bookings.length > 0 || lead.registrations.length > 0 || lead.serviceOrders.length > 0) && (
         <section className="mt-5 grid gap-2 text-sm">
-          {lead.bookings.map((b) => <p key={b.id} className="rounded-lg border border-line bg-white px-3 py-2">{b.kind === "consulting" ? "Séance de conseil" : "Appel"} {b.startsAt.toLocaleString("fr-FR")} · {b.status}{b.outcome ? ` · ${b.outcome}` : ""}{b.meetUrl && <> · <a href={b.meetUrl} className="underline">Meet</a></>}</p>)}
+          {lead.bookings.map((b) => <p key={b.id} className="rounded-lg border border-line bg-white px-3 py-2">{b.kind === "consulting" ? "Séance de conseil" : b.kind === "enterprise" ? "Appel de cadrage Entreprises IA" : "Appel"} {b.startsAt.toLocaleString("fr-FR")} · {b.status}{b.outcome ? ` · ${b.outcome}` : ""}{b.meetUrl && <> · <a href={b.meetUrl} className="underline">Meet</a></>}</p>)}
           {lead.serviceOrders.map((o) => <p key={o.id} className="rounded-lg border border-line bg-white px-3 py-2">Conseil : {o.service.name} · {formatUsdCents(o.amountUsd)} · {o.method} · {o.status} · {o.bookings.length}/{o.sessionsTotal} séance{o.sessionsTotal > 1 ? "s" : ""} · {o.reference}{o.status === "paid" && <> · <a href={`/conseil/rdv/${o.bookingToken}`} className="underline">lien de réservation</a></>}</p>)}
           {lead.registrations.map((r) => (
             <div key={r.id} className="rounded-lg border border-line bg-white px-3 py-2">

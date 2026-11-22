@@ -33,6 +33,9 @@ export const EVENT_NAMES = [
   "ia_view",
   "ia_diagnostic_start",
   "ia_diagnostic_submit",
+  "enterprise_view",
+  "enterprise_request",
+  "enterprise_won",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];

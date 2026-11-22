@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const db = vi.hoisted(() => {
   const m = () => vi.fn();
-  const model = () => ({ findUnique: m(), findMany: m(), findFirst: m(), count: m(), create: m(), createMany: m(), update: m(), delete: m(), deleteMany: m(), upsert: m() });
+  const model = () => ({ findUnique: m(), findMany: m(), findFirst: m(), count: m(), create: m(), createMany: m(), update: m(), updateMany: m(), delete: m(), deleteMany: m(), upsert: m() });
   const d = {
     receipt: model(), registration: model(), serviceOrder: model(), sequence: model(), lead: model(),
     scannerResponse: model(), funnelEvent: model(), actionLog: model(), practiceTest: model(), iaDiagnostic: model(), iaPlan: model(),
-    seatHold: model(), personalSchedule: model(), replayAccess: model(), replayGrant: model(), booking: model(),
+    seatHold: model(), personalSchedule: model(), replayAccess: model(), replayGrant: model(), booking: model(), enterpriseRequest: model(),
     $transaction: vi.fn(),
   };
   return d;
@@ -57,6 +57,7 @@ describe("eraseLead", () => {
     db.receipt.count.mockResolvedValue(0);
     expect(await eraseLead(5)).toBe("deleted");
     expect(db.lead.delete).toHaveBeenCalledWith({ where: { id: 5 } });
+    expect(db.enterpriseRequest.deleteMany).toHaveBeenCalledWith({ where: { leadId: 5 } });
   });
 
   it("anonymises someone who paid: the seat and the receipts stay", async () => {
@@ -67,7 +68,9 @@ describe("eraseLead", () => {
     db.receipt.findMany.mockResolvedValue([]);
     db.registration.findMany.mockResolvedValue([]);
     db.serviceOrder.findMany.mockResolvedValue([]);
+    db.enterpriseRequest.findMany.mockResolvedValue([]);
     expect(await eraseLead(5)).toBe("anonymized");
+    expect(db.enterpriseRequest.deleteMany).toHaveBeenCalledWith({ where: { leadId: 5, depositPaidAt: null } });
     expect(db.lead.delete).not.toHaveBeenCalled();
     expect(db.registration.deleteMany).toHaveBeenCalledWith({ where: { leadId: 5, status: { not: "paid" } } });
     const update = db.lead.update.mock.calls[0]![0];

@@ -45,7 +45,7 @@ export async function saveBusiness(next: Business): Promise<void> {
 
 type Draft = {
   kind: ReceiptKind;
-  leadId: number;
+  leadId: number | null;
   registrationId: number | null;
   serviceOrderId: number | null;
   reference: string;
@@ -60,6 +60,11 @@ type Draft = {
 };
 
 async function draftFor(kind: ReceiptKind, id: number): Promise<Draft | null> {
+  if (kind === "enterprise") {
+    const e = await prisma.enterpriseRequest.findUnique({ where: { id } });
+    if (!e || !e.depositPaidAt || !e.depositUsd || !e.depositReference || !e.depositMethod) return null;
+    return { kind, leadId: e.leadId, registrationId: null, serviceOrderId: null, reference: e.depositReference, buyerName: `${e.organization} (${e.contactName})`.slice(0, 170), buyerEmail: e.email, buyerCountry: e.country, label: `Bâtisseur IA Entreprises · acompte${e.quoteNumber ? `, proposition ${e.quoteNumber}` : ""}`, amountUsd: e.depositUsd, method: e.depositMethod, paymentNote: e.depositNote, paidAt: e.depositPaidAt };
+  }
   if (kind === "service") {
     const o = await prisma.serviceOrder.findUnique({ where: { id }, include: { lead: true, service: { select: { name: true } } } });
     if (!o || o.status !== "paid" || !o.paidAt) return null;
@@ -115,6 +120,8 @@ export async function issueMissingReceipts(limit = 40): Promise<number> {
     if (r.balanceUsd > 0 && r.balancePaidAt && !have.has(receiptSource("balance", r.id))) todo.push({ kind: "balance", id: r.id, at: r.balancePaidAt });
   }
   for (const o of orders) if (!have.has(receiptSource("service", o.id))) todo.push({ kind: "service", id: o.id, at: o.paidAt! });
+  const deposits = await prisma.enterpriseRequest.findMany({ where: { depositPaidAt: { not: null } }, select: { id: true, depositPaidAt: true } }).catch(() => []);
+  for (const d of deposits) if (!have.has(receiptSource("enterprise", d.id))) todo.push({ kind: "enterprise", id: d.id, at: d.depositPaidAt! });
   todo.sort((a, b) => a.at.getTime() - b.at.getTime());
   let issued = 0;
   for (const t of todo.slice(0, limit)) if (await issueReceipt(t.kind, t.id)) issued++;
@@ -138,7 +145,8 @@ export async function eraseLead(leadId: number, now = new Date()): Promise<"dele
     prisma.receipt.count({ where: { leadId } }),
   ]);
   if (!paidRegs && !paidOrders && !receipts) {
-    await prisma.lead.delete({ where: { id: leadId } });
+    // A company request carries the person's name and e-mail too: it goes with them.
+    await prisma.$transaction([prisma.enterpriseRequest.deleteMany({ where: { leadId } }), prisma.lead.delete({ where: { id: leadId } })]);
     return "deleted";
   }
   await issueMissingReceipts(200);
@@ -156,6 +164,9 @@ export async function eraseLead(leadId: number, now = new Date()): Promise<"dele
     prisma.booking.deleteMany({ where: { leadId, serviceOrderId: null } }),
     prisma.registration.deleteMany({ where: { leadId, status: { not: "paid" } } }),
     prisma.serviceOrder.deleteMany({ where: { leadId, status: { not: "paid" } } }),
+    // Company requests: unpaid ones go; a paid deposit keeps the organisation (receipt), not the person.
+    prisma.enterpriseRequest.deleteMany({ where: { leadId, depositPaidAt: null } }),
+    prisma.enterpriseRequest.updateMany({ where: { leadId }, data: { contactName: "Personne supprimée", jobTitle: null, email: `supprime-${leadId}@anonyme.invalid`, need: null, note: null } }),
     prisma.lead.update({ where: { id: leadId }, data: { ...anonymizedIdentity(leadId), tags: undefined, anonymizedAt: lead.anonymizedAt ?? now, unsubscribedAt: now } }),
   ]);
   return "anonymized";

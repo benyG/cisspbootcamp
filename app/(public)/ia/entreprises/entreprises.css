@@ -1,0 +1,131 @@
+/*
+ * Bâtisseur IA Entreprises (Ben, 22/11), ported from the validated
+ * prototype. Builds on landing.css (.ial tokens, buttons, faq, dock);
+ * everything here is scoped under .ial .ent so nothing leaks.
+ */
+.ial .ent .hero-cta { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.ial .ent .hero-note { margin-top: 14px; font-size: .95rem; color: var(--muted); }
+.ial .ent .hero-note a { font-weight: 700; color: var(--ink); }
+.ial .ent .seg { display: inline-flex; border: 2px solid var(--ink); border-radius: 10px; overflow: hidden; }
+.ial .ent .seg button { font: 700 .82rem/1 var(--body); padding: 8px 11px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.ial .ent .seg [aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.ial .ent .pill { font: 600 .7rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 6px 8px; border-radius: 6px; white-space: nowrap; border: 1.5px solid currentColor; }
+.ial .ent .pill.manual { color: var(--stamp); background: #FCEDE5; }
+.ial .ent .pill.assist { color: var(--plan); background: var(--plan-soft); }
+.ial .ent .pill.auto { color: var(--green-ink); background: #E3F6F0; }
+
+/* The process map, before and after */
+.ial .ent .map { background: var(--sheet); border: 2px solid var(--ink); border-radius: 14px; box-shadow: 8px 8px 0 var(--ink); overflow: hidden; }
+.ial .ent .map-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-bottom: 2px solid var(--ink); background: var(--paper); }
+.ial .ent .map ul { list-style: none; padding: 0; margin: 0; }
+.ial .ent .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px 14px; border-top: 1px solid var(--line); }
+.ial .ent .row:first-child { border-top: 0; }
+.ial .ent .row b { display: block; font: 700 .98rem/1.25 var(--body); }
+.ial .ent .row small { display: block; font-size: .82rem; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+.ial .ent .map-foot { padding: 10px 14px; border-top: 2px solid var(--ink); font: 500 .8rem/1.4 var(--mono); color: var(--muted); background: var(--paper); }
+
+/* What stays manual */
+.ial .ent .pains { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); list-style: none; padding: 0; margin: 0; }
+.ial .ent .pains li { background: var(--sheet); border: 1.5px solid var(--line); border-radius: 12px; padding: 16px; }
+.ial .ent .pains b { display: block; font: 800 1.35rem/1 var(--display); text-transform: uppercase; }
+.ial .ent .pains span { display: block; margin-top: 6px; color: var(--ink-2); font-size: .96rem; }
+
+/* The ladder: a real sequence, numbered */
+.ial .ent .prices-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 18px; }
+.ial .ent .ladder { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0; counter-reset: step; }
+@media (min-width: 1000px) { .ial .ent .ladder { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.ial .ent .step { display: grid; grid-template-rows: auto auto 1fr auto; gap: 8px; background: var(--sheet); border: 2px solid var(--ink); border-radius: 12px; padding: 16px; counter-increment: step; min-width: 0; }
+.ial .ent .step::before { content: "0" counter(step); font: 600 .78rem/1 var(--mono); color: var(--plan); letter-spacing: .06em; }
+.ial .ent .step h3 { font: 800 1.6rem/.95 var(--display); text-transform: uppercase; }
+.ial .ent .step ul { padding-left: 1.1em; margin: 0; font-size: .94rem; color: var(--ink-2); }
+.ial .ent .step li { margin-top: 4px; }
+.ial .ent .step .meta { display: grid; gap: 4px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.ial .ent .step .dur { font: 600 .76rem/1.2 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.ial .ent .step .price { font: 800 1.7rem/1 var(--display); }
+.ial .ent .step .price small { font: 600 .8rem/1.2 var(--body); color: var(--muted); display: block; margin-top: 3px; text-transform: none; }
+.ial .ent .step.key { background: var(--ink); color: var(--paper); }
+.ial .ent .step.key::before { color: var(--green); }
+.ial .ent .step.key ul, .ial .ent .step.key .dur, .ial .ent .step.key .price small { color: var(--on-night-2); }
+.ial .ent .step .tag { justify-self: start; font: 600 .68rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; background: var(--tape); color: var(--ink); padding: 5px 7px; border-radius: 5px; }
+.ial .ent .options { display: grid; gap: 12px; margin-top: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.ial .ent .opt { border: 1.5px dashed var(--ink-2); border-radius: 12px; padding: 14px 16px; background: var(--paper); }
+.ial .ent .opt b { font: 800 1.2rem/1 var(--display); text-transform: uppercase; }
+.ial .ent .opt p { margin-top: 6px; color: var(--ink-2); font-size: .95rem; }
+.ial .ent .rules { margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; }
+.ial .ent .rules li { font: 600 .88rem/1.2 var(--body); padding: 8px 12px; border-radius: 8px; background: var(--sheet); border: 1.5px solid var(--line); }
+
+/* Catalogue */
+.ial .ent .fns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.ial .ent .fn { font: 700 .88rem/1 var(--body); padding: 9px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer; }
+.ial .ent .fn[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.ial .ent .cat { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); list-style: none; padding: 0; margin: 0; }
+.ial .ent .cat li { display: grid; gap: 8px; align-content: start; background: var(--sheet); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.ial .ent .cat .top-line { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.ial .ent .cat .fn-name { font: 600 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.ial .ent .cat b { font: 700 1.02rem/1.3 var(--body); }
+.ial .ent .cat .tools { font: 400 .8rem/1.4 var(--mono); color: var(--muted); }
+.ial .ent .never { margin-top: 18px; padding: 14px 16px; border-left: 4px solid var(--stamp); background: var(--sheet); color: var(--ink-2); font-size: .96rem; }
+.ial .ent .never b { color: var(--stamp); }
+
+/* Control */
+.ial .ent .control { background: var(--night); color: var(--on-night); }
+.ial .ent .control .sec-head p { color: var(--on-night-2); }
+.ial .ent .control .label { color: var(--on-night-2); }
+.ial .ent .ctl-grid { display: grid; gap: 28px; align-items: start; }
+@media (min-width: 940px) { .ial .ent .ctl-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; } }
+.ial .ent .guards { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.ial .ent .guards li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; }
+.ial .ent .guards li::before { content: "✓"; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; background: var(--green); color: #04261C; font-weight: 700; }
+.ial .ent .guards b { color: #FFFFFF; }
+.ial .ent .guards span span { display: block; color: var(--on-night-2); font-size: .95rem; }
+.ial .ent .console { background: var(--night-2); border: 1px solid #1E3550; border-radius: 14px; overflow: hidden; }
+.ial .ent .console-bar { display: flex; justify-content: space-between; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #1E3550; font: 600 .74rem/1.2 var(--mono); color: var(--on-night-2); text-transform: uppercase; letter-spacing: .06em; }
+.ial .ent .console-bar b { color: var(--green); }
+.ial .ent .sw { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid #1E3550; font-size: .94rem; }
+.ial .ent .sw small { display: block; color: var(--on-night-2); font-size: .8rem; }
+.ial .ent .toggle { flex: none; width: 46px; height: 26px; border-radius: 999px; background: var(--green); position: relative; }
+.ial .ent .toggle::after { content: ""; position: absolute; top: 3px; left: 23px; width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF; }
+.ial .ent .toggle.off { background: #3A506A; }
+.ial .ent .toggle.off::after { left: 3px; }
+.ial .ent .budget { padding: 12px 14px; }
+.ial .ent .budget .bar { height: 8px; border-radius: 8px; background: #1E3550; overflow: hidden; margin-top: 8px; }
+.ial .ent .budget .bar i { display: block; height: 100%; width: 62%; background: var(--tape); }
+.ial .ent .budget p { display: flex; justify-content: space-between; font: 500 .8rem/1.2 var(--mono); color: var(--on-night-2); }
+.ial .ent .console-note { margin-top: 10px; font: 500 .78rem/1.4 var(--mono); color: var(--on-night-2); }
+
+/* Proof */
+.ial .ent .eproof { display: grid; gap: 24px; align-items: center; }
+@media (min-width: 900px) { .ial .ent .eproof { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 48px; } }
+.ial .ent .eproof blockquote { margin: 0; font: 800 clamp(1.7rem, 4.4vw, 2.6rem)/1 var(--display); text-transform: uppercase; }
+.ial .ent .eproof blockquote span { color: var(--green-ink); }
+.ial .ent .eproof p { margin-top: 12px; color: var(--ink-2); }
+.ial .ent .eruns { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.ial .ent .eruns li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--sheet); border: 1.5px solid var(--line); border-radius: 10px; font-size: .95rem; }
+
+/* Request */
+.ial .ent .req { display: grid; gap: 28px; align-items: start; }
+@media (min-width: 940px) { .ial .ent .req { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 48px; } }
+.ial .ent .req-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; counter-reset: rq; }
+.ial .ent .req-steps li { counter-increment: rq; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; color: var(--ink-2); }
+.ial .ent .req-steps li::before { content: counter(rq); display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--ink); color: var(--paper); font: 800 1rem/1 var(--display); }
+.ial .ent form.ent-form { background: var(--sheet); border: 2px solid var(--ink); border-radius: 14px; padding: 18px; display: grid; gap: 14px; box-shadow: 6px 6px 0 var(--ink); }
+.ial .ent .two { display: grid; gap: 14px; }
+@media (min-width: 560px) { .ial .ent .two { grid-template-columns: 1fr 1fr; } }
+.ial .ent .ent-form label { display: grid; gap: 6px; font-weight: 700; font-size: .92rem; }
+.ial .ent .ent-form input, .ial .ent .ent-form select, .ial .ent .ent-form textarea { font: 400 1rem/1.3 var(--body); padding: 11px 12px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); width: 100%; }
+.ial .ent .ent-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.ial .ent .ent-form legend { font-weight: 700; font-size: .92rem; margin-bottom: 6px; }
+.ial .ent .checks { display: flex; flex-wrap: wrap; gap: 6px; }
+.ial .ent .checks label { display: inline-flex; align-items: center; gap: 6px; font: 600 .88rem/1 var(--body); padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 999px; background: var(--paper); cursor: pointer; }
+.ial .ent .checks input { width: auto; accent-color: var(--green-ink); }
+.ial .ent .consent { display: grid !important; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: start; font: 400 .88rem/1.4 var(--body) !important; color: var(--ink-2); }
+.ial .ent .consent input { width: auto; margin-top: 3px; accent-color: var(--green-ink); }
+.ial .ent .err { padding: 10px 12px; border-radius: 9px; background: #FCEDE5; color: var(--stamp); font-weight: 600; font-size: .92rem; }
+.ial .ent .ok { padding: 14px; border-radius: 10px; background: #E3F6F0; color: var(--green-ink); font-weight: 700; }
+
+/* The request's own pages: call and deposit */
+.ial .ent .card { background: var(--sheet); border: 2px solid var(--ink); border-radius: 14px; padding: 18px; display: grid; gap: 12px; box-shadow: 6px 6px 0 var(--ink); }
+.ial .ent .card h2 { font: 800 1.6rem/1 var(--display); text-transform: uppercase; }
+.ial .ent .card dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; margin: 0; font-size: .95rem; }
+.ial .ent .card dt { color: var(--muted); }
+.ial .ent .card dd { margin: 0; font-weight: 700; }

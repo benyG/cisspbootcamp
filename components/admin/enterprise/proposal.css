@@ -1,0 +1,124 @@
+/*
+ * The Bâtisseur IA Entreprises proposal (Ben, 22/11): four A4 pages in the
+ * Bâtisseur IA identity, ported from the proposal prototype. Scoped under
+ * .prop; printing keeps only the document (the browser's « Enregistrer en
+ * PDF » gives the file to send).
+ */
+.prop {
+  --paper: #F3F5F2; --sheet: #FFFFFF; --ink: #071A33; --ink-2: #33465E; --muted: #5E6E80; --line: #D7DED8;
+  --green: #17B890; --green-ink: #0B6E56; --green-soft: #E3F6F0; --plan: #2F6FB5; --plan-soft: #E6EEF8;
+  --tape: #F5B700; --stamp: #C2410C; --stamp-soft: #FCEDE5; --grid: rgba(47,111,181,.09);
+  --display: var(--font-ia-display), "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: var(--font-ia-body), "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: var(--font-ia-mono), ui-monospace, Menlo, Consolas, monospace;
+  color: var(--ink); font: 400 15px/1.5 var(--body); color-scheme: light;
+}
+.prop h1, .prop h2, .prop h3, .prop p, .prop ul, .prop ol { margin: 0; }
+/* The document: A4 sheets */
+.prop.doc { display: grid; gap: 24px; justify-items: center; min-width: 0; }
+.prop .page { width: 100%; max-width: 794px; aspect-ratio: 210 / 297; background: var(--sheet); box-shadow: 0 18px 40px -24px rgba(7,26,51,.45); position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.prop .pad { padding: 7% 8% 6%; display: flex; flex-direction: column; gap: 18px; flex: 1; }
+.prop .pfoot { display: flex; justify-content: space-between; padding: 0 8% 4%; font: 500 .62rem/1 var(--mono); color: var(--muted); letter-spacing: .04em; }
+.prop .eyebrow { font: 600 .66rem/1.2 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--plan); }
+.prop .page h2 { font: 800 1.9rem/.95 var(--display); text-transform: uppercase; text-wrap: balance; }
+.prop .page h3 { font: 800 1.15rem/1 var(--display); text-transform: uppercase; }
+.prop .page p, .prop .page li { font-size: .84rem; color: var(--ink-2); }
+
+/* Cover */
+.prop .cover { background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 22px 22px; }
+.prop .cover .pad { justify-content: space-between; }
+.prop .brandline { display: flex; justify-content: space-between; align-items: center; }
+.prop .brand { font: 800 1.2rem/1 var(--display); text-transform: uppercase; }
+.prop .brand span { color: var(--green-ink); }
+.prop .ref { font: 600 .66rem/1.4 var(--mono); color: var(--muted); text-align: right; }
+.prop .cover-title { display: grid; gap: 14px; }
+.prop .cover-title .for { font: 600 .74rem/1.2 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.prop .cover-title h1 { font: 800 3.1rem/.9 var(--display); text-transform: uppercase; text-wrap: balance; }
+.prop .cover-title h1 em { font-style: normal; color: var(--green-ink); }
+.prop .cover-title p { font-size: 1rem; max-width: 30em; color: var(--ink-2); }
+.prop .promise { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.prop .promise div { background: var(--sheet); border: 2px solid var(--ink); border-radius: 10px; padding: 10px; }
+.prop .promise b { display: block; font: 800 1.35rem/1 var(--display); text-transform: uppercase; color: var(--green-ink); }
+.prop .promise span { font-size: .74rem; color: var(--ink-2); display: block; margin-top: 4px; line-height: 1.35; }
+.prop .cover-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 12px; border-top: 2px solid var(--ink); }
+.prop .cover-meta span { display: block; font: 600 .6rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.prop .cover-meta b { font-size: .86rem; }
+
+/* Situation + goals */
+.prop .heard { display: grid; gap: 8px; list-style: none; padding: 0; }
+.prop .heard li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; }
+.prop .heard li::before { content: "“"; font: 800 1.6rem/1 var(--display); color: var(--plan); }
+.prop .goals { display: grid; gap: 8px; }
+.prop .goal { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--green-soft); }
+.prop .goal b { font: 800 1.5rem/1 var(--display); color: var(--green-ink); }
+.prop .goal p { color: var(--ink); font-weight: 600; }
+.prop .goal small { display: block; font-weight: 400; color: var(--ink-2); font-size: .76rem; margin-top: 2px; }
+
+/* Before / after */
+.prop .ba { display: grid; border: 2px solid var(--ink); border-radius: 10px; overflow: hidden; }
+.prop .ba-row { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 18px 1fr; gap: 8px; align-items: center; padding: 8px 10px; border-top: 1px solid var(--line); font-size: .8rem; }
+.prop .ba-row:first-child { border-top: 0; background: var(--paper); font: 600 .6rem/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.prop .ba-row .arr { color: var(--muted); text-align: center; }
+.prop .pill { justify-self: start; font: 600 .6rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 5px 6px; border-radius: 5px; border: 1.5px solid currentColor; white-space: nowrap; }
+.prop .pill.manual { color: var(--stamp); background: var(--stamp-soft); }
+.prop .pill.assist { color: var(--plan); background: var(--plan-soft); }
+.prop .pill.auto { color: var(--green-ink); background: var(--green-soft); }
+
+/* Timeline */
+.prop .tl { display: grid; gap: 0; position: relative; }
+.prop .tl-step { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px dashed var(--line); }
+.prop .tl-step:first-child { border-top: 0; }
+.prop .tl-when { font: 600 .66rem/1.3 var(--mono); color: var(--plan); text-transform: uppercase; letter-spacing: .05em; }
+.prop .tl-step h3 { font-size: 1.05rem; }
+.prop .tl-step ul { margin-top: 4px; padding-left: 1em; display: grid; gap: 2px; }
+.prop .tl-step li { font-size: .78rem; }
+.prop .tl-step .out { margin-top: 5px; font-size: .76rem; color: var(--green-ink); font-weight: 700; }
+
+/* Control */
+.prop .ctl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.prop .ctl div { padding: 9px 10px; border: 1.5px solid var(--line); border-radius: 9px; }
+.prop .ctl b { font-size: .8rem; display: block; }
+.prop .ctl span { font-size: .72rem; color: var(--ink-2); }
+
+/* Investment */
+.prop .inv { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.prop .inv th { text-align: left; font: 600 .6rem/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 6px 8px; border-bottom: 2px solid var(--ink); }
+.prop .inv td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--ink); }
+.prop .inv td small { display: block; color: var(--muted); font-size: .72rem; }
+.prop .inv .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.prop .inv tfoot td { font-weight: 700; border-bottom: 0; }
+.prop .inv tfoot .total td { font: 800 1.25rem/1 var(--display); border-top: 2px solid var(--ink); padding-top: 10px; }
+.prop .sched { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.prop .sched div { background: var(--paper); border-radius: 9px; padding: 10px; }
+.prop .sched span { display: block; font: 600 .6rem/1.2 var(--mono); text-transform: uppercase; color: var(--muted); letter-spacing: .07em; }
+.prop .sched b { font: 800 1.2rem/1.1 var(--display); }
+.prop .notes { font-size: .74rem !important; color: var(--muted) !important; }
+
+/* Why us + next */
+.prop .why { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.prop .why div { border-left: 3px solid var(--green); padding: 4px 10px; }
+.prop .why b { font-size: .84rem; display: block; }
+.prop .why span { font-size: .76rem; color: var(--ink-2); }
+.prop .next { display: grid; gap: 8px; counter-reset: nx; list-style: none; padding: 0; }
+.prop .next li { counter-increment: nx; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; color: var(--ink); font-weight: 600; }
+.prop .next li::before { content: counter(nx); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: var(--ink); color: var(--paper); font: 800 .95rem/1 var(--display); }
+.prop .next li small { display: block; font-weight: 400; color: var(--ink-2); font-size: .76rem; }
+.prop .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: auto; }
+.prop .sign div { border: 1.5px solid var(--ink); border-radius: 9px; padding: 10px; min-height: 92px; }
+.prop .sign span { font: 600 .6rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.prop .sign b { display: block; font-size: .84rem; margin-top: 4px; }
+.prop .sign i { display: block; font-style: normal; font-size: .72rem; color: var(--muted); margin-top: 26px; border-top: 1px dotted var(--line); padding-top: 4px; }
+
+@media (max-width: 640px) {
+  .prop .page { aspect-ratio: auto; }
+  .prop .cover-title h1 { font-size: 2.2rem; }
+  .prop .promise, .prop .cover-meta, .prop .ctl, .prop .why, .prop .sign, .prop .sched { grid-template-columns: 1fr; }
+  .prop .ba-row { grid-template-columns: minmax(0, 1fr) auto 12px auto; }
+}
+@page { size: A4; margin: 0; }
+@media print {
+  body * { visibility: hidden; }
+  .prop, .prop * { visibility: visible; }
+  .prop { position: absolute; inset: 0 auto auto 0; width: 210mm; gap: 0 !important; }
+  .prop .page { width: 210mm; height: 297mm; max-width: none; aspect-ratio: auto; box-shadow: none; break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

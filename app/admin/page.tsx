@@ -52,6 +52,7 @@ export default async function AdminHomePage() {
     personal: items.filter((i) => i.kind === "personal"),
     replay: items.filter((i) => i.kind === "replay"),
     quote: items.filter((i) => i.kind === "quote"),
+    enterprise: items.filter((i) => i.kind === "enterprise"),
     session: items.filter((i) => i.kind === "session"),
   };
 
@@ -267,6 +268,14 @@ export default async function AdminHomePage() {
         ))}
       </Group>
 
+      <Group icon={Bot} title="Bâtisseur IA Entreprises : nouvelles demandes" count={groups.enterprise.length}>
+        {groups.enterprise.map((i) => i.kind === "enterprise" && (
+          <Row key={`e${i.requestId}`} name={i.organization} meta={i.contact} href={`/admin/entreprises/${i.requestId}`} note={i.note}>
+            <Link href={`/admin/entreprises/${i.requestId}`} className={primary}>Voir la demande</Link>
+          </Row>
+        ))}
+      </Group>
+
       <Group icon={Timer} title="Places tenues" count={groups.hold.length}>
         {groups.hold.map((i) => i.kind === "hold" && (
           <Row key={`h${i.holdId}`} name={i.name} meta={`${i.cohortName} · libérée dans ${i.hoursLeft} h${i.reminded ? " · rappel envoyé" : ""}`} leadId={i.leadId}>
@@ -312,6 +321,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/replays", label: "Vidéothèque", icon: Clapperboard },
   { href: "/admin/evaluations", label: "Évaluations", icon: ClipboardCheck },
   { href: "/admin/ia", label: "Bâtisseur IA", icon: Bot },
+  { href: "/admin/entreprises", label: "Entreprises IA", icon: Bot },
   { href: "/admin/devis", label: "Devis entreprises", icon: Building2 },
   { href: "/admin/marketing", label: "Marketing", icon: Megaphone },
   { href: "/admin/conseil", label: "Conseil", icon: Compass },

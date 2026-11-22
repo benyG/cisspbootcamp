@@ -19,6 +19,8 @@ type Props = {
   submitLabel?: string;
   /** Shown when no slot is free; defaults to the 14-day discovery wording. */
   emptyMessage?: string;
+  /** Where to go once booked; defaults to the CISSP confirmation page. */
+  doneHref?: string;
 };
 
 export type Contact = { firstName: string; lastName: string; email: string; consent: boolean };
@@ -27,7 +29,7 @@ export type Contact = { firstName: string; lastName: string; email: string; cons
  * Slots in the prospect's own timezone, detected in the browser and shown
  * explicitly (SPECS A3). Chosen slot is re-validated server-side on submit.
  */
-export function SlotPicker({ slots, coachTimeZone, onBook, askContact, submitLabel, emptyMessage }: Props) {
+export function SlotPicker({ slots, coachTimeZone, onBook, askContact, submitLabel, emptyMessage, doneHref }: Props) {
   const router = useRouter();
   const [timezone, setTimezone] = useState(coachTimeZone);
   const [chosen, setChosen] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export function SlotPicker({ slots, coachTimeZone, onBook, askContact, submitLab
     setError(null);
     startTransition(async () => {
       const result = await onBook({ start: chosen, timezone, contact: askContact ? contact : undefined });
-      if (result.ok) router.push(`/rdv/confirme?t=${result.rescheduleToken}`);
+      if (result.ok) router.push(doneHref ?? `/rdv/confirme?t=${result.rescheduleToken}`);
       else setError(result.error);
     });
   };

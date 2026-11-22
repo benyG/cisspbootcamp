@@ -26,11 +26,11 @@ export function formatQuoteNumber(n: number): string {
   return `DEV-${String(n).padStart(6, "0")}`;
 }
 
-export type ReceiptKind = "registration" | "balance" | "service";
+export type ReceiptKind = "registration" | "balance" | "service" | "enterprise";
 
-/** One receipt per payment: the first payment, the balance, a consulting order. */
+/** One receipt per payment: the first payment, the balance, a consulting order, a company's deposit. */
 export function receiptSource(kind: ReceiptKind, id: number): string {
-  return `${kind === "registration" ? "reg" : kind === "balance" ? "bal" : "svc"}:${id}`;
+  return `${kind === "registration" ? "reg" : kind === "balance" ? "bal" : kind === "service" ? "svc" : "ent"}:${id}`;
 }
 
 // ── The accountant's export ─────────────────────────────────────────────────

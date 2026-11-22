@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isServiceReference, markServiceOrderPaid } from "@/lib/consulting";
+import { isDepositReference } from "@/lib/enterprise";
+import { markDepositPaid } from "@/lib/enterprise-server";
 import { confirmationFromEvent, parseWebhook } from "@/lib/payments/stripe";
 import { seatReferenceOfBalance } from "@/lib/installments";
 import { markBalancePaid, markRegistrationPaid } from "@/lib/registration";
@@ -27,10 +29,12 @@ export async function POST(request: NextRequest) {
   const confirmation = confirmationFromEvent(event);
   if (!confirmation) return NextResponse.json({ received: true, ignored: event.type });
 
-  // CB- references are seats (…-S: the second instalment of a seat), CS- references consulting orders.
+  // CB- references are seats (…-S: the second instalment of a seat), CS- references consulting orders,
+  // CE- references Bâtisseur IA Entreprises deposits.
   const seatOfBalance = seatReferenceOfBalance(confirmation.reference);
   const mark = seatOfBalance
     ? (input: Parameters<typeof markRegistrationPaid>[0]) => markBalancePaid({ ...input, reference: seatOfBalance, method: "stripe" })
+    : isDepositReference(confirmation.reference) ? markDepositPaid
     : isServiceReference(confirmation.reference) ? markServiceOrderPaid : markRegistrationPaid;
   const result = await mark({
     reference: confirmation.reference,
