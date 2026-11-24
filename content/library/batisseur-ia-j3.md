@@ -3,6 +3,7 @@ title: Bâtisseur IA · J3 · Structuration de l'activité et de ses données
 category: ia-formateur
 audience: internal
 updated: 2026-11-24
+deck: Batisseur-IA-J3.pptx
 summary: Le support du formateur pour la J3 : fiche de la journée, cours sur les données, démonstration Kofi Traiteur, réflexe « avancer sans peur », labo pas à pas avec les textes à copier, dépannage, lexique, quiz et préparation de la J4.
 ---
 

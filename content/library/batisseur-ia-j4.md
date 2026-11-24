@@ -3,6 +3,7 @@ title: Bâtisseur IA · J4 · Construction du système d'agents IA
 category: ia-formateur
 audience: internal
 updated: 2026-11-24
+deck: Batisseur-IA-J4.pptx
 summary: Le support du formateur de la J4 : fiche de la journée, cours sur l'anatomie d'un agent et les trois agents (devis, encaissement par carte et mobile money, relance), démonstration Kofi Traiteur, réflexe « comprendre et tester un agent », labo pas à pas avec les textes à copier, revue, dépannage, lexique et quiz.
 ---
 

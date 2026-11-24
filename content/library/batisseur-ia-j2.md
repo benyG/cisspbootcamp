@@ -3,6 +3,7 @@ title: Bâtisseur IA · J2 · Identification des processus métiers et fondation
 category: ia-formateur
 audience: internal
 updated: 2026-11-24
+deck: Batisseur-IA-J2.pptx
 summary: Le support complet de la J2 : la carte des processus et les priorités, les fondations Claude Code, GitHub et Vercel, la démonstration Kofi Traiteur, le réflexe « cadrer Claude Code » (CLAUDE.md), le labo de la vitrine en ligne, le dépannage, le lexique et le quiz.
 ---
 

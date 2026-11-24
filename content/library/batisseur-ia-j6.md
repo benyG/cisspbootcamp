@@ -3,6 +3,7 @@ title: Bâtisseur IA · J6 · Pilotage autonome de l'entreprise
 category: ia-formateur
 audience: internal
 updated: 2026-11-24
+deck: Batisseur-IA-J6.pptx
 summary: Le support complet de la J6 : objectifs et courbe, routines, rapport du lundi, agents analyste et administratif, garde-fous, réflexe « laisser tourner en confiance », labo pas à pas, revue finale et plan des 30 jours.
 ---
 
