@@ -3,12 +3,12 @@ title: Fiches réflexes — formation Bâtisseur IA
 category: ia-participants
 audience: participants
 updated: 2026-11-24
-summary: Cinq fiches d'une page à remplir pendant la formation : CLAUDE.md type, modèle de demande, règles d'un agent, 10 cas de test, diagnostic d'une erreur.
+summary: Sept fiches d'une page à remplir pendant la formation : CLAUDE.md type, modèle de demande, règles d'un agent, 10 cas de test, diagnostic d'une erreur, retour arrière, routine qui tourne seule.
 ---
 
 ## Mode d’emploi
 
-Cinq fiches d’une page, une par réflexe du programme. Vous les remplissez sur votre propre projet pendant la journée indiquée, puis vous les gardez à côté de vous.
+Sept fiches d’une page, une par réflexe du programme. Vous les remplissez sur votre propre projet pendant la journée indiquée, puis vous les gardez à côté de vous.
 
 | Fiche | Journée | À quoi elle sert | Elle est remplie quand… |
 | --- | --- | --- | --- |
@@ -16,7 +16,9 @@ Cinq fiches d’une page, une par réflexe du programme. Vous les remplissez sur
 | 2. Le modèle de demande | J1, J2 | Obtenir le bon résultat du premier coup | chaque demande de la journée suit les 6 rubriques |
 | 3. La fiche de règles d’un agent | J4 | Écrire ce que l’agent fait, ne fait jamais, et quand il s’arrête | elle est validée avant la première ligne de code |
 | 4. Les 10 cas de test | J4 | Vérifier qu’un agent se comporte bien avant de lui faire confiance | les 10 cas passent |
-| 5. Diagnostiquer une erreur | J5 | Réparer seul, sans paniquer | la panne d’exercice est réparée |
+| 5. Diagnostiquer une erreur | J5 | Réparer seul, sans paniquer | une vraie erreur du labo est diagnostiquée et réparée |
+| 6. Revenir en arrière | J3 | Avancer sans peur de casser | le retour arrière de l’exercice est réussi et vérifié sur l’aperçu |
+| 7. Une routine qui tourne seule | J6 | Laisser un agent travailler sans vous, dans un budget | chaque routine a son heure, son plafond, sa validation et son interrupteur |
 
 Les passages entre crochets sont à remplacer par vos propres informations ; les exemples suivent l’Atelier Adjoa, l’atelier de couture fictif du site.
 
@@ -169,3 +171,65 @@ Ne modifie rien avant que je valide ton diagnostic.
 **Si tout est cassé :** revenir à la dernière version qui fonctionnait (historique Git ou redéploiement de la version précédente sur Vercel), puis diagnostiquer au calme.
 
 **Ne jamais :** coller une clé ou un mot de passe dans la conversation pour « aider » le diagnostic ; désactiver un test pour qu’il passe.
+
+## Fiche 6 · Revenir en arrière sans peur (J3)
+
+Chaque version de votre projet est gardée dans l’historique Git. Casser quelque chose n’est donc jamais grave : on revient à la version qui marchait, puis on comprend au calme. C’est ce qui permet d’avancer vite.
+
+**Quatre habitudes :**
+
+1. **Une petite étape à la fois.** Une demande, une vérification, puis la suivante. Jamais dix choses dans la même demande.
+2. **Relire ce qui change.** Avant d’accepter, demander à Claude de résumer en français ce qu’il a modifié.
+3. **Travailler sur une branche.** Chaque changement passe par une demande de fusion et se vérifie sur le lien Preview avant d’arriver en ligne.
+4. **Les tests avec la fonctionnalité.** On les demande en même temps, pas après : ils disent tout de suite ce qui a cassé.
+
+**Quand quelque chose casse, à écrire à Claude Code :**
+
+```markdown
+Résume en français, en 5 lignes au plus, ce que tu as changé depuis la dernière version qui marchait.
+Si la cause est ce changement, annule-le : reviens à la version précédente dans l’historique Git, sans rien supprimer d’autre.
+Dis-moi ensuite comment vérifier que tout remarche.
+```
+
+**Si c’est déjà en ligne :** sur Vercel, ouvrir le projet, puis **Deployments**, choisir la dernière version qui marchait et la remettre en production. Le site revient en une minute ; on corrige ensuite sur une branche.
+
+**Exercice (J3) :**
+
+- [ ] Sur une branche d’exercice, demander à Claude de modifier le titre d’une page, puis vérifier le changement sur l’aperçu.
+- [ ] Demander le retour à la version précédente avec le texte ci-dessus.
+- [ ] Vérifier sur l’aperçu que la page est revenue comme avant.
+
+**Ne jamais :** supprimer l’historique ou forcer un envoi pour « faire propre » ; corriger directement sur la version en ligne.
+
+## Fiche 7 · Une routine qui tourne seule (J6)
+
+Une routine, c’est un agent qui part seul à l’heure dite (chaque matin, chaque lundi) ou qui travaille en arrière-plan et vous prévient à la fin. Pour lui faire confiance, elle doit avoir cinq choses, écrites avant de la lancer. Exemple : le rapport du lundi de l’Atelier Adjoa.
+
+| Rubrique | La question à se poser | Exemple (Atelier Adjoa) |
+| --- | --- | --- |
+| 1. L’heure | Quand part-elle, et à quelle fréquence ? | Chaque lundi à 7 h. |
+| 2. Le travail | Qu’a-t-elle fini quand elle s’arrête ? | Le rapport de la semaine : commandes, acomptes encaissés, relances, trois pistes. |
+| 3. Le plafond | Combien peut-elle coûter au plus ? | [montant] USD par mois pour l’API, alerte à 80 %. |
+| 4. La validation | Qu’est-ce qui part sans moi, qu’est-ce que je signe ? | Le rapport m’est envoyé ; aucun message ne part à une cliente sans ma validation. |
+| 5. L’interrupteur | Où l’arrêter en un clic ? | Garde-fous, interrupteur « Rapport du lundi ». |
+
+**Modèle à copier :**
+
+```markdown
+Chaque [jour] à [heure], [le travail, en une phrase].
+Plafond : [montant] USD par mois pour l’API ; alerte à 80 %.
+Rien ne part sans ma validation ; un interrupteur dans Garde-fous.
+Note chaque exécution au journal : date, durée, coût, résultat.
+Commence en mode observer : tu proposes, je décide.
+```
+
+**Le bon modèle pour le bon travail :** un petit modèle pour trier, classer ou résumer ; un grand modèle pour raisonner ou rédiger ce qui compte. Les prix changent : consultez les pages de tarifs officielles plutôt qu’un chiffre noté une fois pour toutes.
+
+**Chaque semaine, cinq minutes :**
+
+- [ ] Le journal : chaque routine est partie à l’heure et a fini.
+- [ ] Le coût de la semaine, dans la console de l’API, sous le plafond.
+- [ ] Une proposition refusée ou corrigée devient une règle de plus dans la fiche de l’agent.
+
+**Ne jamais :** lancer une routine sans plafond ni interrupteur ; la laisser écrire à des clients sans validation tant qu’elle n’a pas fait ses preuves en mode observer.
+
