@@ -7,12 +7,12 @@
 
 /** Per journée, beside JOURNEES (lib/ia-days.ts): a tab label and what the participant knows afterwards. */
 export const DAY_DEMO: ReadonlyArray<{ short: string; skills: readonly string[] }> = [
-  { short: "Composantes de l’IA", skills: ["Comprendre modèle, prompt, contexte et RAG", "Créer une skill et un assistant sur vos documents", "Relier l’IA à vos outils (MCP)"] },
-  { short: "Processus et fondations", skills: ["Cartographier vos processus métiers", "Choisir ce qui s’automatise en premier", "Mettre en ligne avec Claude Code, GitHub et Vercel"] },
-  { short: "Activité et données", skills: ["Structurer clients, commandes et factures", "Créer votre base et vos écrans", "Construire votre tableau de bord, testé"] },
-  { short: "Système d’agents", skills: ["Construire des agents qui agissent", "Encaisser par carte et mobile money", "Fixer leurs règles et leurs limites"] },
-  { short: "Agents spécialisés", skills: ["Des agents communication et service client", "Un agent de veille, et un agent opérations selon votre activité", "Les interfaces pour travailler avec eux"] },
-  { short: "Pilotage autonome", skills: ["Fixer des objectifs, des routines et un rapport", "Un agent analyste et un agent administratif", "Vos garde-fous, et la carte complète de vos agents"] },
+  { short: "Composantes de l’IA", skills: ["Comprendre les briques d’une IA", "Travailler chaque jour avec Claude Desktop", "Un assistant sur vos documents"] },
+  { short: "Processus et fondations", skills: ["Cartographier vos processus métiers", "Cadrer Claude Code (mémoire, plan, secrets)", "Mettre en ligne avec GitHub et Vercel"] },
+  { short: "Activité et données", skills: ["Structurer clients, commandes et factures", "Votre base, vos écrans, votre tableau de bord", "Avancer sans peur : tests et retour arrière"] },
+  { short: "Système d’agents", skills: ["Construire des agents qui agissent", "Encaisser par carte et mobile money", "Fixer les règles d’un agent et le tester"] },
+  { short: "Agents spécialisés", skills: ["Des agents communication et service client", "Les interfaces pour travailler avec eux", "Diagnostiquer et réparer une erreur"] },
+  { short: "Pilotage autonome", skills: ["Objectifs, routines et rapport", "Des agents qui tournent seuls, dans votre budget", "Vos garde-fous et la carte de vos agents"] },
 ];
 
 /**
