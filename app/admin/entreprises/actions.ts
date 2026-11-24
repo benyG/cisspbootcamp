@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { PACKAGE_CODES, STATUSES, type Status, offerSchema } from "@/lib/enterprise";
+import { PACKAGE_CODES, SOVEREIGN_CODES, STATUSES, type Status, offerSchema } from "@/lib/enterprise";
 import { loadOffer, markDepositPaid, prepareDeposit, saveOffer, saveProposal } from "@/lib/enterprise-server";
 
 async function requireAdmin() {
@@ -76,8 +76,7 @@ const lines = (v: FormDataEntryValue | null) => String(v ?? "").split("\n").map(
 export async function saveOfferAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const featured = formData.get("featured");
-  const raw = {
-    packages: PACKAGE_CODES.map((code) => ({
+  const pkg = (code: string) => ({
       code,
       name: formData.get(`${code}.name`),
       duration: formData.get(`${code}.duration`),
@@ -89,7 +88,11 @@ export async function saveOfferAction(formData: FormData): Promise<void> {
       monthly: formData.get(`${code}.monthly`) === "on",
       weeks: Number(formData.get(`${code}.weeks`)) || 0,
       featured: featured === code,
-    })),
+    });
+  const raw = {
+    packages: PACKAGE_CODES.map(pkg),
+    sovereign: SOVEREIGN_CODES.map(pkg),
+    showSovereign: formData.get("showSovereign") === "on",
     options: [0, 1, 2, 3].map((i) => ({ name: String(formData.get(`opt${i}.name`) ?? "").trim(), text: String(formData.get(`opt${i}.text`) ?? "").trim() })).filter((o) => o.name && o.text),
   };
   const parsed = offerSchema.safeParse(raw);

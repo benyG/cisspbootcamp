@@ -29,7 +29,7 @@ export default async function EnterpriseRequestPage({ params, searchParams }: { 
   if (!r) notFound();
   const [offer, zone] = await Promise.all([loadOffer(), zoneOf(r.country)]);
   const functions = Array.isArray(r.functions) ? (r.functions as string[]) : [];
-  const proposal = readProposal(r.proposal) ?? draftProposal({ contactName: r.contactName, jobTitle: r.jobTitle, need: r.need, functions, zone }, offer);
+  const proposal = readProposal(r.proposal) ?? draftProposal({ contactName: r.contactName, jobTitle: r.jobTitle, need: r.need, functions, zone, dataOnSite: r.dataOnSite }, offer);
   const today = new Date().toISOString().slice(0, 10);
   const status = r.status as Status;
 
@@ -51,6 +51,7 @@ export default async function EnterpriseRequestPage({ params, searchParams }: { 
               <dt className="text-muted">Contact</dt><dd><b>{r.contactName}</b>{r.jobTitle ? `, ${r.jobTitle}` : ""}{r.lead && <> · <Link href={`/admin/leads/${r.lead.id}`} className="underline">fiche</Link></>}</dd>
               <dt className="text-muted">E-mail</dt><dd><a href={`mailto:${r.email}`} className="underline">{r.email}</a></dd>
               <dt className="text-muted">Pays · taille</dt><dd>{countryLabel(r.country)} · {SIZES[r.size as SizeKey] ?? r.size}</dd>
+              {r.dataOnSite && <><dt className="text-muted">Données</dt><dd><span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-900">À garder sur site</span> · IA privée et souveraine</dd></>}
               <dt className="text-muted">À traiter</dt><dd>{functions.map((f) => FUNCTIONS[f as FunctionKey] ?? f).join(", ") || "non précisé"}</dd>
               <dt className="text-muted">Reçue</dt><dd>{day(r.createdAt)} · consentement le {r.consentAt.toLocaleString("fr-FR")}</dd>
             </dl>

@@ -46,7 +46,7 @@ export default async function EnterpriseRequestsPage({ searchParams }: { searchP
               {requests.map((r) => (
                 <tr key={r.id} className="border-t border-line">
                   <td className="px-3 py-2 whitespace-nowrap">{day(r.createdAt)}</td>
-                  <td className="px-3 py-2"><Link href={`/admin/entreprises/${r.id}`} className="font-bold hover:underline">{r.organization}</Link><span className="block text-xs text-muted">{r.contactName} · {countryLabel(r.country)} · {SIZES[r.size as SizeKey] ?? r.size}</span></td>
+                  <td className="px-3 py-2"><Link href={`/admin/entreprises/${r.id}`} className="font-bold hover:underline">{r.organization}</Link><span className="block text-xs text-muted">{r.contactName} · {countryLabel(r.country)} · {SIZES[r.size as SizeKey] ?? r.size}{r.dataOnSite ? " · données sur site" : ""}</span></td>
                   <td className="px-3 py-2 text-xs">{(Array.isArray(r.functions) ? (r.functions as string[]) : []).map((f) => FUNCTIONS[f as FunctionKey] ?? f).join(", ") || "—"}</td>
                   <td className="px-3 py-2 whitespace-nowrap">{r.quoteNumber ?? "—"}{r.depositUsd ? <span className="block text-xs text-muted">acompte {formatUsd(r.depositUsd)}{r.depositPaidAt ? " · payé" : ""}</span> : null}</td>
                   <td className="px-3 py-2"><span className={`rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap ${PILL[r.status as Status] ?? ""}`}>{STATUSES[r.status as Status] ?? r.status}</span></td>

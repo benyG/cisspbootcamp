@@ -1,6 +1,7 @@
 import { Settings2 } from "lucide-react";
 import Link from "next/link";
 
+import { type EnterprisePackage, SOVEREIGN_NAME } from "@/lib/enterprise";
 import { loadOffer } from "@/lib/enterprise-server";
 
 import { saveOfferAction } from "../actions";
@@ -10,6 +11,27 @@ export const dynamic = "force-dynamic";
 const input = "w-full rounded-lg border border-line bg-white px-2.5 py-1.5 text-sm";
 const label = "grid gap-1 text-xs font-semibold";
 const usd = (cents: number) => String(cents / 100);
+
+/** One package's fields; the radio « Le plus demandé » only among the five steps. */
+const fields = (p: EnterprisePackage, i: number, featured: boolean) => (
+  <fieldset key={p.code} className="grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-2">
+    <legend className="px-1 text-sm font-bold">{i + 1}. {p.name}</legend>
+    <label className={label}>Nom<input name={`${p.code}.name`} defaultValue={p.name} maxLength={80} required className={input} /></label>
+    <label className={label}>Durée affichée<input name={`${p.code}.duration`} defaultValue={p.duration} maxLength={60} required className={input} /></label>
+    <label className={label + " sm:row-span-2"}>Contenu (une ligne par point, 6 au plus)<textarea name={`${p.code}.items`} defaultValue={p.items.join("\n")} rows={4} required className={input} /></label>
+    <label className={label}>Résultat pour le client<input name={`${p.code}.outcome`} defaultValue={p.outcome} maxLength={160} required className={input} /></label>
+    <div className="grid grid-cols-3 gap-2">
+      <label className={label}>Afrique (USD)<input name={`${p.code}.africa`} type="number" min={0} step={50} defaultValue={usd(p.africaUsd)} className={input + " tabular-nums"} /></label>
+      <label className={label}>International<input name={`${p.code}.intl`} type="number" min={0} step={50} defaultValue={usd(p.intlUsd)} className={input + " tabular-nums"} /></label>
+      <label className={label}>Semaines<input name={`${p.code}.weeks`} type="number" min={0} max={52} defaultValue={p.weeks} className={input + " tabular-nums"} /></label>
+    </div>
+    <div className="flex flex-wrap gap-4 text-sm sm:col-span-2">
+      <label className="flex items-center gap-1.5"><input type="checkbox" name={`${p.code}.from`} defaultChecked={p.from} />Prix « dès »</label>
+      <label className="flex items-center gap-1.5"><input type="checkbox" name={`${p.code}.monthly`} defaultChecked={p.monthly} />Abonnement mensuel</label>
+      {featured && <label className="flex items-center gap-1.5"><input type="radio" name="featured" value={p.code} defaultChecked={p.featured} />« Le plus demandé »</label>}
+    </div>
+  </fieldset>
+);
 
 /** The five steps and their prices (Ben, 22/11): what the public page shows and what new proposals start from. */
 export default async function EnterpriseOfferPage({ searchParams }: { searchParams: Promise<{ ok?: string; erreur?: string }> }) {
@@ -24,25 +46,15 @@ export default async function EnterpriseOfferPage({ searchParams }: { searchPara
       {sp.erreur && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{sp.erreur}</p>}
 
       <form action={saveOfferAction} className="mt-5 grid gap-4">
-        {offer.packages.map((p, i) => (
-          <fieldset key={p.code} className="grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-2">
-            <legend className="px-1 text-sm font-bold">{i + 1}. {p.name}</legend>
-            <label className={label}>Nom<input name={`${p.code}.name`} defaultValue={p.name} maxLength={80} required className={input} /></label>
-            <label className={label}>Durée affichée<input name={`${p.code}.duration`} defaultValue={p.duration} maxLength={60} required className={input} /></label>
-            <label className={label + " sm:row-span-2"}>Contenu (une ligne par point, 6 au plus)<textarea name={`${p.code}.items`} defaultValue={p.items.join("\n")} rows={4} required className={input} /></label>
-            <label className={label}>Résultat pour le client<input name={`${p.code}.outcome`} defaultValue={p.outcome} maxLength={160} required className={input} /></label>
-            <div className="grid grid-cols-3 gap-2">
-              <label className={label}>Afrique (USD)<input name={`${p.code}.africa`} type="number" min={0} step={50} defaultValue={usd(p.africaUsd)} className={input + " tabular-nums"} /></label>
-              <label className={label}>International<input name={`${p.code}.intl`} type="number" min={0} step={50} defaultValue={usd(p.intlUsd)} className={input + " tabular-nums"} /></label>
-              <label className={label}>Semaines<input name={`${p.code}.weeks`} type="number" min={0} max={52} defaultValue={p.weeks} className={input + " tabular-nums"} /></label>
-            </div>
-            <div className="flex flex-wrap gap-4 text-sm sm:col-span-2">
-              <label className="flex items-center gap-1.5"><input type="checkbox" name={`${p.code}.from`} defaultChecked={p.from} />Prix « dès »</label>
-              <label className="flex items-center gap-1.5"><input type="checkbox" name={`${p.code}.monthly`} defaultChecked={p.monthly} />Abonnement mensuel</label>
-              <label className="flex items-center gap-1.5"><input type="radio" name="featured" value={p.code} defaultChecked={p.featured} />« Le plus demandé »</label>
-            </div>
-          </fieldset>
-        ))}
+        {offer.packages.map((p, i) => fields(p, i, true))}
+        <section className="grid gap-4 rounded-xl border border-sky-200 bg-sky-50/40 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-bold">{SOVEREIGN_NAME}</h2>
+            <label className="flex items-center gap-1.5 text-sm font-semibold"><input type="checkbox" name="showSovereign" defaultChecked={offer.showSovereign} />Afficher la section sur la page</label>
+          </div>
+          <p className="text-sm text-muted">L’IA installée dans les locaux du client. Le matériel est acheté par le client à son nom : il n’apparaît pas ici.</p>
+          {offer.sovereign.map((p, i) => fields(p, i, false))}
+        </section>
         <fieldset className="grid gap-3 rounded-xl border border-line bg-white p-4">
           <legend className="px-1 text-sm font-bold">Options (vides = masquées)</legend>
           {options.map((o, i) => (
