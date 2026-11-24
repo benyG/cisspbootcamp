@@ -9,32 +9,32 @@ summary: Support complet de la J5 (agents communication, service client, veille 
 
 ## Fiche de la journée
 
-À la fin de la J5, votre entreprise a des agents spécialisés : un agent communication qui prépare vos publications, un agent service client qui répond sur votre site et, selon votre activité, un agent opérations (si vous produisez ou livrez) ou un agent de veille qui vous résume le marché chaque semaine. Vous travaillez avec eux depuis une seule file d'actions, votre e-mail du matin et l'assistant de votre site. Et quand quelque chose ne marche pas, vous savez trouver pourquoi et réparer seul.
+À la fin de la J5, votre entreprise a deux agents spécialisés en service : un agent communication qui prépare vos publications, et un agent service client qui répond sur votre site. Vous connaissez aussi les deux autres (l'agent opérations si vous produisez ou livrez, l'agent de veille qui vous résume le marché chaque semaine) et les interfaces pour travailler avec tous : une seule file d'actions, un e-mail du matin, l'assistant du site. Et quand quelque chose ne marche pas, vous savez trouver pourquoi et réparer seul.
 
 | | |
 | --- | --- |
 | Public | Dirigeants, indépendants, porteurs de projet. Aucune compétence en programmation. |
 | Durée | 5 heures de travail : cours, démonstration, réflexe Claude, labo, revue |
 | Prérequis | Les agents de la J4 en mode test ; vos questions fréquentes et vos réponses, 3 concurrents ou sources à suivre, 3 publications qui vous ressemblent, et si vous produisez ou livrez le circuit d'une commande (travail « avant la J5 ») ; la fiche réflexe 5 ouverte |
-| Résultat | Deux agents métier en service (communication, service client) et un troisième selon votre activité, chacun avec sa skill ; une file d'actions unique ; un e-mail du matin ; un assistant sur votre site ; une panne volontaire réparée seul |
+| Résultat | Deux agents métier en service (communication, service client), chacun avec sa skill ; un assistant sur votre site ; une vraie erreur du labo diagnostiquée et réparée seul. Avant la J6 : la file d'actions unique et l'e-mail du matin |
 | Lien avec la suite | J6 : l'analyste lit ce que ces agents produisent, l'agent administratif les complète, et vous fixez les objectifs, le budget et les garde-fous de l'ensemble |
 
-**Quels agents construire aujourd'hui ?** Tout le monde construit **communication** et **service client** : ce sont deux rôles du socle de l'entreprise autonome (J1). Ensuite, chacun choisit :
+**Quels agents construire aujourd'hui ?** Au labo, tout le monde construit **communication** et **service client** : ce sont deux rôles du socle de l'entreprise autonome (J1). Le troisième agent se construit après la formation (voir « Pour aller plus loin » à la fin du labo), selon votre activité :
 
 | Votre activité | Troisième agent | Pourquoi |
 | --- | --- | --- |
 | Vous produisez, livrez ou gérez un stock | Opérations | Planning, achats et livraisons pèsent plus que la veille |
 | Vous vendez un service ou du conseil | Veille | Vos prix et votre offre dépendent du marché |
 
-Le quatrième agent se construit après la formation avec la même méthode, dont le gabarit est dans ce support.
+Le quatrième agent se construit ensuite avec la même méthode, dont le gabarit est dans ce support.
 
 **Objectifs.** À la fin de la J5, vous savez :
 
 1. spécialiser un agent : un métier, une skill, des sources, un ton, des limites ;
 2. faire répondre vos clients sur votre site sans rien promettre d'absent de vos documents ;
 3. faire préparer vos publications et votre veille, sources à l'appui ;
-4. pour une activité qui produit ou livre, faire calculer achats et planning par le code ;
-5. travailler avec tous vos agents depuis une file d'actions et un e-mail du matin ;
+4. pour une activité qui produit ou livre, comment faire calculer achats et planning par le code ;
+5. comment travailler avec tous vos agents depuis une file d'actions et un e-mail du matin (à construire avant la J6) ;
 6. diagnostiquer une erreur : lire le message, trouver les journaux, faire analyser par Claude avant de corriger, puis vérifier.
 
 **Déroulé** (heures de Montréal ; Afrique de l'Ouest à l'heure de Greenwich, comme la Côte d'Ivoire ou le Sénégal : + 5 h en hiver, + 4 h en été ; Bénin, Niger et Afrique centrale : + 6 h en hiver, + 5 h en été)
@@ -45,7 +45,7 @@ Le quatrième agent se construit après la formation avec la même méthode, don
 | 10 h 50 | Cours | Les interfaces : file d'actions, e-mail, assistant sur le site |
 | 11 h 20 | Démonstration | Les agents spécialisés de Kofi Traiteur |
 | 12 h 30 | Pause | 1 heure |
-| 13 h 30 | Labo | Réflexe diagnostic, puis vos agents spécialisés et leurs interfaces |
+| 13 h 30 | Labo | Réflexe diagnostic (30 min), puis vos agents service client et communication |
 | 15 h 15 | Revue en groupe | Chacun pose une question à l'assistant d'un autre participant |
 
 ## Cours 1 : spécialiser un agent
@@ -174,7 +174,7 @@ Plan B : branche « j5-specialises » du dépôt « kofi-traiteur-demo ».
 
 ## Bien travailler avec Claude : diagnostiquer une erreur
 
-Le réflexe du jour, au début du labo, en **30 à 45 minutes pris sur la pratique guidée** (pas sur la démonstration). Aujourd'hui, vous branchez plusieurs agents : quelque chose finira par coincer. Pour un non-développeur, ce réflexe fait la différence entre attendre de l'aide et réparer seul. Il suit la [fiche réflexe 5 « Diagnostiquer une erreur en 5 étapes »](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; les participants la retrouvent sur /ia/fiches.
+Le réflexe du jour ouvre le labo et dure **30 minutes, pris sur le labo** (pas sur la démonstration) : environ 15 minutes au début, puis 15 minutes pour le premier diagnostic partagé à l'écran, dès que la première vraie erreur apparaît. Aujourd'hui, vous branchez plusieurs agents : quelque chose finira par coincer. Pour un non-développeur, ce réflexe fait la différence entre attendre de l'aide et réparer seul. Il suit la [fiche réflexe 5 « Diagnostiquer une erreur en 5 étapes »](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; les participants la retrouvent sur /ia/fiches.
 
 ### Une erreur dit où chercher
 
@@ -206,35 +206,32 @@ Ne modifie rien avant que je valide ton diagnostic.
 - désactiver un test pour qu'il passe ;
 - corriger avant de comprendre.
 
-### L'exercice : une panne volontaire, réparée seul
+### L'exercice : votre première vraie erreur du labo, réparée seul
 
-1. Dans Claude Code, créez une branche « exercice-panne ».
-2. Demandez :
+On ne provoque aucune erreur exprès : l'exercice porte sur les erreurs réelles du labo.
 
-```
-Sur cette branche, introduis une seule erreur discrète qui casse l'assistant du site ou une page de /admin. Ne touche ni aux clés ni aux variables d'environnement. Fais un commit avec le message « exercice » et dis seulement : c'est fait.
-```
+1. Pendant le labo, à la première vraie erreur que vous rencontrez (message rouge, page cassée, agent qui ne répond plus, test qui échoue), arrêtez-vous.
+2. Appliquez la fiche 5 jusqu'au bout : noter, lire le message, Logs Vercel filtrés sur l'heure, demande de diagnostic ci-dessus, validation du diagnostic, correction, puis refaire le test qui échouait.
+3. Pas d'erreur de votre côté ? Suivez à l'écran le diagnostic d'un autre participant, étape par étape, puis appliquez la fiche 5 à votre première vraie erreur de la semaine.
 
-3. Fermez cette conversation et ouvrez-en une nouvelle. Poussez la branche, ouvrez le lien Preview et constatez la panne.
-4. Appliquez la fiche 5 jusqu'au bout : noter, lire le message, Logs Vercel filtrés sur l'heure, demande de diagnostic, validation, correction, puis refaire le test qui échouait.
-5. Revenez sur la branche principale : la branche d'exercice n'est jamais fusionnée.
+- [ ] J'ai diagnostiqué et réparé seul une vraie erreur du labo, et refait le test qui échouait
 
-- [ ] J'ai réparé seul la panne d'exercice, et refait le test qui échouait
-
-### Comment l'animer (30 à 45 min)
+### Comment l'animer (30 min)
 
 | Temps | Ce que fait le formateur |
 | --- | --- |
 | 2 min | Intercalaire : le réflexe du jour et pourquoi il compte ; chacun ouvre la fiche 5 |
-| 8 à 10 min | Les quatre gestes, avec l'onglet Logs d'un projet Vercel à l'écran (projet de démonstration de Kofi) |
-| 5 min | La demande de diagnostic et les trois « Ne jamais » |
-| 15 à 25 min | L'exercice ; le formateur passe parmi les participants et vérifie que chacun refait le test qui échouait |
+| 8 min | Les quatre gestes, avec l'onglet Logs d'un projet Vercel à l'écran (projet de démonstration de Kofi) |
+| 5 min | La demande de diagnostic, les trois « Ne jamais » et l'annonce de l'exercice |
+| 15 min, pendant le labo | Premier diagnostic partagé : dès la première vraie erreur du groupe, le participant concerné partage son écran et déroule la fiche 5 ; le formateur guide sans prendre la main ; ceux qui n'ont pas d'erreur suivent à l'écran |
 
-Plan B si la panne n'apparaît pas : sur la branche d'exercice, renommer à la main le dossier « connaissances », puis poser une question à l'assistant sur le lien Preview. Vigilance : personne ne colle une clé dans la conversation.
+Ensuite, le formateur passe parmi les participants : à chaque erreur, il demande d'abord ce qui a été noté et où sont les journaux, et vérifie que chacun refait le test qui échouait. Vigilance : personne ne colle une clé dans la conversation.
 
 ## Labo : vos agents spécialisés
 
-Le labo dure 1 h 45, de 13 h 30 à 15 h 15 : le réflexe diagnostic d'abord (ci-dessus), puis, sur votre application de la J4, deux agents pour tous (service client, communication), un troisième selon votre activité, puis la file d'actions et l'e-mail du matin. Chaque étape passe par une demande de fusion, des tests verts et le lien Preview. Les temps indiqués par étape sont des repères : si le temps manque, priorité aux étapes 1, 2, 3 et 5 ; l'étape 4 peut se terminer dans la semaine. Le livrable du soir reste deux agents métier en service et une panne réparée seul.
+Le labo dure 1 h 45, de 13 h 30 à 15 h 15 : le réflexe diagnostic d'abord (30 min, ci-dessus), puis trois étapes (70 min) sur votre application de la J4 : vos skills, l'agent service client avec l'assistant du site, l'agent communication. Chaque étape passe par une demande de fusion, des tests verts et le lien Preview. Le livrable du soir : deux agents métier en service et une vraie erreur du labo diagnostiquée et réparée seul.
+
+La file d'actions unique et l'e-mail du matin se construisent avant la J6 (voir « Avant la J6 », texte à copier compris). Le troisième agent, opérations ou veille, se construit après la formation (voir « Pour aller plus loin » ci-dessous).
 
 ### Étape 1 · Vos skills (15 min)
 

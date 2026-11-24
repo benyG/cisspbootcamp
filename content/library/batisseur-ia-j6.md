@@ -16,15 +16,15 @@ summary: Le support complet de la J6 : objectifs et courbe, routines, rapport du
 | Public | Dirigeants, indépendants, porteurs de projet. Aucune compétence en programmation. |
 | Durée | 5 heures de travail : cours, démonstration, réflexe du jour, labo, revue finale |
 | Prérequis | Les agents des J4 et J5 ; vos 1 à 3 objectifs chiffrés, vos échéances administratives et vos décisions de la semaine (travail « avant la J6 ») |
-| Résultat | Objectifs et courbe cible, 3 routines, le rapport du lundi, l'agent analyste en lecture seule, l'agent administratif, vos garde-fous écrits, votre carte d'agents avec leurs interrupteurs et leur budget, et votre plan des 30 jours |
-| Après la formation | Vous passez du mode test au mode réel, agent par agent, et vous construisez les agents restants avec le gabarit |
+| Résultat | Objectifs et courbe cible, 3 routines avec plafond, le rapport du lundi écrit par l'agent analyste, votre page Garde-fous avec l'arrêt général, votre carte d'agents avec leurs interrupteurs et leur budget, et votre plan des 30 jours (où l'agent administratif et le branchement MCP de l'analyste sont datés) |
+| Après la formation | Vous passez du mode test au mode réel, agent par agent ; vous construisez l'agent administratif, branchez l'analyste en MCP et construisez les agents restants avec le gabarit |
 
 **Objectifs.** À la fin de la J6, vous savez :
 
 1. traduire un objectif en courbe cible et savoir chaque semaine si vous êtes en avance ou en retard ;
 2. écrire une routine « si… alors… » et choisir son mode : observer, proposer ou agir ;
-3. interroger vos données avec un agent analyste qui ne peut rien modifier ;
-4. confier à un agent la tenue des pièces, des échéances et des demandes sur les données personnelles ;
+3. faire écrire par un agent analyste un rapport chiffré sans chiffre inventé, et savoir comment l'interroger en lecture seule par MCP (branchement fait pendant les 30 jours de suivi) ;
+4. savoir ce que l'on confie à un agent administratif (pièces, échéances, demandes sur les données personnelles) et ce qui reste à vous (agent construit pendant les 30 jours de suivi) ;
 5. faire tourner un agent seul (tâche planifiée, travail en arrière-plan avec notification) dans un budget que vous fixez ;
 6. écrire les garde-fous de votre entreprise autonome et votre propre rôle de dirigeant d'agents.
 
@@ -37,7 +37,7 @@ summary: Le support complet de la J6 : objectifs et courbe, routines, rapport du
 | 11 h 10 | Cours | Les garde-fous, la carte complète, et ensuite |
 | 11 h 35 | Démonstration | Le pilotage de Kofi Traiteur (exemple fictif) |
 | 12 h 30 | Pause | 1 heure |
-| 13 h 30 | Labo | Réflexe routines et coûts, puis votre pilotage autonome |
+| 13 h 30 | Labo | Réflexe routines et coûts (30 min), puis votre pilotage autonome en quatre étapes |
 | 15 h 15 | Revue finale | Chacun présente son entreprise autonome en 3 minutes |
 
 ## Cours 1 : piloter par objectifs
@@ -174,9 +174,11 @@ Les chiffres de Kofi sont fictifs et le disent à l'écran.
 
 Plan B : branche « j6-pilotage » du dépôt « kofi-traiteur-demo », qui contient aussi un exemple complet de serveur MCP en lecture seule.
 
+Les segments 30 – 40 (MCP) et 40 – 50 (agent administratif) sont montrés en démonstration mais ne sont pas des étapes du labo : les participants les construisent pendant les 30 jours de suivi (voir « Après la formation »).
+
 ## Bien travailler avec Claude : laisser tourner en confiance
 
-Le fil rouge du jour ouvre le labo, de 13 h 30 à 14 h 05 environ (30 à 45 minutes, prises sur la pratique guidée, pas sur la démonstration). Il correspond aux diapositives 16 à 18 de la présentation. Pour un non-développeur, laisser un agent travailler seul la nuit ou le lundi matin est le moment qui inquiète : on ne peut pas tout surveiller. Le réflexe consiste à ne jamais laisser tourner un agent sans heure, sans plafond, sans validation et sans interrupteur.
+Le fil rouge du jour ouvre le labo, de 13 h 30 à 14 h 00 (30 minutes, prises sur la pratique guidée, pas sur la démonstration). Il correspond aux diapositives 16 à 18 de la présentation. Pour un non-développeur, laisser un agent travailler seul la nuit ou le lundi matin est le moment qui inquiète : on ne peut pas tout surveiller. Le réflexe consiste à ne jamais laisser tourner un agent sans heure, sans plafond, sans validation et sans interrupteur.
 
 ### Quatre points
 
@@ -201,7 +203,7 @@ Rien ne part sans ma validation ; un interrupteur dans Garde-fous.
 Note chaque exécution au journal.
 ```
 
-Chaque routine a : une heure, un plafond, une validation, un interrupteur.
+Chaque routine a : une heure, un plafond, une validation, un interrupteur. Le modèle complet de la fiche 7 ajoute deux précisions à reprendre : le journal note « date, durée, coût, résultat », et une dernière ligne « Commence en mode observer : tu proposes, je décide ».
 
 ### L'exercice
 
@@ -210,17 +212,17 @@ Chaque participant adapte la demande à l'une de ses routines (le rapport du lun
 - [ ] Ma demande donne une heure, un plafond avec alerte, une validation et un interrupteur
 - [ ] Claude Code a proposé un plan avant d'agir, et chaque exécution est notée au journal
 
-### Comment l'animer (30 à 45 min)
+### Comment l'animer (30 min)
 
-1. **Intercalaire et quatre points (10 à 15 min)** : présenter les quatre gestes ; montrer à l'écran où se lit la consommation et où se fixe un plafond ; nommer les fonctions avancées sans les démontrer.
+1. **Intercalaire et quatre points (10 min)** : présenter les quatre gestes ; montrer à l'écran où se lit la consommation et où se fixe un plafond ; nommer les fonctions avancées sans les démontrer.
 2. **La fiche (5 min)** : lire la demande ligne par ligne : l'heure et la tâche, le coût, la confiance, la trace.
-3. **L'exercice (15 à 25 min)** : chacun écrit sa demande ; en lire deux à voix haute ; corriger celles qui oublient le plafond ou l'interrupteur. Si le temps manque, la demande écrite est appliquée pendant l'étape 3 du labo.
+3. **L'exercice (15 min)** : chacun écrit sa demande ; en lire deux à voix haute ; corriger celles qui oublient le plafond ou l'interrupteur. Si le temps manque, la demande écrite est appliquée pendant l'étape 3 du labo. À 14 h 00, on passe aux étapes du labo, sans déborder.
 
-Il n'existe pas de fiche réflexe propre à la J6 : on s'appuie sur la fiche 3 (la fiche de règles d'un agent), rubriques Budget, Interrupteur et Journal. Lien formateur : [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien participants : /ia/fiches.
+La fiche réflexe du jour est la fiche 7, « Une routine qui tourne seule » : l'heure, le travail, le plafond, la validation et l'interrupteur, avec l'exemple fictif de l'Atelier Adjoa et un modèle à copier. Lien formateur : [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien participants : /ia/fiches.
 
 ## Labo : votre pilotage autonome
 
-Après le réflexe du jour, jusqu'à 15 h 15, sur votre application de la J5 : objectifs, routines, rapport, analyste, administratif, garde-fous. Chaque étape passe par une demande de fusion, des tests verts et le lien Preview. Les temps indiqués (1 h 50 au total) sont des repères : priorisez les étapes 1, 2, 3 et 6 ; ce qui n'est pas terminé à 15 h 15, en particulier l'étape 4, se termine après la formation.
+Après le réflexe du jour, de 14 h 00 à 15 h 15, sur votre application de la J5 : quatre étapes, 70 minutes (objectifs, routines, rapport du lundi, garde-fous). Chaque étape passe par une demande de fusion, des tests verts et le lien Preview. Le branchement de vos données en MCP et l'agent administratif, vus en cours et en démonstration, ne sont plus des étapes du labo : ce sont des travaux des 30 jours de suivi, avec leurs textes à copier dans « Après la formation ».
 
 ### Étape 1 · Objectifs et courbe cible (20 min)
 
@@ -248,40 +250,7 @@ Chaque lundi, calcule par le code les chiffres de la semaine : objectifs et cour
 
 - [ ] Le bouton « Rapport maintenant » m'envoie un rapport dont chaque chiffre est juste
 
-### Étape 4 · Vos données en MCP, lecture seule (20 min)
-
-```
-Expose mes données en MCP sur /api/mcp, en lecture seule : des outils pour lire les clients, demandes, devis, commandes, paiements et objectifs, avec des filtres simples.
-
-Aucun outil n'écrit, n'envoie ni ne supprime. Accès protégé par ma connexion (OAuth), chaque appel journalisé, noms des clients masqués par défaut.
-
-Écris un test qui vérifie qu'aucun outil n'écrit.
-```
-
-Puis ajoutez l'adresse comme connecteur personnalisé dans votre assistant IA, posez une question en français (par exemple « quels clients ont commandé une fois et plus jamais ? »), vérifiez la réponse à la main et retrouvez l'appel au journal.
-
-- [ ] Une question en français reçoit une réponse juste, et l'appel est dans le journal
-
-Si l'étape bloque, terminez les autres d'abord : l'exemple du dépôt de démonstration vous sert après la formation.
-
-### Étape 5 · L'agent administratif (20 min)
-
-```
-Crée l'agent administratif, avec le gabarit de la J5.
-
-Pièces : numérote en continu chaque facture et reçu, et range-les. Les factures fournisseurs envoyées à [adresse ou bouton d'envoi] sont lues (date, fournisseur, montant, catégorie) et attendent ma validation à côté de l'image. Le 1er du mois, prépare l'export pour mon comptable : un tableau et les PDF.
-
-Échéances : une table d'échéances avec rappel à J-15 et J-3 dans l'e-mail du matin. Mes échéances : [votre liste].
-
-Données personnelles : un registre (donnée, raison, durée de conservation), le suivi des demandes d'accès et de suppression avec leur délai, et la proposition dans la file des fiches à effacer une fois la durée passée.
-
-Il ne déclare rien, ne paie rien et ne donne aucun conseil fiscal ou juridique.
-```
-
-- [ ] Une facture fournisseur photographiée est lue et attend ma validation
-- [ ] Une échéance à J-3 apparaît dans l'e-mail du matin
-
-### Étape 6 · La page Garde-fous (10 min)
+### Étape 4 · La page Garde-fous (10 min)
 
 ```
 Ajoute une page /admin/garde-fous : la liste de mes agents et routines avec leur mode et leur interrupteur, un bouton d'arrêt général qui suspend tous les agents, mes plafonds (dépense d'API, messages par client, montant au-delà duquel tout passe par moi) et la date de ma dernière revue.
@@ -291,13 +260,13 @@ Ajoute une page /admin/garde-fous : la liste de mes agents et routines avec leur
 
 ## La revue finale de 15 h 15
 
-Chacun présente son entreprise autonome en 3 minutes, sur téléphone : sa carte d'agents, son objectif et sa courbe, une piste de l'analyste, sa page Garde-fous. Le groupe pose une question à l'analyste de chaque participant.
+Chacun présente son entreprise autonome en 3 minutes, sur téléphone : sa carte d'agents, son objectif et sa courbe, une piste de l'analyste, sa page Garde-fous. Le groupe discute une piste du rapport de chaque participant : la garder ou l'écarter ?
 
 - [ ] Mes objectifs ont leur courbe, et je sais si je suis en avance ou en retard
 - [ ] Trois routines tournent en mode observer, avec un plafond de pression
 - [ ] J'ai reçu un rapport du lundi dont chaque chiffre est juste
-- [ ] L'analyste répond à une question en lecture seule (ou c'est prévu, avec l'exemple)
-- [ ] L'agent administratif range une pièce et rappelle une échéance
+- [ ] Mon plafond d'API est fixé, avec une alerte à 80 %
+- [ ] L'agent administratif et le branchement MCP de l'analyste sont datés dans mon plan des 30 jours
 - [ ] Ma page Garde-fous existe, avec l'arrêt général
 - [ ] Ma carte d'agents est à jour, et mon plan des 30 jours est écrit
 - [ ] Réflexe du jour : chaque routine a son heure, son plafond et son interrupteur
@@ -311,8 +280,8 @@ Le formateur clôt la formation en rappelant le rôle de dirigeant d'agents et l
 | La courbe dit « en retard » alors que non | Vérifiez la façon de compter le réel et les dates de l'objectif ; donnez le bon calcul avec un test |
 | Une routine agit au lieu d'observer | « Toutes les routines démarrent en mode observer ; ajoute un test » |
 | Le rapport invente un chiffre | « L'analyste n'utilise que les chiffres fournis par le code ; supprime toute phrase chiffrée sans source » |
-| Le connecteur MCP refuse la connexion | Vérifiez l'adresse exacte et la connexion ; sinon, gardez l'exemple du dépôt pour après |
-| La facture fournisseur est mal lue | Corrigez à la main avant validation ; une photo nette et droite suffit souvent |
+| Le connecteur MCP refuse la connexion (30 jours de suivi) | Vérifiez l'adresse exacte et la connexion ; sinon, partez de l'exemple du dépôt de démonstration |
+| La facture fournisseur est mal lue (30 jours de suivi) | Corrigez à la main avant validation ; une photo nette et droite suffit souvent |
 | Trop d'alertes le matin | Relevez les seuils des routines ; une alerte doit appeler une décision |
 | La consommation d'API grimpe | Vérifiez le plafond et l'alerte à 80 % ; confiez le tri à un modèle plus petit ; coupez la routine en cause avec son interrupteur |
 
