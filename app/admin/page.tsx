@@ -1,4 +1,4 @@
-import { ScrollText, MessageCircleQuestion, Landmark, ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
+import { Library, ScrollText, MessageCircleQuestion, Landmark, ShieldAlert, BadgeDollarSign, Plug, ShieldCheck, BellRing, Lightbulb, LineChart, Stethoscope, Bot, Building2, Gauge, Rocket, TicketPercent, Workflow, CalendarCheck, Clapperboard, ClipboardCheck, CalendarPlus, Compass, FileText, Filter, Flame, GraduationCap, LayoutDashboard, type LucideIcon, Mail, Megaphone, MessageSquareQuote, MessageSquareText, PhoneCall, Settings2, Share2, Tag, Timer, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { auth } from "@/auth";
@@ -329,6 +329,7 @@ const NAV: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/admin/parametres/site", label: "Page d'accueil", icon: Settings2 },
   { href: "/admin/parametres/prix", label: "Tarifs", icon: Tag },
   { href: "/admin/parametres/gabarits", label: "Gabarits", icon: Mail },
+  { href: "/admin/bibliotheque", label: "Bibliothèque", icon: Library },
   { href: "/admin/documents", label: "Documents", icon: FileText },
   { href: "/admin/parametres/google", label: "Agenda", icon: CalendarCheck },
   { href: "/admin/parametres/linkedin", label: "LinkedIn", icon: Share2 },

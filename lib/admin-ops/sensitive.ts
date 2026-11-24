@@ -1,4 +1,5 @@
 import { eraseLead } from "@/lib/admin-records-server";
+import { PARTICIPANTS } from "@/lib/documents";
 import { revalidateTag } from "next/cache";
 
 import { cohortDeletionProblem } from "@/lib/cohorts";
@@ -63,7 +64,7 @@ export async function registerDirect(input: { leadId: number; cohortId: number; 
   let message = `Inscription confirmée (${result.reference}).${result.emailSent ? " E-mail « place réservée » envoyé avec le reçu." : input.notify ? " L’e-mail « place réservée » n’est pas parti." : ""}`;
   if (input.onboard) {
     const cohort = await prisma.cohort.findUnique({ where: { id: input.cohortId }, select: { program: true } });
-    const documents = cohort ? await prisma.document.findMany({ where: { program: cohort.program, active: true }, select: { id: true } }) : [];
+    const documents = cohort ? await prisma.document.findMany({ where: { program: cohort.program, active: true, audience: PARTICIPANTS }, select: { id: true } }) : [];
     const sent = await sendOnboardingDocuments({ leadId: input.leadId, documentIds: documents.map((d) => d.id) });
     message += sent.ok ? " Documents de préparation envoyés." : ` Documents non envoyés : ${sent.error}`;
   }
@@ -183,7 +184,7 @@ export async function sendCohortDocuments(cohortId: number, onlyLeadId?: number)
   const logs = onlyLeadId || !leadIds.length ? [] : await prisma.actionLog.findMany({ where: { leadId: { in: leadIds }, type: "onboarding_sent" }, select: { payload: true } });
   const sentTo = new Set(logs.map((l) => (l.payload as { registrationId?: number } | null)?.registrationId).filter((x): x is number => typeof x === "number"));
   const targets = cohort.registrations.filter((r) => !sentTo.has(r.id));
-  const documents = await prisma.document.findMany({ where: { program: cohort.program, active: true }, select: { id: true } });
+  const documents = await prisma.document.findMany({ where: { program: cohort.program, active: true, audience: PARTICIPANTS }, select: { id: true } });
   let sent = 0;
   const failures: string[] = [];
   for (const r of targets) {

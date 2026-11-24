@@ -17,7 +17,7 @@ import { HOLD_HOURS, activeHoldFor, formatDeadline } from "@/lib/seat-holds";
 import { confirmBalancePayment, holdSeatAction, releaseHoldAction } from "@/app/admin/actions";
 import { balanceDeadline } from "@/lib/registration";
 
-import { formatBytes } from "@/lib/documents";
+import { formatBytes, PARTICIPANTS } from "@/lib/documents";
 import { planStart } from "@/lib/reading-plan/page";
 
 import { deleteLead, markLost, registerDirectly, scheduleFollowup, sendOnboarding, updateLead } from "../actions";
@@ -66,7 +66,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const analysis = response?.analysis as ProfileAnalysis | undefined;
   const paidRegistration = lead.registrations.find((r) => r.status === "paid");
   const documents = paidRegistration
-    ? await prisma.document.findMany({ where: { program: paidRegistration.cohort.program, active: true }, orderBy: { createdAt: "asc" }, select: { id: true, name: true, filename: true, size: true } })
+    ? await prisma.document.findMany({ where: { program: paidRegistration.cohort.program, active: true, audience: PARTICIPANTS }, orderBy: { createdAt: "asc" }, select: { id: true, name: true, filename: true, size: true } })
     : [];
   const lastOnboarding = lead.actions.find((a) => a.type === "onboarding_sent");
   const cohorts = await prisma.cohort.findMany({

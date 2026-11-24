@@ -20,10 +20,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   if (!link) return gone("Ce lien n'est pas valide.");
 
   const [document, paid] = await Promise.all([
-    prisma.document.findUnique({ where: { id: link.documentId }, select: { active: true, filename: true, mimeType: true, blobPathname: true, content: true } }),
+    prisma.document.findUnique({ where: { id: link.documentId }, select: { active: true, audience: true, filename: true, mimeType: true, blobPathname: true, content: true } }),
     prisma.registration.findFirst({ where: { leadId: link.leadId, status: "paid" }, select: { id: true } }),
   ]);
-  if (!document || !document.active || !paid) return gone("Ce document n'est plus disponible. Écrivez à Ben, il vous le renverra.");
+  if (!document || !document.active || document.audience !== "participants" || !paid) return gone("Ce document n'est plus disponible. Écrivez à Ben, il vous le renverra.");
 
   if (document.blobPathname) {
     const validUntil = Date.now() + 10 * 60_000;

@@ -3,7 +3,7 @@ import { get } from "@vercel/blob";
 import { formatCohortMonth } from "@/lib/cohorts";
 import { prisma } from "@/lib/db";
 import { signDocumentLink } from "@/lib/document-links";
-import { documentList, planAttachments, safeFilename } from "@/lib/documents";
+import { documentList, planAttachments, safeFilename, PARTICIPANTS } from "@/lib/documents";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/messaging/email";
 import { loadTemplate, renderTemplate } from "@/lib/messaging/templates";
@@ -31,7 +31,7 @@ export async function sendOnboardingDocuments(input: { leadId: number; documentI
   if (!registration) return { ok: false, error: "Ce lead n'a pas de place payée : les documents de préparation sont réservés aux inscrits." };
 
   const library = await prisma.document.findMany({
-    where: { program: registration.cohort.program, active: true },
+    where: { program: registration.cohort.program, active: true, audience: PARTICIPANTS },
     select: { id: true, name: true, filename: true, size: true, active: true },
     orderBy: { createdAt: "asc" },
   });
@@ -39,7 +39,7 @@ export async function sendOnboardingDocuments(input: { leadId: number; documentI
   const plan = planAttachments(library, input.documentIds, undefined, { allowEmpty: withReadingPlan });
   if (!plan.ok) return plan;
 
-  const files = await prisma.document.findMany({ where: { id: { in: plan.attached.map((d) => d.id) } }, select: { id: true, filename: true, content: true, blobPathname: true } });
+  const files = await prisma.document.findMany({ where: { id: { in: plan.attached.map((d) => d.id) }, audience: PARTICIPANTS }, select: { id: true, filename: true, content: true, blobPathname: true } });
   const attachments: Array<{ filename: string; content: Buffer }> = [];
   const links: Record<number, string> = {};
   for (const d of plan.attached) {

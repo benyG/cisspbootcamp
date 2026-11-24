@@ -18,6 +18,10 @@ export const MAX_FILE_BYTES = 30 * 1024 * 1024;
 export const ATTACHMENT_BUDGET_BYTES = 15 * 1024 * 1024;
 
 /** What Ben is likely to send: course material and planning, nothing executable. */
+/** Documents sent to participants; internal ones (the library's trainer files) never are. */
+export const PARTICIPANTS = "participants";
+export const INTERNAL = "internal";
+
 export const ALLOWED_MIME_TYPES: Record<string, string> = {
   "application/pdf": "pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",

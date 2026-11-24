@@ -9,13 +9,13 @@ import type { ProgramCode } from "@/lib/programs";
 
 import { registerDocument } from "./actions";
 
-type Props = { programs: Array<{ code: string; name: string }> };
+type Props = { programs: Array<{ code: string; name: string }>; audience?: "participants" | "internal" };
 
 /**
  * The browser sends the file directly to private storage, with a progress
  * bar, then the server records it. Up to 30 MB per file (Ben, 25/09).
  */
-export function UploadForm({ programs }: Props) {
+export function UploadForm({ programs, audience = "participants" }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
@@ -43,7 +43,7 @@ export function UploadForm({ programs }: Props) {
           multipart: file.size > 8 * 1024 * 1024,
           onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
         });
-        const result = await registerDocument({ name: name.trim(), program: program as ProgramCode, filename: file.name, pathname: blob.pathname });
+        const result = await registerDocument({ name: name.trim(), program: program as ProgramCode, filename: file.name, pathname: blob.pathname, audience });
         if (!result.ok) {
           setMessage({ ok: false, text: result.error });
         } else {
@@ -62,7 +62,7 @@ export function UploadForm({ programs }: Props) {
 
   return (
     <form onSubmit={submit} className="mt-5 grid gap-3 rounded-xl border border-line bg-white p-4">
-      <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Nom affiché dans l&apos;e-mail</span><input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} placeholder="Programme des 15 jours" className={input} /></label>
+      <label className="flex flex-col gap-1 text-sm"><span className="font-medium">{audience === "internal" ? "Nom du fichier dans la bibliothèque" : "Nom affiché dans l’e-mail"}</span><input value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} placeholder={audience === "internal" ? "Diapositives J1 · Composantes d’une IA" : "Programme des 15 jours"} className={input} /></label>
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1 text-sm"><span className="font-medium">Formation</span>
           <select value={program} onChange={(e) => setProgram(e.target.value)} className={input}>{programs.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}</select></label>
