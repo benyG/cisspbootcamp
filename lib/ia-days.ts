@@ -29,15 +29,16 @@ export const IA_PICK_LEAD_HOURS = 24;
  * ground every non-developer needs (model, prompt, context, RAG, skills,
  * agents, tools, MCP); J2 maps the business and sets the foundations; J3 to
  * J5 build the data, then the agents, then the specialised agents and their
- * interfaces; J6 puts the business under autonomous steering.
+ * interfaces; J6 puts the business under autonomous steering. Revised 24/11
+ * (Ben): each journée also teaches one habit of working well with Claude.
  */
 export const JOURNEES: ReadonlyArray<{ n: number; title: string; text: string }> = [
-  { n: 1, title: "Introduction aux composantes d’une IA", text: "Modèle, prompt, contexte, RAG, skills, agents, outils, MCP : vous comprenez chaque brique et vous l’essayez sur votre entreprise. Le soir, votre premier assistant répond à partir de vos propres documents." },
-  { n: 2, title: "Identification des processus métiers et fondations architecturales", text: "Vous cartographiez vos processus (attirer, vendre, encaisser, servir, livrer, administrer, piloter), vous choisissez ce qui s’automatise, et vous posez les fondations avec Claude Code, GitHub et Vercel : votre vitrine est en ligne à votre nom." },
-  { n: 3, title: "Structuration de l’activité et de ses données", text: "Clients, commandes, factures : vos données prennent une structure, une base, des écrans et un tableau de bord. Chaque changement est testé." },
-  { n: 4, title: "Construction du système d’agents IA", text: "Des agents qui agissent : ils traitent une demande, préparent un devis, encaissent par carte ou mobile money et relancent. Vous fixez leurs règles et ce qu’ils ne font jamais sans vous." },
-  { n: 5, title: "Spécialisation des agents IA et interfaces", text: "Un agent par métier : communication (publications et images à valider), service client, veille du marché, et selon votre activité un agent opérations (production, stock, livraisons). Et les interfaces pour travailler avec eux : votre espace d’administration, l’e-mail, un assistant sur votre site." },
-  { n: 6, title: "Pilotage autonome de l’entreprise", text: "Vos objectifs et leur courbe, des routines qui relancent et alertent, un rapport chaque semaine, un agent IA analyste sur vos données (MCP, lecture seule), un agent administratif (pièces comptables, échéances, données personnelles) et vos garde-fous." },
+  { n: 1, title: "Introduction aux composantes d’une IA", text: "Modèle, prompt, contexte, RAG, skills, agents, outils, MCP : vous comprenez chaque brique et vous l’essayez sur votre entreprise. Vous prenez en main Claude Desktop : projets, connecteurs, skills. Le soir, votre premier assistant répond à partir de vos propres documents." },
+  { n: 2, title: "Identification des processus métiers et fondations architecturales", text: "Vous cartographiez vos processus, vous choisissez ce qui s’automatise, et vous posez les fondations avec Claude Code, GitHub et Vercel. Vous apprenez à cadrer Claude : sa mémoire du projet, un plan avant d’agir, vos clés toujours protégées. Votre vitrine est en ligne à votre nom." },
+  { n: 3, title: "Structuration de l’activité et de ses données", text: "Clients, commandes, factures : vos données prennent une structure, une base, des écrans et un tableau de bord. Vous avancez par petites étapes testées, et vous savez revenir en arrière si quelque chose casse." },
+  { n: 4, title: "Construction du système d’agents IA", text: "Des agents qui agissent : ils traitent une demande, préparent un devis, encaissent par carte ou mobile money et relancent. Vous comprenez comment un agent raisonne, vous fixez ses règles et vous le testez sur des cas réels avant de lui faire confiance." },
+  { n: 5, title: "Spécialisation des agents IA et interfaces", text: "Un agent par métier : communication, service client, veille du marché, et selon votre activité un agent opérations. Les interfaces pour travailler avec eux : votre administration, l’e-mail, un assistant sur votre site. Et quand quelque chose ne marche pas, vous savez trouver pourquoi." },
+  { n: 6, title: "Pilotage autonome de l’entreprise", text: "Vos objectifs et leur courbe, des routines qui relancent et alertent, un rapport chaque semaine, un agent analyste sur vos données (MCP, lecture seule), un agent administratif et vos garde-fous. Vos agents tournent seuls, dans un budget que vous fixez." },
 ];
 
 export type IaDay = { id: number; date: string; journee: number; capacity: number; seats: number; closed: boolean; start: string };

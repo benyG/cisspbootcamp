@@ -123,6 +123,7 @@ export default async function IaPage() {
               <p>En bleu : ce qui reste à construire. En blanc : ce qui tourne déjà.</p>
             </div>
             <BuildScrubber days={days} />
+            <p className="dayplan-note">À la fin, vous ne dépendez de personne : vous savez faire évoluer votre système et le réparer.</p>
             <div className="again"><Link className="btn btn-go" href={book}>{bookLabel}</Link>{first && <span className="next-group">Démarrage le {firstDay}</span>}</div>
           </div>
         </section>
