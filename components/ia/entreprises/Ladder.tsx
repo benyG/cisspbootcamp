@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-
 import type { Zone } from "@/lib/enterprise";
+
+import { useZone } from "./zone";
 
 export type LadderStep = { code: string; name: string; duration: string; items: string[]; featured: boolean; price: Record<Zone, string>; sub: Record<Zone, string> };
 
 /** The five steps, prices in the visitor's zone, switchable. */
-export function Ladder({ steps, initialZone }: { steps: LadderStep[]; initialZone: Zone }) {
-  const [zone, setZone] = useState<Zone>(initialZone);
+export function Ladder({ steps }: { steps: LadderStep[] }) {
+  const { zone, setZone } = useZone();
   return (
     <>
       <div className="prices-bar">

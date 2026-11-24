@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Fragment } from "react";
 
 import { IaFooter, IaTopbar } from "@/components/ia/shell";
-import { formatUsd, proposalTotals } from "@/lib/enterprise";
+import { findPackage, formatUsd, proposalTotals } from "@/lib/enterprise";
 import { loadOffer, readProposal, requestByToken } from "@/lib/enterprise-server";
 
 import { payDeposit } from "../../actions";
@@ -22,7 +22,7 @@ export default async function DepositPage({ params, searchParams }: { params: Pr
   const offer = await loadOffer();
   const ready = Boolean(proposal && request.depositUsd && request.depositReference && request.quoteNumber);
   const paid = Boolean(request.depositPaidAt);
-  const lines = proposal?.lines.map((l) => ({ pkg: offer.packages.find((p) => p.code === l.code), priceUsd: l.priceUsd })).filter((l) => l.pkg) ?? [];
+  const lines = proposal?.lines.map((l) => ({ pkg: findPackage(offer, l.code), priceUsd: l.priceUsd })).filter((l) => l.pkg) ?? [];
   const totals = proposal ? proposalTotals(proposal, offer) : null;
 
   return (

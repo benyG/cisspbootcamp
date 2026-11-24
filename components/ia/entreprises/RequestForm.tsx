@@ -40,6 +40,7 @@ export function RequestForm({ countries, defaultCountry }: { countries: Option[]
           {Object.entries(FUNCTIONS).map(([k, v]) => <label key={k}><input type="checkbox" name="functions" value={k} />{v}</label>)}
         </div>
       </fieldset>
+      <label className="consent"><input type="checkbox" name="dataOnSite" defaultChecked={f.dataOnSite === "on"} /><span><b>Nos données doivent rester chez nous</b> (IA privée et souveraine, installée dans vos locaux).</span></label>
       <label>Votre besoin en une phrase<textarea name="need" rows={2} maxLength={600} placeholder="Ex. : nos commerciaux passent leurs soirées à répondre sur WhatsApp." defaultValue={f.need} /></label>
       <label className="consent"><input type="checkbox" name="consent" required /><span>J’accepte que l’équipe Bâtisseur IA utilise ces informations pour répondre à ma demande, et seulement pour cela.</span></label>
       {state.error && <p className="err" role="alert">{state.error}</p>}
