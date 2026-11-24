@@ -9,14 +9,14 @@ summary: Le support complet de la J2 : la carte des processus et les priorités,
 
 ## Fiche de la journée
 
-À la fin de la J2, chaque participant a la carte de ses processus, sait lequel automatiser en premier, a écrit le CLAUDE.md de son projet, et sa vitrine est en ligne à son nom de domaine : première brique de son système.
+À la fin de la J2, chaque participant a la carte de ses processus, sait lequel automatiser en premier, a écrit le CLAUDE.md de son projet, et sa vitrine est en ligne à son adresse Vercel : première brique de son système. Le formulaire qui le prévient par e-mail se branche avant la J3.
 
 | | |
 | --- | --- |
 | Public | Dirigeants, indépendants, porteurs de projet. Aucune compétence en programmation. |
 | Durée | 5 heures de travail : cours, démonstration, réflexe du jour, labo, revue |
-| Prérequis | La J1 ; la liste de vos tâches de la semaine (travail « avant la J2 ») ; comptes GitHub et Vercel créés ; un accès à Claude Code ; un nom de domaine (ou l'achat prévu) ; les fiches réflexes reçues avant la J1 |
-| Résultat | Votre carte de processus, vos trois priorités d'automatisation, votre CLAUDE.md, votre vitrine en ligne avec un formulaire qui vous prévient |
+| Prérequis | La J1 ; la liste de vos tâches de la semaine (travail « avant la J2 ») ; comptes GitHub et Vercel créés ; un accès à Claude Code ; les fiches réflexes reçues avant la J1 |
+| Résultat | Votre carte de processus, vos trois priorités d'automatisation, votre CLAUDE.md, votre vitrine en ligne, corrigée et fusionnée ; avant la J3, son formulaire qui vous prévient |
 | Lien avec la suite | J3 structure les données derrière la vitrine ; J4 à J6 automatisent les priorités choisies aujourd'hui ; le CLAUDE.md vous suit jusqu'à la J6 |
 
 **Objectifs.** À la fin de la J2, vous savez :
@@ -36,7 +36,7 @@ summary: Le support complet de la J2 : la carte des processus et les priorités,
 | 11 h 00 | Cours | Les fondations : Claude Code, GitHub, Vercel, domaine |
 | 11 h 30 | Démonstration | La vitrine de Kofi Traiteur, de zéro à en ligne |
 | 12 h 30 | Pause | 1 heure |
-| 13 h 30 | Labo | Réflexe CLAUDE.md, puis votre vitrine, votre formulaire, votre domaine |
+| 13 h 30 | Labo | Réflexe CLAUDE.md (30 min), puis votre vitrine en ligne, corrigée et fusionnée (75 min) |
 | 15 h 15 | Revue en groupe | Carte et vitrine sur téléphone |
 
 ## Cours 1 : cartographier vos processus
@@ -182,7 +182,7 @@ Plan B : si le réseau ou un compte bloque, basculer sur le dépôt de secours �
 
 ## Bien travailler avec Claude : cadrer Claude Code
 
-Le réflexe du jour se fait en 30 à 45 minutes au début du labo, pris sur la pratique guidée (pas sur la démonstration). Il prépare le dépôt avant que Claude Code y écrive une ligne, et il sert ensuite à chaque journée.
+Le réflexe du jour se fait en 30 minutes au début du labo, pris sur la pratique guidée (pas sur la démonstration). Il prépare le dépôt avant que Claude Code y écrive une ligne, et il sert ensuite à chaque journée.
 
 **Pourquoi c'est important pour un non-développeur.** Claude Code va vite. Sans règles écrites, il oublie d'une séance à l'autre ce que vous lui avez dit, et il peut agir avant que vous ayez compris ce qu'il fait. Le cadrer, c'est passer de « subir l'outil » à « le diriger ».
 
@@ -216,19 +216,23 @@ La version complète (le projet, langue et ton, comment travailler avec moi, rè
 2. Demander : « Quelles sont les règles de ce projet ? »
 3. Claude les cite sans aide. Sinon : vérifier que le fichier s'appelle exactement `CLAUDE.md`, qu'il est à la racine du dépôt et qu'il a été fusionné.
 
-### Comment l'animer (30 à 45 min)
+### Comment l'animer (30 min)
 
 | Temps | Ce que fait le formateur | Ce que font les participants |
 | --- | --- | --- |
-| 5 à 10 min | Présente les quatre points, avec un exemple pour chacun tiré de la journée (le plan avant l'étape 3, les secrets de l'étape 6) | Proposent la première règle qu'ils donneraient à Claude |
-| 15 à 20 min | Passe d'écran en écran | Remplissent la fiche 1 à partir de leur fiche projet du matin |
-| 10 à 15 min | Vérifie l'exercice chez chacun | Ajoutent le CLAUDE.md à la racine du dépôt « ma-vitrine » dès que Claude Code y est ouvert (après les étapes 1 et 2), puis font l'exercice de vérification |
+| 8 min | Présente les quatre points, avec un exemple pour chacun tiré de la journée (le plan avant l'étape 3, les secrets du formulaire à brancher avant la J3) | Proposent la première règle qu'ils donneraient à Claude |
+| 12 min | Passe d'écran en écran | Remplissent la fiche 1 à partir de leur fiche projet du matin |
+| 10 min | Vérifie l'exercice chez chacun | Ajoutent le CLAUDE.md à la racine du dépôt « ma-vitrine » dès que Claude Code y est ouvert (après les étapes 1 et 2), puis font l'exercice de vérification |
+
+Le réflexe ne déborde pas sur les étapes : à 14 h 00 (heure de Montréal), on lance l'étape 1, même si quelques CLAUDE.md restent à vérifier (on les vérifie à l'étape 2).
 
 Points de vigilance : aucune clé, même d'exemple, dans le CLAUDE.md (on écrit le nom d'une variable, jamais sa valeur) ; à l'étape 3, Claude Code doit d'abord proposer un plan, que le participant lit et valide.
 
 ## Atelier et labo
 
-Le matin, chacun dresse sa carte de processus. L'après-midi, après le réflexe du jour, chacun met en ligne la vitrine qui sert sa première priorité, en huit étapes (1 h 50 au total). On ne passe pas à l'étape suivante sans avoir coché la vérification.
+Le matin, chacun dresse sa carte de processus. L'après-midi, après le réflexe du jour, chacun met en ligne la vitrine qui sert sa première priorité, en cinq étapes (75 minutes au total, de 14 h 00 à 15 h 15, heure de Montréal). On ne passe pas à l'étape suivante sans avoir coché la vérification.
+
+Le formulaire, montré dans la démonstration, se branche avant la J3 (voir « Avant la J3 ») : la J3 en a besoin pour remplir la base. Le nom de domaine devient un « pour aller plus loin » (fin de cette section). Un participant qui a fini l'étape 5 en avance peut commencer le formulaire en salle.
 
 Les noms de menus des outils peuvent évoluer : le formateur montre l'écran du jour.
 
@@ -287,46 +291,26 @@ Une demande à la fois, par exemple : « Le bouton est caché sous l'image sur t
 - [ ] Mes deux corrections sont visibles
 - [ ] La demande est fusionnée et le site est à jour à l'adresse Vercel principale
 
-### Étape 6 · Le formulaire qui vous prévient (20 min)
+### Pour aller plus loin · Votre nom de domaine
 
-Créez une clé sur resend.com. Ajoutez dans Vercel (Settings, Environment Variables) **RESEND_API_KEY** et **NOTIFY_EMAIL** (votre adresse). Ne collez jamais la clé dans la conversation avec Claude Code. Puis envoyez, en remplaçant [action] par l'action de votre fiche projet (devis, rendez-vous, commande) :
-
-```
-Branche le formulaire de [action] : à l'envoi, envoie-moi un e-mail avec Resend, à l'adresse de la variable NOTIFY_EMAIL, avec la clé de la variable RESEND_API_KEY.
-
-Champs : nom, entreprise, téléphone, e-mail, besoin, et une case non cochée « J'accepte d'être recontacté », obligatoire.
-
-Vérifie chaque champ côté serveur. Ne mets aucune clé dans le code.
-```
-
-Après la fusion, relancez le déploiement (Redeploy) pour que Vercel lise les variables. Sans domaine vérifié chez Resend, l'e-mail ne part que vers l'adresse de votre compte Resend : c'est voulu pour aujourd'hui.
-
-- [ ] Une demande envoyée arrive dans ma boîte
-- [ ] Le formulaire refuse l'envoi sans la case cochée
-
-### Étape 7 · Votre nom de domaine (10 min, puis attente)
+À faire quand vous le souhaitez, après la J2 : rien dans les journées suivantes n'en dépend, votre vitrine fonctionne à son adresse Vercel.
 
 Dans Vercel (Settings, Domains), ajoutez votre domaine. Recopiez exactement chez votre registraire les valeurs DNS affichées. La propagation peut prendre de quelques minutes à quelques heures.
 
 - [ ] Le domaine est ajouté et les valeurs DNS sont saisies
-
-### Étape 8 · Le test du client (5 min)
-
-Un proche ouvre votre vitrine sur son téléphone et envoie une vraie demande.
-
-- [ ] Elle arrive chez moi, avec le consentement coché par la personne
+- [ ] Ma vitrine s'ouvre à mon nom de domaine, en HTTPS
 
 ## Ça tourne ? La revue de 15 h 15
 
-Chacun, en une minute : sa première priorité, sa vitrine sur téléphone, la phrase qui a le mieux marché avec Claude Code. Les meilleures phrases rejoignent la bibliothèque de prompts du groupe.
+Chacun, en une minute : sa première priorité, sa vitrine sur téléphone, la phrase qui a le mieux marché avec Claude Code. Les meilleures phrases rejoignent la bibliothèque de prompts du groupe. Qui n'a pas fusionné montre son lien Preview et termine l'étape 5 avant la J3, avant le formulaire.
 
 - [ ] Ma carte de processus et mes trois priorités sont écrites
 - [ ] Mon offre est en ligne et lisible sur téléphone
-- [ ] Une demande envoyée arrive dans ma boîte
-- [ ] Le formulaire refuse l'envoi sans consentement
-- [ ] Mon code est sur GitHub, dépôt privé, avec au moins 3 changements fusionnés
+- [ ] Mes deux corrections sont visibles, faites une à la fois
+- [ ] Le site est à jour à l'adresse Vercel principale
+- [ ] Mon code est sur GitHub, dépôt privé, avec au moins 2 changements fusionnés (le CLAUDE.md et la page d'accueil)
 - [ ] Aucune clé ni mot de passe dans le code
-- [ ] Mon domaine pointe vers le site, ou c'est lancé
+- [ ] Aucun chiffre ni témoignage que je n'ai pas donné
 - [ ] Réflexe du jour : mon CLAUDE.md est dans le dépôt et Claude le cite
 
 ## Dépannage
@@ -335,8 +319,8 @@ Chacun, en une minute : sa première priorité, sa vitrine sur téléphone, la p
 | --- | --- |
 | Vercel affiche « Build failed » | Copiez les lignes rouges du journal à Claude Code : « le déploiement échoue avec ceci, corrige » |
 | La page en ligne n'a pas changé | Fusionnez sur GitHub, attendez une minute, rechargez en navigation privée |
-| Aucun e-mail ne part | Vérifiez les deux variables dans Vercel, relancez le déploiement (Redeploy), regardez les indésirables |
-| Le domaine reste invalide | Recopiez exactement les valeurs DNS affichées par Vercel, puis patientez |
+| Aucun e-mail ne part (formulaire, avant la J3) | Vérifiez les deux variables dans Vercel, relancez le déploiement (Redeploy), regardez les indésirables |
+| Le domaine reste invalide (pour aller plus loin) | Recopiez exactement les valeurs DNS affichées par Vercel, puis patientez |
 | Claude Code invente des chiffres | « Retire tout chiffre et tout témoignage que je ne t'ai pas donnés » |
 | La carte mélange tout | Un processus = un déclencheur et un résultat ; coupez en deux s'il y en a deux |
 | Claude ne cite pas les règles du CLAUDE.md | Vérifiez le nom exact `CLAUDE.md`, sa place à la racine du dépôt et sa fusion, puis ouvrez une nouvelle séance |
@@ -374,11 +358,37 @@ Bloqué plus de 10 minutes : levez la main.
 6. Comment savoir que Claude Code a bien la mémoire de votre projet ?
    - Dans une nouvelle séance, il cite les règles du CLAUDE.md quand on lui demande « Quelles sont les règles de ce projet ? ».
 
-## Avant la J3 · 30 minutes
+## Avant la J3 · 45 minutes
 
-Préparez les données de votre activité.
+Votre formulaire, puis les données de votre activité. Le formulaire est le plus important : en J3, chaque demande qu'il reçoit entrera dans votre base.
 
-- [ ] Listez ce que vous suivez aujourd'hui : clients, commandes, rendez-vous, paiements, et où (cahier, tableur, téléphone)
-- [ ] Notez les trois chiffres que vous voudriez voir chaque lundi
-- [ ] Faites lire votre vitrine à deux personnes de votre cible et notez leurs remarques
-- [ ] Ajoutez à votre CLAUDE.md chaque règle décidée cette semaine
+- [ ] Listez ce que vous suivez aujourd'hui : clients, commandes, rendez-vous, paiements, et où (cahier, tableur, téléphone) (10 min)
+- [ ] Notez les trois chiffres que vous voudriez voir chaque lundi (5 min)
+- [ ] Branchez votre formulaire et testez-le avec un proche, en suivant le pas-à-pas ci-dessous (20 à 25 min)
+- [ ] Ajoutez à votre CLAUDE.md chaque règle décidée cette semaine (5 min)
+
+Si vous n'avez pas fusionné l'étape 5 pendant le labo, terminez-la d'abord.
+
+### Le formulaire qui vous prévient
+
+C'est votre premier secret, la troisième carte du réflexe du jour. Créez une clé sur resend.com. Ajoutez dans Vercel (Settings, Environment Variables) **RESEND_API_KEY** et **NOTIFY_EMAIL** (votre adresse). Ne collez jamais la clé dans la conversation avec Claude Code. Puis envoyez, en remplaçant [action] par l'action de votre fiche projet (devis, rendez-vous, commande) :
+
+```
+Branche le formulaire de [action] : à l'envoi, envoie-moi un e-mail avec Resend, à l'adresse de la variable NOTIFY_EMAIL, avec la clé de la variable RESEND_API_KEY.
+
+Champs : nom, entreprise, téléphone, e-mail, besoin, et une case non cochée « J'accepte d'être recontacté », obligatoire.
+
+Vérifie chaque champ côté serveur. Ne mets aucune clé dans le code.
+```
+
+Comme au labo, Claude Code propose d'abord un plan : lisez-le, puis donnez votre accord. Vérifiez sur le lien Preview, puis fusionnez. Après la fusion, relancez le déploiement (Redeploy) pour que Vercel lise les variables. Sans domaine vérifié chez Resend, l'e-mail ne part que vers l'adresse de votre compte Resend : c'est voulu à ce stade.
+
+- [ ] Une demande envoyée arrive dans ma boîte
+- [ ] Le formulaire refuse l'envoi sans la case cochée
+- [ ] La clé n'apparaît ni dans le code, ni dans la conversation avec Claude Code
+
+**Le test du client.** Un proche ouvre votre vitrine sur son téléphone et envoie une vraie demande.
+
+- [ ] Elle arrive chez moi, avec le consentement coché par la personne
+
+Bloqué plus de 10 minutes : la section Dépannage, puis la conversation du groupe. Signalez-le avant la J3 plutôt que d'arriver sans formulaire.

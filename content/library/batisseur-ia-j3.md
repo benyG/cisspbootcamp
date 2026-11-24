@@ -9,14 +9,14 @@ summary: Le support du formateur pour la J3 : fiche de la journée, cours sur le
 
 ## Fiche de la journée
 
-À la fin de la J3, les demandes de la vitrine ne dorment plus dans une boîte mail : elles entrent dans une base de données, se gèrent depuis vos écrans d'administration et alimentent un tableau de bord avec vos trois chiffres du lundi. Chaque changement est vérifié par des tests automatiques, et vous savez revenir en arrière si quelque chose casse.
+À la fin de la J3, vos données ont une structure : elles entrent dans une base de données, se gèrent depuis vos écrans d'administration et alimentent un tableau de bord avec vos trois chiffres du lundi. Chaque fonctionnalité arrive avec son test, et vous savez revenir en arrière si quelque chose casse. Avant la J4, vous branchez la vitrine sur la base, vous faites tourner vos tests sur GitHub et vous créez vos clés : les demandes ne dorment plus dans une boîte mail.
 
 | | |
 | --- | --- |
 | Public | Dirigeants, indépendants, porteurs de projet. Aucune compétence en programmation. |
 | Durée | 5 heures de travail (plus une heure de pause) : cours, démonstration, réflexe du jour, labo, revue |
 | Prérequis | La vitrine de la J2 en ligne ; la liste de ce que vous suivez aujourd'hui et vos trois chiffres du lundi (travail « avant la J3 ») |
-| Résultat | Votre schéma de données, une base reliée à la vitrine, un espace d'administration protégé, un tableau de bord, des tests qui tournent à chaque changement, et un retour arrière réussi en exercice |
+| Résultat | Votre schéma de données, une base avec vos tables et des données de test, un espace d'administration protégé, un tableau de bord avec ses tests, et un retour arrière réussi en exercice. Avant la J4 : la vitrine reliée à la base, les tests lancés par GitHub Actions, et les clés de l'API du modèle et de Stripe (mode test) rangées dans Vercel |
 | Lien avec la suite | Tous les agents de l'entreprise autonome travaillent sur cette base : vente et encaissement en J4, service client et opérations en J5, analyste (en lecture seule) et administratif en J6 |
 
 Kofi Traiteur, l'entreprise de la démonstration, est un exemple fictif.
@@ -38,7 +38,7 @@ Kofi Traiteur, l'entreprise de la démonstration, est un exemple fictif.
 | 10 h 45 | Cours | Base, écrans, tableau de bord, tests |
 | 11 h 30 | Démonstration | Les données de Kofi Traiteur, du formulaire au tableau de bord |
 | 12 h 30 | Pause | 1 heure |
-| 13 h 30 | Labo | Réflexe retour arrière, puis votre base, votre administration, votre tableau de bord |
+| 13 h 30 | Labo | Réflexe retour arrière (30 min), puis quatre étapes : votre base, vos tables, votre administration, votre tableau de bord |
 | 15 h 15 | Revue en groupe | Chacun montre son tableau de bord et un test qui passe |
 
 ## Cours 1 : penser ses données
@@ -171,7 +171,7 @@ Plan B : la branche « j3-donnees » du dépôt « kofi-traiteur-demo » contien
 
 ## Bien travailler avec Claude : avancer sans peur
 
-Le labo s'ouvre par le réflexe du jour, en 30 à 45 minutes prises sur la pratique guidée. Pour un non-développeur, la peur de casser ce qui marche est le premier frein : on n'ose plus rien changer, ou l'on accepte des modifications sans les comprendre. Ce bloc montre que rien n'est perdu tant qu'on avance par petites étapes, et il le prouve par un exercice de retour arrière.
+Le labo s'ouvre par le réflexe du jour, en 30 minutes, de 13 h 30 à 14 h 00 (heure de Montréal). Pour un non-développeur, la peur de casser ce qui marche est le premier frein : on n'ose plus rien changer, ou l'on accepte des modifications sans les comprendre. Ce bloc montre que rien n'est perdu tant qu'on avance par petites étapes, et il le prouve par un exercice de retour arrière.
 
 ### Quatre habitudes
 
@@ -202,25 +202,33 @@ Dis-moi ensuite comment vérifier que tout remarche.
 - [ ] Le retour à la version précédente est fait par Claude Code, sans rien supprimer d'autre
 - [ ] L'aperçu est redevenu normal
 
-### Comment l'animer (30 à 45 min)
+### Comment l'animer (30 min)
 
-- 5 à 10 min : l'intercalaire et les quatre habitudes ; demander qui a déjà accepté un changement de Claude sans savoir ce qu'il faisait.
-- 5 min : la fiche « Quand quelque chose casse », lue à voix haute.
-- 20 à 30 min : l'exercice, chacun sur son dépôt « ma-vitrine », sur une branche et une demande de fusion, jamais sur la version en ligne. Le formateur passe vérifier les trois cases.
-- Plan B si la branche est trop abîmée : fermer la demande de fusion sans la fusionner ; la version en ligne n'a pas bougé. En dernier recours, redéployer la version précédente sur Vercel.
+- 9 min : l'intercalaire (1 min) et les quatre habitudes (8 min) ; demander qui a déjà accepté un changement de Claude sans savoir ce qu'il faisait.
+- 3 min : la fiche « Quand quelque chose casse », lue à voix haute.
+- 18 min : l'exercice, chacun sur son dépôt « ma-vitrine », sur une branche et une demande de fusion, jamais sur la version en ligne. Le formateur passe vérifier les trois cases.
+- Plan B si la branche est trop abîmée : fermer la demande de fusion sans la fusionner ; la version en ligne n'a pas bougé. En dernier recours, redéployer la version précédente sur Vercel (fiche 6, « Si c'est déjà en ligne »).
+- À 14 h 00, passer aux étapes du labo même si quelques-uns n'ont pas fini : ils refont l'exercice avant la J4.
 - Rappel : ne jamais coller un mot de passe ou une clé dans la conversation pour « aider » Claude.
 
-Fiches réflexes correspondantes : la fiche 1 (rubrique « Comment travailler avec moi » du CLAUDE.md type : petites étapes, tests avec chaque fonctionnalité) et la fiche 5 (« Si tout est cassé » : revenir à la dernière version qui fonctionnait). Voir les [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien à donner aux participants : /ia/fiches.
+Fiche réflexe correspondante : la fiche 6, « Revenir en arrière sans peur » (les quatre habitudes, le texte « Quand quelque chose casse », la marche à suivre si c'est déjà en ligne, et l'exercice). La fiche formule la troisième habitude ainsi : travailler sur une branche, chaque changement passant par une demande de fusion vérifiée sur le lien Preview. Elle est remplie quand le retour arrière de l'exercice est réussi et vérifié sur l'aperçu. Voir les [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien à donner aux participants : /ia/fiches.
 
 ## Atelier et labo
 
-Le matin, chacun dessine son schéma. L'après-midi, après l'exercice « avancer sans peur », chacun le transforme en base, en écrans et en tableau de bord, sur le dépôt « ma-vitrine » de la J2. On ne passe pas à l'étape suivante sans avoir coché la vérification.
+Le matin, chacun dessine son schéma. L'après-midi, après l'exercice « avancer sans peur », chacun le transforme en base, en administration et en tableau de bord, en quatre étapes (75 minutes), sur le dépôt « ma-vitrine » de la J2. On ne passe pas à l'étape suivante sans avoir coché la vérification.
 
 Chaque demande à Claude Code passe par une demande de fusion, vérifiée sur le lien Preview avant d'être fusionnée, comme en J2.
 
-Réflexe du jour appliqué au labo : à chaque étape, demandez le test de la règle en même temps que la fonctionnalité (ajoutez à la fin de la demande : « Écris aussi le test de cette règle. »). L'étape 6 les rassemble et les fait tourner sur GitHub Actions.
+Réflexe du jour appliqué au labo : à chaque étape, demandez le test de la règle en même temps que la fonctionnalité (ajoutez à la fin de la demande : « Écris aussi le test de cette règle. »). Claude Code les fait tourner à chaque étape ; leur lancement automatique par GitHub Actions se branche avant la J4.
 
-Point de vigilance horaire : les sept étapes totalisent 1 h 50 et le labo, réflexe compris, dure 1 h 45. Priorisez les étapes 1 à 5 ; l'étape 7 peut se faire pendant la revue, et ce qui reste se termine avant la J4.
+| Étape | Ce que vous faites | Temps |
+| --- | --- | --- |
+| 1 | La base Postgres créée depuis Vercel, reliée au projet | 10 min |
+| 2 | Les tables de votre schéma et des données de test | 20 min |
+| 3 | L'administration protégée : liste, statut, fiche, suppression | 25 min |
+| 4 | Le tableau de bord : vos trois chiffres, avec leurs tests | 20 min |
+
+Total : 75 minutes, de 14 h 00 à 15 h 15 (heure de Montréal), après les 30 minutes du réflexe. Deux étapes de l'ancien labo se font chez soi avant la J4, parce que la J4 en a besoin : la vitrine qui enregistre chaque demande et les tests lancés par GitHub Actions (voir « Avant la J4 »). Le parcours complet sur téléphone passe en « Pour aller plus loin ».
 
 ### Atelier du matin · Votre schéma (30 min)
 
@@ -251,16 +259,7 @@ N'écris aucun mot de passe dans le code.
 - [ ] La migration est dans la demande de fusion
 - [ ] Les données de test sont visibles dans l'onglet de la base sur Vercel
 
-### Étape 3 · La vitrine enregistre les demandes (15 min)
-
-```
-Quand le formulaire de la vitrine est envoyé avec le consentement, enregistre le client (ou retrouve-le par son e-mail) et crée une demande au statut « nouvelle », avec la date et l'heure du consentement. Garde l'e-mail de notification de la J2.
-```
-
-- [ ] Une demande envoyée depuis le lien Preview apparaît dans la base
-- [ ] L'e-mail de notification arrive toujours
-
-### Étape 4 · L'administration protégée (25 min)
+### Étape 3 · L'administration protégée (25 min)
 
 Ajoutez d'abord dans Vercel la variable **ADMIN_PASSWORD** (un mot de passe long, que vous seul connaissez). Il va dans Vercel, jamais dans le code ni dans la conversation avec Claude. Puis :
 
@@ -270,33 +269,27 @@ Crée un espace /admin protégé par une connexion avec le mot de passe de la va
 Pages : la liste des demandes, filtrable par statut, la plus récente en haut ; la fiche d'un client avec ses demandes ; un bouton pour changer le statut ; un bouton pour supprimer un client et toutes ses données, avec confirmation.
 
 Conçu d'abord pour téléphone, compréhensible en 10 secondes.
+
+Écris aussi le test de cette règle : sans connexion, /admin renvoie vers la page de connexion.
 ```
 
 - [ ] En navigation privée, sur le lien Preview, /admin demande la connexion
 - [ ] Je change le statut d'une demande depuis mon téléphone
 
-### Étape 5 · Le tableau de bord (20 min)
+### Étape 4 · Le tableau de bord et ses tests (20 min)
 
 ```
 Ajoute en haut de /admin un tableau de bord avec trois chiffres : [vos trois chiffres]. Pour chacun : la valeur de la semaine en cours, celle de la semaine précédente et l'écart. Calculés depuis la base à chaque visite, aucun chiffre en dur.
+
+Écris aussi les tests du calcul de chacun de mes trois chiffres sur des données connues, et fais-les tourner.
 ```
 
 - [ ] Les trois chiffres correspondent à un calcul fait à la main sur les données de test
+- [ ] Claude Code montre les tests en vert ; j'ai lu le nom de chaque test et je comprends ce qu'il vérifie
 
-### Étape 6 · Les tests (15 min)
+### Pour aller plus loin · Le parcours complet sur téléphone
 
-```
-Écris des tests pour : le refus d'un formulaire sans consentement, le calcul de chacun de mes trois chiffres sur des données connues, et l'interdiction d'accès à /admin sans connexion.
-
-Fais-les tourner sur GitHub Actions à chaque demande de fusion.
-```
-
-- [ ] Sur GitHub, la demande de fusion affiche les tests en vert
-- [ ] J'ai lu le nom de chaque test et je comprends ce qu'il vérifie
-
-### Étape 7 · Le parcours complet (5 min)
-
-Un proche envoie une demande depuis la vitrine en ligne. Vous la retrouvez dans l'administration, vous changez son statut, le tableau de bord bouge.
+Une fois la vitrine branchée sur la base (avant la J4) : un proche envoie une demande depuis la vitrine en ligne. Vous la retrouvez dans l'administration, vous changez son statut, le tableau de bord bouge.
 
 - [ ] Le parcours fonctionne de bout en bout, sur téléphone
 
@@ -305,15 +298,15 @@ Un proche envoie une demande depuis la vitrine en ligne. Vous la retrouvez dans 
 Chacun montre en une minute son tableau de bord sur téléphone et le nom d'un test qui passe.
 
 - [ ] Mon schéma tient sur une page et calcule mes trois chiffres
-- [ ] Une demande envoyée depuis la vitrine arrive dans la base
+- [ ] Mes tables et mes fiches de test sont dans la base
 - [ ] /admin demande une connexion
 - [ ] Je change un statut et je supprime un client de test depuis mon téléphone
 - [ ] Mes trois chiffres s'affichent avec la semaine précédente et l'écart
-- [ ] Les tests tournent sur GitHub et sont verts
+- [ ] Chaque étape a son test, et il passe
 - [ ] Aucun mot de passe ni adresse de base dans le code
 - [ ] Réflexe du jour : j'ai réussi un retour arrière en exercice
 
-Le formateur note les chiffres choisis par chacun : ils reviendront en J6 comme objectifs.
+Le formateur note les chiffres choisis par chacun : ils reviendront en J6 comme objectifs. Il note aussi, pour ceux qui n'ont pas fini, l'étape atteinte : elle passe avant le travail « avant la J4 », car la J4 a besoin de l'administration et du tableau de bord.
 
 ## Dépannage
 
@@ -361,9 +354,48 @@ Bloqué plus de 10 minutes : levez la main.
 6. Après une modification, votre page d'accueil est cassée. Que demandez-vous à Claude Code ?
    - De résumer en français ce qui a changé depuis la dernière version qui marchait, puis, si c'est la cause, de revenir à la version précédente dans l'historique Git sans rien supprimer d'autre, et de dire comment vérifier.
 
-## Avant la J4 · 30 minutes
+## Avant la J4 · 1 heure
 
-- [ ] Écrivez vos règles de devis : prix par produit ou service, remises, durée de validité
-- [ ] Notez comment vos clients paient (carte, mobile money, virement) et ce qui se passe en cas de retard
+La J4 a besoin de deux morceaux de l'ancien labo : l'agent devis se déclenche quand une nouvelle demande arrive dans la base, et chaque étape de la J4 exige des tests verts sur GitHub. Elle a aussi besoin de vos clés : son labo commence directement par la grille de prix. Faites les deux premiers points dans cet ordre, chacun sur une branche et une demande de fusion vérifiée sur le lien Preview, comme au labo. Si quelque chose casse : fiche 6.
+
+### 1 · La vitrine enregistre chaque demande (15 min)
+
+```
+Quand le formulaire de la vitrine est envoyé avec le consentement, enregistre le client (ou retrouve-le par son e-mail) et crée une demande au statut « nouvelle », avec la date et l'heure du consentement. Garde l'e-mail de notification de la J2.
+
+Écris aussi le test de cette règle : un formulaire sans consentement est refusé.
+```
+
+- [ ] Une demande envoyée depuis le lien Preview apparaît dans la base et dans /admin
+- [ ] L'e-mail de notification arrive toujours
+
+### 2 · Les tests tournent sur GitHub (15 min)
+
+```
+Fais tourner tous les tests du projet sur GitHub Actions à chaque demande de fusion : le refus d'un formulaire sans consentement, le calcul de chacun de mes trois chiffres sur des données connues, et l'interdiction d'accès à /admin sans connexion. Ajoute ceux qui manquent.
+```
+
+- [ ] Sur GitHub, la demande de fusion affiche les tests en vert
+- [ ] J'ai lu le nom de chaque test et je comprends ce qu'il vérifie
+
+### 3 · Vos clés, rangées dans Vercel (15 min)
+
+Les agents de la J4 appellent le modèle par son API, et l'encaissement passe par Stripe en mode test. Ces deux clés se créent maintenant, chacune dans son tableau de bord, et vont **uniquement** dans les variables d'environnement de Vercel. Une clé ne va jamais dans le code, ni dans une conversation, même avec Claude, ni dans un message à l'équipe.
+
+1. Sur la console du fournisseur du modèle, créez une clé d'API. Fixez tout de suite une limite de dépense mensuelle, avec le montant que vous acceptez de dépenser. On paie aux tokens : les tarifs à jour sont sur la page de tarifs officielle du fournisseur.
+2. Dans Vercel, projet « ma-vitrine », Settings, Environment Variables : ajoutez **ANTHROPIC_API_KEY** et collez la clé directement depuis la console.
+3. Sur Stripe, passez et restez en **mode test**. Dans la partie développeurs du tableau de bord, page des clés d'API, copiez la clé secrète de test et ajoutez-la dans Vercel : **STRIPE_SECRET_KEY**. La clé du webhook viendra pendant le labo de la J4. Les frais de Stripe sont sur sa page de tarifs officielle.
+4. Relancez le déploiement pour que les variables soient prises en compte.
+
+- [ ] Une limite de dépense est fixée sur la console du fournisseur du modèle
+- [ ] ANTHROPIC_API_KEY et STRIPE_SECRET_KEY sont dans Vercel, et Stripe est en mode test
+- [ ] Aucune clé n'apparaît dans le code, dans le dépôt GitHub ni dans une conversation
+
+Stripe n'ouvre pas de compte marchand dans tous les pays. Si le vôtre n'est pas couvert, signalez-le avant la J4 : un agrégateur local suit le même principe. Bloqué ? Venez à la pause de midi de la J4 : on termine les clés ensemble avant le labo, sans jamais afficher leur valeur.
+
+### 4 · Vos règles (15 min)
+
+- [ ] Écrivez vos règles de devis et de paiement : prix par produit ou service, remises, durée de validité, comment vos clients paient (carte, mobile money, virement) et ce qui se passe en cas de retard
 - [ ] Listez ce qu'un agent ne doit jamais faire sans vous (exemple : accorder une remise, rembourser)
-- [ ] Lisez les fiches 3 et 4 : les règles d'un agent et ses 10 cas de test ([fiches réflexes](/ia/fiches))
+
+Si le retour arrière de l'exercice n'a pas été réussi en séance, refaites-le avec la fiche 6 ([fiches réflexes](/ia/fiches)). Les fiches 3 et 4 (règles d'un agent, 10 cas de test) seront parcourues en séance à la J4.

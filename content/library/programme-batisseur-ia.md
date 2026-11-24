@@ -24,7 +24,7 @@ Chaque journée livre une pièce du système et ajoute un réflexe de travail av
 | J2 · Processus et fondations | La carte des processus, la vitrine en ligne | Claude Code : la mémoire du projet (CLAUDE.md), le plan avant d’agir, les secrets et les permissions | Une vitrine en ligne et un CLAUDE.md à son nom |
 | J3 · Activité et données | Base, écrans, tableau de bord testé | Petites étapes, relire ce qui change, revenir en arrière (historique Git) | Un tableau de bord sur ses vraies données, avec ses tests |
 | J4 · Système d’agents | Agents qui traitent, devisent, encaissent (carte et mobile money), relancent | Comment fonctionne un agent (outils, boucle, arrêt) et comment le tester sur des cas réels | Un agent qui encaisse, avec sa fiche de règles et ses cas de test |
-| J5 · Agents spécialisés et interfaces | Un agent par métier, admin, e-mail, assistant du site | Diagnostiquer une erreur : lire le message, les journaux, faire analyser par Claude | Deux agents métier en service et une panne réparée seul |
+| J5 · Agents spécialisés et interfaces | Un agent par métier, admin, e-mail, assistant du site | Diagnostiquer une erreur : lire le message, les journaux, faire analyser par Claude | Deux agents métier en service et une vraie erreur réparée seul |
 | J6 · Pilotage autonome | Objectifs, routines, rapport, analyste (MCP lecture seule), agent administratif | Faire tourner un agent seul (planifié, en arrière-plan), maîtriser les coûts, aperçu des fonctions avancées | La carte complète de ses agents et de leurs garde-fous |
 
 Les 30 jours de suivi après la formation servent à vérifier ces réflexes sur le projet réel du participant.
@@ -93,7 +93,7 @@ Les 30 jours de suivi après la formation servent à vérifier ces réflexes sur
   - trouver les journaux (Vercel) et les donner à Claude ;
   - demander un diagnostic avant une correction ;
   - vérifier que la correction tient : refaire le test qui échouait.
-- **Livrable :** deux agents métier en service, et une panne volontaire réparée seul en exercice.
+- **Livrable :** deux agents métier en service, et une vraie erreur du labo diagnostiquée et réparée seul.
 
 ### J6 · Pilotage autonome de l’entreprise
 
@@ -124,5 +124,5 @@ Phrase sous le programme : « À la fin, vous ne dépendez de personne : vous sa
 
 ## Supports
 
-- Les [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) (CLAUDE.md type, modèle de demande, règles d’un agent, 10 cas de test, diagnostic), à envoyer aux participants avant la J1 ; leur lien public est /ia/fiches.
+- Les [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) (CLAUDE.md type, modèle de demande, règles d’un agent, 10 cas de test, diagnostic, retour arrière, routine qui tourne seule), à envoyer aux participants avant la J1 ; leur lien public est /ia/fiches.
 - Les fichiers PowerPoint et les fichiers du formateur : à déposer dans la Bibliothèque, section Bâtisseur IA.

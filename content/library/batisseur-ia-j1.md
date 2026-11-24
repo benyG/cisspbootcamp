@@ -15,8 +15,8 @@ summary: Le support du formateur pour la J1 : fiche de la journée, cours sur le
 | --- | --- |
 | Public | Dirigeants, indépendants, porteurs de projet. Aucune compétence en programmation. |
 | Durée | 5 heures de travail : cours, démonstration, réflexe Claude Desktop, labo, revue |
-| Prérequis | Un ordinateur, l'application Claude Desktop installée, un compte Claude (l'offre gratuite permet de commencer ; certaines fonctions comme les projets et les connecteurs peuvent demander une offre payante : vérifiez sur la page de tarifs officielle), 3 à 5 documents de votre activité |
-| Résultat | Un projet Claude Desktop qui répond à partir de vos documents, une première skill à votre nom, un connecteur, votre fiche lexique |
+| Prérequis | Un ordinateur, l'application Claude Desktop installée, un compte Claude (l'offre gratuite permet de commencer ; certaines fonctions comme les projets et les connecteurs peuvent demander une offre payante : vérifiez sur la page de tarifs officielle), 3 à 5 documents de votre activité, rassemblés avant la journée et apportés le jour même : offres, tarifs, conditions, questions fréquentes, en PDF texte ou Word, sans données personnelles de clients |
+| Résultat | Un projet Claude Desktop qui répond à partir de vos documents, une première skill à votre nom, un connecteur |
 | Lien avec la suite | J2 à J6 assemblent ces composantes : site, données, agents, pilotage |
 
 **Objectifs.** À la fin de la J1, vous savez :
@@ -35,7 +35,7 @@ summary: Le support du formateur pour la J1 : fiche de la journée, cours sur le
 | 10 h 00 | Cours | Les composantes d'une IA, avec démonstrations courtes |
 | 11 h 15 | Démonstration | L'assistant de Kofi Traiteur (entreprise fictive), de zéro à utile |
 | 12 h 30 | Pause | 1 heure |
-| 13 h 30 | Labo | Réflexe Claude Desktop, puis votre assistant, votre skill, votre connecteur |
+| 13 h 30 | Labo | Réflexe Claude Desktop (30 min), puis votre assistant, votre skill, votre connecteur (75 min) |
 | 15 h 15 | Revue en groupe | Chacun pose une question piège à son assistant |
 
 ## Cours : les composantes d'une IA
@@ -166,7 +166,7 @@ Plan B : les documents de Kofi sont prêts dans le dossier « kofi-demo ». Si l
 
 ## Bien travailler avec Claude : Claude Desktop au quotidien
 
-Nouveauté du programme révisé du 24/11 : chaque journée ajoute un réflexe de travail avec Claude, qui sert ensuite tous les jours suivants. Celui de la J1 se fait au début du labo, en **30 à 45 minutes prises sur la pratique guidée** (pas sur la démonstration). Pour un non-développeur, Claude Desktop devient le poste de travail de tous les jours : c'est là qu'il range ses documents, ses consignes et ses demandes.
+Nouveauté du programme révisé du 24/11 : chaque journée ajoute un réflexe de travail avec Claude, qui sert ensuite tous les jours suivants. Celui de la J1 se fait au début du labo, en **30 minutes** (de 13 h 30 à 14 h 00, heure de Montréal ; pas sur la démonstration). Pour un non-développeur, Claude Desktop devient le poste de travail de tous les jours : c'est là qu'il range ses documents, ses consignes et ses demandes.
 
 **Claude Desktop : quatre outils pour chaque jour**
 
@@ -190,16 +190,16 @@ Trois réflexes : une seule chose par demande ; dire précisément ce qui ne va 
 
 **Exercice** : chacun réécrit une demande récente avec les six rubriques, la soumet dans Claude Desktop et compare avec le résultat de la demande d'origine. Aucune donnée client réelle ni aucun secret dans la demande.
 
-**Comment l'animer (30 à 45 min)**
+**Comment l'animer (30 min)**
 
 | Temps | Ce que fait le formateur |
 | --- | --- |
 | 2 min | Intercalaire : le réflexe du jour et pourquoi il compte pour un non-développeur |
-| 8 à 10 min | Les quatre outils, montrés à l'écran dans Claude Desktop : un projet avec ses documents et ses instructions, les connecteurs, les skills, un artefact de la démonstration. Les noms de menus peuvent évoluer : montrer l'écran du jour |
-| 5 à 10 min | La fiche 2 : lire les six rubriques, faire le lien avec la grille du prompt du matin |
-| 10 à 15 min | L'exercice, puis la lecture de deux ou trois demandes réécrites ; renforcer « C'est réussi quand », souvent oublié |
+| 8 min | Les quatre outils, montrés à l'écran dans Claude Desktop : un projet avec ses documents et ses instructions, les connecteurs, les skills, un artefact de la démonstration. Les noms de menus peuvent évoluer : montrer l'écran du jour |
+| 5 min | La fiche 2 : lire les six rubriques, faire le lien avec la grille du prompt du matin |
+| 15 min | L'exercice (10 min), puis la lecture de deux ou trois demandes réécrites (5 min) ; renforcer « C'est réussi quand », souvent oublié |
 
-Les étapes 3, 6 et 7 du labo mettent ensuite en pratique le projet, la skill et le connecteur ; chaque demande du labo suit les six rubriques. Ce réflexe est vérifié à la revue.
+À 14 h 00, on passe aux étapes du labo. Les étapes 1, 3 et 4 du labo mettent ensuite en pratique le projet, la skill et le connecteur ; chaque demande du labo suit les six rubriques. Ce réflexe est vérifié à la revue.
 
 Fiche réflexe correspondante : [fiche 2, le modèle de demande](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien à donner aux participants : `/ia/fiches`. Les exemples des fiches suivent l'Atelier Adjoa, un atelier de couture fictif.
 
@@ -209,31 +209,25 @@ Vous construisez un assistant qui répond à partir de vos documents, puis vous 
 
 Les noms de menus de l'interface peuvent évoluer : le formateur montre l'écran du jour.
 
-**Le temps.** Le labo dure de 13 h 30 à 15 h 15 (1 h 45), dont 30 à 45 minutes pour le réflexe Claude Desktop. Les durées indiquées ci-dessous (2 h 10 au total) sont celles d'un travail complet : en séance, l'étape 1 se réduit à 5 minutes (documents préparés avant la journée), l'étape 2 à 5 minutes, les étapes 3 à 6 sont faites par tous (le livrable du soir est le projet et une première skill), l'étape 7 par ceux qui avancent (sinon montrée en démonstration rapide), et l'étape 8 se termine avant la J2.
+**Le temps.** Le labo dure de 13 h 30 à 15 h 15 (1 h 45) : 30 minutes pour le réflexe Claude Desktop, puis 75 minutes pour les quatre étapes ci-dessous (de 14 h 00 à 15 h 15). Les documents ne se rassemblent pas pendant le labo : ils sont un prérequis, apportés le jour même. Priorité aux étapes 1 à 3, qui font le livrable du soir (le projet et une première skill) ; si l'heure tourne, le formateur montre l'étape 4 en démonstration rapide.
 
-### Étape 1 · Rassembler vos documents (15 min)
+| Étape | Ce que vous faites | Temps |
+| --- | --- | --- |
+| 1 | Créer le projet et y déposer vos 3 à 5 documents apportés | 15 min |
+| 2 | Écrire les instructions avec la grille en six éléments, tester un piège | 20 min |
+| 3 | Créer une skill pour une tâche qui revient | 25 min |
+| 4 | Brancher un connecteur sur un outil que vous utilisez | 15 min |
 
-Choisissez 3 à 5 documents : offres, tarifs, conditions de vente, questions fréquentes, procédure interne. Pas de document contenant des données personnelles de clients.
+Les dix questions de clients, dont trois pièges, se font avant la J2 (voir « Avant la J2 ») ; le test sans document et la fiche lexique sont dans « Pour aller plus loin ».
+
+### Étape 1 · Créer le projet (15 min)
+
+Dans Claude Desktop, créez un projet nommé « Assistant [mon entreprise] » et déposez dans ses connaissances les 3 à 5 documents que vous avez apportés : offres, tarifs, conditions de vente, questions fréquentes, procédure interne. C'est votre base pour le RAG. Pas de document contenant des données personnelles de clients.
 
 - [ ] Mes documents sont en PDF texte, Word ou texte simple (pas des photos scannées)
-
-### Étape 2 · Le test sans document (10 min)
-
-Ouvrez une conversation vide et posez une question précise sur votre activité, par exemple :
-
-```
-Quels sont les tarifs de [mon entreprise] pour [mon offre principale] ?
-```
-
-- [ ] J'ai noté ce que l'IA a inventé ou laissé dans le vague
-
-### Étape 3 · Créer le projet (15 min)
-
-Dans Claude Desktop, créez un projet nommé « Assistant [mon entreprise] » et déposez vos documents dans ses connaissances. C'est votre base pour le RAG.
-
 - [ ] Mes documents apparaissent dans le projet
 
-### Étape 4 · Écrire les instructions (20 min)
+### Étape 2 · Écrire les instructions et tester un piège (20 min)
 
 Collez ce texte dans les instructions du projet, puis complétez les crochets :
 
@@ -247,18 +241,12 @@ Si la réponse n'est pas dans les documents, dis-le simplement et propose de me 
 Réponses courtes, en français, ton [chaleureux / sobre].
 ```
 
+Posez ensuite une question à laquelle vos documents répondent, puis une question piège dont la réponse n'y est pas (une zone de livraison, un délai, une remise que vous n'avez jamais écrits).
+
 - [ ] Les six éléments y sont : rôle, situation, tâche, source, limites, format
-- [ ] Il cite le bon document, refuse les pièges, ne promet rien d'absent, et le ton me ressemble
+- [ ] Il cite le bon document, refuse la question piège, ne promet rien d'absent, et le ton me ressemble
 
-### Étape 5 · Dix questions, dont trois pièges (20 min)
-
-Écrivez sept questions que vos clients posent vraiment, et trois dont la réponse n'est pas dans vos documents. Posez-les une par une dans le projet.
-
-- [ ] Les sept réponses citent le bon document
-- [ ] Les trois pièges sont refusés sans invention
-- [ ] La question de l'étape 2 a maintenant une réponse juste
-
-### Étape 6 · Votre première skill (25 min)
+### Étape 3 · Votre première skill (25 min)
 
 Choisissez une tâche qui revient chaque semaine : un devis, une réponse type, un compte rendu. Demandez à l'IA de vous aider à l'écrire, en suivant les six rubriques de la fiche 2 :
 
@@ -277,7 +265,7 @@ Enregistrez-la dans les réglages de votre compte (section des skills), puis tes
 - [ ] La skill se déclenche seule quand je décris la tâche
 - [ ] Deux essais donnent la même structure
 
-### Étape 7 · Un connecteur (15 min)
+### Étape 4 · Un connecteur (15 min)
 
 Dans les réglages, section des connecteurs, branchez un outil que vous utilisez déjà : agenda, stockage de fichiers ou messagerie. Lisez les droits demandés avant d'accepter. Ne collez jamais de mot de passe ni de clé dans une conversation.
 
@@ -287,12 +275,6 @@ Quels sont mes rendez-vous de la semaine prochaine, et lequel concerne un client
 
 - [ ] Le connecteur est branché avec les droits minimum (lecture seule si possible)
 - [ ] L'assistant a lu l'outil sans copier-coller
-
-### Étape 8 · Votre fiche lexique (10 min)
-
-Pour chaque mot du lexique ci-dessous, écrivez un exemple tiré de votre activité (« le contexte, chez moi, ce sont… »).
-
-- [ ] J'ai un exemple à moi pour les douze mots
 
 ## Ça tourne ? La revue de 15 h 15
 
@@ -306,7 +288,7 @@ Chacun montre en une minute la question piège que son assistant a bien refusée
 - [ ] Aucun secret ni donnée client sensible dans le projet
 - [ ] Réflexe du jour : chaque demande suit les six rubriques de la fiche 2
 
-Les meilleures instructions rejoignent la bibliothèque de prompts du groupe.
+Les meilleures instructions rejoignent la bibliothèque de prompts du groupe. Si le connecteur n'a été vu qu'en démonstration, la case reste ouverte, sans travail supplémentaire.
 
 ## Dépannage
 
@@ -355,9 +337,34 @@ Bloqué plus de 10 minutes : levez la main.
 7. Quelles sont les six rubriques d'une bonne demande (fiche 2) ?
    - Contexte, ce que je veux, c'est réussi quand, exemple, ne fais pas, méthode (un plan court d'abord, puis mon accord).
 
-## Avant la J2 · 30 minutes
+## Avant la J2 · 45 minutes
 
-- [ ] Listez vos tâches de la semaine et le temps que chacune vous prend
-- [ ] Entourez les trois qui reviennent le plus et vous plaisent le moins
-- [ ] Créez vos comptes GitHub et Vercel (gratuits) : on les utilise dès la J2
-- [ ] Lisez la fiche 1, le CLAUDE.md type : on l'écrit ensemble en J2 (fiches réflexes : `/ia/fiches`)
+- [ ] Listez vos tâches de la semaine et le temps que chacune vous prend (10 min)
+- [ ] Entourez les trois qui reviennent le plus et vous plaisent le moins (5 min)
+- [ ] Créez vos comptes GitHub et Vercel (gratuits) : on les utilise dès la J2 (10 min)
+- [ ] Testez votre assistant : 10 questions de clients, dont 3 pièges (20 min)
+
+**Les dix questions, dont trois pièges.** Écrivez sept questions que vos clients posent vraiment, et trois dont la réponse n'est pas dans vos documents. Posez-les une par une dans le projet « Assistant [mon entreprise] ». Si une réponse invente, corrigez les instructions (voir « Dépannage ») et reposez la question. La J2 commence par la question piège que votre assistant a bien refusée.
+
+- [ ] Les sept réponses citent le bon document
+- [ ] Les trois pièges sont refusés sans invention
+
+Les fiches réflexes sont sur `/ia/fiches`.
+
+## Pour aller plus loin
+
+Sans durée, pour ceux qui veulent approfondir ; rien dans la suite n'en dépend.
+
+**Le test sans document.** Ouvrez une conversation vide, hors de tout projet, et posez une question précise sur votre activité. Comparez avec la réponse de votre assistant.
+
+```
+Quels sont les tarifs de [mon entreprise] pour [mon offre principale] ?
+```
+
+- [ ] J'ai noté ce que l'IA a inventé ou laissé dans le vague, et la question a maintenant une réponse juste dans le projet
+
+**Votre fiche lexique.** Pour chaque mot du lexique ci-dessus, écrivez un exemple tiré de votre activité (« le contexte, chez moi, ce sont… »).
+
+- [ ] J'ai un exemple à moi pour les douze mots
+
+**La fiche 1, le CLAUDE.md type.** Lisez-la : on l'écrit ensemble en J2.
