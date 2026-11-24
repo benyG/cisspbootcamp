@@ -1,0 +1,28 @@
+/* The library's documents (lib/library.ts), readable on a phone and printable as a PDF. */
+.md-doc { color: var(--color-ink); font-size: 1rem; line-height: 1.6; overflow-wrap: anywhere; }
+.md-doc > * + * { margin-top: .9em; }
+.md-doc h1 { font-size: 1.6rem; font-weight: 800; line-height: 1.2; }
+.md-doc h2 { margin-top: 1.8em; font-size: 1.3rem; font-weight: 800; line-height: 1.25; padding-top: .6em; border-top: 1px solid var(--color-line); }
+.md-doc h3 { margin-top: 1.4em; font-size: 1.08rem; font-weight: 700; }
+.md-doc a { color: var(--color-accent-ink); text-decoration: underline; text-underline-offset: 3px; }
+.md-doc ul, .md-doc ol { padding-left: 1.4em; }
+.md-doc ul { list-style: disc; }
+.md-doc ol { list-style: decimal; }
+.md-doc li + li { margin-top: .3em; }
+.md-doc li > ul, .md-doc li > ol { margin-top: .3em; }
+.md-doc li:has(> input[type="checkbox"]) { list-style: none; margin-left: -1.4em; }
+.md-doc input[type="checkbox"] { margin-right: .5em; accent-color: var(--color-accent); }
+.md-doc blockquote { border-left: 3px solid var(--color-accent); background: var(--color-accent-soft); padding: .6em .9em; border-radius: 0 8px 8px 0; }
+.md-doc code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .88em; background: #eef1f3; padding: .1em .3em; border-radius: 4px; }
+.md-doc pre { background: #0b2440; color: #e3eaf1; padding: .9em 1em; border-radius: 10px; overflow-x: auto; font-size: .85rem; line-height: 1.5; white-space: pre-wrap; }
+.md-doc pre code { background: none; padding: 0; color: inherit; }
+.md-doc table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; font-size: .9rem; }
+.md-doc th, .md-doc td { border: 1px solid var(--color-line); padding: .45em .6em; text-align: left; vertical-align: top; min-width: 7em; }
+.md-doc th { background: var(--color-paper); font-weight: 700; }
+@media print {
+  .md-doc { font-size: 10.5pt; }
+  .md-doc pre { background: #f2f4f6; color: #071a33; border: 1px solid #dfe5e8; }
+  .md-doc table { display: table; }
+  .md-doc h2 { break-after: avoid; }
+  .md-doc tr, .md-doc pre { break-inside: avoid; }
+}

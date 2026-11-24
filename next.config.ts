@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
     "/twitter-image": ["./lib/marketing/fonts/**", "./lib/og/**"],
     "/ia/opengraph-image": ["./lib/marketing/fonts/**", "./lib/og/**"],
     "/ia/twitter-image": ["./lib/marketing/fonts/**", "./lib/og/**"],
+    /* The library's documents are Markdown files read at runtime (lib/library.ts). */
+    "/admin/bibliotheque": ["./content/library/**"],
+    "/admin/bibliotheque/[slug]": ["./content/library/**"],
+    "/ia/fiches": ["./content/library/**"],
   },
   /* A LinkedIn post may carry an image of up to 4 MB (lib/linkedin.ts); the default is 1 MB. */
   experimental: { serverActions: { bodySizeLimit: "5mb" } },
