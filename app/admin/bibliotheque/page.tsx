@@ -1,4 +1,4 @@
-import { Download, FileText, Library } from "lucide-react";
+import { Download, FileText, Library, Presentation } from "lucide-react";
 import Link from "next/link";
 
 import { UploadForm } from "@/app/admin/documents/UploadForm";
@@ -31,12 +31,15 @@ export default async function LibraryPage() {
           <h2 className="mb-2 text-sm font-extrabold tracking-[.06em] text-muted uppercase">{LIBRARY_CATEGORIES[c]}</h2>
           <ul className="grid gap-2">
             {docs.filter((d) => d.category === c).map((d) => (
-              <li key={d.slug}>
-                <Link href={`/admin/bibliotheque/${d.slug}`} className="block rounded-xl border border-line bg-white px-4 py-3 hover:border-ink">
+              <li key={d.slug} className="rounded-xl border border-line bg-white hover:border-ink">
+                <Link href={`/admin/bibliotheque/${d.slug}`} className="block px-4 py-3">
                   <span className="flex items-start gap-2 font-semibold"><FileText className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />{d.title}</span>
                   {d.summary && <span className="mt-1 block text-sm text-muted">{d.summary}</span>}
                   <span className="mt-1 block text-xs text-muted">Mis à jour le {formatUpdated(d.updated)}{d.audience === "participants" ? " · à remettre aux participants" : ""}</span>
                 </Link>
+                {d.deck && (
+                  <a href={`/admin/bibliotheque/presentation/${d.deck}`} className="mx-4 mb-3 inline-flex items-center gap-1 rounded-lg border border-line px-3 py-1.5 text-sm font-semibold"><Presentation className="size-4" aria-hidden />Présentation PowerPoint, avec les notes</a>
+                )}
               </li>
             ))}
           </ul>
