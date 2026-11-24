@@ -10,7 +10,18 @@ import { z } from "zod";
 export const ENTERPRISE_OFFER_KEY = "enterprise_offer";
 
 export const PACKAGE_CODES = ["diagnostic", "roadmap", "pilot", "deploy", "autopilot"] as const;
-export type PackageCode = (typeof PACKAGE_CODES)[number];
+/** IA privée et souveraine (Ben, 24/11): the model runs in the client's premises. */
+export const SOVEREIGN_CODES = ["sov_study", "sov_deploy", "sov_care"] as const;
+export const ALL_CODES = [...PACKAGE_CODES, ...SOVEREIGN_CODES] as const;
+export type PackageCode = (typeof ALL_CODES)[number];
+/** The order steps follow in a proposal's timeline: the study first, the subscriptions last. */
+const TIMELINE_ORDER: readonly PackageCode[] = ["sov_study", "diagnostic", "roadmap", "pilot", "deploy", "sov_deploy", "autopilot", "sov_care"];
+
+/** Where the AI runs (Ben, 24/11). */
+export const HOSTINGS = { cloud: "Cloud", hybrid: "Hybride", onsite: "Dans vos locaux" } as const;
+export type Hosting = keyof typeof HOSTINGS;
+const HOSTING_KEYS = Object.keys(HOSTINGS) as [Hosting, ...Hosting[]];
+export const SOVEREIGN_NAME = "IA privée et souveraine";
 
 export type Zone = "africa" | "intl";
 export const ZONE_LABEL: Record<Zone, string> = { africa: "Afrique francophone", intl: "International" };
@@ -24,7 +35,7 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 const usdCents = z.number().int().min(0).max(100_000_000);
 
 export const packageSchema = z.object({
-  code: z.enum(PACKAGE_CODES),
+  code: z.enum(ALL_CODES),
   name: text(80),
   duration: text(60),
   /** What it contains, a few short lines. */
@@ -44,11 +55,31 @@ export const packageSchema = z.object({
 });
 export type EnterprisePackage = z.infer<typeof packageSchema>;
 
+const SOVEREIGN_DEFAULT = [
+  { code: "sov_study", name: "Étude IA souveraine", duration: "2 à 3 semaines", items: ["Inventaire de vos données sensibles", "Un modèle ouvert testé sur 50 de vos documents", "Coût cloud contre local sur 3 ans", "Cahier des charges du matériel"], outcome: "La décision chiffrée, et le matériel à acheter", africaUsd: 250_000, intlUsd: 500_000, from: false, monthly: false, weeks: 3, featured: false },
+  { code: "sov_deploy", name: "Déploiement IA sur site", duration: "6 à 8 semaines", items: ["Installation du modèle dans vos locaux", "Un assistant qui répond depuis vos documents", "1 à 3 processus connectés", "Sécurité, sauvegardes, formation du référent"], outcome: "Votre IA en service, sans que vos données sortent", africaUsd: 1_500_000, intlUsd: 3_000_000, from: true, monthly: false, weeks: 8, featured: false },
+  { code: "sov_care", name: "Maintien en service sur site", duration: "Abonnement, 3 mois minimum", items: ["Mises à jour du modèle et de la sécurité", "Supervision à distance", "8 h d’évolutions par mois", "Rapport mensuel"], outcome: "Votre IA locale à jour et surveillée", africaUsd: 120_000, intlUsd: 250_000, from: false, monthly: true, weeks: 0, featured: false },
+] satisfies Array<z.input<typeof packageSchema>>;
+
+const ordered = (codes: readonly PackageCode[], label: string) =>
+  z.array(packageSchema).length(codes.length).refine((ps) => codes.every((c, i) => ps[i]?.code === c), label);
+
 export const offerSchema = z.object({
-  packages: z.array(packageSchema).length(PACKAGE_CODES.length).refine((ps) => PACKAGE_CODES.every((c, i) => ps[i]?.code === c), "Les cinq marches restent dans l’ordre."),
+  packages: ordered(PACKAGE_CODES, "Les cinq marches restent dans l’ordre."),
+  /** IA privée et souveraine: three offers, shown in their own section (default for catalogues saved before 24/11). */
+  sovereign: ordered(SOVEREIGN_CODES, "Les trois offres souveraines restent dans l’ordre.").default(SOVEREIGN_DEFAULT),
+  showSovereign: z.boolean().default(true),
   options: z.array(z.object({ name: text(80), text: text(300) })).max(4),
 });
 export type EnterpriseOffer = z.infer<typeof offerSchema>;
+
+/** Every package of the catalogue: the five steps, then the sovereign offers. */
+export function allPackages(offer: EnterpriseOffer): EnterprisePackage[] {
+  return [...offer.packages, ...offer.sovereign];
+}
+export function findPackage(offer: EnterpriseOffer, code: string): EnterprisePackage | undefined {
+  return allPackages(offer).find((p) => p.code === code);
+}
 
 /** The catalogue validated with Ben on 22/11/2026, until he edits it in the admin. */
 export const DEFAULT_OFFER: EnterpriseOffer = {
@@ -63,6 +94,8 @@ export const DEFAULT_OFFER: EnterpriseOffer = {
     { name: "Former vos équipes", text: "La formation Bâtisseur IA en groupe réservé, sur site ou en ligne : votre équipe apprend à faire évoluer le système elle-même." },
     { name: "Conformité IA", text: "Déclarations à l’autorité de protection des données (ARTCI, CDP, APDP), registre des outils IA, sensibilisation des équipes. Dès 2 500 USD." },
   ],
+  sovereign: SOVEREIGN_DEFAULT,
+  showSovereign: true,
 };
 
 /** Whatever is stored, a complete catalogue: the stored one if valid, else the default. */
@@ -113,6 +146,8 @@ export const requestSchema = z.object({
   size: z.enum(Object.keys(SIZES) as [SizeKey, ...SizeKey[]]),
   functions: z.array(z.enum(FUNCTION_KEYS)).max(FUNCTION_KEYS.length).default([]),
   need: optional(600),
+  /** « Nos données doivent rester chez nous »: an unticked box sends nothing. */
+  dataOnSite: z.literal("on").optional().transform((v) => v === "on"),
   /** The box the person ticked; never pre-ticked. */
   consent: z.literal("on", { errorMap: () => ({ message: "Cochez la case pour que nous puissions vous répondre." }) }),
 });
@@ -150,9 +185,13 @@ export const proposalSchema = z.object({
   /** Three measurable goals: a short title and the sentence. */
   goals: z.array(z.object({ title: text(40), text: text(200) })).min(1).max(3),
   /** Before / after, process by process. */
-  processes: z.array(z.object({ name: text(80), before: z.enum(LEVEL_KEYS), after: z.enum(LEVEL_KEYS) })).max(8),
+  processes: z.array(z.object({ name: text(80), before: z.enum(LEVEL_KEYS), after: z.enum(LEVEL_KEYS), local: z.boolean().default(false) })).max(8),
   /** The steps sold, with the price agreed for this client (USD cents). */
-  lines: z.array(z.object({ code: z.enum(PACKAGE_CODES), priceUsd: usdCents })).min(1, "Choisissez au moins une marche.").max(PACKAGE_CODES.length),
+  lines: z.array(z.object({ code: z.enum(ALL_CODES), priceUsd: usdCents })).min(1, "Choisissez au moins une marche.").max(ALL_CODES.length),
+  /** Where the AI runs; hybrid or on site adds « Où vivent vos données » and the hardware line. */
+  hosting: z.enum(HOSTING_KEYS).default("cloud"),
+  /** Hardware bought by the client in its own name, indicative (USD cents): outside the total and the deposit. */
+  hardwareUsd: usdCents.default(0),
   validDays: z.number().int().min(7).max(90),
   start: z.string().trim().max(60).default(""),
   /** The date printed on the proposal (YYYY-MM-DD). */
@@ -161,8 +200,10 @@ export const proposalSchema = z.object({
 export type Proposal = z.infer<typeof proposalSchema>;
 
 /** The first draft of a proposal, from the request: the client's words, the Pilot and the subscription. */
-export function draftProposal(input: { contactName: string; jobTitle: string | null; need: string | null; functions: readonly string[]; zone: Zone }, offer: EnterpriseOffer): Proposal {
-  const pkg = (code: PackageCode) => offer.packages.find((p) => p.code === code)!;
+export function draftProposal(input: { contactName: string; jobTitle: string | null; need: string | null; functions: readonly string[]; zone: Zone; dataOnSite?: boolean }, offer: EnterpriseOffer): Proposal {
+  const pkg = (code: PackageCode) => findPackage(offer, code)!;
+  // Data that must stay in-house: hybrid by default, starting with the sovereign study.
+  const codes: PackageCode[] = input.dataOnSite ? ["sov_study", "pilot"] : ["pilot", "autopilot"];
   const fn = input.functions.filter((f): f is Exclude<FunctionKey, "inconnu"> => f in FUNCTIONS && f !== "inconnu");
   const processes = (fn.length ? fn : (["service", "ventes", "pilotage"] as const)).map((f) => ({ name: FUNCTIONS[f], before: "manual" as Level, after: (f === "documents" || f === "ventes" ? "assist" : "auto") as Level }));
   return {
@@ -171,10 +212,12 @@ export function draftProposal(input: { contactName: string; jobTitle: string | n
     role: input.jobTitle ?? "",
     heard: [input.need?.trim() || "À compléter après l’appel de cadrage."],
     goals: [{ title: "Objectif 1", text: "À préciser après l’appel : un résultat mesurable." }],
-    processes: [...processes, { name: "Prix et remises", before: "manual", after: "manual" }],
-    lines: (["pilot", "autopilot"] as const).map((code) => ({ code, priceUsd: priceOf(pkg(code), input.zone) })),
+    processes: [...processes, { name: "Prix et remises", before: "manual" as Level, after: "manual" as Level }].map((r) => ({ ...r, local: Boolean(input.dataOnSite) })),
+    lines: codes.map((code) => ({ code, priceUsd: priceOf(pkg(code), input.zone) })),
     validDays: 30,
     start: "",
+    hosting: input.dataOnSite ? "hybrid" : "cloud",
+    hardwareUsd: 0,
   };
 }
 
@@ -185,7 +228,7 @@ export type Totals = { onceUsd: number; monthlyUsd: number; depositUsd: number; 
  * or the first month when only the subscription is sold.
  */
 export function proposalTotals(p: Pick<Proposal, "lines">, offer: EnterpriseOffer): Totals {
-  const monthlyCodes = new Set(offer.packages.filter((x) => x.monthly).map((x) => x.code));
+  const monthlyCodes = new Set(allPackages(offer).filter((x) => x.monthly).map((x) => x.code));
   const onceUsd = p.lines.filter((l) => !monthlyCodes.has(l.code)).reduce((s, l) => s + l.priceUsd, 0);
   const monthlyUsd = p.lines.filter((l) => monthlyCodes.has(l.code)).reduce((s, l) => s + l.priceUsd, 0);
   const depositUsd = onceUsd > 0 ? Math.round(onceUsd / 2) : monthlyUsd;
@@ -198,8 +241,9 @@ export type TimelineStep = { when: string; pkg: EnterprisePackage };
 export function proposalTimeline(p: Pick<Proposal, "lines">, offer: EnterpriseOffer): { steps: TimelineStep[]; weeks: number } {
   let week = 0;
   const steps: TimelineStep[] = [];
-  for (const pkg of offer.packages) {
-    if (!p.lines.some((l) => l.code === pkg.code)) continue;
+  for (const code of TIMELINE_ORDER) {
+    const pkg = findPackage(offer, code);
+    if (!pkg || !p.lines.some((l) => l.code === code)) continue;
     if (pkg.monthly) {
       steps.push({ when: "Ensuite, chaque mois", pkg });
       continue;
