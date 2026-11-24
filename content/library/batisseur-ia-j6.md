@@ -326,6 +326,49 @@ Bloqué plus de 10 minutes : levez la main.
 
 - [ ] Semaine 1 : relire toutes les règles ; passer les paiements en mode réel après un paiement test de petit montant
 - [ ] Semaine 2 : ouvrir l'assistant du site aux vrais clients ; lire les conversations chaque soir
+- [ ] Semaines 2 et 3 : construire l'agent administratif (texte à copier ci-dessous), avec vos échéances notées en cours
 - [ ] Semaine 3 : construire l'agent manquant (opérations ou veille) avec le gabarit de la J5
+- [ ] Semaine 4 : brancher vos données en MCP, en lecture seule (texte à copier ci-dessous), et poser vos questions du bilan à l'analyste
 - [ ] Semaine 4 : premier bilan mensuel ; passer en automatique une seule action, celle qui n'a plus été corrigée
 - [ ] Gardez les fiches réflexes à côté de vous pendant les 30 jours ([fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien participants : /ia/fiches)
+
+Pour chaque nouvelle routine, reprenez la fiche 7 (Une routine qui tourne seule) : une heure, un plafond, une validation, un interrupteur.
+
+### L'agent administratif (semaines 2 et 3)
+
+Vu en cours 2 et en démonstration, il n'est plus une étape du labo. Comptez une séance d'environ 20 minutes avec Claude Code, puis une semaine en mode observer. Comme au labo : une demande de fusion, des tests verts, le lien Preview.
+
+```
+Crée l'agent administratif, avec le gabarit de la J5.
+
+Pièces : numérote en continu chaque facture et reçu, et range-les. Les factures fournisseurs envoyées à [adresse ou bouton d'envoi] sont lues (date, fournisseur, montant, catégorie) et attendent ma validation à côté de l'image. Le 1er du mois, prépare l'export pour mon comptable : un tableau et les PDF.
+
+Échéances : une table d'échéances avec rappel à J-15 et J-3 dans l'e-mail du matin. Mes échéances : [votre liste].
+
+Données personnelles : un registre (donnée, raison, durée de conservation), le suivi des demandes d'accès et de suppression avec leur délai, et la proposition dans la file des fiches à effacer une fois la durée passée.
+
+Il ne déclare rien, ne paie rien et ne donne aucun conseil fiscal ou juridique.
+```
+
+- [ ] Une facture fournisseur photographiée est lue et attend ma validation
+- [ ] Une échéance à J-3 apparaît dans l'e-mail du matin
+- [ ] L'agent a son interrupteur dans la page Garde-fous
+
+Les règles (mentions d'une facture, délais, durées de conservation) se valident avec votre comptable et, pour les données personnelles, avec les indications de l'autorité de protection des données de votre pays.
+
+### Vos données en MCP, lecture seule (semaine 4)
+
+Vu en cours 2 et en démonstration, c'est la seconde façon de travailler de l'analyste : vos questions, quand vous voulez. Comptez une séance d'environ 20 minutes ; si le connecteur résiste, partez de l'exemple de serveur MCP en lecture seule de la branche « j6-pilotage » du dépôt « kofi-traiteur-demo ».
+
+```
+Expose mes données en MCP sur /api/mcp, en lecture seule : des outils pour lire les clients, demandes, devis, commandes, paiements et objectifs, avec des filtres simples.
+
+Aucun outil n'écrit, n'envoie ni ne supprime. Accès protégé par ma connexion (OAuth), chaque appel journalisé, noms des clients masqués par défaut.
+
+Écris un test qui vérifie qu'aucun outil n'écrit.
+```
+
+Puis ajoutez l'adresse comme connecteur personnalisé dans votre assistant IA, posez une question en français (par exemple « quels clients ont commandé une fois et plus jamais ? » ou l'une des questions notées en cours), vérifiez la réponse à la main et retrouvez l'appel au journal. Aucune clé ni aucun jeton ne se colle dans la conversation pour faire marcher la connexion.
+
+- [ ] Le test « aucun outil n'écrit » existe et passe
+- [ ] Une question en français reçoit une réponse juste, et l'appel est dans le journal

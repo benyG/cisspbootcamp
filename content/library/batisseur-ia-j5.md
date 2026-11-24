@@ -274,7 +274,9 @@ Chaque lien vers ma vitrine porte un marqueur UTM ; le tableau de bord compte le
 - [ ] 3 brouillons avec visuel, dans mon ton
 - [ ] Le lien de chaque publication porte son marqueur
 
-### Étape 4 · Votre troisième agent (25 min)
+### Pour aller plus loin · Votre troisième agent
+
+Après la formation (semaine 3 du plan des 30 jours présenté en J6), avec le gabarit du Cours 1 et la même méthode : demande de fusion, tests verts, lien Preview.
 
 **Si vous produisez ou livrez : l'agent opérations.** Ajoutez d'abord vos nomenclatures (ce qu'il faut par unité vendue) et votre stock.
 
@@ -292,29 +294,18 @@ Crée l'agent veille. Chaque vendredi (et sur un bouton dans /admin), il consult
 
 - [ ] Le résumé cite un lien pour chaque fait, et je les ai ouverts
 
-### Étape 5 · La file d'actions et l'e-mail du matin (15 min)
-
-```
-Regroupe dans une seule page /admin tout ce qui attend ma décision, quel que soit l'agent : devis, relances, publications, questions transmises, bons de commande. Pour chaque ligne : ce que c'est, pourquoi maintenant, valider ou modifier. Les plus urgentes en haut, lisible sur téléphone.
-
-Chaque matin, envoie-moi un seul e-mail : ce que les agents ont fait la veille, ce qui m'attend avec un lien direct, et les alertes.
-```
-
-- [ ] La file montre les actions de tous mes agents
-- [ ] Le bouton « Envoyer l'e-mail du matin maintenant » me l'envoie
-
 ## Ça tourne ? La revue de 15 h 15
 
-Chacun pose deux questions à l'assistant du site d'un autre participant, une simple et une piège, puis montre sa file d'actions sur téléphone. Le formateur note les questions pièges qui ont fait sortir un assistant de ses documents : elles deviennent des tests.
+Chacun pose deux questions à l'assistant du site d'un autre participant, une simple et une piège, puis montre sur téléphone la question transmise dans /admin. Le formateur note les questions pièges qui ont fait sortir un assistant de ses documents : elles deviennent des tests.
 
 - [ ] L'assistant de mon site répond depuis mes documents et cite la source
-- [ ] Une question sensible ou hors documents est transmise dans ma file
+- [ ] Une question sensible ou hors documents est transmise dans ma file (/admin)
 - [ ] 3 publications en brouillon, avec visuel et marqueur de lien
-- [ ] Mon troisième agent tourne : liste d'achats juste, ou résumé de veille sourcé
-- [ ] Une seule file d'actions pour tous mes agents
-- [ ] J'ai reçu l'e-mail du matin
+- [ ] Mes deux skills contiennent mes vrais exemples, pas des exemples inventés
+- [ ] Aucune coordonnée n'est demandée sans la case de consentement
+- [ ] L'assistant est lisible sur un écran de 360 px
 - [ ] Les tests sont verts et chaque agent a son interrupteur
-- [ ] Réflexe du jour : j'ai réparé seul une panne d'exercice
+- [ ] Réflexe du jour : j'ai diagnostiqué et réparé seul une vraie erreur du labo
 
 ## Dépannage
 
@@ -323,8 +314,8 @@ Chacun pose deux questions à l'assistant du site d'un autre participant, une si
 | L'assistant répond hors de vos documents | « Réponds uniquement depuis le dossier connaissances ; sinon, transmets », et ajoutez un test avec une question piège |
 | Les publications sonnent génériques | Ajoutez à la skill « Mon ton » deux exemples de plus et trois mots que vous n'employez jamais |
 | Le visuel déborde ou coupe le texte | « Raccourcis le texte du visuel à 8 mots et teste sur un écran de 360 px » |
-| La liste d'achats est fausse | Vérifiez la nomenclature d'un produit à la main ; donnez le bon résultat à Claude Code avec un test |
-| La veille cite un lien qui ne dit pas ça | « Supprime tout fait dont la source ne contient pas l'information » ; ouvrez toujours les liens |
+| La liste d'achats est fausse (troisième agent, après la formation) | Vérifiez la nomenclature d'un produit à la main ; donnez le bon résultat à Claude Code avec un test |
+| La veille cite un lien qui ne dit pas ça (troisième agent, après la formation) | « Supprime tout fait dont la source ne contient pas l'information » ; ouvrez toujours les liens |
 | Trop d'e-mails | Un seul e-mail par jour ; les alertes urgentes se déclarent une par une |
 | Une page affiche une erreur, ou un agent ne répond plus | Fiche 5 : noter, lire le message, Logs Vercel filtrés sur l'heure, diagnostic avant toute correction, puis refaire le test |
 
@@ -359,11 +350,26 @@ Bloqué plus de 10 minutes : levez la main.
 6. Après une modification, une page de votre site affiche une erreur. Que demandez-vous d'abord à Claude ?
    - Un diagnostic : la cause probable et comment la confirmer, en lui donnant ce qui s'est passé, le message et les journaux, et sans rien modifier avant votre accord. Jamais de clé collée dans la conversation.
 
-## Avant la J6 · 30 minutes
+## Avant la J6 · 45 minutes
 
 Préparez le pilotage :
 
 - [ ] Fixez 1 à 3 objectifs chiffrés pour les trois prochains mois (exemple : 20 commandes par mois)
 - [ ] Listez vos échéances administratives : déclarations, cotisations, renouvellements, et qui est votre comptable
-- [ ] Notez les décisions que vous prenez chaque semaine, et les chiffres dont vous auriez besoin pour les prendre
+- [ ] Créez votre file d'actions unique et l'e-mail du matin (environ 20 minutes, texte ci-dessous) : en J6, vous ouvrez la journée en montrant cette file
 - [ ] Notez ce que vos agents ont coûté cette semaine (console de l'API) ; pour les tarifs, reportez-vous aux pages de tarifs officielles
+
+### La file d'actions et l'e-mail du matin
+
+Sur votre application, dans une nouvelle branche, demandez à Claude Code d'abord un plan, puis :
+
+```
+Regroupe dans une seule page /admin tout ce qui attend ma décision, quel que soit l'agent : devis, relances, publications, questions transmises, bons de commande. Pour chaque ligne : ce que c'est, pourquoi maintenant, valider ou modifier. Les plus urgentes en haut, lisible sur téléphone.
+
+Chaque matin, envoie-moi un seul e-mail : ce que les agents ont fait la veille, ce qui m'attend avec un lien direct, et les alertes.
+```
+
+Comme au labo : demande de fusion, tests verts, lien Preview. Si quelque chose casse, appliquez la fiche 5 ; si vous restez bloqué, signalez-le avant la J6.
+
+- [ ] La file montre les actions de tous mes agents (questions transmises, brouillons de publications, devis et relances de la J4)
+- [ ] Le bouton « Envoyer l'e-mail du matin maintenant » me l'envoie
