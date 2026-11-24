@@ -58,6 +58,16 @@
 .prop .ba { display: grid; border: 2px solid var(--ink); border-radius: 10px; overflow: hidden; }
 .prop .ba-row { display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr 18px 1fr; gap: 8px; align-items: center; padding: 8px 10px; border-top: 1px solid var(--line); font-size: .8rem; }
 .prop .ba-row:first-child { border-top: 0; background: var(--paper); font: 600 .6rem/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.prop .ba-row.where { grid-template-columns: minmax(0, 1.4fr) 1fr 18px 1fr 64px; }
+.prop .loc { justify-self: start; font: 600 .6rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 5px 6px; border-radius: 5px; color: var(--muted); background: var(--paper); }
+.prop .loc.on { color: var(--plan); background: var(--plan-soft); }
+.prop .host { justify-self: start; font: 600 .66rem/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 7px 10px; border-radius: 6px; background: var(--ink); color: var(--paper); }
+.prop .data { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.prop .data div { padding: 9px 10px; border-radius: 9px; background: var(--plan-soft); }
+.prop .data b { font-size: .8rem; display: block; color: var(--ink); }
+.prop .data span { font-size: .72rem; color: var(--ink-2); }
+.prop .inv tfoot .hw td { font-weight: 400; color: var(--muted); border-bottom: 1px dashed var(--line); }
+.prop .inv tfoot .hw b { color: var(--ink-2); }
 .prop .ba-row .arr { color: var(--muted); text-align: center; }
 .prop .pill { justify-self: start; font: 600 .6rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 5px 6px; border-radius: 5px; border: 1.5px solid currentColor; white-space: nowrap; }
 .prop .pill.manual { color: var(--stamp); background: var(--stamp-soft); }
@@ -112,7 +122,7 @@
 @media (max-width: 640px) {
   .prop .page { aspect-ratio: auto; }
   .prop .cover-title h1 { font-size: 2.2rem; }
-  .prop .promise, .prop .cover-meta, .prop .ctl, .prop .why, .prop .sign, .prop .sched { grid-template-columns: 1fr; }
+  .prop .promise, .prop .cover-meta, .prop .ctl, .prop .why, .prop .sign, .prop .sched, .prop .data { grid-template-columns: 1fr; }
   .prop .ba-row { grid-template-columns: minmax(0, 1fr) auto 12px auto; }
 }
 @page { size: A4; margin: 0; }

@@ -87,7 +87,7 @@ export async function createRequest(input: EnterpriseRequestInput, now = new Dat
       });
   const token = createToken();
   const request = await prisma.enterpriseRequest.create({
-    data: { token, leadId: lead.id, organization: input.organization, country: input.country, contactName: input.contactName, jobTitle: input.jobTitle, email: input.email, size: input.size, functions: input.functions, need: input.need, consentAt: now },
+    data: { token, leadId: lead.id, organization: input.organization, country: input.country, contactName: input.contactName, jobTitle: input.jobTitle, email: input.email, size: input.size, functions: input.functions, need: input.need, dataOnSite: input.dataOnSite, consentAt: now },
   });
   await prisma.actionLog.create({ data: { leadId: lead.id, type: "enterprise_request", payload: { requestId: request.id, organization: input.organization } } });
   await recordServerEvent({ name: "enterprise_request", leadId: lead.id, label: input.size });
@@ -100,6 +100,7 @@ export async function createRequest(input: EnterpriseRequestInput, now = new Dat
       `${input.email}\n\n` +
       `À traiter : ${input.functions.map((f) => FUNCTIONS[f as FunctionKey]).join(", ") || "non précisé"}\n` +
       (input.need ? `Besoin : ${input.need}\n` : "") +
+      (input.dataOnSite ? "Données à garder sur site : IA privée et souveraine.\n" : "") +
       `\nLa demande : ${base()}/admin/entreprises/${request.id}`,
   }).catch((error) => console.error("[entreprises] e-mail", error));
   return { token };

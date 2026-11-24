@@ -1337,6 +1337,8 @@ model EnterpriseRequest {
   /// The functions ticked in the form (lib/enterprise.ts FUNCTIONS).
   functions    Json
   need         String?  @db.Text
+  /// « Nos données doivent rester chez nous » ticked: IA privée et souveraine (Ben, 24/11).
+  dataOnSite   Boolean  @default(false) @map("data_on_site")
   consentAt    DateTime @map("consent_at")
   /// new | call | proposal | won | lost
   status       String   @default("new") @db.VarChar(10)

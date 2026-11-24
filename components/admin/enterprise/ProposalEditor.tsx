@@ -4,7 +4,7 @@ import { Copy, Link2, Plus, Printer, Save, X } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { prepareDepositAction, saveProposalAction } from "@/app/admin/entreprises/actions";
-import { type EnterpriseOffer, LEVELS, type Level, type Proposal, type Zone, ZONE_LABEL, formatUsd, priceOf, proposalTotals } from "@/lib/enterprise";
+import { type EnterpriseOffer, HOSTINGS, type Hosting, LEVELS, type Level, type Proposal, SOVEREIGN_NAME, type Zone, ZONE_LABEL, allPackages, findPackage, formatUsd, priceOf, proposalTotals } from "@/lib/enterprise";
 
 import { ProposalDocument } from "./ProposalDocument";
 
@@ -36,16 +36,17 @@ export function ProposalEditor({ requestId, initial, offer, head, today, deposit
 
   // A new zone resets the prices to the catalogue's for that zone.
   const setZone = (zone: Zone) => {
-    setP((prev) => ({ ...prev, zone, lines: prev.lines.map((l) => ({ ...l, priceUsd: priceOf(offer.packages.find((x) => x.code === l.code)!, zone) })) }));
+    setP((prev) => ({ ...prev, zone, lines: prev.lines.map((l) => ({ ...l, priceUsd: priceOf(findPackage(offer, l.code)!, zone) })) }));
     setDirty(true);
   };
   const toggle = (code: Proposal["lines"][number]["code"], on: boolean) => {
-    const pkg = offer.packages.find((x) => x.code === code)!;
-    set("lines", on ? offer.packages.filter((x) => x.code === code || p.lines.some((l) => l.code === x.code)).map((x) => p.lines.find((l) => l.code === x.code) ?? { code: x.code, priceUsd: priceOf(pkg, p.zone) }) : p.lines.filter((l) => l.code !== code));
+    const pkg = findPackage(offer, code)!;
+    set("lines", on ? allPackages(offer).filter((x) => x.code === code || p.lines.some((l) => l.code === x.code)).map((x) => p.lines.find((l) => l.code === x.code) ?? { code: x.code, priceUsd: priceOf(pkg, p.zone) }) : p.lines.filter((l) => l.code !== code));
   };
   const price = (code: string, usd: number) => set("lines", p.lines.map((l) => (l.code === code ? { ...l, priceUsd: Math.max(0, Math.round(usd * 100)) } : l)));
   const goal = (i: number, k: "title" | "text", v: string) => set("goals", p.goals.map((g, j) => (j === i ? { ...g, [k]: v } : g)));
-  const proc = (i: number, k: "name" | "before" | "after", v: string) => set("processes", p.processes.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  const local = p.hosting !== "cloud";
+  const proc = (i: number, k: "name" | "before" | "after" | "local", v: string | boolean) => set("processes", p.processes.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
 
   function save(then?: () => void) {
     start(async () => {
@@ -80,6 +81,9 @@ export function ProposalEditor({ requestId, initial, offer, head, today, deposit
             <label className={label}>Contact<input value={p.contact} onChange={(e) => set("contact", e.target.value)} className={field} /></label>
             <label className={label}>Fonction<input value={p.role} onChange={(e) => set("role", e.target.value)} className={field} /></label>
           </div>
+          <label className={label}>Hébergement de l’IA
+            <select value={p.hosting} onChange={(e) => set("hosting", e.target.value as Hosting)} className={field}>{(Object.keys(HOSTINGS) as Hosting[]).map((h) => <option key={h} value={h}>{HOSTINGS[h]}</option>)}</select>
+          </label>
           <label className={label}>Zone de prix
             <select value={p.zone} onChange={(e) => setZone(e.target.value as Zone)} className={field}>{(Object.keys(ZONE_LABEL) as Zone[]).map((z) => <option key={z} value={z}>{ZONE_LABEL[z]}</option>)}</select>
           </label>
@@ -103,26 +107,28 @@ export function ProposalEditor({ requestId, initial, offer, head, today, deposit
 
         <fieldset className="grid gap-2 border-t border-line pt-3"><legend className={legend}>Avant / après</legend>
           {p.processes.map((r, i) => (
-            <div key={i} className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-1">
+            <div key={i} className={`grid items-center gap-1 ${local ? "grid-cols-[minmax(0,1fr)_auto_auto_auto_auto]" : "grid-cols-[minmax(0,1fr)_auto_auto_auto]"}`}>
               <input value={r.name} maxLength={80} onChange={(e) => proc(i, "name", e.target.value)} className={field} />
+              {local && <label className="flex items-center gap-0.5 text-[11px]" title="Ce processus tourne dans les locaux du client"><input type="checkbox" checked={r.local} onChange={(e) => proc(i, "local", e.target.checked)} />local</label>}
               {(["before", "after"] as const).map((k) => <select key={k} aria-label={k === "before" ? "Aujourd’hui" : "Après"} value={r[k]} onChange={(e) => proc(i, k, e.target.value as Level)} className="rounded-lg border border-line bg-white px-1 py-1.5 text-xs">{(Object.keys(LEVELS) as Level[]).map((l) => <option key={l} value={l}>{LEVELS[l]}</option>)}</select>)}
               <button type="button" aria-label="Retirer" onClick={() => set("processes", p.processes.filter((_, j) => j !== i))} className="px-1 text-muted"><X className="size-4" /></button>
             </div>
           ))}
-          {p.processes.length < 8 && <button type="button" onClick={() => set("processes", [...p.processes, { name: "", before: "manual", after: "assist" }])} className="inline-flex items-center gap-1 justify-self-start text-sm font-semibold text-accent"><Plus className="size-4" />Ajouter un processus</button>}
+          {p.processes.length < 8 && <button type="button" onClick={() => set("processes", [...p.processes, { name: "", before: "manual", after: "assist", local }])} className="inline-flex items-center gap-1 justify-self-start text-sm font-semibold text-accent"><Plus className="size-4" />Ajouter un processus</button>}
         </fieldset>
 
         <fieldset className="grid gap-2 border-t border-line pt-3"><legend className={legend}>Les marches proposées (USD)</legend>
-          {offer.packages.map((k) => {
+          {allPackages(offer).map((k) => {
             const line = p.lines.find((l) => l.code === k.code);
             return (
-              <div key={k.code} className="grid grid-cols-[auto_minmax(0,1fr)_96px] items-center gap-2 rounded-lg border border-line p-2">
+              <div key={k.code} className={`grid grid-cols-[auto_minmax(0,1fr)_96px] items-center gap-2 rounded-lg border p-2 ${k.code.startsWith("sov_") ? "border-sky-200 bg-sky-50/40" : "border-line"}`} title={k.code.startsWith("sov_") ? SOVEREIGN_NAME : undefined}>
                 <input type="checkbox" checked={Boolean(line)} onChange={(e) => toggle(k.code, e.target.checked)} aria-label={k.name} />
                 <span className="min-w-0"><b className="block text-sm">{k.name}</b><small className="text-muted">{k.duration}</small></span>
                 <input type="number" min={0} step={100} disabled={!line} value={line ? line.priceUsd / 100 : priceOf(k, p.zone) / 100} onChange={(e) => price(k.code, Number(e.target.value) || 0)} aria-label={`Prix ${k.name}`} className={field + " text-right tabular-nums"} />
               </div>
             );
           })}
+          {local && <label className={label}>Matériel acheté par le client, indicatif (USD, hors total)<input type="number" min={0} step={500} value={p.hardwareUsd / 100} onChange={(e) => set("hardwareUsd", Math.max(0, Math.round((Number(e.target.value) || 0) * 100)))} className={field + " text-right tabular-nums"} /></label>}
           <p className="text-sm">Total : <b className="tabular-nums">{formatUsd(totals.onceUsd)}{totals.monthlyUsd ? ` + ${formatUsd(totals.monthlyUsd)} / mois` : ""}</b> · acompte <b className="tabular-nums">{formatUsd(totals.depositUsd)}</b></p>
         </fieldset>
 

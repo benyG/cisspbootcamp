@@ -5,11 +5,13 @@ import Link from "next/link";
 import { Catalogue } from "@/components/ia/entreprises/Catalogue";
 import { Ladder, type LadderStep } from "@/components/ia/entreprises/Ladder";
 import { ProcessMap } from "@/components/ia/entreprises/ProcessMap";
+import { HostingModes, type SovereignCard, SovereignOffers } from "@/components/ia/entreprises/Sovereign";
+import { ZoneProvider } from "@/components/ia/entreprises/zone";
 import { RequestForm } from "@/components/ia/entreprises/RequestForm";
 import { Dock } from "@/components/ia/landing/Dock";
 import { IaFooter, IaTopbar } from "@/components/ia/shell";
 import { TrackView } from "@/components/tracking/TrackView";
-import { type Zone, priceLabel } from "@/lib/enterprise";
+import { SOVEREIGN_NAME, type Zone, priceLabel } from "@/lib/enterprise";
 import { loadOffer, zoneOf } from "@/lib/enterprise-server";
 import { iaPath } from "@/lib/ia-domain";
 import { COUNTRIES } from "@/lib/scanner/questions";
@@ -18,7 +20,7 @@ import "../landing.css";
 import "./entreprises.css";
 
 const TITLE = "Bâtisseur IA Entreprises : vos processus tournent avec l’IA";
-const DESCRIPTION = "Diagnostic, pilote, déploiement et suivi : nous mettons l’IA au travail dans votre entreprise, un processus après l’autre, mesuré, avec un interrupteur sur chaque automatisation.";
+const DESCRIPTION = "Diagnostic, pilote, déploiement et suivi : nous mettons l’IA au travail dans votre entreprise, un processus après l’autre, mesuré, avec un interrupteur sur chaque automatisation. Et si vos données doivent rester chez vous, nous installons l’IA dans vos locaux.";
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
@@ -42,6 +44,7 @@ const GUARDS = [
   ["Journal", "Chaque action notée ; chaque connecteur n’accède qu’au nécessaire."],
   ["Données personnelles", "Déclarations faites, transferts analysés, données réduites au nécessaire."],
   ["À vous", "Comptes, clés, code et documentation à votre nom. Aucune dépendance à nous."],
+  ["Dans vos locaux", "En mode privé et souverain, le modèle, vos données et le journal ne quittent pas votre réseau."],
 ];
 
 const SWITCHES: Array<[string, string, boolean]> = [
@@ -61,10 +64,13 @@ const RUNS: Array<[string, "auto" | "assist" | "manual"]> = [
 const LEVEL = { auto: "Autonome", assist: "Assisté", manual: "Manuel" } as const;
 
 const FAQ = [
-  ["Nos données partent-elles à l’étranger ?", "Les modèles d’IA sont hébergés hors d’Afrique : c’est un transfert de données, encadré par la loi de votre pays. Le diagnostic le traite dès le début : données réduites au nécessaire, déclarations à l’autorité (ARTCI, CDP, APDP), et rien de sensible sans base légale."],
+  ["Nos données partent-elles à l’étranger ?", "Pas si vous ne le voulez pas. Avec l’IA privée et souveraine, le modèle est installé dans vos locaux et rien ne sort. Avec les modèles hébergés, c’est un transfert encadré par la loi de votre pays : données réduites au nécessaire, déclarations à l’autorité (ARTCI, CDP, APDP), et rien de sensible sans base légale."],
+  ["Un modèle installé chez nous est-il aussi bon ?", "Il est très bon sur des tâches cadrées : répondre depuis vos documents, résumer, classer, extraire. Il reste en retrait des meilleurs modèles hébergés sur le raisonnement complexe. C’est pourquoi l’étude le teste sur vos propres documents avant tout achat de matériel."],
+  ["Que se passe-t-il pendant une coupure de courant ?", "Le serveur est protégé par un onduleur et redémarre seul. Pendant une coupure, le travail manuel reprend, comme avec n’importe quel interrupteur du système."],
   ["Qui paie les coûts d’IA et de WhatsApp ?", "Vous, directement, sur vos propres comptes, avec un plafond mensuel et une alerte avant de l’atteindre. Nous ne refacturons rien et vous voyez chaque dépense."],
   ["Et si le pilote ne donne rien ?", "Les indicateurs sont fixés avant de commencer. À J14, un point d’arrêt : si la piste ne tient pas, on change de processus ou on arrête. À J30, vous décidez sur des mesures, pas sur une impression."],
-  ["Le système nous appartient-il ?", "Oui : comptes, clés, code et documentation sont à votre nom. Vous pouvez continuer seul, avec votre équipe formée, ou avec nous en Pilote automatique."],
+  ["Le système nous appartient-il ?", "Oui : comptes, clés, code, documentation et, en mode souverain, le serveur lui-même, acheté à votre nom. Vous pouvez continuer seul, avec votre équipe formée, ou avec nous en suivi mensuel."],
+  ["Intervenez-vous sur place ?", "Le suivi se fait à distance, avec un accès que vous ouvrez et fermez. Si vous le souhaitez, nous nous déplaçons : le déplacement est facturé à part, sur devis accepté avant."],
   ["Faut-il un informaticien chez nous ?", "Non. Il faut une personne référente qui connaît le métier. Nous la formons pour qu’elle suive et fasse évoluer le système."],
   ["Quelle différence avec la formation Bâtisseur IA ?", "La formation vous apprend à construire vous-même, en 6 journées. L’accompagnement le construit avec vous, dans votre entreprise, et s’engage sur un résultat mesuré."],
 ];
@@ -87,6 +93,7 @@ export default async function EntreprisesPage() {
     price: { africa: priceLabel(p, "africa"), intl: priceLabel(p, "intl") },
     sub: { africa: p.outcome, intl: p.outcome },
   }));
+  const sovereign: SovereignCard[] = offer.sovereign.map((p) => ({ code: p.code, name: p.name, duration: p.duration, items: p.items, outcome: p.outcome, price: { africa: priceLabel(p, "africa"), intl: priceLabel(p, "intl") } }));
   const known = COUNTRIES.some((c) => c.value === country) ? country : "";
 
   return (
@@ -94,16 +101,18 @@ export default async function EntreprisesPage() {
       <TrackView name="enterprise_view" />
       <IaTopbar current="entreprises" />
       <main className="ent">
+        <ZoneProvider initial={zone}>
         <div className="hero">
           <div className="wrap hero-grid">
             <div>
-              <div className="kicker"><span>Diagnostic</span><span>Pilote</span><span>Déploiement</span><span>Suivi</span></div>
+              <div className="kicker"><span>Diagnostic</span><span>Pilote</span><span>Déploiement</span><span>Suivi</span>{offer.showSovereign && <span>IA privée et souveraine</span>}</div>
               <h1>Vos processus tournent avec l’IA. <em>Vous gardez la main.</em></h1>
               <p className="lede">Nous mettons l’IA au travail <b>dans votre entreprise</b> : service client sur WhatsApp, relances, devis, factures, chiffres du mois. Un processus après l’autre, mesuré avant et après, avec vos règles et un interrupteur sur chaque automatisation.</p>
               <div className="hero-cta" id="cadrage">
                 <a className="btn btn-go btn-big" href="#demande">Réserver un appel de cadrage</a>
                 <Link className="btn btn-line" href={iaPath("/ia/diagnostic")}>Mesurer mon autonomie (3 min)</Link>
               </div>
+              {offer.showSovereign && <p className="hero-note">Données sensibles ? <a href="#souverain">Nous installons aussi l’IA dans vos locaux</a>.</p>}
               <p className="hero-note">Appel de 30 minutes, gratuit. Vous préférez former votre équipe à le faire elle-même ? <Link href={iaPath("/ia")}>La formation Bâtisseur IA</Link>.</p>
             </div>
             <ProcessMap />
@@ -128,7 +137,7 @@ export default async function EntreprisesPage() {
               <h2 id="parcours-title">Cinq marches. Vous vous arrêtez quand vous voulez.</h2>
               <p>Chaque marche se suffit à elle-même et prépare la suivante. Prix fixes : vous payez un résultat, jamais des journées.</p>
             </div>
-            <Ladder steps={steps} initialZone={zone} />
+            <Ladder steps={steps} />
             {offer.options.length > 0 && (
               <div className="options">
                 {offer.options.map((o) => <div key={o.name} className="opt"><b>Option · {o.name}</b><p>{o.text}</p></div>)}
@@ -142,6 +151,31 @@ export default async function EntreprisesPage() {
             </ul>
           </div>
         </section>
+
+        {offer.showSovereign && (
+          <section className="block sov" id="souverain" aria-labelledby="souverain-title">
+            <div className="wrap">
+              <div className="sec-head">
+                <span className="label">{SOVEREIGN_NAME}</span>
+                <h2 id="souverain-title">Votre IA, dans vos murs.</h2>
+                <p>Données de santé, comptes clients, dossiers juridiques, données publiques : certaines informations ne doivent pas sortir. Nous installons un modèle d’IA dans vos locaux, sur un serveur à votre nom. Vous choisissez où tourne chaque processus.</p>
+              </div>
+              <HostingModes />
+              <ul className="cases">
+                <li><b>Clinique</b> Les dossiers patients résumés sans quitter l’établissement.</li>
+                <li><b>Cabinet juridique</b> Contrats et pièces analysés sur place.</li>
+                <li><b>Administration</b> Le courrier entrant trié et orienté en interne.</li>
+              </ul>
+              <SovereignOffers cards={sovereign} />
+              <ul className="rules">
+                <li>Matériel acheté à votre nom, chiffré dans l’étude, sans marge de notre part</li>
+                <li>Modèle testé sur vos documents avant tout achat</li>
+                <li>Suivi à distance ; déplacement sur site facturé à part</li>
+              </ul>
+              <p className="sov-demo">Pendant l’appel de cadrage, nous vous montrons un modèle ouvert en direct, sur notre machine de démonstration.</p>
+            </div>
+          </section>
+        )}
 
         <section className="block" id="catalogue" aria-labelledby="catalogue-title">
           <div className="wrap">
@@ -213,6 +247,7 @@ export default async function EntreprisesPage() {
             <RequestForm countries={COUNTRIES} defaultCountry={known} />
           </div>
         </section>
+        </ZoneProvider>
         <Dock href="#demande" watch="cadrage" title="Appel de cadrage" sub="30 min, gratuit" action="Réserver" />
       </main>
       <IaFooter />

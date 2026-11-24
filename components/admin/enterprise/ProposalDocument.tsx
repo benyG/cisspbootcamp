@@ -1,4 +1,4 @@
-import { type EnterpriseOffer, LEVELS, type Proposal, durationLabel, formatUsd, proposalTimeline, proposalTotals } from "@/lib/enterprise";
+import { type EnterpriseOffer, LEVELS, type Proposal, durationLabel, findPackage, formatUsd, proposalTimeline, proposalTotals } from "@/lib/enterprise";
 import { IA_COMPANY, IA_TEAM } from "@/lib/ia-brand";
 
 import "./proposal.css";
@@ -18,7 +18,10 @@ export function ProposalDocument({ p, offer, head, today }: { p: Proposal; offer
   const ref = `${head.number ?? "DEV-…"} · ${head.organization}`;
   const totals = proposalTotals(p, offer);
   const { steps, weeks } = proposalTimeline(p, offer);
-  const pkg = (code: string) => offer.packages.find((x) => x.code === code);
+  const pkg = (code: string) => findPackage(offer, code);
+  // Hybrid or on site (Ben, 24/11): where the data lives is part of the promise.
+  const local = p.hosting !== "cloud";
+  const onsite = p.hosting === "onsite";
   const foot = (n: number) => <div className="pfoot"><span>{n === 1 ? `${IA_TEAM} · ${IA_COMPANY}` : ref}</span><span>{n}</span></div>;
 
   return (
@@ -28,8 +31,9 @@ export function ProposalDocument({ p, offer, head, today }: { p: Proposal; offer
           <div className="brandline"><span className="brand">Bâtisseur <span>IA</span></span><span className="ref">{head.number ?? "Brouillon"}<br />{longDate(issued)}</span></div>
           <div className="cover-title">
             <span className="for">Proposition d’accompagnement pour {head.organization}</span>
-            <h1>Vos processus tournent avec l’IA. <em>Vous gardez la main.</em></h1>
-            <p>Ce document vous dit, en quelques pages, ce que nous allons mettre en place chez vous, en combien de temps, à quel prix, et comment vous gardez le contrôle à chaque étape.</p>
+            {local ? <h1>Votre IA, <em>dans vos murs.</em> Vous gardez la main.</h1> : <h1>Vos processus tournent avec l’IA. <em>Vous gardez la main.</em></h1>}
+            <p>Ce document vous dit, en quelques pages, ce que nous allons mettre en place chez vous, en combien de temps, à quel prix, {local ? "où restent vos données, " : ""}et comment vous gardez le contrôle à chaque étape.</p>
+            {local && <span className="host">{onsite ? "IA privée et souveraine · vos données restent sur site" : "IA hybride · vos données sensibles restent sur site"}</span>}
           </div>
           <div className="promise">{p.goals.map((g) => <div key={g.title}><b>{g.title}</b><span>{g.text}</span></div>)}</div>
           <div className="cover-meta">
@@ -53,9 +57,9 @@ export function ProposalDocument({ p, offer, head, today }: { p: Proposal; offer
             <>
               <span className="eyebrow">Avant / après</span>
               <div className="ba">
-                <div className="ba-row"><span>Processus</span><span>Aujourd’hui</span><span /><span>Après</span></div>
+                <div className={"ba-row" + (local ? " where" : "")}><span>Processus</span><span>Aujourd’hui</span><span /><span>Après</span>{local && <span>Où</span>}</div>
                 {p.processes.map((r) => (
-                  <div key={r.name} className="ba-row"><span>{r.name}</span><span className={`pill ${r.before}`}>{LEVELS[r.before]}</span><span className="arr">→</span><span className={`pill ${r.after}`}>{LEVELS[r.after]}</span></div>
+                  <div key={r.name} className={"ba-row" + (local ? " where" : "")}><span>{r.name}</span><span className={`pill ${r.before}`}>{LEVELS[r.before]}</span><span className="arr">→</span><span className={`pill ${r.after}`}>{LEVELS[r.after]}</span>{local && <span className={"loc" + (r.local ? " on" : "")}>{r.local ? "Sur site" : "Cloud"}</span>}</div>
                 ))}
               </div>
               <p className="notes">Manuel : une personne fait tout. Assisté : l’IA prépare, une personne valide. Autonome : l’IA agit seule selon vos règles, avec plafond et journal.</p>
@@ -77,11 +81,21 @@ export function ProposalDocument({ p, offer, head, today }: { p: Proposal; offer
               </div>
             ))}
           </div>
+          {local && (
+            <>
+              <span className="eyebrow">Où vivent vos données</span>
+              <div className="data">
+                <div><b>Ce qui reste chez vous</b><span>{onsite ? "Tout : le modèle, vos documents, les questions posées et le journal, sur votre serveur, dans votre réseau." : "Vos données sensibles et les processus marqués « Sur site » : traités par un modèle installé chez vous."}</span></div>
+                <div><b>Ce qui sort</b><span>{onsite ? "Rien. L’assistant fonctionne même sans connexion internet." : "Le reste, réduit au nécessaire, vers des modèles hébergés, sur vos comptes et sous plafond."}</span></div>
+                <div><b>Qui y accède</b><span>Les personnes que vous désignez. Nous intervenons à distance, avec un accès que vous ouvrez et fermez.</span></div>
+              </div>
+            </>
+          )}
           <span className="eyebrow">Vous gardez la main</span>
           <div className="ctl">
             <div><b>Validation humaine</b><span>Rien ne part vers un client, aucun paiement, aucune décision sur une personne sans votre accord.</span></div>
             <div><b>Un interrupteur par automatisation</b><span>Tout s’arrête en un clic ; le travail manuel reprend.</span></div>
-            <div><b>Budget plafonné</b><span>Coûts d’IA et de WhatsApp sur vos comptes, avec alerte à 80 %.</span></div>
+            {onsite ? <div><b>Coût maîtrisé</b><span>Pas de facture au volume : le coût est votre matériel et son électricité.</span></div> : <div><b>Budget plafonné</b><span>Coûts d’IA et de WhatsApp sur vos comptes, avec alerte à 80 %.</span></div>}
             <div><b>Tout est à vous</b><span>Comptes, code et documentation à votre nom. Aucune dépendance à nous.</span></div>
           </div>
         </div>
@@ -101,6 +115,7 @@ export function ProposalDocument({ p, offer, head, today }: { p: Proposal; offer
               })}
             </tbody>
             <tfoot>
+              {local && p.hardwareUsd > 0 && <tr className="hw"><td><b>Matériel, acheté à votre nom (indicatif)</b><small>Hors total : vous l’achetez chez le fournisseur de votre choix, sur notre cahier des charges, sans marge de notre part.</small></td><td className="num">{formatUsd(p.hardwareUsd)}</td></tr>}
               <tr className="total"><td>Total</td><td className="num">{totals.onceUsd > 0 ? formatUsd(totals.onceUsd) : ""}{totals.onceUsd > 0 && totals.monthlyUsd > 0 ? " + " : ""}{totals.monthlyUsd > 0 ? `${formatUsd(totals.monthlyUsd)} / mois` : ""}</td></tr>
             </tfoot>
           </table>
@@ -114,7 +129,7 @@ export function ProposalDocument({ p, offer, head, today }: { p: Proposal; offer
               <div><span>À la commande (premier mois)</span><b>{formatUsd(totals.depositUsd)}</b></div>
             )}
           </div>
-          <p className="notes">Prix en dollars américains, hors taxes. Les coûts d’usage (IA, WhatsApp, hébergement) sont payés directement par vous, sur vos comptes, avec un plafond que vous fixez. Paiement par carte ou virement ; un reçu numéroté est émis à chaque paiement.</p>
+          <p className="notes">Prix en dollars américains, hors taxes. {onsite ? "Le matériel et son électricité sont à votre charge, à votre nom." : "Les coûts d’usage (IA, WhatsApp, hébergement) sont payés directement par vous, sur vos comptes, avec un plafond que vous fixez."} Le suivi se fait à distance ; un déplacement sur site, si vous le souhaitez, est facturé à part, sur devis accepté avant. Paiement par carte ou virement ; un reçu numéroté est émis à chaque paiement.</p>
           <span className="eyebrow">Pourquoi nous</span>
           <div className="why">
             <div><b>Nous l’utilisons nous-mêmes</b><span>Notre propre entreprise tourne avec ces outils : vous les verrez fonctionner avant de signer.</span></div>
