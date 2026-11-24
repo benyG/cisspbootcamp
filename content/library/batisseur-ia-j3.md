@@ -9,14 +9,14 @@ summary: Le support du formateur pour la J3 : fiche de la journée, cours sur le
 
 ## Fiche de la journée
 
-À la fin de la J3, vos données ont une structure : elles entrent dans une base de données, se gèrent depuis vos écrans d'administration et alimentent un tableau de bord avec vos trois chiffres du lundi. Chaque fonctionnalité arrive avec son test, et vous savez revenir en arrière si quelque chose casse. Avant la J4, vous branchez la vitrine sur la base et vous faites tourner vos tests sur GitHub : les demandes ne dorment plus dans une boîte mail.
+À la fin de la J3, vos données ont une structure : elles entrent dans une base de données, se gèrent depuis vos écrans d'administration et alimentent un tableau de bord avec vos trois chiffres du lundi. Chaque fonctionnalité arrive avec son test, et vous savez revenir en arrière si quelque chose casse. Avant la J4, vous branchez la vitrine sur la base, vous faites tourner vos tests sur GitHub et vous créez vos clés : les demandes ne dorment plus dans une boîte mail.
 
 | | |
 | --- | --- |
 | Public | Dirigeants, indépendants, porteurs de projet. Aucune compétence en programmation. |
 | Durée | 5 heures de travail (plus une heure de pause) : cours, démonstration, réflexe du jour, labo, revue |
 | Prérequis | La vitrine de la J2 en ligne ; la liste de ce que vous suivez aujourd'hui et vos trois chiffres du lundi (travail « avant la J3 ») |
-| Résultat | Votre schéma de données, une base avec vos tables et des données de test, un espace d'administration protégé, un tableau de bord avec ses tests, et un retour arrière réussi en exercice. Avant la J4 : la vitrine reliée à la base et les tests lancés par GitHub Actions |
+| Résultat | Votre schéma de données, une base avec vos tables et des données de test, un espace d'administration protégé, un tableau de bord avec ses tests, et un retour arrière réussi en exercice. Avant la J4 : la vitrine reliée à la base, les tests lancés par GitHub Actions, et les clés de l'API du modèle et de Stripe (mode test) rangées dans Vercel |
 | Lien avec la suite | Tous les agents de l'entreprise autonome travaillent sur cette base : vente et encaissement en J4, service client et opérations en J5, analyste (en lecture seule) et administratif en J6 |
 
 Kofi Traiteur, l'entreprise de la démonstration, est un exemple fictif.
@@ -354,9 +354,9 @@ Bloqué plus de 10 minutes : levez la main.
 6. Après une modification, votre page d'accueil est cassée. Que demandez-vous à Claude Code ?
    - De résumer en français ce qui a changé depuis la dernière version qui marchait, puis, si c'est la cause, de revenir à la version précédente dans l'historique Git sans rien supprimer d'autre, et de dire comment vérifier.
 
-## Avant la J4 · 45 minutes
+## Avant la J4 · 1 heure
 
-La J4 a besoin de deux morceaux de l'ancien labo : l'agent devis se déclenche quand une nouvelle demande arrive dans la base, et chaque étape de la J4 exige des tests verts sur GitHub. Faites-les dans cet ordre, chacun sur une branche et une demande de fusion vérifiée sur le lien Preview, comme au labo. Si quelque chose casse : fiche 6.
+La J4 a besoin de deux morceaux de l'ancien labo : l'agent devis se déclenche quand une nouvelle demande arrive dans la base, et chaque étape de la J4 exige des tests verts sur GitHub. Elle a aussi besoin de vos clés : son labo commence directement par la grille de prix. Faites les deux premiers points dans cet ordre, chacun sur une branche et une demande de fusion vérifiée sur le lien Preview, comme au labo. Si quelque chose casse : fiche 6.
 
 ### 1 · La vitrine enregistre chaque demande (15 min)
 
@@ -378,7 +378,22 @@ Fais tourner tous les tests du projet sur GitHub Actions à chaque demande de fu
 - [ ] Sur GitHub, la demande de fusion affiche les tests en vert
 - [ ] J'ai lu le nom de chaque test et je comprends ce qu'il vérifie
 
-### 3 · Vos règles (15 min)
+### 3 · Vos clés, rangées dans Vercel (15 min)
+
+Les agents de la J4 appellent le modèle par son API, et l'encaissement passe par Stripe en mode test. Ces deux clés se créent maintenant, chacune dans son tableau de bord, et vont **uniquement** dans les variables d'environnement de Vercel. Une clé ne va jamais dans le code, ni dans une conversation, même avec Claude, ni dans un message à l'équipe.
+
+1. Sur la console du fournisseur du modèle, créez une clé d'API. Fixez tout de suite une limite de dépense mensuelle, avec le montant que vous acceptez de dépenser. On paie aux tokens : les tarifs à jour sont sur la page de tarifs officielle du fournisseur.
+2. Dans Vercel, projet « ma-vitrine », Settings, Environment Variables : ajoutez **ANTHROPIC_API_KEY** et collez la clé directement depuis la console.
+3. Sur Stripe, passez et restez en **mode test**. Dans la partie développeurs du tableau de bord, page des clés d'API, copiez la clé secrète de test et ajoutez-la dans Vercel : **STRIPE_SECRET_KEY**. La clé du webhook viendra pendant le labo de la J4. Les frais de Stripe sont sur sa page de tarifs officielle.
+4. Relancez le déploiement pour que les variables soient prises en compte.
+
+- [ ] Une limite de dépense est fixée sur la console du fournisseur du modèle
+- [ ] ANTHROPIC_API_KEY et STRIPE_SECRET_KEY sont dans Vercel, et Stripe est en mode test
+- [ ] Aucune clé n'apparaît dans le code, dans le dépôt GitHub ni dans une conversation
+
+Stripe n'ouvre pas de compte marchand dans tous les pays. Si le vôtre n'est pas couvert, signalez-le avant la J4 : un agrégateur local suit le même principe. Bloqué ? Venez à la pause de midi de la J4 : on termine les clés ensemble avant le labo, sans jamais afficher leur valeur.
+
+### 4 · Vos règles (15 min)
 
 - [ ] Écrivez vos règles de devis et de paiement : prix par produit ou service, remises, durée de validité, comment vos clients paient (carte, mobile money, virement) et ce qui se passe en cas de retard
 - [ ] Listez ce qu'un agent ne doit jamais faire sans vous (exemple : accorder une remise, rembourser)
