@@ -2,7 +2,7 @@ import { BookOpenCheck, FileText } from "lucide-react";
 import Link from "next/link";
 
 import { prisma } from "@/lib/db";
-import { ATTACHMENT_BUDGET_BYTES, extension, formatBytes } from "@/lib/documents";
+import { ATTACHMENT_BUDGET_BYTES, extension, formatBytes, PARTICIPANTS } from "@/lib/documents";
 import { PROGRAMS } from "@/lib/programs";
 
 import { deleteDocument, toggleDocument } from "./actions";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 /** Library of preparation documents: upload, activate, delete. Sending happens from a lead's sheet. */
 export default async function DocumentsPage() {
-  const documents = await prisma.document.findMany({ orderBy: [{ program: "asc" }, { createdAt: "asc" }], select: { id: true, name: true, filename: true, size: true, active: true, program: true, createdAt: true } });
+  const documents = await prisma.document.findMany({ where: { audience: PARTICIPANTS }, orderBy: [{ program: "asc" }, { createdAt: "asc" }], select: { id: true, name: true, filename: true, size: true, active: true, program: true, createdAt: true } });
   const total = documents.filter((d) => d.active).reduce((sum, d) => sum + d.size, 0);
 
   return (

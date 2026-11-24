@@ -21,6 +21,7 @@ const registerSchema = z.object({
   program: z.enum(PROGRAM_CODES),
   filename: z.string().trim().min(1).max(200),
   pathname: z.string().startsWith("documents/").max(255),
+  audience: z.enum(["participants", "internal"]).default("participants"),
 });
 
 /**
@@ -45,9 +46,10 @@ export async function registerDocument(input: z.input<typeof registerSchema>): P
   }
 
   await prisma.document.create({
-    data: { name: parsed.data.name, program: parsed.data.program, filename: safeFilename(parsed.data.filename), mimeType: blob.contentType, size: blob.size, blobPathname: blob.pathname },
+    data: { name: parsed.data.name, program: parsed.data.program, audience: parsed.data.audience, filename: safeFilename(parsed.data.filename), mimeType: blob.contentType, size: blob.size, blobPathname: blob.pathname },
   });
   revalidatePath("/admin/documents");
+  revalidatePath("/admin/bibliotheque");
   return { ok: true };
 }
 
@@ -67,4 +69,5 @@ export async function deleteDocument(formData: FormData): Promise<void> {
   if (document?.blobPathname) await del(document.blobPathname).catch((error) => console.error("[documents] suppression du fichier", error));
   await prisma.document.delete({ where: { id: documentId } });
   revalidatePath("/admin/documents");
+  revalidatePath("/admin/bibliotheque");
 }

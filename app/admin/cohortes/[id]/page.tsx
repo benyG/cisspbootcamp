@@ -1,4 +1,5 @@
 import { Clapperboard, FileText, GraduationCap, Send, Trash2, Video } from "lucide-react";
+import { PARTICIPANTS } from "@/lib/documents";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -50,7 +51,7 @@ export default async function CohortPage({
     ...cohort.registrations.map((r) => r.lead.id),
     ...(await prisma.seatHold.findMany({ where: { cohortId: cohort.id, releasedAt: null, expiresAt: { gt: new Date() } }, select: { leadId: true } })).map((h) => h.leadId),
   ]).size;
-  const documents = await prisma.document.findMany({ where: { program: cohort.program, active: true }, orderBy: { createdAt: "asc" }, select: { id: true, name: true } });
+  const documents = await prisma.document.findMany({ where: { program: cohort.program, active: true, audience: PARTICIPANTS }, orderBy: { createdAt: "asc" }, select: { id: true, name: true } });
   const onboardingLogs = paid.length
     ? await prisma.actionLog.findMany({ where: { leadId: { in: paid.map((r) => r.lead.id) }, type: "onboarding_sent" }, orderBy: { createdAt: "desc" }, select: { payload: true, createdAt: true } })
     : [];
