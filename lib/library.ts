@@ -29,11 +29,16 @@ export type LibraryDoc = {
   audience: LibraryAudience;
   updated: string;
   summary: string;
+  /** The trainer's presentation for this document, in content/library/files (front matter `deck:`). */
+  deck: string | null;
   body: string;
 };
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DIR = () => path.join(process.cwd(), "content", "library");
+/** A presentation kept with the library: letters, digits and dashes, .pptx only. */
+export const DECK_NAME = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\.pptx$/;
+const FILES_DIR = () => path.join(DIR(), "files");
 
 /** "---\nkey: value\n---\nbody" → fields and body. Pure. */
 export function parseDocument(slug: string, raw: string): LibraryDoc | null {
@@ -53,6 +58,7 @@ export function parseDocument(slug: string, raw: string): LibraryDoc | null {
     audience: fields.audience === "participants" ? "participants" : "internal",
     updated: /^\d{4}-\d{2}-\d{2}$/.test(fields.updated ?? "") ? fields.updated! : "",
     summary: fields.summary ?? "",
+    deck: DECK_NAME.test(fields.deck ?? "") ? fields.deck! : null,
     body: match[2]!.trim(),
   };
 }
@@ -76,6 +82,28 @@ export function getLibraryDoc(slug: string): LibraryDoc | null {
     return parseDocument(slug, readFileSync(path.join(DIR(), `${slug}.md`), "utf8"));
   } catch {
     return null;
+  }
+}
+
+/**
+ * The trainer's presentations (Bâtisseur IA J1 to J6, speaker notes included),
+ * revised by Claude and kept in content/library/files like the Markdown
+ * documents, so every correction is versioned. Admin only.
+ */
+export function readLibraryDeck(name: string): Buffer | null {
+  if (!DECK_NAME.test(name)) return null;
+  try {
+    return readFileSync(path.join(FILES_DIR(), name));
+  } catch {
+    return null;
+  }
+}
+
+export function listLibraryDecks(): string[] {
+  try {
+    return readdirSync(FILES_DIR()).filter((f) => DECK_NAME.test(f)).sort();
+  } catch {
+    return [];
   }
 }
 

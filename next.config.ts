@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
     "/admin/bibliotheque": ["./content/library/**"],
     "/admin/bibliotheque/[slug]": ["./content/library/**"],
     "/ia/fiches": ["./content/library/**"],
+    "/admin/bibliotheque/presentation/[name]": ["./content/library/files/**"],
   },
   /* A LinkedIn post may carry an image of up to 4 MB (lib/linkedin.ts); the default is 1 MB. */
   experimental: { serverActions: { bodySizeLimit: "5mb" } },

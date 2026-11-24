@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Presentation } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -27,6 +28,9 @@ export default async function LibraryDocPage({ params }: { params: Promise<{ slu
       <p className="mt-4 text-xs font-bold tracking-[.06em] text-muted uppercase">{LIBRARY_CATEGORIES[doc.category]}</p>
       <h1 className="mt-1 text-2xl font-extrabold leading-tight">{doc.title}</h1>
       <p className="mt-1 text-sm text-muted">Mis à jour le {formatUpdated(doc.updated)}</p>
+      {doc.deck && (
+        <a href={`/admin/bibliotheque/presentation/${doc.deck}`} className="mt-3 inline-flex items-center gap-1 rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold print:hidden"><Presentation className="size-4" aria-hidden />Télécharger la présentation (PowerPoint, notes du formateur incluses)</a>
+      )}
       {doc.audience === "participants" && <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent-ink print:hidden">À remettre aux participants : lien public <a href="/ia/fiches" className="font-semibold underline">/ia/fiches</a>, ou le PDF de cette page.</p>}
       <article className="md-doc mt-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(doc.body) }} />
     </main>
