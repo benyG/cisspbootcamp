@@ -4,19 +4,19 @@ category: ia-formateur
 audience: internal
 updated: 2026-11-24
 deck: Batisseur-IA-J4.pptx
-summary: Le support du formateur de la J4 : fiche de la journée, cours sur l'anatomie d'un agent et les trois agents (devis, encaissement par carte et mobile money, relance), démonstration Kofi Traiteur, réflexe « comprendre et tester un agent », labo pas à pas avec les textes à copier, revue, dépannage, lexique et quiz.
+summary: Le support du formateur de la J4 : fiche de la journée, cours sur l'anatomie d'un agent et les trois agents (devis, encaissement par carte et mobile money, relance), démonstration Kofi Traiteur, réflexe « comprendre et tester un agent », labo pas à pas (agent devis, 10 cas de test, journal) avec les textes à copier, paiement de test à brancher avant la J5, revue, dépannage, lexique et quiz.
 ---
 
 ## Fiche de la journée
 
-À la fin de la J4, trois agents travaillent dans votre application : l'un prépare un devis à chaque demande, l'autre encaisse par carte ou mobile money et confirme le paiement, le troisième relance les devis restés sans réponse. Chacun suit vos règles, note ce qu'il fait, et vous laisse les décisions qui engagent l'entreprise.
+Le matin, vous découvrez trois agents : l'un prépare un devis à chaque demande, l'autre encaisse par carte ou mobile money et confirme le paiement, le troisième relance les devis restés sans réponse. À la fin de la J4, le premier travaille dans votre application et a passé ses 10 cas de test : il suit vos règles, note ce qu'il fait, et vous laisse les décisions qui engagent l'entreprise. Le paiement par carte de test se branche avant la J5 (25 minutes, texte à copier ci-dessous) ; l'agent relance est un « pour aller plus loin ».
 
 | Rubrique | Détail |
 | --- | --- |
 | Public | Dirigeants, indépendants, porteurs de projet. Aucune compétence en programmation. |
 | Durée | 5 heures de travail (10 h à 16 h, heure de Montréal, avec une heure de pause) : cours, démonstration, réflexe du jour, labo, revue |
 | Prérequis | La base, l'administration et les tests de la J3 ; vos règles de devis, vos moyens de paiement et la liste de ce qu'un agent ne fait jamais sans vous (travail « avant la J4 ») ; un compte Stripe (mode test) ; un compte sur la console du fournisseur du modèle (la clé d'API Claude se crée à l'étape 1) ; les fiches réflexes 3 et 4 |
-| Résultat | Un agent devis, un encaissement carte (et mobile money si votre pays le permet), un agent de relance, des règles écrites, un journal des actions, la fiche de règles et les 10 cas de test de l'agent devis |
+| Résultat | Le soir : un agent devis en brouillon, des règles écrites, un journal des actions avec un interrupteur, la fiche de règles et les 10 cas de test de l'agent devis. Avant la J5 : l'encaissement carte (et mobile money si votre pays le permet), confirmé par le webhook, qui fait de lui un agent qui encaisse |
 | Lien avec la suite | J5 ajoute les agents communication, service client, veille et, selon l'activité, opérations ; J6 ajoute l'analyste et l'administratif, et pilote l'ensemble avec des objectifs et des garde-fous |
 
 Kofi Traiteur, l'entreprise des exemples et de la démonstration, est un exemple fictif ; l'Atelier Adjoa, dans les fiches réflexes, l'est aussi.
@@ -38,8 +38,8 @@ Kofi Traiteur, l'entreprise des exemples et de la démonstration, est un exemple
 | 10 h 45 | Cours et atelier | Les trois agents de la journée ; vos règles écrites |
 | 11 h 30 | Démonstration | Les agents de Kofi Traiteur |
 | 12 h 30 | Pause | 1 heure |
-| 13 h 30 | Labo | Réflexe du jour : comprendre et tester un agent (10 cas de test), puis vos trois agents, en mode test |
-| 15 h 15 | Revue en groupe | Une demande de bout en bout : devis, paiement, relance |
+| 13 h 30 | Labo | Réflexe du jour : comprendre et tester un agent (10 cas de test, 30 min), puis votre agent devis, en mode test (4 étapes, 65 min) |
+| 15 h 15 | Revue en groupe | Votre agent devis, ses 10 cas de test et son journal |
 
 ## Cours 1 : anatomie d'un agent
 
@@ -156,7 +156,7 @@ Plan B : branche « j4-agents » du dépôt « kofi-traiteur-demo ».
 
 ## Bien travailler avec Claude : comprendre et tester un agent
 
-Le réflexe du jour ouvre le labo, à 13 h 30, juste après la pause. Il dure 30 à 45 minutes, pris sur la pratique guidée (pas sur la démonstration). Pourquoi il compte pour un non-développeur : vous ne lirez pas le code de vos agents, mais vous pouvez toujours savoir ce qu'ils ont le droit de faire et vérifier leur comportement avant de leur confier vos clients.
+Le réflexe du jour ouvre le labo, à 13 h 30, juste après la pause. Il dure 30 minutes (13 h 30 – 14 h 00), pris sur la pratique guidée (pas sur la démonstration). Pourquoi il compte pour un non-développeur : vous ne lirez pas le code de vos agents, mais vous pouvez toujours savoir ce qu'ils ont le droit de faire et vérifier leur comportement avant de leur confier vos clients.
 
 **Comprendre un agent, puis le tester : les quatre points** (diapositive « Comprendre un agent, puis le tester »)
 
@@ -187,21 +187,30 @@ La règle :
 
 1. Fiche 3 (10 à 15 min) : chacun remplit la fiche de règles de son agent devis à partir des cinq éléments écrits à l'atelier du matin. Insister sur « Il ne fait jamais » et « Il s'arrête et me passe la main quand ».
 2. Fiche 4 (15 min) : chacun écrit ses 10 messages de test avec les mots de ses vrais clients, et la réaction attendue pour chacun.
-3. Après l'étape 3 du labo : chaque cas est joué comme une demande de test, le résultat est noté dans la colonne « Résultat ». Un cas qui échoue se corrige en précisant la règle à Claude Code, puis on rejoue les 10. On les rejoue aussi après les étapes 4 et 5.
+3. À la fin de l'étape 3 du labo : chaque cas est joué comme une demande de test, le résultat est noté dans la colonne « Résultat ». Un cas qui échoue se corrige en précisant la règle à Claude Code, puis on rejoue les 10. On les rejoue aussi après l'étape 4, puis avant la J5, une fois le paiement branché.
 
-**Comment l'animer (30 à 45 min).**
+**Comment l'animer (30 min).**
 
 - 10 minutes : les quatre points, avec l'agent devis de Kofi Traiteur (fictif) comme exemple ; faire le lien avec les cinq éléments du matin.
 - 5 minutes : la fiche 4, en lisant les six cas difficiles à voix haute.
-- 15 à 30 minutes : l'exercice (fiches 3 et 4), en passant voir chacun.
+- 15 minutes : l'exercice (fiches 3 et 4), en passant voir chacun.
 - Le cas 7 rejoint l'encaissement : une capture d'écran de paiement, par carte ou mobile money, ne vaut jamais confirmation.
-- Si le groupe est en retard : s'en tenir à 30 minutes et finir la fiche 4 pendant l'étape 3.
+- Si le groupe est en retard : passer quand même à l'étape 1 à 14 h 00 et finir la fiche 4 pendant l'étape 3.
 
 Fiches réflexes : [fiches 3 et 4](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien à donner aux participants : /ia/fiches.
 
 ## Atelier et labo
 
-Le matin, chacun écrit les règles de ses trois agents. L'après-midi, de 13 h 30 à 15 h 15, chacun commence par le réflexe du jour, puis construit ses agents sur son application de la J3, **en mode test**. Les durées des étapes sont indicatives : le créneau est serré, visez au minimum les étapes 1 à 4 avant la revue. Chaque étape passe par une demande de fusion, des tests verts et une vérification sur le lien Preview.
+Le matin, chacun écrit les règles de ses trois agents. L'après-midi, de 13 h 30 à 15 h 15, chacun commence par le réflexe du jour (30 min), puis construit son agent devis sur son application de la J3, **en mode test**, en quatre étapes :
+
+| Étape | Ce que vous faites | Temps |
+| --- | --- | --- |
+| 1 | Les clés : API du modèle avec limite de dépense, Stripe en mode test | 15 min |
+| 2 | La grille de prix dans la base, modifiable depuis /admin | 15 min |
+| 3 | L'agent devis, en brouillon, puis vos 10 cas de test joués | 25 min |
+| 4 | Le journal et l'interrupteur | 10 min |
+
+Soit 65 minutes, de 14 h 00 à 15 h 05 ; les 10 minutes restantes servent à rejouer les cas de test qui ont échoué. Chaque étape passe par une demande de fusion, des tests verts et une vérification sur le lien Preview. Le paiement par carte de test se branche avant la J5 (voir « Avant la J5 ») ; l'agent relance est dans « Pour aller plus loin ».
 
 ### Atelier du matin · Vos règles (30 min)
 
@@ -214,7 +223,7 @@ Pour chacun des trois agents, remplissez les cinq éléments (déclencheur, outi
 ### Étape 1 · Les clés (15 min)
 
 1. Sur la console du fournisseur du modèle, créez une clé d'API et fixez une limite de dépense mensuelle. Ajoutez-la dans Vercel : **ANTHROPIC_API_KEY**.
-2. Sur Stripe, restez en **mode test**. Copiez la clé secrète de test dans Vercel : **STRIPE_SECRET_KEY**. La clé du webhook viendra à l'étape 4.
+2. Sur Stripe, restez en **mode test**. Copiez la clé secrète de test dans Vercel : **STRIPE_SECRET_KEY**. Elle servira au paiement, avant la J5 ; la clé du webhook viendra à ce moment-là.
 
 - [ ] Les deux variables sont dans Vercel, aucune dans le code ni dans un message
 
@@ -226,7 +235,7 @@ Ajoute une table « grille de prix » : nom, description, prix unitaire en centi
 
 - [ ] Je modifie un prix depuis /admin sur mon téléphone
 
-### Étape 3 · L'agent devis (25 min)
+### Étape 3 · L'agent devis, puis vos 10 cas de test (25 min)
 
 Utilisez le prompt du Cours 2 avec vos règles de l'atelier et votre fiche 3. Précisez :
 
@@ -238,64 +247,40 @@ Le devis est créé en brouillon et attend mon clic « Envoyer » dans /admin. S
 - [ ] Une demande hors grille est signalée, sans devis inventé
 - [ ] Mes 10 cas de test (fiche 4) sont joués et leur résultat est noté
 
-### Étape 4 · Le paiement par carte, en test (25 min)
-
-```
-Quand j'envoie un devis, ajoute un lien de paiement Stripe Checkout au montant du devis, avec la clé de la variable STRIPE_SECRET_KEY.
-
-Crée la route du webhook Stripe pour l'événement checkout.session.completed. Vérifie sa signature avec la variable STRIPE_WEBHOOK_SECRET. Seul ce webhook passe le paiement à « reçu », crée la commande et envoie le reçu. Le retour du navigateur n'affiche qu'un message d'attente.
-
-Teste la signature : un webhook mal signé est refusé.
-```
-
-Dans Stripe (mode test), ajoutez l'adresse du webhook de votre site, copiez sa clé dans Vercel (**STRIPE_WEBHOOK_SECRET**), puis relancez le déploiement. Payez avec une carte de test Stripe.
-
-- [ ] Après le paiement de test, la commande et le reçu apparaissent, même si je ferme l'onglet
-- [ ] Le test « webhook mal signé refusé » est vert
-
-Mobile money : si vous avez déjà un compte de test chez un agrégateur, appliquez le même principe (notification serveur vérifiée, puis vérification de statut auprès de lui). Sinon, on le branche après la formation avec sa documentation.
-
-### Étape 5 · L'agent relance (20 min)
-
-```
-Crée l'agent relance, lancé chaque matin par Vercel Cron. Il cherche les devis envoyés il y a 5 jours ou plus, sans paiement ni réponse, et prépare une relance en brouillon dans /admin. 2 relances au plus par devis, espacées de 5 jours. Jamais à un client désinscrit. Chaque e-mail contient un lien de désinscription en un clic. Ton aimable, aucune fausse urgence. Ajoute dans /admin un bouton pour le lancer à la main.
-```
-
-- [ ] Le bouton manuel prépare une relance pour un devis de test vieux de 5 jours
-- [ ] Le lien de désinscription fonctionne et bloque la relance suivante
-
-### Étape 6 · Le journal et les interrupteurs (10 min)
+### Étape 4 · Le journal et l'interrupteur (10 min)
 
 ```
 Ajoute dans /admin une page Journal : chaque action des agents, la plus récente en haut, avec l'heure, l'agent, la fiche et le résultat. Ajoute un interrupteur par agent : arrêté, l'agent ne fait plus rien et le journal le note.
 ```
 
-- [ ] J'arrête l'agent relance, je clique sur le bouton manuel : rien ne part, le journal le dit
+- [ ] J'arrête l'agent devis, j'envoie une demande de test : aucun brouillon n'est créé, le journal le dit
+
+Les agents ajoutés ensuite (paiement avant la J5, relance, agents de la J5) écrivent dans ce même journal et reçoivent chacun leur interrupteur.
 
 ## Ça tourne ? La revue de 15 h 15
 
-Chacun fait passer une demande de test par ses trois agents, devant le groupe, puis montre son journal.
+Chacun fait passer une demande de test par son agent devis, devant le groupe, puis montre son journal.
 
 - [ ] Une demande produit un brouillon de devis au bon montant, que je valide
 - [ ] Une demande hors grille est signalée, sans invention
-- [ ] Un paiement de test crée la commande et le reçu, par le webhook
-- [ ] Une relance est préparée, avec lien de désinscription
-- [ ] Le journal montre chaque action ; un interrupteur arrête un agent
-- [ ] Les tests sont verts, dont celui du webhook mal signé
+- [ ] Ma fiche de règles (fiche 3) est complète
+- [ ] Je modifie un prix de ma grille depuis /admin
+- [ ] Le journal montre chaque action ; un interrupteur arrête l'agent
+- [ ] Les tests sont verts, dont celui du calcul des montants
 - [ ] Toutes les clés sont dans Vercel, en mode test, avec une limite de dépense
 - [ ] Réflexe du jour : mon agent devis passe ses 10 cas de test
 
-Rien ne passe en mode réel avant d'avoir relu les règles à tête reposée.
+Rien ne passe en mode réel avant d'avoir relu les règles à tête reposée. Ceux qui n'ont pas fini notent les étapes restantes et les terminent avant la J5, avec le paiement.
 
 ## Dépannage
 
 | Symptôme | Quoi faire |
 | --- | --- |
 | L'agent devis invente un prix | « Le montant doit venir uniquement de la grille, calculé par le code ; ajoute un test » |
-| Le webhook renvoie une erreur 400 | La clé STRIPE_WEBHOOK_SECRET ne correspond pas à cette adresse de webhook : recopiez-la, relancez le déploiement |
-| Le paiement de test ne crée rien | Dans Stripe, ouvrez le webhook et regardez l'événement envoyé ; copiez la réponse à Claude Code |
 | « Authentication error » de l'API du modèle | Vérifiez ANTHROPIC_API_KEY dans Vercel, puis relancez le déploiement |
-| La relance ne part pas le matin | Les tâches planifiées ne tournent qu'en production : testez avec le bouton manuel |
+| Avant la J5 : le webhook renvoie une erreur 400 | La clé STRIPE_WEBHOOK_SECRET ne correspond pas à cette adresse de webhook : recopiez-la, relancez le déploiement |
+| Avant la J5 : le paiement de test ne crée rien | Dans Stripe, ouvrez le webhook et regardez l'événement envoyé ; copiez la réponse à Claude Code |
+| Pour aller plus loin : la relance ne part pas le matin | Les tâches planifiées ne tournent qu'en production : testez avec le bouton manuel |
 | Le ton de l'agent ne vous ressemble pas | Donnez-lui deux exemples de vos vrais messages dans ses règles |
 | Un des 10 cas de test échoue | Précisez la règle concernée à Claude Code, puis rejouez les 10 cas, pas seulement celui qui échouait |
 
@@ -336,10 +321,44 @@ On copie à Claude Code le message d'erreur ou la réponse de Stripe, jamais une
 7. Quand un agent peut-il être mis en service ?
    - Quand ses 10 cas de test passent, dont les six difficiles ; on les rejoue après chaque changement.
 
-## Avant la J5 · 30 minutes
+## Avant la J5 · environ 1 heure
+
+### Branchez le paiement par carte de test (25 min)
+
+C'est ce qui fait de votre agent devis un agent qui encaisse, et la J5 en a besoin : l'agent opérations part des commandes confirmées. Revoyez d'abord la démonstration du matin (de 25 à 40 minutes). La clé STRIPE_SECRET_KEY est déjà dans Vercel depuis l'étape 1 du labo. Écrivez à Claude Code :
+
+```
+Quand j'envoie un devis, ajoute un lien de paiement Stripe Checkout au montant du devis, avec la clé de la variable STRIPE_SECRET_KEY.
+
+Crée la route du webhook Stripe pour l'événement checkout.session.completed. Vérifie sa signature avec la variable STRIPE_WEBHOOK_SECRET. Seul ce webhook passe le paiement à « reçu », crée la commande et envoie le reçu. Le retour du navigateur n'affiche qu'un message d'attente.
+
+Teste la signature : un webhook mal signé est refusé.
+```
+
+Dans Stripe (mode test), ajoutez l'adresse du webhook de votre site, copiez sa clé dans Vercel (**STRIPE_WEBHOOK_SECRET**), puis relancez le déploiement. Payez avec une carte de test Stripe.
+
+- [ ] Après le paiement de test, la commande et le reçu apparaissent, même si je ferme l'onglet
+- [ ] Le test « webhook mal signé refusé » est vert
+- [ ] Le paiement écrit dans le journal, et je rejoue mes 10 cas de test
+
+Mobile money : si vous avez déjà un compte de test chez un agrégateur, appliquez le même principe (notification serveur vérifiée, puis vérification de statut auprès de lui). Sinon, on le branche après la formation avec sa documentation. Une clé ne va jamais dans le code ni dans une conversation : seulement dans Vercel. En cas de blocage, voir le dépannage (lignes « Avant la J5 ») ; on en reparle en ouverture de la J5.
+
+### Préparez vos agents spécialisés (30 min)
 
 - [ ] Notez les questions que vos clients posent le plus souvent, avec votre réponse habituelle
 - [ ] Listez 3 concurrents ou sources à suivre (sites, pages, salons) et ce que vous voulez y surveiller
 - [ ] Choisissez les réseaux où vous publiez, et rassemblez 3 publications qui vous ressemblent
 - [ ] Si vous produisez ou livrez : décrivez le circuit d'une commande jusqu'à la livraison, et vos fournisseurs
 - [ ] Lisez la fiche 5 : diagnostiquer une erreur en 5 étapes (fiches réflexes, lien /ia/fiches)
+
+## Pour aller plus loin : l'agent relance
+
+L'agent relance est présenté en cours et en démonstration, mais il n'est pas au labo et rien n'en dépend en J5. Si vous voulez le construire après la formation, une fois le paiement branché, écrivez à Claude Code :
+
+```
+Crée l'agent relance, lancé chaque matin par Vercel Cron. Il cherche les devis envoyés il y a 5 jours ou plus, sans paiement ni réponse, et prépare une relance en brouillon dans /admin. 2 relances au plus par devis, espacées de 5 jours. Jamais à un client désinscrit. Chaque e-mail contient un lien de désinscription en un clic. Ton aimable, aucune fausse urgence. Ajoute dans /admin un bouton pour le lancer à la main.
+```
+
+- [ ] Le bouton manuel prépare une relance pour un devis de test vieux de 5 jours
+- [ ] Le lien de désinscription fonctionne et bloque la relance suivante
+- [ ] J'arrête l'agent relance, je clique sur le bouton manuel : rien ne part, le journal le dit
