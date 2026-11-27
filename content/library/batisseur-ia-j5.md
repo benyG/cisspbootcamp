@@ -244,31 +244,47 @@ On ne provoque aucune erreur exprès : l'exercice porte sur les erreurs réelles
 
 Ensuite, le formateur passe parmi les participants : à chaque erreur, il demande d'abord ce qui a été noté et où sont les journaux, et vérifie que chacun refait le test qui échouait. Vigilance : personne ne colle une clé dans la conversation.
 
-## Labo : vos agents spécialisés
+## Labo : les deux agents de votre projet
 
-Le labo dure 1 h 45, de 13 h 30 à 15 h 15 : le réflexe diagnostic d'abord (30 min, ci-dessus), puis trois étapes (70 min) sur votre application de la J4 : vos skills, l'agent service client avec l'assistant du site, l'agent communication. Chaque étape passe par une demande de fusion, des tests verts et le lien Preview. Le livrable du soir : deux agents métier en service et une vraie erreur du labo diagnostiquée et réparée seul.
+Le labo dure 1 h 45, de 13 h 30 à 15 h 15 : « Selon votre projet » à la reprise (3 min), le réflexe diagnostic (30 min, ci-dessus), puis trois étapes (70 min) sur votre application de la J4. La compétence est la même pour tous ; les deux agents sont ceux de votre projet. Chaque étape passe par une demande de fusion, des tests verts et le lien Preview. Le livrable du soir : deux agents choisis pour votre projet, en service, et une vraie erreur du labo diagnostiquée et réparée seul.
 
-La file d'actions unique et l'e-mail du matin se construisent avant la J6 (voir « Avant la J6 », texte à copier compris). Le troisième agent, opérations ou veille, se construit après la formation (voir « Pour aller plus loin » ci-dessous).
+**Votre choix.** Deux agents parmi les quatre (voir les repères de la fiche de la journée et « Selon votre projet ») :
 
-### Étape 1 · Vos skills (15 min)
+- **réponse au public** : service client, réponse aux membres ou aux collègues, avec l'assistant du site ;
+- **communication** : trois publications par semaine, à valider ;
+- **veille** : ce qui a changé dans votre marché ou votre secteur, un lien par fait ;
+- **opérations** : planning, achats, stock ou préparation des événements, calculés par le code.
 
-Avec ce que vous avez préparé avant la J5, écrivez deux skills (comme en J1) et ajoutez-les au dépôt :
+Si l'un de vos deux agents répond au public, construisez-le en premier (étape 2) : la revue le testera.
 
-- **« Mon ton »** : vos 3 publications, vos formules, ce que vous n'écrivez jamais.
-- **« Répondre à mes clients »** : vos questions fréquentes avec vos réponses, et les sujets à transmettre.
+**Pas encore d'activité ?** Travaillez sur les documents et les données de test de votre kit de départ (fiche 0), marqués « Exemple » ; si vous ne l'avez pas encore fait, collez votre fiche projet dans Claude Desktop avec le texte du kit de départ avant l'étape 1. Ils servent jusqu'à ce que les vrais arrivent.
 
-- [ ] Les deux skills contiennent mes vrais exemples, pas des exemples inventés
+La file d'actions unique et l'e-mail du matin se construisent avant la J6 (voir « Avant la J6 », texte à copier compris). Les deux agents que vous ne choisissez pas se construisent après la formation (voir « Pour aller plus loin » ci-dessous).
 
-### Étape 2 · L'agent service client et l'assistant du site (30 min)
+Dans les textes à copier, remplacez chaque crochet par ce que dit votre fiche projet.
 
-Ajoutez d'abord vos documents (ceux de la J1) au dépôt, dans un dossier « connaissances ». Puis, avec le gabarit du Cours 1 :
+### Étape 1 · Vos deux agents et leurs skills (15 min)
+
+Notez vos deux agents en tête de votre fiche projet. Puis, avec ce que vous avez préparé avant la J5 (ou avec votre kit de départ), écrivez une skill par agent (comme en J1) et ajoutez-les au dépôt :
+
+- **« Mon ton »** (communication) : vos 3 publications, vos formules, ce que vous n'écrivez jamais ;
+- **« Répondre à [mon public] »** (réponse au public) : vos questions fréquentes avec vos réponses, et les sujets à transmettre ;
+- **« Ma veille »** (veille) : vos sources, vos mots-clés, les décisions que la veille doit éclairer ;
+- **« Mes opérations »** (opérations) : vos nomenclatures, votre stock ou votre circuit, et ce qui ne part jamais sans votre clic.
+
+- [ ] Mes deux agents sont notés dans ma fiche projet
+- [ ] Les deux skills contiennent mes vrais exemples (ou ceux du kit de départ, relus), pas des exemples inventés au hasard
+
+### Étape 2 · Votre premier agent (30 min)
+
+**S'il répond au public : l'agent de réponse et l'assistant du site.** Ajoutez d'abord vos documents (ceux de la J1, ou ceux du kit de départ) au dépôt, dans un dossier « connaissances ». Puis, avec le gabarit du Cours 1 :
 
 ```
-Crée l'agent service client, avec la skill « Répondre à mes clients ».
+Crée l'agent qui répond à [mon public : clients, membres ou collègues], avec la skill « Répondre à [mon public] ».
 
-Il répond dans une bulle de discussion sur la vitrine, uniquement à partir des documents du dossier « connaissances », en citant le document. Il se présente comme un assistant automatique.
+Il répond dans une bulle de discussion sur [ma première page publique], uniquement à partir des documents du dossier « connaissances », en citant le document. Il se présente comme un assistant automatique.
 
-Si la question est hors documents, ou concerne [vos sujets sensibles], il répond qu'il transmet à l'équipe et crée une action dans /admin. Il ne demande des coordonnées que si le client veut être recontacté, avec une case de consentement non cochée.
+Si la question est hors documents, ou concerne [mes sujets sensibles], il répond qu'il transmet à l'équipe et crée une action dans /admin. Il ne demande des coordonnées que si la personne veut être recontactée, avec une case de consentement non cochée.
 
 Limite : 20 messages par conversation, pour maîtriser le coût.
 ```
@@ -278,50 +294,56 @@ Limite : 20 messages par conversation, pour maîtriser le coût.
 - [ ] Aucune coordonnée n'est demandée sans la case
 - [ ] L'assistant est lisible sur un écran de 360 px
 
-### Étape 3 · L'agent communication (25 min)
+**Sinon**, prenez ici le texte de votre premier agent parmi ceux de l'étape 3, avec les mêmes vérifications que lui.
+
+### Étape 3 · Votre deuxième agent (25 min)
+
+Prenez le texte de votre deuxième agent. Chaque agent a ses règles, ses tests et son interrupteur, comme ceux de la J4.
+
+**L'agent communication.**
 
 ```
-Crée l'agent communication, avec la skill « Mon ton ». Chaque lundi (et sur un bouton dans /admin), il propose 3 publications à partir de mes offres, des questions fréquentes de la semaine et des nouveautés de la base.
+Crée l'agent communication de [mon projet], avec la skill « Mon ton ». Chaque lundi (et sur un bouton dans /admin), il propose 3 publications à partir de [mes offres ou mes événements], des questions fréquentes de la semaine et des nouveautés de la base.
 
-Pour chaque publication, compose un visuel avec le code, à partir de mon gabarit : [couleurs, logo, photos du dossier « images »]. Aucun visuel ne montre un faux client ni un faux produit.
+Pour chaque publication, compose un visuel avec le code, à partir de mon gabarit : [couleurs, logo, photos du dossier « images »]. Aucun visuel ne montre une fausse personne ni un faux produit.
 
-Chaque lien vers ma vitrine porte un marqueur UTM ; le tableau de bord compte les demandes venues de chaque publication. Les publications restent en brouillon dans /admin, avec un bouton « Copier ».
+Chaque lien vers [ma première page publique] porte un marqueur UTM ; le tableau de bord compte les demandes venues de chaque publication. Les publications restent en brouillon dans /admin, avec un bouton « Copier ».
 ```
 
 - [ ] 3 brouillons avec visuel, dans mon ton
 - [ ] Le lien de chaque publication porte son marqueur
 
-### Pour aller plus loin · Votre troisième agent
-
-Après la formation (semaine 3 du plan des 30 jours présenté en J6), avec le gabarit du Cours 1 et la même méthode : demande de fusion, tests verts, lien Preview.
-
-**Si vous produisez ou livrez : l'agent opérations.** Ajoutez d'abord vos nomenclatures (ce qu'il faut par unité vendue) et votre stock.
+**L'agent veille.**
 
 ```
-Crée l'agent opérations. Chaque soir et à chaque commande confirmée, il prépare le planning de production et de livraison du lendemain, la liste d'achats et les alertes de stock bas. Les quantités sont calculées par le code à partir des nomenclatures, jamais par le modèle. Un bon de commande fournisseur reste en brouillon jusqu'à mon clic. Écris les tests des calculs.
-```
-
-- [ ] 3 commandes de test donnent une liste d'achats juste, vérifiée à la main
-
-**Si vous vendez un service : l'agent veille.**
-
-```
-Crée l'agent veille. Chaque vendredi (et sur un bouton dans /admin), il consulte ces sources publiques : [vos 3 sources], et cherche sur le web : [vos mots-clés]. Il rend un résumé d'une page dans /admin : ce qui a changé, avec un lien pour chaque fait, puis trois questions pour moi. Aucun fait sans source ; pages publiques uniquement.
+Crée l'agent veille de [mon projet], avec la skill « Ma veille ». Chaque vendredi (et sur un bouton dans /admin), il consulte ces sources publiques : [mes 3 sources], et cherche sur le web : [mes mots-clés]. Il rend un résumé d'une page dans /admin : ce qui a changé, avec un lien pour chaque fait, puis trois questions pour moi. Aucun fait sans source ; pages publiques uniquement ; aucun suivi de personnes.
 ```
 
 - [ ] Le résumé cite un lien pour chaque fait, et je les ai ouverts
 
+**L'agent opérations.** Ajoutez d'abord vos nomenclatures (ce qu'il faut par unité vendue, ou par participant inscrit) et votre stock ; sans activité, celles du kit de départ, vérifiées à la main.
+
+```
+Crée l'agent opérations de [mon projet], avec la skill « Mes opérations ». Chaque soir et à chaque [action clé] confirmée, il prépare [le planning, la liste d'achats, les alertes de stock bas, ou la préparation de l'événement]. Les quantités sont calculées par le code à partir des nomenclatures, jamais par le modèle. Un bon de commande fournisseur reste en brouillon jusqu'à mon clic. Écris les tests des calculs.
+```
+
+- [ ] 3 [actions clés] de test donnent un résultat juste, vérifié à la main
+
+### Pour aller plus loin · Vos deux autres agents
+
+Après la formation (semaine 3 du plan des 30 jours présenté en J6), construisez les agents que vous n'avez pas choisis aujourd'hui, si votre projet en a besoin : mêmes textes à copier ci-dessus, gabarit du Cours 1 et même méthode (demande de fusion, tests verts, lien Preview).
+
 ## Ça tourne ? La revue de 15 h 15
 
-Chacun pose deux questions à l'assistant du site d'un autre participant, une simple et une piège, puis montre sur téléphone la question transmise dans /admin. Le formateur note les questions pièges qui ont fait sortir un assistant de ses documents : elles deviennent des tests.
+Les points sont les mêmes pour tous : on vérifie que ça marche sur votre projet, pas la ressemblance avec Kofi. Chacun fait deux demandes à un agent d'un autre participant, une simple et une piège (une question hors documents à l'assistant, un témoignage à inventer pour la communication, un fait sans source pour la veille, une quantité absurde pour les opérations), puis montre sur téléphone ce qui est arrivé dans /admin. Le formateur note les demandes pièges qui ont fait sortir un agent de ses règles : elles deviennent des tests.
 
-- [ ] L'assistant de mon site répond depuis mes documents et cite la source
-- [ ] Une question sensible ou hors documents est transmise dans ma file (/admin)
-- [ ] 3 publications en brouillon, avec visuel et marqueur de lien
+- [ ] Mes deux agents marchent sur de vrais cas de mon projet (ou du kit de départ)
+- [ ] Un cas sensible ou hors documents est transmis dans ma file (/admin), sans réponse inventée
+- [ ] Chaque fait ou chiffre vient d'une source citée ou du code, jamais du modèle
 - [ ] Mes deux skills contiennent mes vrais exemples, pas des exemples inventés
 - [ ] Aucune coordonnée n'est demandée sans la case de consentement
-- [ ] L'assistant est lisible sur un écran de 360 px
-- [ ] Les tests sont verts et chaque agent a son interrupteur
+- [ ] Ce que voit le public est lisible sur un écran de 360 px
+- [ ] Les tests sont verts ; chaque agent a une règle écrite et son interrupteur
 - [ ] Réflexe du jour : j'ai diagnostiqué et réparé seul une vraie erreur du labo
 
 ## Dépannage
@@ -331,8 +353,8 @@ Chacun pose deux questions à l'assistant du site d'un autre participant, une si
 | L'assistant répond hors de vos documents | « Réponds uniquement depuis le dossier connaissances ; sinon, transmets », et ajoutez un test avec une question piège |
 | Les publications sonnent génériques | Ajoutez à la skill « Mon ton » deux exemples de plus et trois mots que vous n'employez jamais |
 | Le visuel déborde ou coupe le texte | « Raccourcis le texte du visuel à 8 mots et teste sur un écran de 360 px » |
-| La liste d'achats est fausse (troisième agent, après la formation) | Vérifiez la nomenclature d'un produit à la main ; donnez le bon résultat à Claude Code avec un test |
-| La veille cite un lien qui ne dit pas ça (troisième agent, après la formation) | « Supprime tout fait dont la source ne contient pas l'information » ; ouvrez toujours les liens |
+| La liste d'achats est fausse (agent opérations) | Vérifiez la nomenclature d'un produit à la main ; donnez le bon résultat à Claude Code avec un test |
+| La veille cite un lien qui ne dit pas ça (agent veille) | « Supprime tout fait dont la source ne contient pas l'information » ; ouvrez toujours les liens |
 | Trop d'e-mails | Un seul e-mail par jour ; les alertes urgentes se déclarent une par une |
 | Une page affiche une erreur, ou un agent ne répond plus | Fiche 5 : noter, lire le message, Logs Vercel filtrés sur l'heure, diagnostic avant toute correction, puis refaire le test |
 
@@ -354,14 +376,14 @@ Bloqué plus de 10 minutes : levez la main.
 
 ## Quiz
 
-1. Un client demande sur le site si un plat contient des arachides. Que fait l'assistant ?
-   - Il ne répond pas à votre place : il transmet en urgence et le dit au client, sauf si vos documents contiennent l'information exacte.
+1. Sur le site de Kofi, un client demande si un plat contient des arachides. Que fait l'assistant ? Et quel serait le cas équivalent dans votre projet ?
+   - Il ne répond pas à la place de Kofi : il transmet en urgence et le dit au client, sauf si les documents contiennent l'information exacte. Dans votre projet, c'est le sujet sensible que vous avez écrit entre crochets à l'étape 2 (un remboursement, une question de santé, une adhésion contestée…).
 2. Pourquoi des marqueurs UTM sur chaque publication ?
    - Pour savoir quelles publications amènent des demandes, et ajuster la suivante.
-3. Qui calcule les 12 kg de riz de la liste d'achats ?
+3. Chez Kofi, qui calcule les 12 kg de riz de la liste d'achats ?
    - Le code, à partir de la nomenclature ; jamais le modèle.
-4. L'agent veille rapporte une baisse de prix d'un concurrent. Que faites-vous ?
-   - Vous ouvrez le lien pour vérifier, puis vous décidez. L'agent informe, il ne change pas vos prix.
+4. L'agent veille rapporte un changement important (une baisse de prix d'un concurrent, une nouvelle règle). Que faites-vous ?
+   - Vous ouvrez le lien pour vérifier, puis vous décidez. L'agent informe, il ne change rien à votre projet.
 5. Pourquoi une seule file d'actions ?
    - Pour ne rien rater et tout décider en quelques minutes depuis votre téléphone.
 6. Après une modification, une page de votre site affiche une erreur. Que demandez-vous d'abord à Claude ?
@@ -371,8 +393,8 @@ Bloqué plus de 10 minutes : levez la main.
 
 Préparez le pilotage :
 
-- [ ] Fixez 1 à 3 objectifs chiffrés pour les trois prochains mois (exemple : 20 commandes par mois)
-- [ ] Listez vos échéances administratives : déclarations, cotisations, renouvellements, et qui est votre comptable
+- [ ] Fixez 1 à 3 objectifs pour les trois prochains mois, sur les trois chiffres de votre fiche projet (exemple : 20 commandes, inscriptions ou demandes traitées par mois)
+- [ ] Listez vos échéances administratives : déclarations, cotisations, renouvellements, et qui les suit (votre comptable, votre trésorier ou vous-même)
 - [ ] Créez votre file d'actions unique et l'e-mail du matin (environ 20 minutes, texte ci-dessous) : en J6, vous ouvrez la journée en montrant cette file
 - [ ] Notez ce que vos agents ont coûté cette semaine (console de l'API) ; pour les tarifs, reportez-vous aux pages de tarifs officielles
 
