@@ -413,6 +413,8 @@ Fais tourner tous les tests du projet sur GitHub Actions à chaque demande de fu
 
 Les agents de la J4 appellent le modèle par son API, et, si votre projet vend, l'encaissement passe par Stripe en mode test. Ces clés se créent maintenant, chacune dans son tableau de bord, et vont **uniquement** dans les variables d'environnement de Vercel. Une clé ne va jamais dans le code, ni dans une conversation, même avec Claude, ni dans un message à l'équipe.
 
+**En coulisses.** La clé d'API est le badge, les variables d'environnement de Vercel sont le coffre (J2, fiche 8). Pour vous faire guider, donnez à Claude la demande type de la fiche 8 : il vous dit où aller et quel nom donner à chaque variable, sans jamais vous demander la valeur.
+
 1. Sur la console du fournisseur du modèle, créez une clé d'API. Fixez tout de suite une limite de dépense mensuelle, avec le montant que vous acceptez de dépenser. On paie aux tokens : les tarifs à jour sont sur la page de tarifs officielle du fournisseur.
 2. Dans Vercel, projet « ma-vitrine », Settings, Environment Variables : ajoutez **ANTHROPIC_API_KEY** et collez la clé directement depuis la console.
 3. Si votre projet vend : sur Stripe, passez et restez en **mode test**. Dans la partie développeurs du tableau de bord, page des clés d'API, copiez la clé secrète de test et ajoutez-la dans Vercel : **STRIPE_SECRET_KEY**. La clé du webhook viendra pendant le labo de la J4. Les frais de Stripe sont sur sa page de tarifs officielle.

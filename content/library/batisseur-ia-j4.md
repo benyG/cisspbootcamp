@@ -114,6 +114,8 @@ Dans tous les cas, la chaîne est la même : une demande arrive, l'agent lit le 
 
 Le client reçoit avec le devis, la réservation ou la commande un lien de paiement. Le statut « payé » ne vient **jamais** du navigateur du client (une page « merci » peut s'afficher sans paiement), ni d'une capture d'écran envoyée par le client : il vient d'une **notification serveur signée** par le prestataire, que votre application vérifie.
 
+**En coulisses.** Cette notification, c'est le webhook : le SMS de confirmation du mobile money vu en J2 (fiche 8). Le prestataire prévient votre système que le paiement est fait, et sa signature prouve que c'est bien lui. Le secret qui permet de vérifier cette signature se range, lui aussi, dans les variables d'environnement.
+
 | Moyen | Prestataire | Ce qui confirme le paiement |
 | --- | --- | --- |
 | Carte | Stripe Checkout | Le webhook « paiement terminé », signature vérifiée |

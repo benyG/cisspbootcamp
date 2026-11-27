@@ -3,12 +3,12 @@ title: Fiches réflexes — formation Bâtisseur IA
 category: ia-participants
 audience: participants
 updated: 2026-11-27
-summary: La fiche projet à remplir avant la J1, puis sept fiches d'une page à remplir pendant la formation : CLAUDE.md type, modèle de demande, règles d'un agent, 10 cas de test, diagnostic d'une erreur, retour arrière, routine qui tourne seule.
+summary: La fiche projet à remplir avant la J1, puis huit fiches d'une page à garder pendant la formation : CLAUDE.md type, modèle de demande, règles d'un agent, 10 cas de test, diagnostic d'une erreur, retour arrière, routine qui tourne seule, les coulisses (API, secrets, OAuth, webhook, MCP).
 ---
 
 ## Mode d’emploi
 
-Pendant le Bâtisseur IA, vous construisez **votre** projet : celui que vous avez choisi, pas un modèle à recopier. Tout commence par la fiche 0, à remplir avant la J1. Viennent ensuite sept fiches d’une page, une par réflexe du programme : vous les remplissez sur votre projet pendant la journée indiquée, puis vous les gardez à côté de vous.
+Pendant le Bâtisseur IA, vous construisez **votre** projet : celui que vous avez choisi, pas un modèle à recopier. Tout commence par la fiche 0, à remplir avant la J1. Viennent ensuite huit fiches d’une page, une par réflexe du programme : vous les remplissez sur votre projet pendant la journée indiquée, puis vous les gardez à côté de vous.
 
 | Fiche | Journée | À quoi elle sert | Elle est remplie quand… |
 | --- | --- | --- | --- |
@@ -20,6 +20,7 @@ Pendant le Bâtisseur IA, vous construisez **votre** projet : celui que vous ave
 | 5. Diagnostiquer une erreur | J5 | Réparer seul, sans paniquer | une vraie erreur du labo est diagnostiquée et réparée |
 | 6. Revenir en arrière | J3 | Avancer sans peur de casser | le retour arrière de l’exercice est réussi et vérifié sur l’aperçu |
 | 7. Une routine qui tourne seule | J6 | Laisser un agent travailler sans vous, dans un budget | chaque routine a son heure, son plafond, sa validation et son interrupteur |
+| 8. Les coulisses en une page | J2, puis J1 à J6 | Comprendre ce qui agit en arrière-plan (API, clés, OAuth, webhook, MCP) et se faire aider par Claude pour configurer | vous savez dire, pour chaque branchement de votre projet, quel accès il donne et où est rangé son secret |
 
 Les passages entre crochets sont à remplacer par vos propres informations ; les exemples suivent l’Atelier Adjoa, l’atelier de couture fictif du site.
 
@@ -279,4 +280,34 @@ Commence en mode observer : tu proposes, je décide.
 - [ ] Une proposition refusée ou corrigée devient une règle de plus dans la fiche de l’agent.
 
 **Ne jamais :** lancer une routine sans plafond ni interrupteur ; la laisser écrire à des clients sans validation tant qu’elle n’a pas fait ses preuves en mode observer.
+
+## Fiche 8 · Les coulisses en une page (J2)
+
+Vous n’écrirez jamais ces mécanismes vous-même, mais votre système en dépend, et Claude vous en parlera. Il suffit de savoir ce qu’ils font et ce qu’ils demandent. Au moment de configurer, vous vous faites aider par Claude.
+
+| Le mot | L’image | Ce qu’il fait dans votre projet | Ce que vous retenez |
+| --- | --- | --- | --- |
+| API | Le guichet | Vos outils se parlent : votre site demande au modèle de rédiger, à Stripe de créer un paiement, à Resend d’envoyer un e-mail | Une API répond à qui présente le bon badge |
+| Clé d’API (secret) | Le badge | Prouve que la demande vient de vous ; chaque appel est à votre nom et souvent à vos frais | Elle ne se montre jamais : ni dans le code, ni dans une conversation, ni dans un message |
+| Variables d’environnement | Le coffre | Vercel garde les clés et les donne à votre application au moment où elle en a besoin | On voit le nom de la clé, jamais sa valeur ; une clé exposée se remplace aussitôt |
+| OAuth 2.0 | La procuration | « Se connecter avec Google », « Autoriser l’accès à votre agenda » : vous prêtez un accès limité sans donner votre mot de passe ; l’application reçoit un jeton d’accès | Lisez ce qui est demandé (lire ? écrire ?), accordez le minimum, et sachez où retirer l’accès |
+| Webhook | Le SMS de confirmation | Le prestataire prévient votre système qu’un événement a eu lieu (un paiement réussi, un e-mail non distribué) | C’est lui, pas le navigateur, qui dit « payé » ; sa signature prouve que c’est bien lui |
+| MCP | La prise universelle | Branche Claude sur vos outils (fichiers, agenda, base de données) pour qu’il lise ou agisse | Chaque branchement est un accès : lecture seule quand c’est possible |
+
+**Deux « tokens », deux sens.** En J1, un token est un morceau de texte que le modèle lit et que l’on paie. Un jeton d’accès (« access token »), lui, est un badge temporaire remis par OAuth : c’est un secret.
+
+**Se faire aider par Claude au moment de configurer :**
+
+```markdown
+Je veux brancher [le service] sur mon projet pour [ce que je veux qu’il fasse].
+Explique-moi en français simple :
+1. ce que fait ce branchement, et quelle API il utilise ;
+2. quelles clés ou autorisations il demande, et le minimum suffisant ;
+3. où je dois ranger chaque secret (le nom de la variable dans Vercel), sans jamais me demander sa valeur ;
+4. s’il faut un webhook, et comment vérifier qu’il vient bien du service ;
+5. comment je retire l’accès si besoin.
+Puis guide-moi étape par étape, et dis-moi comment vérifier que ça marche.
+```
+
+**Ne jamais :** coller une clé, un mot de passe ou un jeton dans la conversation, même pour « aider » ; accorder un accès en écriture quand la lecture suffit ; garder une clé qui a été montrée à l’écran (elle se remplace).
 
