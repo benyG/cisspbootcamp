@@ -96,7 +96,7 @@ describe("chiffres réels du test", () => {
 
 describe("piliers, formats, équilibre (Ben, 30/09)", () => {
   it("chaque pilier a sa destination naturelle", () => {
-    expect(PILLARS.methode.destination).toBe("test");
+    expect(PILLARS.decouverte.destination).toBe("test");
     expect(PILLARS.carriere.destination).toBe("conseil");
     expect(PILLARS.offre.destination).toBe("cohorte");
     expect(trackedLink("https://x.test", "linkedin", 3, "li-abc123", "conseil")).toMatch(/^https:\/\/x\.test\/conseil\?utm_source=linkedin/);
@@ -111,7 +111,11 @@ describe("piliers, formats, équilibre (Ben, 30/09)", () => {
   });
 
   it("les anciens posts retrouvent leur pilier", () => {
-    expect(pillarOf({ pillar: null, angle: "conseil_du_jour", destination: "scanner" })).toBe("methode");
+    expect(pillarOf({ pillar: null, angle: "conseil_du_jour", destination: "scanner" })).toBe("decouverte");
+    // Posts kept before 27/11 carry pillars that no longer exist.
+    expect(pillarOf({ pillar: "methode", angle: "methode", destination: "test" })).toBe("decouverte");
+    expect(pillarOf({ pillar: "eligibilite", angle: "eligibilite", destination: "scanner" })).toBe("certification");
+    expect(pillarOf({ pillar: "outils", angle: "outils", destination: "ia_page" }, "ia")).toBe("ia_decouverte");
     expect(pillarOf({ pillar: null, angle: "places", destination: "scanner" })).toBe("offre");
     expect(pillarOf({ pillar: "carriere", angle: "carriere", destination: "conseil" })).toBe("carriere");
   });
@@ -124,7 +128,10 @@ describe("piliers, formats, équilibre (Ben, 30/09)", () => {
     expect(b.byDestination.cohorte).toBe(2);
     expect(b.advice).toMatch(/2 posts de vente sur 4/);
     expect(editorialBalance([]).advice).toMatch(/Aucun post/);
-    expect(editorialBalance([value, value, value, { ...value, pillar: "carriere" }]).advice).toMatch(/Pas encore de post « Choisir sa certification »/);
+    expect(editorialBalance([value, value, value, { ...value, pillar: "carriere" }]).advice).toMatch(/Pas encore de post « Tendances du domaine »/);
+    // With Ben's line: his names, and a pillar set to 0 is never asked for.
+    const line = { tendances: { label: "Tendances", weight: 0 }, certification: { label: "Se certifier", weight: 15 } };
+    expect(editorialBalance([value, value, value, { ...value, pillar: "carriere" }], "cert", line).advice).toMatch(/Pas encore de post « Se certifier »/);
   });
 
   it("anonymise les mots des prospects", () => {

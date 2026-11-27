@@ -92,29 +92,36 @@ export function defaultDestination(angle: Angle): Destination {
 }
 
 /**
- * Editorial pillars (Ben, 29/09): most posts give value (method, career,
- * choices), about one in five sells. Each pillar has a natural destination
- * for its single call to action, and a few subject ideas to start from.
+ * Editorial pillars (Ben, 29/09; rewritten 27/11): posts that make people
+ * who are not yet in training say « tiens, c'est intéressant » — notions
+ * explained, career, why get certified, why a bootcamp, the field's trends —
+ * not the course's own method, which is for those already enrolled. These
+ * are the slots and their defaults; Ben edits labels, intents, examples,
+ * destinations and weights in Marketing › Ligne éditoriale (lib/marketing/editorial.ts).
  */
 export const PILLARS = {
-  methode: { label: "Méthode CISSP", destination: "test", examples: ["Raisonner en manager, pas en technicien", "Les pièges du format adaptatif", "Un domaine du CBK expliqué simplement"] },
-  carriere: { label: "Carrière cyber", destination: "conseil", examples: ["Devenir RSSI : ce qui manque souvent au profil", "Passer de la technique à la GRC", "Se reconvertir dans la cybersécurité"] },
-  certification: { label: "Choisir sa certification", destination: "scanner", examples: ["CISSP, CISM ou CC : par où commencer ?", "Ce que le CISSP change dans une carrière", "Certification ou expérience d'abord ?"] },
-  eligibilite: { label: "Éligibilité", destination: "scanner", examples: ["Les 5 ans d'expérience : ce qui compte vraiment", "Le titre Associate of ISC²", "Les domaines qui valident l'expérience"] },
-  candidat: { label: "Vie du candidat", destination: "cohorte", examples: ["Préparer le CISSP en travaillant", "Le mercredi lecture et les week-ends denses", "Gérer le stress du jour J"] },
+  decouverte: { label: "Le saviez-vous ?", destination: "test", examples: ["C'est quoi la GIA (gestion des identités et des accès) ?", "La triade confidentialité, intégrité, disponibilité en trois exemples du quotidien", "RTO et RPO : la différence en une minute"] },
+  carriere: { label: "Carrière cyber", destination: "conseil", examples: ["RSSI, GRC, SOC, pentest : les métiers de la cybersécurité expliqués", "Passer de la technique au management de la sécurité", "Ce qu'un recruteur regarde dans un profil cyber"] },
+  tendances: { label: "Tendances du domaine", destination: "scanner", examples: ["Ce que les lois sur les données personnelles changent pour les entreprises", "L'IA générative : nouveaux risques, nouveaux rôles en sécurité", "Le zero trust, au-delà du mot à la mode"] },
+  certification: { label: "Pourquoi se certifier", destination: "scanner", examples: ["Ce que le CISSP dit de vous à un employeur", "CISSP, CISM ou CC : à chacun son moment", "Le titre Associate of ISC² : certifié avant les 5 ans d'expérience"] },
+  bootcamp: { label: "Pourquoi un bootcamp", destination: "cohorte", examples: ["Se préparer seul ou accompagné : ce qui change", "Pourquoi une préparation courte et intensive", "Ce qu'apporte un groupe qui avance au même rythme"] },
   offre: { label: "Offre et cohorte", destination: "cohorte", examples: ["Places limitées, date de clôture", "Paiement par carte, même depuis Orange Money", "Un coach qui tient le rythme avec vous"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
 
-/** Bâtisseur IA pillars (Ben, 04/11; the autonomous business 08/11): about four value posts for one selling post, like the certifications. */
+/** Bâtisseur IA pillars (Ben, 04/11; rewritten 27/11 in the same spirit): curiosity and interest first, the offer about one post in ten. */
 export const IA_PILLARS = {
-  autonome: { label: "L'entreprise autonome", destination: "ia_page", examples: ["Une entreprise autonome, ce n'est pas une entreprise sans humains", "Ce que notre site fait seul chaque nuit, et ce qu'il nous laisse", "Manuel, assisté, autonome : où en est votre entreprise ?"] },
+  ia_decouverte: { label: "Le saviez-vous ? (IA)", destination: "ia_diagnostic", examples: ["C'est quoi un agent IA, en une phrase ?", "Comment une IA peut répondre à partir de vos propres documents", "Une API expliquée avec l'exemple d'une boutique"] },
   cas_usage: { label: "Cas d'usage", destination: "ia_diagnostic", examples: ["Relancer ses prospects sans y penser", "Savoir qui a payé, sans chercher", "Des devis et factures en un clic"] },
-  construire: { label: "Construire avec Claude Code", destination: "ia_page", examples: ["Ce site a été construit avec Claude Code", "Une panne corrigée et remise en ligne le jour même", "Les tests automatiques, l'assurance d'un système qui tourne seul"] },
-  outils: { label: "Les outils expliqués", destination: "ia_page", examples: ["GitHub expliqué à un chef d'entreprise", "Mettre une application en ligne avec Vercel", "Ce que coûte vraiment une application sur mesure"] },
-  garde_fous: { label: "Méthode et garde-fous", destination: "ia_diagnostic", examples: ["Ne jamais confier ses mots de passe à une IA", "Relire ce que l'IA a écrit avant de publier", "Commencer petit : une tâche, puis la suivante"] },
-  entrepreneur: { label: "Vie d'entrepreneur", destination: "ia_diagnostic", examples: ["Le temps perdu dans WhatsApp", "Quand Excel ne suffit plus", "Lancer son entreprise déjà organisée"] },
+  autonome: { label: "L'entreprise autonome", destination: "ia_page", examples: ["Une entreprise autonome, ce n'est pas une entreprise sans humains", "Manuel, assisté, autonome : où en est votre entreprise ?", "Ce qu'une entreprise peut confier à l'IA, et ce qu'elle garde"] },
+  ia_tendances: { label: "Tendances IA et entreprise", destination: "ia_page", examples: ["Ce que les nouveaux modèles d'IA changent pour une petite entreprise", "Paiement en ligne et mobile money : ce qui s'automatise", "Ce qu'une petite entreprise peut automatiser aujourd'hui"] },
+  ia_pourquoi: { label: "Pourquoi bâtir soi-même", destination: "ia_page", examples: ["Agence, logiciel du marché ou sur mesure : comparer honnêtement", "Ne pas savoir coder n'empêche plus de construire", "Garder la main sur son propre système"] },
+  ia_bootcamp: { label: "Pourquoi un bootcamp", destination: "ia_page", examples: ["Apprendre en construisant son propre projet", "Six journées le week-end : pourquoi ce format", "Avancer en groupe, avec d'autres entrepreneurs"] },
+  garde_fous: { label: "Bons réflexes", destination: "ia_diagnostic", examples: ["Ne jamais confier ses mots de passe à une IA", "Relire ce que l'IA a écrit avant de publier", "Commencer petit : une tâche, puis la suivante"] },
   offre: { label: "Offre et dates", destination: "ia_inscription", examples: ["Les prochaines entrées J1", "6 journées le week-end, aux dates de votre choix", "Paiement par carte, même depuis Orange Money"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
+
+/** Pillars of posts kept before 27/11, read as today's closest pillar. */
+const LEGACY_PILLARS: Record<string, string> = { methode: "decouverte", eligibilite: "certification", candidat: "bootcamp", construire: "ia_pourquoi", outils: "ia_decouverte", entrepreneur: "cas_usage" };
 
 export type Pillar = keyof typeof PILLARS | keyof typeof IA_PILLARS;
 export const ALL_PILLARS: Record<Pillar, { label: string; destination: Destination; examples: readonly string[] }> = { ...PILLARS, ...IA_PILLARS };
@@ -130,6 +137,8 @@ export function destinationsFor(kind: MarketingKind): Record<string, { label: st
 /** Post formats, with what the model must produce and where they fit. */
 export const FORMATS = {
   standard: { label: "Post classique", channels: ["linkedin", "whatsapp_status", "whatsapp_group", "tiktok"], rule: "Accroche, développement court, une seule action." },
+  notion: { label: "« C'est quoi… ? »", channels: ["linkedin", "whatsapp_status", "whatsapp_group", "tiktok"], rule: "Une seule notion du domaine (un sigle, un concept, un métier), expliquée simplement avec un exemple concret de la vie d'une entreprise, en quelques phrases. L'accroche est la question « C'est quoi, au juste, … ? ». Se termine par une invitation à en apprendre plus." },
+  le_saviez_vous: { label: "Le saviez-vous ?", channels: ["linkedin", "whatsapp_status", "whatsapp_group", "tiktok"], rule: "Un fait surprenant mais vrai et vérifiable du domaine (une origine, une règle méconnue, une idée reçue corrigée), puis pourquoi il compte, en quelques phrases. Aucun chiffre qui ne soit pas fourni ou établi." },
   cas: { label: "Mini-cas « Que feriez-vous ? »", channels: ["linkedin", "whatsapp_group", "tiktok"], rule: "Une situation de manager sécurité en 3 à 5 phrases, une question à choix (A, B, C, D), invitation à répondre en commentaire ; la réponse commentée sera donnée plus tard. Pas de réponse dans le post." },
   mythe: { label: "Mythe ou réalité", channels: ["linkedin", "whatsapp_status", "whatsapp_group", "tiktok"], rule: "Une idée reçue répandue, puis la réalité, expliquée simplement." },
   erreur: { label: "Erreur fréquente", channels: ["linkedin", "whatsapp_group", "tiktok"], rule: "Une erreur fréquente des candidats ou des professionnels, pourquoi elle coûte, comment l'éviter." },
@@ -137,7 +146,7 @@ export const FORMATS = {
   checklist: { label: "Checklist en 5 points", channels: ["linkedin", "whatsapp_status", "whatsapp_group"], rule: "Cinq points courts et concrets, numérotés." },
   carrousel: { label: "Carrousel LinkedIn", channels: ["linkedin"], rule: "Le texte du post, puis le contenu de 6 à 8 diapositives dans le brief visuel (une idée par diapositive, titre de 6 mots au plus)." },
   sondage: { label: "Sondage LinkedIn", channels: ["linkedin"], rule: "Une question et 4 réponses de 30 caractères au plus, écrites à la fin du texte sous « Options du sondage : », puis une phrase qui annonce le lien." },
-  coulisses: { label: "Coulisses du bootcamp", channels: ["linkedin", "whatsapp_status", "tiktok"], rule: "Ce qui se passe réellement dans une préparation avec Ben (méthode, rythme, outils), sans inventer d'élève, de chiffre ni de témoignage." },
+  coulisses: { label: "Coulisses du métier", channels: ["linkedin", "whatsapp_status", "tiktok"], rule: "Un moment vrai de la vie de coach ou du métier de la sécurité (une question souvent posée, une observation, une idée qui surprend), sans détailler la méthode de la formation, sans inventer d'élève, de chiffre ni de témoignage." },
   face_camera: { label: "Face caméra « 3 conseils en 30 s »", channels: ["tiktok"], rule: "Script parlé par Ben face caméra : une accroche, trois conseils, une action. Le storyboard suit le script." },
   pov: { label: "« POV » TikTok", channels: ["tiktok"], rule: "Format « POV : vous … » mis en scène, situation reconnaissable par un candidat ou un professionnel de la cyber." },
 } as const satisfies Record<string, { label: string; channels: readonly Channel[]; rule: string }>;
@@ -168,10 +177,12 @@ export type BalancePost = { pillar: string | null; angle: string; destination: s
 /** Old posts carry no pillar: their angle says what they were. */
 export function pillarOf(p: BalancePost, kind: MarketingKind = "cert"): Pillar {
   if (p.pillar && p.pillar in pillarsFor(kind)) return p.pillar as Pillar;
+  const legacy = p.pillar ? LEGACY_PILLARS[p.pillar] : undefined;
+  if (legacy && legacy in pillarsFor(kind)) return legacy as Pillar;
   if (kind === "ia") return "offre";
-  if (p.angle === "conseil_du_jour" || p.angle === "test") return "methode";
-  if (p.angle === "associate" || p.angle === "eligibilite") return "eligibilite";
-  if (p.angle === "emploi") return "candidat";
+  if (p.angle === "conseil_du_jour" || p.angle === "test") return "decouverte";
+  if (p.angle === "associate" || p.angle === "eligibilite") return "certification";
+  if (p.angle === "emploi") return "bootcamp";
   return "offre";
 }
 
@@ -179,20 +190,22 @@ export function pillarOf(p: BalancePost, kind: MarketingKind = "cert"): Pillar {
  * The editorial balance of the last posts: counts by pillar and by
  * destination, and one line of advice when it leans too much one way.
  */
-export function editorialBalance(posts: BalancePost[], kind: MarketingKind = "cert"): { byPillar: Record<Pillar, number>; byDestination: Record<Destination, number>; advice: string | null } {
-  const pillars = pillarsFor(kind);
-  const byPillar = Object.fromEntries(Object.keys(pillars).map((k) => [k, 0])) as Record<Pillar, number>;
+export function editorialBalance(posts: BalancePost[], kind: MarketingKind = "cert", line?: Record<string, { label: string; weight: number }>): { byPillar: Record<Pillar, number>; byDestination: Record<Destination, number>; advice: string | null } {
+  const base = pillarsFor(kind) as Record<string, { label: string }>;
+  // Ben's own names, and only the pillars he keeps on (weight above 0), when his editorial line is given.
+  const pillars = line ? Object.fromEntries(Object.keys(base).filter((k) => (line[k]?.weight ?? 1) > 0 || k === "offre").map((k) => [k, { label: line[k]?.label ?? base[k]!.label }])) : base;
+  const byPillar = Object.fromEntries(Object.keys(base).map((k) => [k, 0])) as Record<Pillar, number>;
   const byDestination = Object.fromEntries(Object.keys(destinationsFor(kind)).map((k) => [k, 0])) as Record<Destination, number>;
   for (const p of posts) {
     byPillar[pillarOf(p, kind)]++;
     if (p.destination in byDestination) byDestination[p.destination as Destination]++;
   }
-  if (posts.length === 0) return { byPillar, byDestination, advice: kind === "ia" ? "Aucun post sur 30 jours : commencez par un post de valeur (l'entreprise autonome, ou un cas d'usage)." : "Aucun post sur 30 jours : commencez par un post de valeur (méthode ou carrière)." };
+  if (posts.length === 0) return { byPillar, byDestination, advice: kind === "ia" ? "Aucun post sur 30 jours : commencez par un « Le saviez-vous ? » ou un cas d'usage." : "Aucun post sur 30 jours : commencez par un « Le saviez-vous ? » ou un post carrière." };
   const missing = (Object.keys(pillars) as Pillar[]).filter((k) => k !== "offre" && byPillar[k] === 0);
-  const firstValue = kind === "ia" ? "cas_usage" : "methode";
+  const firstValue = missing[0] ?? Object.keys(pillars).find((k) => k !== "offre") ?? "offre";
   let advice: string | null = null;
-  if (posts.length >= 3 && byPillar.offre / posts.length > MAX_OFFER_SHARE) advice = `${byPillar.offre} posts de vente sur ${posts.length} : place à la valeur, par exemple « ${pillars[missing[0] ?? firstValue].label} ».`;
-  else if (missing.length > 0 && posts.length >= 4) advice = `Pas encore de post « ${pillars[missing[0]].label} » ce mois-ci.`;
+  if (posts.length >= 3 && byPillar.offre / posts.length > MAX_OFFER_SHARE) advice = `${byPillar.offre} posts de vente sur ${posts.length} : place à la valeur, par exemple « ${pillars[firstValue]!.label} ».`;
+  else if (missing.length > 0 && posts.length >= 4) advice = `Pas encore de post « ${pillars[missing[0]!]!.label} » ce mois-ci.`;
   return { byPillar, byDestination, advice };
 }
 

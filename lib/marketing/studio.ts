@@ -6,6 +6,7 @@ import { examBootEnabled } from "@/lib/examboot/client";
 import { ACTIVITIES, HOURS, type IaDiagnosis, TASKS, TOOLS } from "@/lib/ia-diagnostic";
 import { iaUrl } from "@/lib/ia-domain";
 import { type NewsItem, type TopicIdea, type Variant, draftFollowup, generateVariants, searchNews, suggestTopics } from "@/lib/marketing/ai";
+import { activePillars, editorialForModel, loadEditorial } from "@/lib/marketing/editorial";
 import { audienceInsights, cohortFacts, factsForModel, recentPosts, recentTestStats } from "@/lib/marketing/data";
 import { ALL_DESTINATIONS, ALL_PILLARS, CHANNELS, FORMATS, IA_SEGMENTS, type MarketingKind, POST_CODE_PATTERN, type SegmentKey, destinationsFor, marketingKind, newPostCode, pillarOf, pillarsFor, trackedLink, withLink } from "@/lib/marketing/plan";
 import { loadMarketingSettings } from "@/lib/marketing/settings";
@@ -43,24 +44,30 @@ export async function topicIdeas(input: { cohortId: number; withNews: boolean })
   const cohort = await prisma.cohort.findUnique({ where: { id: parsed.data.cohortId }, select: { program: true } });
   if (!cohort) return { ok: false, error: "Cohorte introuvable." };
   const kind = marketingKind(cohort.program);
-  const [facts, tests, insights, recent, news] = await Promise.all([
+  const [facts, tests, insights, recent, news, line] = await Promise.all([
     cohortFacts(parsed.data.cohortId),
     recentTestStats(settings.testThreshold),
     audienceInsights(new Date(), kind),
     recentPosts(new Date(), kind),
     parsed.data.withNews ? searchNews(kind) : Promise.resolve(null),
+    loadEditorial(kind),
   ]);
   if (!facts) return { ok: false, error: "Cohorte introuvable." };
   const newsItems = news?.ok ? news.items : [];
+  const active = activePillars(line);
   const result = await suggestTopics({
     kind,
+    editorial: editorialForModel(line),
+    pillarKeys: active.map((p) => p.key),
     facts: factsForModel(facts, tests.stats),
     insights,
-    recent: recent.map((p) => `- ${ALL_PILLARS[pillarOf(p, kind)].label} · ${p.format ?? "standard"} · ${p.topic ?? p.text.split("\n")[0].slice(0, 120)}`).join("\n"),
+    recent: recent.map((p) => `- ${line.pillars[pillarOf(p, kind)]?.label ?? ALL_PILLARS[pillarOf(p, kind)].label} · ${p.format ?? "standard"} · ${p.topic ?? p.text.split("\n")[0].slice(0, 120)}`).join("\n"),
     news: newsItems.map((n) => `- ${n.title} (${n.date}) — ${n.url} — ${n.why}`).join("\n"),
   });
   if (!result.ok) return result;
-  return { ok: true, ideas: result.ideas, news: newsItems, newsError: news && !news.ok ? news.error : null };
+  // Each pillar's link goes where Ben decided (Ligne éditoriale).
+  const ideas = result.ideas.map((i) => ({ ...i, destination: (line.pillars[i.pillar]?.destination ?? i.destination) as TopicIdea["destination"] }));
+  return { ok: true, ideas, news: newsItems, newsError: news && !news.ok ? news.error : null };
 }
 
 /** Three variants for a channel, a pillar, a format and a subject, each with its own tracked link. */
@@ -77,7 +84,8 @@ export async function generateStudioPosts(input: { cohortId: number; channel: st
   const kind = marketingKind(facts.program);
   const mismatch = audienceError(kind, d.pillar, d.destination);
   if (mismatch) return { ok: false, error: mismatch };
-  const result = await generateVariants({ kind, facts: factsForModel(facts, kind === "ia" ? null : tests.stats), channel: d.channel, pillar: d.pillar, format: d.format, topic: d.topic, destination: d.destination, brief: d.brief });
+  const line = await loadEditorial(kind);
+  const result = await generateVariants({ kind, editorial: editorialForModel(line), pillarLine: line.pillars[d.pillar], facts: factsForModel(facts, kind === "ia" ? null : tests.stats), channel: d.channel, pillar: d.pillar, format: d.format, topic: d.topic, destination: d.destination, brief: d.brief });
   if (!result.ok) return result;
   return {
     ok: true,

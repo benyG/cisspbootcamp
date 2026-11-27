@@ -9,10 +9,11 @@ import { VideoPanel } from "@/components/admin/marketing/VideoPanel";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { cockpit, cohortFacts, followupSegments, libraryWithResults, marketingCohorts, recentPosts } from "@/lib/marketing/data";
 import { CANVAS, defaultKeyword } from "@/lib/marketing/brand";
-import { ALL_DESTINATIONS, ALL_PILLARS, CHANNELS, FORMATS, MIN_SAMPLE_FOR_STATS, destinationsFor, editorialBalance, marketingKind, pillarOf, pillarsFor } from "@/lib/marketing/plan";
+import { ALL_DESTINATIONS, ALL_PILLARS, CHANNELS, FORMATS, MIN_SAMPLE_FOR_STATS, destinationsFor, editorialBalance, marketingKind, pillarOf } from "@/lib/marketing/plan";
 import { linkedinStatus } from "@/lib/linkedin";
 import { minimaxEnabled } from "@/lib/minimax";
 import { loadMarketingSettings } from "@/lib/marketing/settings";
+import { activePillars, loadEditorial } from "@/lib/marketing/editorial";
 import { PROGRAMS } from "@/lib/programs";
 
 import { deletePost, saveTestThreshold, schedulePost, togglePublished, unschedulePost } from "./actions";
@@ -44,10 +45,12 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
   const ia = kind === "ia";
   // The practice test belongs to the certifications; an IA entry never shows it.
   const testOn = examBootEnabled() && !ia;
-  const pillars = pillarsFor(kind);
+  const line = await loadEditorial(kind);
+  const pillars = activePillars(line);
+  const label = (k: string) => line.pillars[k]?.label ?? ALL_PILLARS[k as keyof typeof ALL_PILLARS]?.label ?? k;
   const destinations = destinationsFor(kind);
   const [cp, segments, library, recent, linkedin] = await Promise.all([cockpit(facts, threshold), followupSegments(facts.program, threshold), libraryWithResults(facts.id), recentPosts(new Date(), kind), linkedinStatus()]);
-  const balance = editorialBalance(recent, kind);
+  const balance = editorialBalance(recent, kind, line.pillars);
   const fmt = (d: Date) => d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", timeZone: "UTC" });
 
   return (
@@ -100,16 +103,14 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
       <section className="mt-6 rounded-xl border border-line bg-white p-4">
         <h2 className={h2}><Sparkles className="size-4 text-accent" aria-hidden />Studio de contenu</h2>
         <p className="mt-1 mb-3 text-sm text-muted">
-          {ia
-            ? "Pour des chefs d’entreprise, pas des informaticiens. Environ quatre posts de valeur (cas d’usage, construire avec Claude Code, outils expliqués, garde-fous, vie d’entrepreneur) pour un post de vente. Chaque post a une seule action : diagnostic, page du Bâtisseur IA ou inscription. Chaque variante a son brief visuel (« Nuit et vert », signature Bâtisseur IA) et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax."
-            : "Environ quatre posts de valeur (méthode, carrière, certifications, éligibilité, vie du candidat) pour un post de vente. Chaque post a une seule action : test, analyse de profil, conseil carrière ou cohorte. Chaque variante a son brief visuel (direction « Nuit et vert ») et son lien suivi ; pour TikTok, un storyboard et le prompt vidéo pour MiniMax."}
+          Les idées et les posts suivent votre ligne éditoriale : {pillars.map((p) => `${p.label} ${p.share} %`).join(" · ")}. <Link href={`/admin/marketing/ligne-editoriale?public=${kind}`} className="font-semibold underline">Modifier la ligne éditoriale</Link>
         </p>
         <Studio
           key={facts.id}
           ia={ia}
           cohortId={facts.id}
           channels={Object.entries(CHANNELS).map(([value, c]) => ({ value, label: c.label }))}
-          pillars={Object.entries(pillars).map(([value, p]) => ({ value, label: p.label, destination: p.destination, examples: p.examples }))}
+          pillars={pillars.map((p) => ({ value: p.key, label: p.label, destination: p.destination, examples: p.examples }))}
           formats={Object.entries(FORMATS).map(([value, f]) => ({ value, label: f.label, channels: f.channels }))}
           destinations={Object.entries(destinations).filter(([k]) => testOn || k !== "test").map(([value, d]) => ({ value, label: d.label }))}
         />
@@ -125,7 +126,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
         ) : null}
         <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
           <p className="font-semibold">Équilibre éditorial, 30 derniers jours ({recent.length} post{recent.length > 1 ? "s" : ""})</p>
-          <p className="mt-1 text-muted">{(Object.keys(pillars) as Array<keyof typeof ALL_PILLARS>).map((k) => `${ALL_PILLARS[k].label} ${balance.byPillar[k]}`).join(" · ")}</p>
+          <p className="mt-1 text-muted">{pillars.map((p) => `${p.label} ${balance.byPillar[p.key as keyof typeof balance.byPillar] ?? 0}`).join(" · ")}</p>
           <p className="text-muted">Liens : {(Object.keys(destinations) as Array<keyof typeof ALL_DESTINATIONS>).map((k) => `${ALL_DESTINATIONS[k].label.toLowerCase()} ${balance.byDestination[k]}`).join(" · ")}</p>
           {balance.advice && <p className="mt-1 font-semibold text-accent-ink">{balance.advice}</p>}
         </div>
@@ -136,7 +137,7 @@ export default async function MarketingPage({ searchParams }: { searchParams: Pr
             {library.map((p) => (
               <li key={p.id} className="rounded-lg border border-line p-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {ALL_PILLARS[pillarOf(p, kind)].label}{p.format && p.format !== "standard" ? ` · ${FORMATS[p.format as keyof typeof FORMATS]?.label ?? p.format}` : ""} · vers {ALL_DESTINATIONS[p.destination as keyof typeof ALL_DESTINATIONS]?.label.toLowerCase() ?? p.destination}</span>
+                  <span className="font-semibold">{CHANNELS[p.channel as keyof typeof CHANNELS]?.label ?? p.channel} · {label(pillarOf(p, kind))}{p.format && p.format !== "standard" ? ` · ${FORMATS[p.format as keyof typeof FORMATS]?.label ?? p.format}` : ""} · vers {ALL_DESTINATIONS[p.destination as keyof typeof ALL_DESTINATIONS]?.label.toLowerCase() ?? p.destination}</span>
                   <span className="text-muted">{p.visitors} visiteur{p.visitors > 1 ? "s" : ""} · {p.destination === "test" || p.tests > 0 ? `${p.tests} test${p.tests > 1 ? "s" : ""} ouvert${p.tests > 1 ? "s" : ""} (${p.testsDone} fait${p.testsDone > 1 ? "s" : ""}) · ` : ""}{p.leads} {ia ? "contact" : "analyse"}{p.leads > 1 ? "s" : ""} · {p.paid} inscription{p.paid > 1 ? "s" : ""} · {p.code}</span>
                 </div>
                 {p.autoDraft && !p.publishedAt && <p className="mt-1 inline-block rounded-full bg-[#e6eef8] px-2 py-0.5 text-xs font-semibold text-[#2f6fb5]">Proposé automatiquement : à relire, puis à programmer ou à supprimer</p>}
