@@ -124,6 +124,20 @@ Le client reçoit avec le devis, la réservation ou la commande un lien de paiem
 
 Stripe n'ouvre pas de compte marchand dans tous les pays. Si le vôtre n'est pas couvert, un agrégateur local peut gérer la carte et le mobile money : le principe de la notification signée est le même. Aujourd'hui, tout se fait en **mode test** : aucune vraie carte, aucun vrai argent.
 
+**Pour le formateur : les agrégateurs de mobile money** (relevé du 27/11/2026 dans les documentations publiques, à revérifier avant chaque cohorte ; le tableau par pays est dans la fiche 8 des participants)
+
+| Agrégateur | Pays annoncés (Afrique francophone) | Mode test | Ce qui confirme le paiement |
+| --- | --- | --- | --- |
+| FedaPay | Bénin, Togo, Côte d'Ivoire, Sénégal, Burkina Faso, Mali, Niger, Guinée | Oui, dès la création du compte (clé `sk_sandbox`) | Webhook signé (en-tête `X-FEDAPAY-SIGNATURE`), un secret par environnement |
+| Kkiapay | Bénin, Côte d'Ivoire, Togo, Sénégal | Oui (`sandbox: true`, numéros de test) | Webhook avec l'en-tête `x-kkiapay-secret` |
+| Flutterwave | Cameroun, Côte d'Ivoire, Sénégal, Burkina Faso ou Mali selon les pages | Oui, tant que le compte n'est pas validé | Webhook avec l'en-tête `verif-hash`, puis vérification de la transaction par l'API |
+| Paystack | Côte d'Ivoire | Oui (numéros de test Orange et MTN) | Webhook signé (`Paystack-Signature`), puis vérification de la transaction |
+| PayDunya | Sénégal, Côte d'Ivoire, Bénin, Burkina Faso, Mali, Togo (liste non officielle) | Oui (application en mode test) | Notification (IPN) avec un `hash` à comparer, puis confirmation de la facture |
+| CinetPay | Côte d'Ivoire, Sénégal, Mali, Togo, Burkina Faso, Bénin, Cameroun, Guinée, RDC | Annoncé « momentanément indisponible » | Notification avec l'en-tête `x-token` (HMAC), puis vérification du statut |
+| Wave | Sénégal (autres pays non confirmés) | Non trouvé | Webhook signé (`Wave-Signature`) |
+
+Points d'attention : en production, l'ouverture d'un compte demande presque toujours un dossier (pièce d'identité, souvent registre du commerce) ; FedaPay prévoit le travailleur indépendant, Paystack un compte « Starter » plafonné en Côte d'Ivoire, Flutterwave un compte individuel dans certains pays. Aucun agrégateur n'a été confirmé pour le Gabon et le Congo. Ne citez aucun tarif : renvoyez à la page officielle.
+
 Une fois le paiement confirmé, l'agent crée la commande, envoie le reçu et établit la facture, automatiquement : c'est vérifiable et sans ambiguïté. Factures et reçus sont enregistrés dans la base : l'agent administratif de la J6 les rangera pour la comptabilité. Quand seul un acompte est payé, le solde restant apparaît comme impayé dans le tableau de bord.
 
 **Si votre projet ne vend pas** (association gratuite, outil interne) : la même logique s'applique à la confirmation de l'action clé. C'est votre application qui passe l'inscription ou la demande au statut « confirmé », selon vos règles, et qui prévient la personne par e-mail ; jamais un message de la personne (« c'est bon, je suis inscrit »). Chaque confirmation est notée au journal.
@@ -289,7 +303,9 @@ Utilisez le prompt du Cours 2 avec vos règles de l'atelier et votre fiche 3. Pr
 - [ ] Une demande hors règles est signalée, sans rien inventer
 - [ ] Mes 10 cas de test (fiche 4), adaptés à mon action clé, sont joués et leur résultat est noté
 
-### Étape 3 · Si votre projet vend : le paiement par carte, en test (25 min)
+### Étape 3 · Si votre projet vend : le paiement par carte ou par mobile money, en test (25 min)
+
+Choisissez **un** moyen pour le labo : la carte avec Stripe (texte ci-dessous), ou le mobile money avec un agrégateur de votre pays **qui a un mode test** (fiche 8 : FedaPay, Kkiapay, Flutterwave, Paystack ou PayDunya). Pour le mobile money, donnez à Claude Code le même texte en remplaçant Stripe par l'agrégateur choisi, et ajoutez : « Lis sa documentation officielle sur les paiements et les webhooks, dis-moi le nom des variables d'environnement à créer et comment la signature se vérifie, puis vérifie toujours le statut du paiement auprès de l'agrégateur avant de le passer à « reçu ». » Les clés de test vont dans Vercel, comme celles de Stripe.
 
 ```
 Quand je valide [l'action clé], ajoute un lien de paiement Stripe Checkout au montant calculé, avec la clé de la variable STRIPE_SECRET_KEY.
