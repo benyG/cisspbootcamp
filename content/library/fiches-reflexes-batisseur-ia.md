@@ -311,3 +311,31 @@ Puis guide-moi étape par étape, et dis-moi comment vérifier que ça marche.
 
 **Ne jamais :** coller une clé, un mot de passe ou un jeton dans la conversation, même pour « aider » ; accorder un accès en écriture quand la lecture suffit ; garder une clé qui a été montrée à l’écran (elle se remplace).
 
+### Le catalogue d’API : choisir celles de votre projet
+
+Chaque API suit le même schéma : une clé ou une autorisation, rangée dans le coffre, et souvent un webhook pour être prévenu. Vous n’apprenez pas chaque API : vous choisissez, à partir de votre fiche projet, les deux ou trois dont votre projet a besoin, et vous vous faites guider par Claude avec la demande ci-dessus. Les conditions et les prix changent : vérifiez toujours la page officielle du service.
+
+**Le socle, utilisé pendant la formation**
+
+| Besoin | API | Journée | Ce qu’elle demande |
+| --- | --- | --- | --- |
+| Faire réfléchir et rédiger vos agents | API Claude (Anthropic) | J4 | Une clé d’API, avec un plafond de dépense |
+| Envoyer des e-mails (confirmations, relances, e-mail du matin) | Resend, ou un service équivalent | J2, J5 | Une clé d’API ; un webhook pour les e-mails non distribués |
+| Encaisser par carte | Stripe | J4 | Une clé secrète et un webhook signé |
+| Mettre en ligne, ranger les secrets et les fichiers | Vercel | J2, J3 | C’est le coffre lui-même |
+| Garder le code et son historique | GitHub | J2 | Une connexion OAuth |
+
+**Selon votre projet, pendant la formation ou dans les 30 jours**
+
+| Besoin | API | Ce qu’elle demande | À savoir |
+| --- | --- | --- | --- |
+| Encaisser par mobile money | Un agrégateur de votre pays (tableau ci-dessous) | Une clé et un webhook | Le même schéma que Stripe : le « payé » vient du webhook |
+| Répondre sur WhatsApp | WhatsApp Business, API Cloud de Meta | Un compte Meta Business validé, une clé | Messages modèles validés par Meta, consentement obligatoire : à ajouter quand le site fonctionne |
+| Envoyer des SMS | Un fournisseur de SMS de votre pays | Une clé | Utile quand vos clients ont peu de données mobiles ; consentement obligatoire |
+| Prendre des rendez-vous | Cal.com ou Calendly | Une clé ou OAuth, et un webhook à chaque réservation | Pour les projets de service sur rendez-vous |
+| Lire et écrire dans votre agenda, vos documents, vos tableaux | Google Agenda, Drive, Sheets | OAuth | Le connecteur de la J1 en est la version sans code |
+| Publier sur les réseaux | LinkedIn, Facebook, Instagram | OAuth, et une validation par la plateforme | Commencez par publier vous-même ce que l’agent prépare |
+| Afficher des prix en plusieurs monnaies | Un service de taux de change | Une clé | Mettez en cache le taux du jour |
+
+**Ne pas confondre :** un reçu, un devis ou une facture en PDF n’a pas besoin d’API ; Claude Code le fait dans votre application. Le MCP (J6) n’est pas une API de plus : c’est la prise qui branche Claude sur vos données.
+
