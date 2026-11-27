@@ -337,5 +337,33 @@ Chaque API suit le même schéma : une clé ou une autorisation, rangée dans le
 | Publier sur les réseaux | LinkedIn, Facebook, Instagram | OAuth, et une validation par la plateforme | Commencez par publier vous-même ce que l’agent prépare |
 | Afficher des prix en plusieurs monnaies | Un service de taux de change | Une clé | Mettez en cache le taux du jour |
 
+**Encaisser par mobile money : quel agrégateur dans votre pays ?**
+
+Un agrégateur vous donne, avec un seul compte, plusieurs moyens de paiement (Orange Money, MTN, Moov, Wave…) et une carte. Tous suivent le schéma de Stripe : un lien de paiement, puis un webhook signé qui confirme ; votre application revérifie le statut avant d’écrire « payé ».
+
+| Pays | Agrégateurs annoncés |
+| --- | --- |
+| Côte d’Ivoire | CinetPay, FedaPay, Kkiapay, Flutterwave, Paystack, PayDunya |
+| Sénégal | CinetPay, FedaPay, Kkiapay, Flutterwave, PayDunya ; l’API de Wave pour Wave seul |
+| Bénin, Togo | CinetPay, FedaPay, Kkiapay, PayDunya |
+| Burkina Faso, Mali | CinetPay, FedaPay, PayDunya ; Flutterwave dans l’un des deux (sa documentation varie) |
+| Cameroun | CinetPay, Flutterwave |
+| Guinée | CinetPay, FedaPay (MTN) |
+| Niger | FedaPay (Airtel) |
+| RDC | CinetPay |
+| Gabon, Congo | Aucun confirmé : demandez à votre banque ou à votre opérateur |
+
+| Agrégateur | Mode test | Qui peut ouvrir un compte | Page officielle |
+| --- | --- | --- | --- |
+| FedaPay | Oui, dès la création du compte | Entreprise, ONG, travailleur indépendant | fedapay.com |
+| Kkiapay | Oui | Entreprise ; consultant individuel au Bénin | kkiapay.me |
+| Flutterwave | Oui, tant que le compte n’est pas validé | Entreprise ; compte individuel en Côte d’Ivoire, au Cameroun, au Sénégal | flutterwave.com |
+| Paystack | Oui | Côte d’Ivoire : entreprise, ou particulier avec un plafond (« Starter ») | paystack.com |
+| PayDunya | Oui (application « mode test ») | À vérifier auprès de PayDunya | paydunya.com |
+| CinetPay | Annoncé « momentanément indisponible » le 27/11/2026 | Entreprise établie dans le pays | cinetpay.com |
+| Wave | Non trouvé | Compte Wave Business | wave.com |
+
+Informations relevées le 27/11/2026 dans les documentations publiques : elles changent, vérifiez la page officielle avant de choisir. Pour le labo, prenez un agrégateur qui a un mode test. En production, il faut presque toujours un dossier d’ouverture de compte (pièce d’identité, et souvent registre du commerce) : préparez-le pendant les 30 jours de suivi.
+
 **Ne pas confondre :** un reçu, un devis ou une facture en PDF n’a pas besoin d’API ; Claude Code le fait dans votre application. Le MCP (J6) n’est pas une API de plus : c’est la prise qui branche Claude sur vos données.
 
