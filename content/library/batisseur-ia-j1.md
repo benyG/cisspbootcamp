@@ -82,7 +82,7 @@ Un agent attire le client (contenu, référencement, réponse immédiate) ; il n
 
 **Le prompt** est votre demande. **Le contexte** est tout ce que le modèle voit au moment de répondre : le prompt, la conversation précédente, les documents joints, les instructions du projet. C'est le dossier posé sur le bureau du rédacteur. Sa taille est limitée : au-delà, les éléments les plus anciens sortent ou sont résumés.
 
-**Les tokens** sont les morceaux de mots que le modèle lit et écrit. Ils mesurent deux choses qui vous concernent : la taille du contexte et le coût d'usage par API.
+**Les tokens** sont les morceaux de mots que le modèle lit et écrit. Ils mesurent deux choses qui vous concernent : la taille du contexte et le coût d'usage par API. À ne pas confondre avec le jeton d'accès (« access token ») que vous verrez en J2 : un badge temporaire, donc un secret.
 
 ### 2. Pourquoi l'IA se trompe avec assurance
 
@@ -311,6 +311,8 @@ Enregistrez-la dans les réglages de votre compte (section des skills), puis tes
 ### Étape 4 · Un connecteur (15 min)
 
 Dans les réglages, section des connecteurs, branchez un outil que vous utilisez déjà : agenda, stockage de fichiers ou messagerie. Lisez les droits demandés avant d'accepter. Ne collez jamais de mot de passe ni de clé dans une conversation.
+
+**En coulisses.** L'écran « Autoriser l'accès » que vous voyez, c'est OAuth : une procuration limitée et révocable, sans votre mot de passe. Accordez le minimum (la lecture si elle suffit) et repérez où retirer l'accès. Le mot est expliqué en J2 (fiche 8).
 
 ```
 Quels sont mes rendez-vous de la semaine prochaine, et lesquels concernent [mon projet] ?

@@ -64,6 +64,7 @@ Les 30 jours de suivi après la formation servent à faire mûrir le projet et �
 
 - **La carte :** les processus de son projet (pour une entreprise : attirer, vendre, encaisser, servir, livrer, administrer, piloter ; pour une association ou un outil interne : informer, inscrire, traiter les demandes, suivre) ; pour chacun, manuel, assisté ou autonome.
 - **Les fondations :** Claude Code, GitHub, Vercel ; la première page publique de son projet en ligne (vitrine, page d’inscription, page de présentation d’un outil).
+- **Ce qui se passe en coulisses** (8 minutes, fiche 8) : API (le guichet), clé d’API (le badge), variables d’environnement (le coffre), OAuth 2.0 (la procuration), webhook (le SMS de confirmation), MCP (la prise universelle). Le participant n’écrit pas ces mécanismes : il sait ce qu’ils font, ce qu’ils demandent, et il se fait guider par Claude pour les configurer, sans jamais lui donner un secret. Chaque notion est reprise en deux minutes au moment où elle sert : OAuth au connecteur de la J1, clés et coffre au devoir d’avant la J4, webhook au paiement de la J4, MCP à l’analyste de la J6.
 - **Fil rouge, travailler avec Claude Code :**
   - le fichier **CLAUDE.md** : la mémoire du projet (langue, règles, interdits), que Claude relit à chaque séance ;
   - **le plan avant d’agir** : demander un plan, le corriger, puis seulement laisser faire ;
@@ -139,5 +140,5 @@ Phrase sous le programme : « À la fin, vous ne dépendez de personne : vous sa
 
 ## Supports
 
-- Les [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) (fiche projet et kit de départ, CLAUDE.md type, modèle de demande, règles d’un agent, 10 cas de test, diagnostic, retour arrière, routine qui tourne seule), à envoyer aux participants avant la J1 avec la consigne de remplir la fiche projet ; leur lien public est /ia/fiches.
+- Les [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) (fiche projet et kit de départ, CLAUDE.md type, modèle de demande, règles d’un agent, 10 cas de test, diagnostic, retour arrière, routine qui tourne seule, les coulisses), à envoyer aux participants avant la J1 avec la consigne de remplir la fiche projet ; leur lien public est /ia/fiches.
 - Les fichiers PowerPoint et les fichiers du formateur : à déposer dans la Bibliothèque, section Bâtisseur IA.

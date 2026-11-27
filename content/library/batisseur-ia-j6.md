@@ -91,6 +91,8 @@ Ces deux agents complètent la carte de l'entreprise autonome (la carte des proc
 
 ### L'agent analyste
 
+**En coulisses.** Le MCP, c'est la prise universelle vue en J2 (fiche 8) : il branche Claude sur vos données. L'analyste est branché en lecture seule ; chaque branchement est un accès, on donne le minimum.
+
 Il travaille de deux façons.
 
 **1. L'analyse de la semaine.** Chaque lundi, le code calcule les chiffres de la semaine (objectifs, courbe, vos trois chiffres de la fiche projet, coûts d'API, résultats des publications ; chez Kofi : demandes, devis, encaissements). L'analyste les lit et rédige : ce qui s'est passé, pourquoi c'est probable, et trois pistes, chacune avec le chiffre qui la justifie. Vous gardez ou écartez chaque piste ; une piste gardée devient une action dans votre file.

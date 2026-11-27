@@ -146,6 +146,25 @@ Ton chaleureux et professionnel. Lisible d'abord sur téléphone.
 
 Aucun mot technique n'est nécessaire, sauf la dernière ligne du vrai message (Next.js, Vercel), donnée telle quelle dans le labo. Kofi est un exemple : pour une association, le bouton serait « Je m'inscris » ; pour un outil interne, « Faire une demande ». Ces cinq phrases, vous les ajoutez à votre fiche projet pendant l'atelier du matin.
 
+### Ce qui se passe en coulisses (8 min)
+
+Vous n'écrirez jamais ces mécanismes, mais votre projet en dépend, et Claude vous en parlera dès cette semaine. Six mots, six images (fiche 8, « Les coulisses en une page ») :
+
+| Le mot | L'image | Ce que le participant retient |
+| --- | --- | --- |
+| API | Le guichet | Vos outils se parlent par des API : on demande dans les formes, on reçoit une réponse |
+| Clé d'API (secret) | Le badge | Qui a le badge agit en votre nom et à vos frais : il ne se montre jamais, même à Claude |
+| Variables d'environnement | Le coffre | Les clés se rangent dans Vercel ; on voit leur nom, jamais leur valeur |
+| OAuth 2.0 | La procuration | « Autoriser l'accès » : un accès limité, sans votre mot de passe, que vous pouvez retirer |
+| Webhook | Le SMS de confirmation | Le service prévient votre système qu'un événement a eu lieu (un paiement, par exemple) |
+| MCP | La prise universelle | Elle branche Claude sur vos outils ; chaque branchement est un accès, on donne le minimum |
+
+**Deux « tokens ».** Le token de la J1 est un morceau de texte que le modèle lit et que l'on paie ; le jeton d'accès (« access token ») remis par OAuth est un badge temporaire, donc un secret.
+
+**Comment l'animer.** Huit minutes, prises sur ce cours (la démonstration garde 11 h 30). Faites relier chaque image à un moment de la formation : OAuth au connecteur de la J1, clés et coffre au devoir d'avant la J4, webhook au paiement de la J4, MCP à l'analyste de la J6. Montrez la page des variables d'environnement d'un projet Vercel de démonstration : les noms sont visibles, jamais les valeurs. Chaque notion est reprise en deux minutes au moment où elle sert.
+
+**Se faire aider par Claude.** Au moment de configurer, le participant utilise la demande type de la fiche 8 : Claude explique ce que fait le branchement, quelles clés ou autorisations il demande, où les ranger et comment vérifier, sans jamais recevoir la valeur d'un secret.
+
 ### Quatre règles de sécurité dès aujourd'hui
 
 1. Aucune clé dans le code ni dans un message : les secrets vont dans les variables d'environnement de Vercel. Jamais dans GitHub, jamais dans une conversation, même avec Claude.
@@ -370,6 +389,10 @@ Bloqué plus de 10 minutes : levez la main.
 | Déclencheur | L'événement qui lance le processus : un appel, une date, un paiement |
 | Claude Code | L'agent qui écrit et modifie le code de votre application d'après vos phrases |
 | CLAUDE.md | Le fichier des règles de votre projet, que Claude Code relit à chaque séance |
+| API | Le guichet par lequel deux logiciels se parlent : une demande dans les formes, une réponse |
+| Clé d'API | Le badge qui prouve que la demande vient de vous : un secret, rangé dans les variables d'environnement |
+| OAuth 2.0 | La procuration : « Autoriser l'accès », sans donner son mot de passe, retirable à tout moment |
+| Webhook | Le message qu'un service envoie à votre système quand un événement arrive |
 | Dépôt | Le dossier de votre application sur GitHub, avec son historique |
 | Demande de fusion | Un changement proposé, relu puis intégré |
 | Preview | Le lien qui montre un changement avant sa publication |
