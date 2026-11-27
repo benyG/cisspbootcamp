@@ -403,12 +403,12 @@ Préparez le pilotage :
 Sur votre application, dans une nouvelle branche, demandez à Claude Code d'abord un plan, puis :
 
 ```
-Regroupe dans une seule page /admin tout ce qui attend ma décision, quel que soit l'agent : devis, relances, publications, questions transmises, bons de commande. Pour chaque ligne : ce que c'est, pourquoi maintenant, valider ou modifier. Les plus urgentes en haut, lisible sur téléphone.
+Regroupe dans une seule page /admin tout ce qui attend ma décision, quel que soit l'agent : [l'action clé de la J4 : devis, réservations, inscriptions ou commandes], relances, et ce que produisent mes deux agents du jour ([questions transmises, publications, résumés de veille, bons de commande]). Pour chaque ligne : ce que c'est, pourquoi maintenant, valider ou modifier. Les plus urgentes en haut, lisible sur téléphone.
 
 Chaque matin, envoie-moi un seul e-mail : ce que les agents ont fait la veille, ce qui m'attend avec un lien direct, et les alertes. Ajoute dans /admin un bouton « Envoyer l'e-mail du matin maintenant » pour le tester.
 ```
 
 Comme au labo : demande de fusion, tests verts, lien Preview. Si quelque chose casse, appliquez la fiche 5 ; si vous restez bloqué, signalez-le avant la J6.
 
-- [ ] La file montre les actions de tous mes agents (questions transmises, brouillons de publications, devis et relances de la J4)
+- [ ] La file montre les actions de tous mes agents (ce que produisent mes deux agents du jour, et l'action clé et les relances de la J4)
 - [ ] Le bouton « Envoyer l'e-mail du matin maintenant » me l'envoie

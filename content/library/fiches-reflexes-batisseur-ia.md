@@ -125,7 +125,7 @@ Une bonne demande donne à Claude ce qu’une personne nouvelle dans l’entrepr
 **Modèle à copier :**
 
 ```markdown
-Contexte : [qui je suis, mon activité, mes clients]
+Contexte : [qui je suis, mon projet, pour qui]
 Ce que je veux : [le résultat, en une phrase]
 C’est réussi quand : [ce que je dois voir ou pouvoir faire]
 Exemple : [capture, document, message joint]

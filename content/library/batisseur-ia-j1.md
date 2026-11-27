@@ -206,7 +206,7 @@ Nouveauté du programme révisé du 24/11 : chaque journée ajoute un réflexe d
 **Une bonne demande, en six rubriques** (fiche 2 · le modèle de demande) :
 
 ```
-Contexte : [qui je suis, mon activité, mes clients]
+Contexte : [qui je suis, mon projet, pour qui]
 Ce que je veux : [le résultat, en une phrase]
 C'est réussi quand : [ce que je dois voir]
 Exemple : [capture, document, message joint]

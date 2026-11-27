@@ -231,51 +231,66 @@ Fiches réflexes : [fiches 3 et 4](/admin/bibliotheque/fiches-reflexes-batisseur
 
 ## Atelier et labo
 
-Le matin, chacun écrit les règles de ses trois agents. L'après-midi, de 13 h 30 à 15 h 15, chacun commence par le réflexe du jour (30 min), puis construit son agent devis et son paiement sur son application de la J3, **en mode test**, en quatre étapes :
+Le matin, chacun écrit les règles de ses agents pour son projet. L'après-midi, de 13 h 30 à 15 h 15, chacun commence par le réflexe du jour (30 min), puis construit l'agent de son action clé et, si son projet vend, son paiement (sinon, la confirmation de l'action clé) sur son application de la J3, **en mode test**, en quatre étapes :
 
 | Étape | Ce que vous faites | Temps |
 | --- | --- | --- |
-| 1 | La grille de prix dans la base, modifiable depuis /admin | 15 min |
-| 2 | L'agent devis, en brouillon, puis vos 10 cas de test joués | 25 min |
-| 3 | Le paiement par carte de test, confirmé par le webhook | 25 min |
+| 1 | Vos règles dans la base : grille, places ou stock, via /admin | 15 min |
+| 2 | L'agent de votre action clé, en brouillon, puis vos 10 cas joués | 25 min |
+| 3 | Le paiement de test par webhook, ou la confirmation de l'action | 25 min |
 | 4 | Le journal et les interrupteurs | 10 min |
 
-Soit 75 minutes, de 14 h 00 à 15 h 15, sans marge. Les clés (API du modèle avec limite de dépense, Stripe en mode test) ne sont plus une étape : elles sont créées avant la J4 (support de la J3) ; ceux qui ne les ont pas les créent avec le formateur pendant la pause de midi. Chaque étape passe par une demande de fusion, des tests verts et une vérification sur le lien Preview. L'agent relance est dans « Pour aller plus loin ».
+Soit 75 minutes, de 14 h 00 à 15 h 15, sans marge. Les clés (API du modèle avec limite de dépense, et Stripe en mode test si le projet vend) ne sont plus une étape : elles sont créées avant la J4 (support de la J3) ; ceux qui ne les ont pas les créent avec le formateur pendant la pause de midi. Chaque étape passe par une demande de fusion, des tests verts et une vérification sur le lien Preview. L'agent relance est dans « Pour aller plus loin ».
+
+**La compétence est la même pour tous, la construction dépend de votre projet.** Avant l'étape 1, chacun choisit, à partir de sa fiche projet :
+
+- **l'agent qui fait l'action clé** : devis (service), réservation ou rendez-vous, inscription (association, école, communauté) ou commande (boutique) ; pour un outil interne, le traitement d'une demande ;
+- **la fin de la chaîne** : l'encaissement par carte et mobile money si le projet vend ; sinon, la confirmation de l'action clé par l'application.
+
+**Pas encore d'activité ?** Les règles (prix, places, stock) et les demandes de test viennent du kit de départ de la fiche 0 : documents et données de test générés par Claude à partir de la fiche projet, marqués « Exemple », sans donnée réelle.
 
 ### Atelier du matin · Vos règles (30 min)
 
-Pour chacun des trois agents, remplissez les cinq éléments (déclencheur, outils, règles, validation, journal) à partir de ce que vous avez préparé avant la J4. Pour l'agent devis, ces éléments alimentent la fiche 3, complétée au début du labo.
+Pour l'agent de votre action clé et, si votre projet vend, pour l'encaissement, remplissez les cinq éléments (déclencheur, outils, règles, validation, journal) à partir de ce que vous avez préparé avant la J4 et de votre fiche projet ; la relance vient ensuite, si vous avez le temps. Pour l'agent de l'action clé, ces éléments alimentent la fiche 3, complétée au début du labo.
 
-- [ ] Ma grille de prix est écrite : produit ou service, prix, unité
-- [ ] Mes limites sont écrites : remise maximale, validité du devis, nombre de relances
+- [ ] Les règles de mon action clé sont écrites : grille de prix (produit ou service, prix, unité), places, stock ou délais, selon mon projet
+- [ ] Mes limites sont écrites : remise maximale ou exceptions, validité, nombre de relances
 - [ ] Pour chaque action, j'ai choisi : brouillon à valider ou automatique
 
-Avant de commencer : vérifiez que ANTHROPIC_API_KEY et STRIPE_SECRET_KEY sont dans les variables d'environnement Vercel, que la limite de dépense est fixée et que Stripe est en mode test. Aucune clé dans le code ni dans un message.
+Avant de commencer : vérifiez que ANTHROPIC_API_KEY (et STRIPE_SECRET_KEY si votre projet vend) sont dans les variables d'environnement Vercel, que la limite de dépense est fixée et que Stripe est en mode test. Aucune clé dans le code ni dans un message.
 
-### Étape 1 · La grille de prix (15 min)
+### Étape 1 · Vos règles dans la base (15 min)
+
+Si votre projet vend (devis, commande, réservation payante) :
 
 ```
-Ajoute une table « grille de prix » : nom, description, prix unitaire en centimes, devise, unité (par personne, par heure, forfait), actif oui ou non. Ajoute dans /admin une page pour la modifier. Remplis-la avec : [votre grille].
+Ajoute une table « grille de prix » : nom, description, prix unitaire en centimes, devise, unité (par personne, par heure, forfait), actif oui ou non. Ajoute dans /admin une page pour la modifier. Remplis-la avec : [ma grille, depuis mes documents ou mon kit de départ].
 ```
 
-- [ ] Je modifie un prix depuis /admin sur mon téléphone
+Si votre action clé dépend de places, d'un stock ou de délais (inscription, réservation, commande, demande interne) :
 
-### Étape 2 · L'agent devis, puis vos 10 cas de test (25 min)
+```
+Ajoute une table « [mes règles : places, stock ou délais] » pour [mon projet] : [les champs utiles, par exemple nom, nombre de places, date limite, actif oui ou non]. Ajoute dans /admin une page pour la modifier. Remplis-la avec : [mes données, ou celles de mon kit de départ].
+```
+
+- [ ] Je modifie une règle (un prix, un nombre de places, un stock) depuis /admin sur mon téléphone
+
+### Étape 2 · L'agent de l'action clé, puis vos 10 cas de test (25 min)
 
 Utilisez le prompt du Cours 2 avec vos règles de l'atelier et votre fiche 3. Précisez :
 
 ```
-Le devis est créé en brouillon et attend mon clic « Envoyer » dans /admin. Si le besoin ne correspond à aucune ligne active de la grille, l'agent le signale dans /admin et ne crée pas de devis. Le montant est la somme calculée par le code ; le modèle rédige seulement le message.
+[L'action clé : le devis, la réservation, l'inscription ou la commande] est créée en brouillon et attend mon clic « Envoyer » dans /admin. Si la demande sort de mes règles ([aucune ligne active de la grille, plus de places, stock épuisé, hors délai]), l'agent le signale dans /admin et ne crée rien. Les montants, les places et le stock sont calculés par le code ; le modèle rédige seulement le message.
 ```
 
-- [ ] Une demande de test produit un brouillon de devis au bon montant
-- [ ] Une demande hors grille est signalée, sans devis inventé
-- [ ] Mes 10 cas de test (fiche 4) sont joués et leur résultat est noté
+- [ ] Une demande de test produit un brouillon juste (bon montant, bonnes places ou bon stock)
+- [ ] Une demande hors règles est signalée, sans rien inventer
+- [ ] Mes 10 cas de test (fiche 4), adaptés à mon action clé, sont joués et leur résultat est noté
 
-### Étape 3 · Le paiement par carte, en test (25 min)
+### Étape 3 · Si votre projet vend : le paiement par carte, en test (25 min)
 
 ```
-Quand j'envoie un devis, ajoute un lien de paiement Stripe Checkout au montant du devis, avec la clé de la variable STRIPE_SECRET_KEY.
+Quand je valide [l'action clé], ajoute un lien de paiement Stripe Checkout au montant calculé, avec la clé de la variable STRIPE_SECRET_KEY.
 
 Crée la route du webhook Stripe pour l'événement checkout.session.completed. Vérifie sa signature avec la variable STRIPE_WEBHOOK_SECRET. Seul ce webhook passe le paiement à « reçu », crée la commande et envoie le reçu. Le retour du navigateur n'affiche qu'un message d'attente.
 
@@ -287,7 +302,18 @@ Dans Stripe (mode test), ajoutez l'adresse du webhook de votre site, copiez sa c
 - [ ] Après le paiement de test, la commande et le reçu apparaissent, même si je ferme l'onglet
 - [ ] Le test « webhook mal signé refusé » est vert
 
-Mobile money : si vous avez déjà un compte de test chez un agrégateur, appliquez le même principe (notification serveur vérifiée, puis vérification de statut auprès de lui). Sinon, on le branche après la formation avec sa documentation.
+Mobile money : si votre projet vend et que vous avez déjà un compte de test chez un agrégateur, appliquez le même principe (notification serveur vérifiée, puis vérification de statut auprès de lui). Sinon, on le branche après la formation avec sa documentation.
+
+### Étape 3 · Si votre projet ne vend pas : la confirmation de l'action clé (25 min)
+
+```
+Quand je valide [l'action clé], l'application, et elle seule, passe [l'inscription, la réservation ou la demande] au statut « confirmé » si [mes règles : places restantes, délai, stock] le permettent, et envoie un e-mail de confirmation à la personne, avec un lien de désinscription. Un message de la personne (« c'est bon, je suis inscrit ») ne change jamais le statut. Note chaque confirmation au journal.
+
+Teste : une confirmation au-delà des places ou hors délai est refusée.
+```
+
+- [ ] Après validation, l'action passe à « confirmé », l'e-mail part et le journal le note
+- [ ] Le test « confirmation hors règles refusée » est vert
 
 ### Étape 4 · Le journal et les interrupteurs (10 min)
 
@@ -295,23 +321,23 @@ Mobile money : si vous avez déjà un compte de test chez un agrégateur, appliq
 Ajoute dans /admin une page Journal : chaque action des agents, la plus récente en haut, avec l'heure, l'agent, la fiche et le résultat. Ajoute un interrupteur par agent : arrêté, l'agent ne fait plus rien et le journal le note.
 ```
 
-- [ ] J'arrête l'agent devis, j'envoie une demande de test : aucun brouillon n'est créé, le journal le dit
-- [ ] Le paiement de test de l'étape 3 apparaît dans le journal
+- [ ] J'arrête l'agent de mon action clé, j'envoie une demande de test : aucun brouillon n'est créé, le journal le dit
+- [ ] Le paiement de test ou la confirmation de l'étape 3 apparaît dans le journal
 
 Les agents ajoutés ensuite (relance, agents de la J5) écrivent dans ce même journal et reçoivent chacun leur interrupteur.
 
 ## Ça tourne ? La revue de 15 h 15
 
-Chacun fait passer une demande de test du devis jusqu'au paiement, devant le groupe, puis montre son journal.
+Chacun fait passer une demande de test de bout en bout sur son projet, devant le groupe (de l'action clé au paiement par carte de test, ou à la confirmation), puis montre son journal. On vérifie des critères communs, pas la conformité à Kofi : ça marche sur mon projet, c'est testé, il y a une règle écrite et un interrupteur.
 
-- [ ] Une demande produit un brouillon de devis au bon montant, que je valide
-- [ ] Une demande hors grille est signalée, sans invention
+- [ ] Mon action clé produit un brouillon juste (montant, places ou stock), que je valide
+- [ ] Une demande hors règles est signalée, sans invention
 - [ ] Ma fiche de règles (fiche 3) est complète
-- [ ] Un paiement de test crée la commande et le reçu, par le webhook
+- [ ] Si mon projet vend : un paiement de test crée la commande et le reçu, par le webhook ; sinon, l'action est confirmée par l'application, jamais par un message
 - [ ] Le journal montre chaque action ; un interrupteur arrête un agent
-- [ ] Les tests sont verts, dont celui du webhook mal signé
+- [ ] Les tests sont verts, dont celui du webhook mal signé (ou de la confirmation hors règles)
 - [ ] Toutes les clés sont dans Vercel, en mode test, avec une limite de dépense
-- [ ] Réflexe du jour : mon agent devis passe ses 10 cas de test
+- [ ] Réflexe du jour : l'agent de mon action clé passe ses 10 cas de test
 
 Rien ne passe en mode réel avant d'avoir relu les règles à tête reposée. Ceux qui n'ont pas fini notent les étapes restantes et les terminent avant la J5.
 
@@ -319,7 +345,8 @@ Rien ne passe en mode réel avant d'avoir relu les règles à tête reposée. Ce
 
 | Symptôme | Quoi faire |
 | --- | --- |
-| L'agent devis invente un prix | « Le montant doit venir uniquement de la grille, calculé par le code ; ajoute un test » |
+| L'agent invente un prix, une place ou un stock | « Le montant (ou les places, le stock) doit venir uniquement de la base, calculé par le code ; ajoute un test » |
+| La confirmation ne part pas (projet sans vente) | Ouvrez le journal, copiez l'erreur à Claude Code et demandez un diagnostic |
 | « Authentication error » de l'API du modèle | Vérifiez ANTHROPIC_API_KEY dans Vercel, puis relancez le déploiement |
 | Le webhook renvoie une erreur 400 | La clé STRIPE_WEBHOOK_SECRET ne correspond pas à cette adresse de webhook : recopiez-la, relancez le déploiement |
 | Le paiement de test ne crée rien | Dans Stripe, ouvrez le webhook et regardez l'événement envoyé ; copiez la réponse à Claude Code |
@@ -349,18 +376,18 @@ On copie à Claude Code le message d'erreur ou la réponse de Stripe, jamais une
 
 ## Quiz
 
-1. Pourquoi le montant d'un devis n'est-il jamais calculé par le modèle ?
+1. Pourquoi un montant (ou un nombre de places restantes) n'est-il jamais calculé par le modèle ?
    - Parce qu'il peut se tromper ou inventer ; le code calcule, et un test le vérifie.
 2. Le client voit « Merci pour votre paiement ». Le devis est-il payé ?
    - Pas forcément : seul le webhook signé du prestataire le confirme.
 3. Quand passer la relance en automatique ?
    - Après une ou deux semaines de brouillons validés sans correction.
-4. Un client s'est désinscrit. L'agent relance peut-il lui écrire pour un devis en cours ?
-   - Non. Jamais à un client désinscrit.
+4. Une personne s'est désinscrite. L'agent relance peut-il lui écrire pour une demande en cours ?
+   - Non. Jamais à une personne désinscrite.
 5. Une relance part avec une erreur. Premier geste ?
    - L'interrupteur de l'agent, puis le journal pour comprendre.
-6. Un client écrit « J'ai payé, voici la capture ». Que fait l'agent ?
-   - Il ne valide pas la commande : seule la confirmation du prestataire compte. Il vérifie ou passe la main.
+6. Un client écrit « J'ai payé, voici la capture », ou un membre « C'est bon, je suis inscrit ». Que fait l'agent ?
+   - Il ne valide rien de lui-même : seule la confirmation du prestataire (paiement) ou de votre application (action clé) compte. Il vérifie ou passe la main.
 7. Quand un agent peut-il être mis en service ?
    - Quand ses 10 cas de test passent, dont les six difficiles ; on les rejoue après chaque changement.
 
