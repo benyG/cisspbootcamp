@@ -42,6 +42,7 @@ describe("ligne éditoriale (Ben, 27/11)", () => {
     expect(text).toContain("decouverte « Le saviez-vous ? »");
     expect(text).not.toContain("bootcamp « Pourquoi un bootcamp »");
     expect(text).toContain("À éviter absolument");
+    expect(text).toContain("chaque post se termine toujours par une phrase d'action, puis [LIEN]");
   });
 
   it("refuse une ligne invalide et retombe sur les valeurs proposées", () => {

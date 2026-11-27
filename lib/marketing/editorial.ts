@@ -23,6 +23,7 @@ const CERT_INTENTS: Record<string, { intent: string; weight: number }> = {
   tendances: { intent: "Ce qui bouge dans le domaine (régulation, nouvelles menaces, nouveaux rôles), expliqué pour un professionnel, avec sa source quand c'est une actualité.", weight: 15 },
   certification: { intent: "Ce qu'apporte une certification (CISSP, CC) dans une carrière, et laquelle choisir selon son profil.", weight: 15 },
   bootcamp: { intent: "Pourquoi se préparer en bootcamp plutôt que seul : le cadre, le groupe, l'accompagnement. Sans détailler la méthode.", weight: 10 },
+  entreprises: { intent: "Pour les managers et les directions : pourquoi former une équipe à la sécurité, ce que ça change dans l'entreprise. Le lien mène à la demande de devis.", weight: 5 },
   offre: { intent: "La prochaine cohorte : dates, places, prix, inscription. Un post sur dix environ.", weight: 10 },
 };
 
@@ -34,6 +35,7 @@ const IA_INTENTS: Record<string, { intent: string; weight: number }> = {
   ia_pourquoi: { intent: "Pourquoi apprendre à construire soi-même plutôt que tout acheter ou tout déléguer.", weight: 10 },
   ia_bootcamp: { intent: "Pourquoi apprendre en bootcamp, en construisant son propre projet avec d'autres entrepreneurs. Sans détailler la méthode.", weight: 5 },
   garde_fous: { intent: "Les bons réflexes avec l'IA : secrets, relecture, données des clients.", weight: 5 },
+  ia_entreprises: { intent: "Pour les dirigeants de PME et d'organisations : ce que l'IA peut prendre en charge dans leurs processus, avec leurs règles et leurs données. Le lien mène à la demande de devis.", weight: 10 },
   offre: { intent: "Les prochaines dates d'entrée et l'inscription. Un post sur dix environ.", weight: 10 },
 };
 
@@ -42,7 +44,7 @@ const CERT_TEXT = {
   convictions: "- La sécurité est d'abord une affaire de décisions et de risques, pas seulement d'outils.\n- Comprendre une notion vaut mieux que réciter une définition.\n- Une certification compte quand elle s'appuie sur une vraie compréhension du métier.\n- Se former avec un cadre et un groupe aide à aller au bout.",
   tone: "Un professionnel qui partage ce qu'il trouve intéressant dans son métier, avec curiosité et simplicité. Une seule idée par post, un exemple concret. L'accroche pique la curiosité (une question, un fait surprenant mais vrai). La fin invite doucement à en apprendre plus.",
   avoid: "- La méthodologie de la formation (déroulé des séances, rythme, outils de préparation, techniques de révision) : c'est pour ceux qui sont déjà inscrits.\n- Les posts qui supposent qu'on prépare déjà l'examen.\n- Le jargon non expliqué.\n- La vente en dehors du pilier « Offre et cohorte ».\n- Les chiffres de marché (salaires, nombre de postes) sans source.",
-  models: "C'est quoi, au juste, la GIA ?\n\nGestion des identités et des accès. Derrière le sigle, une question simple : qui a le droit de faire quoi, et comment le vérifie-t-on ?\n\nQuand un collaborateur quitte l'entreprise, son compte doit disparaître le jour même. Quand un stagiaire arrive, il ne doit voir que ce dont il a besoin. La GIA, c'est donner le bon accès, à la bonne personne, au bon moment, et pouvoir le prouver.\n\nC'est l'un des huit domaines du CISSP. Envie de voir où vous en êtes sur ces notions ? [LIEN]",
+  models: "C'est quoi, au juste, la GIA ?\n\nGestion des identités et des accès. Derrière le sigle, une question simple : qui a le droit de faire quoi, et comment le vérifie-t-on ?\n\nQuand un collaborateur quitte l'entreprise, son compte doit disparaître le jour même. Quand un stagiaire arrive, il ne doit voir que ce dont il a besoin. La GIA, c'est donner le bon accès, à la bonne personne, au bon moment, et pouvoir le prouver.\n\nC'est l'un des huit domaines du CISSP. Pour aller plus loin sur celui-ci et les sept autres, la formation en 15 jours : [LIEN]",
 };
 
 const IA_TEXT = {
@@ -50,7 +52,7 @@ const IA_TEXT = {
   convictions: "- L'IA sert l'entrepreneur, elle ne le remplace pas : il garde les décisions, les prix et ce qui est public.\n- Ne pas savoir coder n'empêche plus de construire ses propres outils.\n- Commencer petit, une tâche à la fois, et garder la main.",
   tone: "Une équipe qui explique simplement, avec des exemples tirés de la vie d'une petite entreprise (boutique, atelier, cabinet). Pas de jargon sans explication. Une seule idée par post. On parle au nom d'ExamBoot et de son équipe, jamais d'une personne.",
   avoid: "- La méthode de la formation (déroulé des journées, Claude Code étape par étape, fiches réflexes) : c'est pour les participants.\n- Les gains chiffrés (heures, chiffre d'affaires) et les promesses.\n- Les robots, le futurisme, le vocabulaire de science-fiction.\n- La vente en dehors du pilier « Offre et dates ».",
-  models: "C'est quoi, au juste, un agent IA ?\n\nUn assistant qui ne se contente pas de répondre : il agit. Il lit une demande de devis, prépare le devis, l'envoie pour validation, et relance si le client ne répond pas.\n\nLa différence avec un simple chatbot ? Il a des outils (votre catalogue, votre agenda, votre paiement) et des règles : ce qu'il fait seul, ce qu'il vous laisse décider.\n\nVous voulez savoir quelles tâches de votre activité un agent pourrait prendre en charge ? [LIEN]",
+  models: "C'est quoi, au juste, un agent IA ?\n\nUn assistant qui ne se contente pas de répondre : il agit. Il lit une demande de devis, prépare le devis, l'envoie pour validation, et relance si le client ne répond pas.\n\nLa différence avec un simple chatbot ? Il a des outils (votre catalogue, votre agenda, votre paiement) et des règles : ce qu'il fait seul, ce qu'il vous laisse décider.\n\nConstruire vos propres agents, pour votre activité, sans savoir coder : c'est le Bâtisseur IA. [LIEN]",
 };
 
 function defaults(kind: MarketingKind): EditorialLine {
@@ -102,6 +104,7 @@ export function editorialForModel(line: EditorialLine): string {
     line.convictions && `Convictions à refléter :\n${line.convictions}`,
     line.tone && `Ton : ${line.tone}`,
     line.avoid && `À éviter absolument :\n${line.avoid}`,
+    "Appel à l'action : chaque post se termine toujours par une phrase d'action, puis [LIEN] (les hashtags peuvent suivre). Le lien mène à la formation, ou à la demande de devis pour un sujet qui parle aux entreprises, selon la destination du pilier.",
     line.models && `Posts modèles (s'en inspirer pour le ton, le niveau et la longueur ; ne jamais les recopier) :\n${line.models}`,
   ].filter(Boolean).join("\n\n");
 }

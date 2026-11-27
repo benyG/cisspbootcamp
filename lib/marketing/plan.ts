@@ -66,6 +66,7 @@ export const DESTINATIONS = {
   test: { label: "Test CISSP (5 questions)", path: "/test", forModel: "un test gratuit de 5 questions d'entraînement originales, au niveau et dans l'esprit du CISSP, corrigées, sans compte, en 10 minutes ; il mène ensuite à l'analyse de profil" },
   conseil: { label: "Conseil carrière", path: "/conseil", forModel: "les séances de conseil carrière de Ben (bilan de carrière, évolution vers le management ou le poste de RSSI, reconversion…), payantes, avec prise de rendez-vous en ligne" },
   cohorte: { label: "Inscription à la cohorte", path: "/", forModel: "la page du bootcamp : programme, rythme, prix selon le pays et inscription à la prochaine cohorte" },
+  devis: { label: "Demande de devis (entreprises)", path: "/entreprises?formation=cissp", forModel: "la page des formations CISSP et CC pour les entreprises : une session réservée à une équipe, sur site ou en ligne, à leurs dates, avec un formulaire de demande de devis" },
 } as const;
 
 /** Where a Bâtisseur IA post sends people (Ben, 04/11). */
@@ -73,6 +74,7 @@ export const IA_DESTINATIONS = {
   ia_diagnostic: { label: "Diagnostic IA", path: "/ia/diagnostic", forModel: "le diagnostic d'autonomie gratuit (5 questions, 3 minutes), pour une activité ou un projet : où en est l'entreprise (projet, manuel, assisté) et les trois tâches à mettre en pilote automatique d'abord" },
   ia_page: { label: "Page Bâtisseur IA", path: "/ia", forModel: "la page du Bâtisseur IA : bâtir son entreprise autonome avec l'IA, programme des 6 journées le week-end (chacune met une fonction de l'entreprise en pilote automatique), prix selon le pays, prochaines dates d'entrée" },
   ia_inscription: { label: "Inscription IA", path: "/ia/inscription", forModel: "l'inscription au Bâtisseur IA : choix de la date d'entrée (J1), paiement par carte bancaire" },
+  ia_devis: { label: "Demande de devis (entreprises)", path: "/ia/entreprises", forModel: "la page Bâtisseur IA Entreprises : l'équipe met l'IA au travail dans l'entreprise, un processus après l'autre (diagnostic, pilote, déploiement, suivi), avec une demande de devis et un appel de 30 minutes" },
 } as const;
 
 export const ALL_DESTINATIONS = { ...DESTINATIONS, ...IA_DESTINATIONS } as const;
@@ -100,23 +102,25 @@ export function defaultDestination(angle: Angle): Destination {
  * destinations and weights in Marketing › Ligne éditoriale (lib/marketing/editorial.ts).
  */
 export const PILLARS = {
-  decouverte: { label: "Le saviez-vous ?", destination: "test", examples: ["C'est quoi la GIA (gestion des identités et des accès) ?", "La triade confidentialité, intégrité, disponibilité en trois exemples du quotidien", "RTO et RPO : la différence en une minute"] },
-  carriere: { label: "Carrière cyber", destination: "conseil", examples: ["RSSI, GRC, SOC, pentest : les métiers de la cybersécurité expliqués", "Passer de la technique au management de la sécurité", "Ce qu'un recruteur regarde dans un profil cyber"] },
-  tendances: { label: "Tendances du domaine", destination: "scanner", examples: ["Ce que les lois sur les données personnelles changent pour les entreprises", "L'IA générative : nouveaux risques, nouveaux rôles en sécurité", "Le zero trust, au-delà du mot à la mode"] },
-  certification: { label: "Pourquoi se certifier", destination: "scanner", examples: ["Ce que le CISSP dit de vous à un employeur", "CISSP, CISM ou CC : à chacun son moment", "Le titre Associate of ISC² : certifié avant les 5 ans d'expérience"] },
+  decouverte: { label: "Le saviez-vous ?", destination: "cohorte", examples: ["C'est quoi la GIA (gestion des identités et des accès) ?", "La triade confidentialité, intégrité, disponibilité en trois exemples du quotidien", "RTO et RPO : la différence en une minute"] },
+  carriere: { label: "Carrière cyber", destination: "cohorte", examples: ["RSSI, GRC, SOC, pentest : les métiers de la cybersécurité expliqués", "Passer de la technique au management de la sécurité", "Ce qu'un recruteur regarde dans un profil cyber"] },
+  tendances: { label: "Tendances du domaine", destination: "cohorte", examples: ["Ce que les lois sur les données personnelles changent pour les entreprises", "L'IA générative : nouveaux risques, nouveaux rôles en sécurité", "Le zero trust, au-delà du mot à la mode"] },
+  certification: { label: "Pourquoi se certifier", destination: "cohorte", examples: ["Ce que le CISSP dit de vous à un employeur", "CISSP, CISM ou CC : à chacun son moment", "Le titre Associate of ISC² : certifié avant les 5 ans d'expérience"] },
   bootcamp: { label: "Pourquoi un bootcamp", destination: "cohorte", examples: ["Se préparer seul ou accompagné : ce qui change", "Pourquoi une préparation courte et intensive", "Ce qu'apporte un groupe qui avance au même rythme"] },
+  entreprises: { label: "Former une équipe", destination: "devis", examples: ["Pourquoi former toute une équipe à la gouvernance de la sécurité", "Ce qu'un manager gagne à parler le même langage que son RSSI", "Former ses équipes ou recruter : comparer honnêtement"] },
   offre: { label: "Offre et cohorte", destination: "cohorte", examples: ["Places limitées, date de clôture", "Paiement par carte, même depuis Orange Money", "Un coach qui tient le rythme avec vous"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
 
 /** Bâtisseur IA pillars (Ben, 04/11; rewritten 27/11 in the same spirit): curiosity and interest first, the offer about one post in ten. */
 export const IA_PILLARS = {
-  ia_decouverte: { label: "Le saviez-vous ? (IA)", destination: "ia_diagnostic", examples: ["C'est quoi un agent IA, en une phrase ?", "Comment une IA peut répondre à partir de vos propres documents", "Une API expliquée avec l'exemple d'une boutique"] },
-  cas_usage: { label: "Cas d'usage", destination: "ia_diagnostic", examples: ["Relancer ses prospects sans y penser", "Savoir qui a payé, sans chercher", "Des devis et factures en un clic"] },
+  ia_decouverte: { label: "Le saviez-vous ? (IA)", destination: "ia_page", examples: ["C'est quoi un agent IA, en une phrase ?", "Comment une IA peut répondre à partir de vos propres documents", "Une API expliquée avec l'exemple d'une boutique"] },
+  cas_usage: { label: "Cas d'usage", destination: "ia_page", examples: ["Relancer ses prospects sans y penser", "Savoir qui a payé, sans chercher", "Des devis et factures en un clic"] },
   autonome: { label: "L'entreprise autonome", destination: "ia_page", examples: ["Une entreprise autonome, ce n'est pas une entreprise sans humains", "Manuel, assisté, autonome : où en est votre entreprise ?", "Ce qu'une entreprise peut confier à l'IA, et ce qu'elle garde"] },
   ia_tendances: { label: "Tendances IA et entreprise", destination: "ia_page", examples: ["Ce que les nouveaux modèles d'IA changent pour une petite entreprise", "Paiement en ligne et mobile money : ce qui s'automatise", "Ce qu'une petite entreprise peut automatiser aujourd'hui"] },
   ia_pourquoi: { label: "Pourquoi bâtir soi-même", destination: "ia_page", examples: ["Agence, logiciel du marché ou sur mesure : comparer honnêtement", "Ne pas savoir coder n'empêche plus de construire", "Garder la main sur son propre système"] },
   ia_bootcamp: { label: "Pourquoi un bootcamp", destination: "ia_page", examples: ["Apprendre en construisant son propre projet", "Six journées le week-end : pourquoi ce format", "Avancer en groupe, avec d'autres entrepreneurs"] },
-  garde_fous: { label: "Bons réflexes", destination: "ia_diagnostic", examples: ["Ne jamais confier ses mots de passe à une IA", "Relire ce que l'IA a écrit avant de publier", "Commencer petit : une tâche, puis la suivante"] },
+  garde_fous: { label: "Bons réflexes", destination: "ia_page", examples: ["Ne jamais confier ses mots de passe à une IA", "Relire ce que l'IA a écrit avant de publier", "Commencer petit : une tâche, puis la suivante"] },
+  ia_entreprises: { label: "L'IA dans votre entreprise", destination: "ia_devis", examples: ["Ce qu'une PME peut confier à l'IA dès ce mois-ci", "Garder ses données chez soi : l'IA installée dans vos locaux", "Un processus automatisé, mesuré, avec un interrupteur"] },
   offre: { label: "Offre et dates", destination: "ia_inscription", examples: ["Les prochaines entrées J1", "6 journées le week-end, aux dates de votre choix", "Paiement par carte, même depuis Orange Money"] },
 } as const satisfies Record<string, { label: string; destination: Destination; examples: readonly string[] }>;
 
@@ -241,7 +245,8 @@ export function trackedLink(appUrl: string, channel: Channel, cohortId: number |
     utm_campaign: cohortId ? `cohorte-${cohortId}` : "cohorte",
     utm_content: code,
   });
-  const path = `${ALL_DESTINATIONS[destination].path}?${params.toString()}`;
+  const base = ALL_DESTINATIONS[destination].path;
+  const path = `${base}${base.includes("?") ? "&" : "?"}${params.toString()}`;
   // Bâtisseur IA pages live on their own domain once it is set (lib/ia-domain.ts).
   return path.startsWith("/ia") ? iaUrl(path, appUrl) : `${appUrl}${path}`;
 }

@@ -96,8 +96,11 @@ describe("chiffres réels du test", () => {
 
 describe("piliers, formats, équilibre (Ben, 30/09)", () => {
   it("chaque pilier a sa destination naturelle", () => {
-    expect(PILLARS.decouverte.destination).toBe("test");
-    expect(PILLARS.carriere.destination).toBe("conseil");
+    // Ben, 27/11: the call to action leads to the training, or to the quote request for company topics.
+    expect(PILLARS.decouverte.destination).toBe("cohorte");
+    expect(PILLARS.carriere.destination).toBe("cohorte");
+    expect(PILLARS.entreprises.destination).toBe("devis");
+    expect(trackedLink("https://x.test", "linkedin", 3, "li-abc123", "devis")).toBe("https://x.test/entreprises?formation=cissp&utm_source=linkedin&utm_medium=social&utm_campaign=cohorte-3&utm_content=li-abc123");
     expect(PILLARS.offre.destination).toBe("cohorte");
     expect(trackedLink("https://x.test", "linkedin", 3, "li-abc123", "conseil")).toMatch(/^https:\/\/x\.test\/conseil\?utm_source=linkedin/);
     expect(trackedLink("https://x.test", "linkedin", 3, "li-abc123", "cohorte")).toMatch(/^https:\/\/x\.test\/\?utm_source=linkedin/);

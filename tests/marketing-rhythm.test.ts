@@ -15,9 +15,9 @@ describe("subject of the week", () => {
     expect(chooseSubject("cert", recent, 1).topic).not.toBe(s.topic);
   });
 
-  it("falls back to the profile analysis when the practice test is off", () => {
-    const all = ["carriere", "tendances", "certification", "bootcamp", "offre"].map((p) => ({ pillar: p, angle: p, destination: "scanner" }));
-    expect(chooseSubject("cert", all, 0)).toMatchObject({ pillar: "decouverte", destination: "scanner" });
+  it("leads to the training page", () => {
+    const all = ["carriere", "tendances", "certification", "bootcamp", "offre"].map((p) => ({ pillar: p, angle: p, destination: "cohorte" }));
+    expect(chooseSubject("cert", all, 0)).toMatchObject({ pillar: "decouverte", destination: "cohorte" });
   });
 
   it("never proposes a pillar Ben switched off", () => {

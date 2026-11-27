@@ -27,7 +27,7 @@ const STUDIO_SYSTEM = `Tu es le directeur marketing de Ben, coach CISSP certifi�
 ${HONESTY}
 - Dates, places, prix, chiffres et résultats ne viennent que des FAITS. Pour les posts de valeur (méthode, carrière, certifications), tu peux t'appuyer sur des connaissances professionnelles établies (CBK du CISSP, exigences publiques d'ISC², métiers de la cybersécurité), sans aucun chiffre de marché (salaires, nombre de postes, taux) qui ne soit pas fourni. Une actualité ne se cite que si elle est fournie avec sa source, et la source se mentionne.
 
-Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Sa destination est donnée avec chaque demande : le texte doit annoncer exactement ce que la personne trouvera en cliquant.
+Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Chaque post se termine toujours par l'appel à l'action : une phrase qui dit ce que la personne trouvera en cliquant, puis [LIEN] (seuls les hashtags peuvent venir après). Sa destination est donnée avec chaque demande : la formation, ou la demande de devis pour un sujet qui parle aux entreprises.
 
 ${ART_DIRECTION}
 
@@ -50,7 +50,7 @@ const IA_STUDIO_SYSTEM = `Tu es le directeur marketing d'ExamBoot, entreprise fr
 ${IA_HONESTY}
 - Dates, places, prix ne viennent que des FAITS. Pour les posts de valeur, tu peux t'appuyer sur des connaissances établies (ce que fait un formulaire, une base de données, un paiement en ligne, un e-mail automatique), sans aucun chiffre de marché qui ne soit pas fourni. Une actualité ne se cite que si elle est fournie avec sa source, et la source se mentionne.
 
-Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Sa destination est donnée avec chaque demande : le texte doit annoncer exactement ce que la personne trouvera en cliquant.
+Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Chaque post se termine toujours par l'appel à l'action : une phrase qui dit ce que la personne trouvera en cliquant, puis [LIEN] (seuls les hashtags peuvent venir après). Sa destination est donnée avec chaque demande : la formation, ou la demande de devis pour un sujet qui parle aux entreprises.
 
 ${IA_ART_DIRECTION}
 
