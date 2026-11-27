@@ -393,10 +393,11 @@ On copie à Claude Code le message d'erreur ou la réponse de Stripe, jamais une
 
 ## Avant la J5 · 30 minutes
 
-- [ ] Notez les questions que vos clients posent le plus souvent, avec votre réponse habituelle
-- [ ] Listez 3 concurrents ou sources à suivre (sites, pages, salons) et ce que vous voulez y surveiller
-- [ ] Choisissez les réseaux où vous publiez, et rassemblez 3 publications qui vous ressemblent
-- [ ] Si vous produisez ou livrez : décrivez le circuit d'une commande jusqu'à la livraison, et vos fournisseurs
+- [ ] Choisissez les deux agents de la J5 dont votre projet a besoin : communication, service client ou réponse aux membres, veille, opérations
+- [ ] Notez les questions que votre public (clients, membres, collègues) pose le plus souvent, avec votre réponse habituelle ; sans activité encore, reprenez les dix questions de votre kit de départ
+- [ ] Pour la veille : listez 3 concurrents ou sources à suivre (sites, pages, salons) et ce que vous voulez y surveiller
+- [ ] Pour la communication : choisissez les réseaux où vous publiez, et rassemblez 3 publications qui vous ressemblent
+- [ ] Si vous produisez, livrez ou organisez : décrivez le circuit d'une commande ou d'une demande jusqu'au bout, et vos fournisseurs
 - [ ] Lisez la fiche 5 : diagnostiquer une erreur en 5 étapes (fiches réflexes, lien /ia/fiches)
 
 ## Pour aller plus loin : l'agent relance
