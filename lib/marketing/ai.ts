@@ -27,13 +27,14 @@ const STUDIO_SYSTEM = `Tu es le directeur marketing de Ben, coach CISSP certifi�
 ${HONESTY}
 - Dates, places, prix, chiffres et résultats ne viennent que des FAITS. Pour les posts de valeur (méthode, carrière, certifications), tu peux t'appuyer sur des connaissances professionnelles établies (CBK du CISSP, exigences publiques d'ISC², métiers de la cybersécurité), sans aucun chiffre de marché (salaires, nombre de postes, taux) qui ne soit pas fourni. Une actualité ne se cite que si elle est fournie avec sa source, et la source se mentionne.
 
-Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Sa destination est donnée avec chaque demande : le texte doit annoncer exactement ce que la personne trouvera en cliquant.
+Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Chaque post se termine toujours par l'appel à l'action : une phrase qui dit ce que la personne trouvera en cliquant, puis [LIEN] (seuls les hashtags peuvent venir après). Sa destination est donnée avec chaque demande : la formation, ou la demande de devis pour un sujet qui parle aux entreprises.
 
 ${ART_DIRECTION}
 
 Pour chaque variante, donne un brief visuel court et concret qui respecte strictement cette direction artistique : ce qu'on voit, le texte à l'écran (5 à 8 mots, un mot ou un chiffre fort à mettre en vert), le cadrage, et la description en anglais de la photographie seule pour le générateur d'images (personnes fictives : jamais Ben, jamais un élève présenté comme réel).
 Pour TikTok : un storyboard de 3 à 6 plans (durée, image, voix off, texte à l'écran) pour 15 à 30 secondes, et un prompt texte-vers-vidéo en anglais pour MiniMax (un seul plan de 6 secondes, le plan d'ouverture, avec les mouvements de caméra entre crochets comme [Push in] ou [Tracking shot], sans texte à l'écran, sans logo). Pour les autres canaux : storyboard vide et prompt vide.
-Les trois variantes doivent être vraiment différentes (accroche, structure, ton), pas trois reformulations.`;
+Les trois variantes doivent être vraiment différentes (accroche, structure, ton), pas trois reformulations.
+La LIGNE ÉDITORIALE fournie avec la demande (public, ton, convictions, à éviter, posts modèles) prime sur tout, sauf les règles d'honnêteté.`;
 
 /** Bâtisseur IA (Ben, 04/11): business owners, not IT people; the same honesty, no gain promised. */
 const IA_HONESTY = [
@@ -49,13 +50,14 @@ const IA_STUDIO_SYSTEM = `Tu es le directeur marketing d'ExamBoot, entreprise fr
 ${IA_HONESTY}
 - Dates, places, prix ne viennent que des FAITS. Pour les posts de valeur, tu peux t'appuyer sur des connaissances établies (ce que fait un formulaire, une base de données, un paiement en ligne, un e-mail automatique), sans aucun chiffre de marché qui ne soit pas fourni. Une actualité ne se cite que si elle est fournie avec sa source, et la source se mentionne.
 
-Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Sa destination est donnée avec chaque demande : le texte doit annoncer exactement ce que la personne trouvera en cliquant.
+Le lien s'écrit exactement [LIEN] dans le texte ; il sera remplacé par un lien suivi. Chaque post se termine toujours par l'appel à l'action : une phrase qui dit ce que la personne trouvera en cliquant, puis [LIEN] (seuls les hashtags peuvent venir après). Sa destination est donnée avec chaque demande : la formation, ou la demande de devis pour un sujet qui parle aux entreprises.
 
 ${IA_ART_DIRECTION}
 
 Pour chaque variante, donne un brief visuel court et concret qui respecte strictement cette direction artistique : ce qu'on voit, le texte à l'écran (5 à 8 mots, un mot ou un chiffre fort à mettre en vert), le cadrage, et la description en anglais de la photographie seule pour le générateur d'images (personnes fictives : jamais Ben ni une personne réelle, jamais un participant présenté comme réel). Le Bâtisseur IA parle au nom d'ExamBoot et de son équipe : ne nomme jamais Ben, ni aucun formateur.
 Pour TikTok : un storyboard de 3 à 6 plans (durée, image, voix off, texte à l'écran) pour 15 à 30 secondes, et un prompt texte-vers-vidéo en anglais pour MiniMax (un seul plan de 6 secondes, le plan d'ouverture, avec les mouvements de caméra entre crochets comme [Push in] ou [Tracking shot], sans texte à l'écran, sans logo). Pour les autres canaux : storyboard vide et prompt vide.
-Les trois variantes doivent être vraiment différentes (accroche, structure, ton), pas trois reformulations.`;
+Les trois variantes doivent être vraiment différentes (accroche, structure, ton), pas trois reformulations.
+La LIGNE ÉDITORIALE fournie avec la demande (public, ton, convictions, à éviter, posts modèles) prime sur tout, sauf les règles d'honnêteté.`;
 
 const CHANNEL_RULES: Record<Channel, string> = {
   linkedin: "LinkedIn : 120 à 220 mots. Première ligne = accroche qui arrête le défilement. Paragraphes d'une à deux phrases. Une seule action à la fin avec [LIEN]. 3 à 5 hashtags pertinents en fin.",
@@ -139,19 +141,26 @@ export type GenerateInput = {
   brief: string;
   /** The audience: certifications (default) or Bâtisseur IA. */
   kind?: MarketingKind;
+  /** Ben's editorial line, as editorialForModel writes it (lib/marketing/editorial.ts). */
+  editorial?: string;
+  /** The pillar's name and intent as Ben set them. */
+  pillarLine?: { label: string; intent: string };
 };
 
 export async function generateVariants(input: GenerateInput): Promise<StudioResult> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
   const kind = input.kind ?? "cert";
   const destination = input.destination ?? (kind === "ia" ? "ia_diagnostic" : "scanner");
+  const pillarLabel = input.pillar ? (input.pillarLine?.label ?? ALL_PILLARS[input.pillar].label) : "";
   const prompt = [
+    input.editorial ?? null,
+    input.editorial ? "" : null,
     "FAITS SUR L'OFFRE (seule source pour dates, places, prix et chiffres) :",
     input.facts,
     "",
     `Canal : ${CHANNELS[input.channel].label}. ${CHANNEL_RULES[input.channel]}`,
     `Format visuel : ${CHANNELS[input.channel].format}.`,
-    input.pillar ? `Pilier éditorial : ${ALL_PILLARS[input.pillar].label}.${input.pillar === "offre" ? "" : " C'est un post de valeur : il aide d'abord, l'offre n'arrive qu'avec l'action finale, en une phrase."}` : null,
+    input.pillar ? `Pilier éditorial : ${pillarLabel}.${input.pillarLine?.intent ? ` ${input.pillarLine.intent}` : ""}${input.pillar === "offre" ? "" : " C'est un post de valeur : il intéresse d'abord, l'offre n'arrive qu'avec l'action finale, en une phrase."}` : null,
     input.topic ? `Sujet : ${input.topic}` : input.angle ? `Angle : ${ANGLES[input.angle]}.` : null,
     `Format : ${FORMATS[input.format ?? "standard"].label}. ${formatRule(input.format ?? "standard", kind)}`,
     `Le lien [LIEN] mène à : ${ALL_DESTINATIONS[destination].forModel}.`,
@@ -237,7 +246,7 @@ export async function draftFollowup(input: FollowupInput): Promise<{ ok: true; t
 
 export type TopicIdea = { pillar: Pillar; format: Format; channel: Channel; destination: Destination; title: string; hook: string; why: string; source: string };
 
-const ideasSchema = (kind: MarketingKind) => ({
+const ideasSchema = (kind: MarketingKind, pillarKeys?: string[]) => ({
   type: "object",
   additionalProperties: false,
   required: ["ideas"],
@@ -249,7 +258,7 @@ const ideasSchema = (kind: MarketingKind) => ({
         additionalProperties: false,
         required: ["pillar", "format", "channel", "destination", "title", "hook", "why", "source"],
         properties: {
-          pillar: { type: "string", enum: Object.keys(pillarsFor(kind)) },
+          pillar: { type: "string", enum: pillarKeys?.length ? pillarKeys : Object.keys(pillarsFor(kind)) },
           format: { type: "string", enum: Object.keys(FORMATS) },
           channel: { type: "string", enum: Object.keys(CHANNELS) },
           destination: { type: "string", enum: Object.keys(destinationsFor(kind)) },
@@ -268,10 +277,10 @@ const IDEAS_SYSTEM = `Tu es le responsable éditorial de Ben, coach CISSP certif
 ${HONESTY}
 
 Règles des idées :
-- Environ quatre sujets de valeur (méthode, carrière, choix de certification, éligibilité, vie du candidat) pour un sujet de vente (pilier « offre »).
-- Varie les piliers, les formats et les canaux. Respecte les formats possibles par canal.
-- Chaque sujet a une seule destination pour son lien, la plus naturelle : méthode → test, carrière → conseil, choix et éligibilité → analyse, vie du candidat et offre → cohorte.
-- Pars de ce que les prospects disent et font (leurs objectifs, leurs questions, leurs verdicts) : c'est la meilleure source. Ne cite jamais leurs phrases, ne les reconnais jamais : reformule le besoin.
+- La LIGNE ÉDITORIALE fournie fixe les piliers, leur part des posts, la destination de leur lien, le public, le ton, les convictions et ce qu'il faut éviter : elle prime sur tout le reste, sauf les règles d'honnêteté. Répartis les 10 sujets selon les parts indiquées ; n'utilise que les piliers listés, avec la destination indiquée pour chacun.
+- Chaque sujet doit donner envie à quelqu'un qui n'est pas encore en formation de s'arrêter et de se dire « tiens, c'est intéressant ». Préfère une notion précise et concrète à un thème vague.
+- Varie les formats et les canaux. Respecte les formats possibles par canal.
+- Ce que les prospects disent et font (leurs objectifs, leurs questions, leurs verdicts) aide à choisir parmi les sujets possibles. Ne cite jamais leurs phrases, ne les reconnais jamais : reformule le besoin.
 - Évite les sujets déjà traités ce mois-ci.
 - Une actualité ne sert que si elle est fournie avec sa source ; ne rapporte que ce qu'elle dit.`;
 
@@ -280,18 +289,20 @@ const IA_IDEAS_SYSTEM = `Tu es le responsable éditorial du Bâtisseur IA, la fo
 ${IA_HONESTY}
 
 Règles des idées :
-- Environ quatre sujets de valeur (l'entreprise autonome, cas d'usage, construire avec Claude Code, les outils expliqués, méthode et garde-fous, vie d'entrepreneur) pour un sujet de vente (pilier « offre »).
-- Varie les piliers, les formats et les canaux. Respecte les formats possibles par canal.
-- Chaque sujet a une seule destination pour son lien, la plus naturelle : cas d'usage, garde-fous et vie d'entrepreneur → diagnostic ; entreprise autonome, construire et outils → page du Bâtisseur IA ; offre → inscription.
-- Pars de ce que les entrepreneurs ont répondu au diagnostic (leur activité, les tâches qui leur coûtent du temps, leurs outils) : c'est la meilleure source. Agrégats seulement, jamais une personne.
+- La LIGNE ÉDITORIALE fournie fixe les piliers, leur part des posts, la destination de leur lien, le public, le ton, les convictions et ce qu'il faut éviter : elle prime sur tout le reste, sauf les règles d'honnêteté. Répartis les 10 sujets selon les parts indiquées ; n'utilise que les piliers listés, avec la destination indiquée pour chacun.
+- Chaque sujet doit donner envie à quelqu'un qui n'est pas encore en formation de s'arrêter et de se dire « tiens, c'est intéressant ». Préfère une notion précise et concrète à un thème vague.
+- Varie les formats et les canaux. Respecte les formats possibles par canal.
+- Ce que les entrepreneurs ont répondu au diagnostic (leur activité, les tâches qui leur coûtent du temps, leurs outils) aide à choisir parmi les sujets possibles. Agrégats seulement, jamais une personne.
 - Évite les sujets déjà traités ce mois-ci.
 - Une actualité ne sert que si elle est fournie avec sa source ; ne rapporte que ce qu'elle dit.`;
 
 const FORMAT_CHANNELS = Object.entries(FORMATS).map(([k, f]) => `${k} (${f.label}) : ${f.channels.join(", ")}`).join("\n");
 
-export async function suggestTopics(input: { facts: string; insights: string; recent: string; news: string; kind?: MarketingKind }): Promise<{ ok: true; ideas: TopicIdea[] } | { ok: false; error: string }> {
+export async function suggestTopics(input: { facts: string; insights: string; recent: string; news: string; kind?: MarketingKind; editorial?: string; pillarKeys?: string[] }): Promise<{ ok: true; ideas: TopicIdea[] } | { ok: false; error: string }> {
   if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "La clé ANTHROPIC_API_KEY n'est pas configurée sur le serveur." };
   const prompt = [
+    input.editorial ?? `Piliers : ${Object.entries(pillarsFor(input.kind ?? "cert")).map(([k, p]) => `${k} (${p.label})`).join(", ")}.`,
+    "",
     "FAITS SUR L'OFFRE :",
     input.facts,
     "",
@@ -304,7 +315,6 @@ export async function suggestTopics(input: { facts: string; insights: string; re
     "ACTUALITÉS (avec source) :",
     input.news || "Aucune : n'en invente pas.",
     "",
-    `Piliers : ${Object.entries(pillarsFor(input.kind ?? "cert")).map(([k, p]) => `${k} (${p.label})`).join(", ")}.`,
     `Formats possibles par canal :\n${FORMAT_CHANNELS}`,
     "",
     "Propose 10 sujets.",
@@ -319,14 +329,14 @@ export async function suggestTopics(input: { facts: string; insights: string; re
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
       system: [{ type: "text", text: input.kind === "ia" ? IA_IDEAS_SYSTEM : IDEAS_SYSTEM, cache_control: { type: "ephemeral" } }],
-      output_config: { effort: "medium", format: { type: "json_schema", schema: ideasSchema(input.kind ?? "cert") } },
+      output_config: { effort: "medium", format: { type: "json_schema", schema: ideasSchema(input.kind ?? "cert", input.pillarKeys) } },
       messages: [{ role: "user", content: prompt }],
     });
     await recordAiUsage("ideas", response);
     if (response.stop_reason === "refusal") return { ok: false, error: "Le modèle a refusé cette demande." };
     if (response.stop_reason === "max_tokens") return { ok: false, error: "Réponse coupée. Réessayez." };
     const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("");
-    const ideas = (JSON.parse(text) as { ideas: TopicIdea[] }).ideas.filter((i) => i.title && (FORMATS[i.format]?.channels as readonly string[] | undefined)?.includes(i.channel));
+    const ideas = (JSON.parse(text) as { ideas: TopicIdea[] }).ideas.filter((i) => i.title && (FORMATS[i.format]?.channels as readonly string[] | undefined)?.includes(i.channel) && (!input.pillarKeys?.length || input.pillarKeys.includes(i.pillar)));
     return ideas.length ? { ok: true, ideas: ideas.slice(0, 10) } : { ok: false, error: "Aucune idée exploitable. Réessayez." };
   } catch (error) {
     if (error instanceof Anthropic.APIError) {

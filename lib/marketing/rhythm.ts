@@ -3,7 +3,8 @@ import { env } from "@/lib/env";
 import { examBootEnabled } from "@/lib/examboot/client";
 import { generateVariants } from "@/lib/marketing/ai";
 import { cohortFacts, factsForModel, recentPosts, recentTestStats } from "@/lib/marketing/data";
-import { type BalancePost, type MarketingKind, type Pillar, editorialBalance, marketingKind, newPostCode, pillarsFor, trackedLink, withLink } from "@/lib/marketing/plan";
+import { type BalancePost, type MarketingKind, type Pillar, editorialBalance, marketingKind, newPostCode, trackedLink, withLink } from "@/lib/marketing/plan";
+import { DEFAULT_EDITORIAL, type EditorialLine, activePillars, editorialForModel, loadEditorial } from "@/lib/marketing/editorial";
 import { loadMarketingSettings } from "@/lib/marketing/settings";
 
 /**
@@ -18,14 +19,19 @@ export const RHYTHM_POSTS_PER_WEEK = 3;
 /** Drafts are proposed at most once in this many days per cohort. */
 export const RHYTHM_EVERY_DAYS = 6;
 
-/** The subject of the week: the least used pillar (the offer pillar last), one of its example subjects. */
-export function chooseSubject(kind: MarketingKind, recent: BalancePost[], week: number): { pillar: Pillar; topic: string; destination: string } {
-  const pillars = pillarsFor(kind) as Record<string, { label: string; destination: string; examples: readonly string[] }>;
+/**
+ * The subject of the week: the pillar furthest behind its share in Ben's
+ * editorial line (the offer pillar last on a tie), one of its example subjects.
+ */
+export function chooseSubject(kind: MarketingKind, recent: BalancePost[], week: number, line: EditorialLine = DEFAULT_EDITORIAL[kind]): { pillar: Pillar; topic: string; destination: string } {
   const { byPillar } = editorialBalance(recent, kind);
-  const keys = Object.keys(pillars).sort((a, b) => (byPillar[a as Pillar] ?? 0) - (byPillar[b as Pillar] ?? 0) || Number(a === "offre") - Number(b === "offre") || a.localeCompare(b));
-  const pillar = keys[0]!;
-  const examples = pillars[pillar]!.examples;
-  let destination = pillars[pillar]!.destination;
+  const n = recent.length;
+  const gap = (p: { key: string; share: number }) => (byPillar[p.key as Pillar] ?? 0) - (p.share / 100) * (n + 1);
+  const ranked = activePillars(line).filter((p) => p.examples.length > 0).sort((a, b) => gap(a) - gap(b) || Number(a.key === "offre") - Number(b.key === "offre") || a.key.localeCompare(b.key));
+  const chosen = ranked[0] ?? activePillars(DEFAULT_EDITORIAL[kind])[0]!;
+  const pillar = chosen.key;
+  const examples = chosen.examples;
+  let destination = chosen.destination;
   if (destination === "test" && !examBootEnabled()) destination = "scanner";
   return { pillar: pillar as Pillar, topic: examples[week % examples.length]!, destination };
 }
@@ -36,8 +42,9 @@ export async function generateRhythmDrafts(cohortId: number, now = new Date()): 
   if (!facts) return { ok: false, error: "Cohorte introuvable." };
   const kind = marketingKind(facts.program);
   const [tests, recent] = await Promise.all([recentTestStats(settings.testThreshold, now), recentPosts(now, kind)]);
-  const subject = chooseSubject(kind, recent, Math.floor(now.getTime() / (7 * 86_400_000)));
-  const result = await generateVariants({ kind, facts: factsForModel(facts, kind === "ia" ? null : tests.stats), channel: "linkedin", pillar: subject.pillar, format: "standard", topic: subject.topic, destination: subject.destination as never, brief: "" });
+  const line = await loadEditorial(kind);
+  const subject = chooseSubject(kind, recent, Math.floor(now.getTime() / (7 * 86_400_000)), line);
+  const result = await generateVariants({ kind, editorial: editorialForModel(line), pillarLine: line.pillars[subject.pillar], facts: factsForModel(facts, kind === "ia" ? null : tests.stats), channel: "linkedin", pillar: subject.pillar, format: "standard", topic: subject.topic, destination: subject.destination as never, brief: "" });
   if (!result.ok) return result;
   for (const v of result.variants) {
     const code = newPostCode("linkedin");

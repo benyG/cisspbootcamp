@@ -12,7 +12,7 @@ describe("marketing Bâtisseur IA, deux publics (Ben, 04/11)", () => {
     expect(marketingKind("cc")).toBe("cert");
     expect(pillarsFor("ia")).toBe(IA_PILLARS);
     expect(pillarsFor("cert")).toBe(PILLARS);
-    expect(Object.keys(destinationsFor("ia"))).toEqual(["ia_diagnostic", "ia_page", "ia_inscription"]);
+    expect(Object.keys(destinationsFor("ia"))).toEqual(["ia_diagnostic", "ia_page", "ia_inscription", "ia_devis"]);
     expect(Object.keys(destinationsFor("cert"))).not.toContain("ia_diagnostic");
   });
 
@@ -20,6 +20,8 @@ describe("marketing Bâtisseur IA, deux publics (Ben, 04/11)", () => {
     const destinations = Object.keys(destinationsFor("ia"));
     for (const p of Object.values(IA_PILLARS)) expect(destinations).toContain(p.destination);
     expect(IA_PILLARS.offre.destination).toBe("ia_inscription");
+    expect(IA_PILLARS.ia_entreprises.destination).toBe("ia_devis");
+    expect(IA_PILLARS.ia_decouverte.destination).toBe("ia_page");
   });
 
   it("trace les liens vers les pages IA", () => {
@@ -40,7 +42,7 @@ describe("marketing Bâtisseur IA, deux publics (Ben, 04/11)", () => {
     expect(b.byPillar.offre).toBe(2);
     expect(b.byDestination.ia_inscription).toBe(2);
     expect(b.advice).toContain("place à la valeur");
-    expect(b.advice).toContain(IA_PILLARS.autonome.label);
+    expect(b.advice).toContain(IA_PILLARS.ia_decouverte.label);
     expect(editorialBalance([], "ia").advice).toContain("cas d'usage");
     // An old post without a pillar counts as selling.
     expect(pillarOf({ pillar: null, angle: "x", destination: "ia_page" }, "ia")).toBe("offre");
