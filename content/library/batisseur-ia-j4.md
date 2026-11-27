@@ -184,7 +184,7 @@ Celui qui hésite entre deux profils choisit l'action la plus simple à montrer 
 
 ## Bien travailler avec Claude : comprendre et tester un agent
 
-Le réflexe du jour ouvre le labo, à 13 h 30, juste après la pause. Il dure 30 minutes (13 h 30 – 14 h 00), pris sur la pratique guidée (pas sur la démonstration). Pourquoi il compte pour un non-développeur : vous ne lirez pas le code de vos agents, mais vous pouvez toujours savoir ce qu'ils ont le droit de faire et vérifier leur comportement avant de leur confier vos clients.
+Le réflexe du jour ouvre le labo, à 13 h 30, juste après la pause. Il dure 30 minutes (13 h 30 – 14 h 00), pris sur la pratique guidée (pas sur la démonstration). Pourquoi il compte pour un non-développeur : vous ne lirez pas le code de vos agents, mais vous pouvez toujours savoir ce qu'ils ont le droit de faire et vérifier leur comportement avant de leur confier les personnes qui comptent sur votre projet.
 
 **Comprendre un agent, puis le tester : les quatre points** (diapositive « Comprendre un agent, puis le tester »)
 
@@ -405,9 +405,9 @@ On copie à Claude Code le message d'erreur ou la réponse de Stripe, jamais une
 L'agent relance est présenté en cours et en démonstration, mais il n'est pas au labo et rien n'en dépend en J5. Si vous voulez le construire après la formation, écrivez à Claude Code :
 
 ```
-Crée l'agent relance, lancé chaque matin par Vercel Cron. Il cherche les devis envoyés il y a 5 jours ou plus, sans paiement ni réponse, et prépare une relance en brouillon dans /admin. 2 relances au plus par devis, espacées de 5 jours. Jamais à un client désinscrit. Chaque e-mail contient un lien de désinscription en un clic. Ton aimable, aucune fausse urgence. Ajoute dans /admin un bouton pour le lancer à la main.
+Crée l'agent relance, lancé chaque matin par Vercel Cron. Il cherche [les devis, inscriptions, réservations ou commandes] restés sans suite depuis 5 jours ou plus, sans paiement ni réponse, et prépare une relance en brouillon dans /admin. 2 relances au plus par demande, espacées de 5 jours. Jamais à une personne désinscrite. Chaque e-mail contient un lien de désinscription en un clic. Ton aimable, aucune fausse urgence. Ajoute dans /admin un bouton pour le lancer à la main.
 ```
 
-- [ ] Le bouton manuel prépare une relance pour un devis de test vieux de 5 jours
+- [ ] Le bouton manuel prépare une relance pour une demande de test vieille de 5 jours
 - [ ] Le lien de désinscription fonctionne et bloque la relance suivante
 - [ ] J'arrête l'agent relance, je clique sur le bouton manuel : rien ne part, le journal le dit
