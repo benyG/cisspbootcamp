@@ -2,16 +2,17 @@
 title: Fiches réflexes — formation Bâtisseur IA
 category: ia-participants
 audience: participants
-updated: 2026-11-24
-summary: Sept fiches d'une page à remplir pendant la formation : CLAUDE.md type, modèle de demande, règles d'un agent, 10 cas de test, diagnostic d'une erreur, retour arrière, routine qui tourne seule.
+updated: 2026-11-27
+summary: La fiche projet à remplir avant la J1, puis sept fiches d'une page à remplir pendant la formation : CLAUDE.md type, modèle de demande, règles d'un agent, 10 cas de test, diagnostic d'une erreur, retour arrière, routine qui tourne seule.
 ---
 
 ## Mode d’emploi
 
-Sept fiches d’une page, une par réflexe du programme. Vous les remplissez sur votre propre projet pendant la journée indiquée, puis vous les gardez à côté de vous.
+Pendant le Bâtisseur IA, vous construisez **votre** projet : celui que vous avez choisi, pas un modèle à recopier. Tout commence par la fiche 0, à remplir avant la J1. Viennent ensuite sept fiches d’une page, une par réflexe du programme : vous les remplissez sur votre projet pendant la journée indiquée, puis vous les gardez à côté de vous.
 
 | Fiche | Journée | À quoi elle sert | Elle est remplie quand… |
 | --- | --- | --- | --- |
+| 0. Ma fiche projet | Avant la J1 | Dire ce que vous allez bâtir, pour qui, et ce que vous montrerez en J6 | elle tient sur une page et vous pouvez la présenter en une minute |
 | 1. Le CLAUDE.md type | J2 | Donner à Claude Code la mémoire du projet | le fichier est dans le projet et Claude le cite |
 | 2. Le modèle de demande | J1, J2 | Obtenir le bon résultat du premier coup | chaque demande de la journée suit les 6 rubriques |
 | 3. La fiche de règles d’un agent | J4 | Écrire ce que l’agent fait, ne fait jamais, et quand il s’arrête | elle est validée avant la première ligne de code |
@@ -22,6 +23,52 @@ Sept fiches d’une page, une par réflexe du programme. Vous les remplissez sur
 
 Les passages entre crochets sont à remplacer par vos propres informations ; les exemples suivent l’Atelier Adjoa, l’atelier de couture fictif du site.
 
+## Fiche 0 · Ma fiche projet (avant la J1)
+
+Vous venez avec un projet que vous avez choisi, et vous repartez avec une réalisation qui a du sens, même si elle n’est pas encore terminée. Cette fiche dit lequel. Elle prend 30 minutes ; vous la présentez en une minute au début de la J1, et elle devient la première section de votre CLAUDE.md en J2.
+
+Le projet peut être une activité qui existe déjà (un atelier, une boutique, un cabinet), une activité à lancer, une association ou une communauté, ou un outil pour votre travail. Les exemples ci-dessous suivent l’Atelier Adjoa, l’atelier de couture fictif des fiches.
+
+| Question | Ce que vous écrivez | Exemple (Atelier Adjoa) |
+| --- | --- | --- |
+| 1. Mon projet | Ce que je veux bâtir, en une phrase | Le système qui reçoit les demandes de tenues sur mesure et suit chaque commande jusqu’à la livraison. |
+| 2. Pour qui | Les personnes qui l’utiliseront | Mes clientes, à Abidjan et dans la diaspora ; moi et mes deux couturières. |
+| 3. Le problème réglé | Ce qui coûte du temps, se perd ou s’oublie aujourd’hui | Les demandes arrivent sur WhatsApp, je perds des mesures et j’oublie de relancer les acomptes. |
+| 4. L’action clé | Ce que la personne fait grâce au projet | Demander un devis et payer l’acompte. |
+| 5. Ce que je montrerai en J6 | Ce qui doit marcher, même simplement | Une cliente fait sa demande sur le site, reçoit son devis, paie l’acompte, et je vois la commande dans mon tableau de bord. |
+| 6. Mes trois chiffres | Ce que je veux suivre chaque semaine | Demandes reçues, acomptes payés, commandes en retard. |
+| 7. Mes limites | Ce que le projet ne fait jamais seul, et mes contraintes | Les prix et les remises restent à moi ; pas de message à une cliente sans son accord ; budget outils : [montant] par mois. |
+| 8. Mes documents | Ce que j’ai déjà (offres, tarifs, conditions, questions fréquentes) ou « rien encore » | Grille des tarifs, conditions de commande, guide des mesures. |
+
+**Modèle à copier :**
+
+```markdown
+# Ma fiche projet — [nom du projet]
+Mon projet : [en une phrase]
+Pour qui : [les personnes qui l’utiliseront]
+Le problème réglé : [ce qui coûte du temps, se perd ou s’oublie]
+L’action clé : [ce que la personne fait grâce au projet]
+Ce que je montrerai en J6 : [ce qui doit marcher, même simplement]
+Mes trois chiffres : [à suivre chaque semaine]
+Mes limites : [ce que le projet ne fait jamais seul ; budget ; contraintes]
+Mes documents : [ce que j’ai déjà, ou « rien encore »]
+```
+
+**Vérifier :** relisez la ligne « Ce que je montrerai en J6 ». Si elle demande plus de six journées de travail, gardez le cœur et notez le reste pour les 30 jours de suivi.
+
+### Pas encore d’activité ? Le kit de départ
+
+Si votre projet n’a pas encore de clients, de documents ni de données, Claude vous aide à créer des exemples réalistes. Ils servent pendant la formation, jusqu’à ce que les vrais arrivent. Dans Claude Desktop, collez votre fiche projet, puis :
+
+```markdown
+Voici ma fiche projet : [coller la fiche].
+Rédige trois documents d’exemple réalistes pour ce projet : une présentation de l’offre, les conditions (prix ou gratuité, délais, ce qui est inclus), et les dix questions qu’on me posera le plus, avec leurs réponses.
+Puis propose un jeu de 20 lignes de données de test (personnes et demandes fictives, sans données réelles).
+Marque chaque document « Exemple » en haut. N’invente aucun chiffre présenté comme réel.
+```
+
+Relisez et corrigez ces documents : ce sont eux qui guident vos assistants. Remplacez-les par les vrais dès que vous les avez.
+
 ## Fiche 1 · Le CLAUDE.md type (J2)
 
 Le fichier `CLAUDE.md`, à la racine du projet, est relu par Claude Code au début de chaque séance. Tout ce qui n’y est pas, Claude l’oublie d’une séance à l’autre. Court et concret : une page suffit.
@@ -30,7 +77,7 @@ Le fichier `CLAUDE.md`, à la racine du projet, est relu par Claude Code au déb
 # CLAUDE.md — [Nom de l’entreprise]
 
 ## Le projet
-[Une phrase : ce que fait l’entreprise et pour qui.]
+[Reprendre ici votre fiche projet (fiche 0), ou au moins : ce que fait le projet, et pour qui.]
 Ex. : Atelier Adjoa confectionne des tenues sur mesure pour des clientes à Abidjan.
 Objectif du système : [ce qu’il doit faire seul]. Ex. : répondre aux clientes, préparer les devis, encaisser l’acompte, relancer.
 
@@ -78,7 +125,7 @@ Une bonne demande donne à Claude ce qu’une personne nouvelle dans l’entrepr
 **Modèle à copier :**
 
 ```markdown
-Contexte : [qui je suis, mon activité, mes clients]
+Contexte : [qui je suis, mon projet, pour qui]
 Ce que je veux : [le résultat, en une phrase]
 C’est réussi quand : [ce que je dois voir ou pouvoir faire]
 Exemple : [capture, document, message joint]
