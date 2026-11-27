@@ -2,21 +2,21 @@
 title: Bâtisseur IA · J6 · Pilotage autonome de l'entreprise
 category: ia-formateur
 audience: internal
-updated: 2026-11-24
+updated: 2026-11-27
 deck: Batisseur-IA-J6.pptx
-summary: Le support complet de la J6 : objectifs et courbe, routines, rapport du lundi, agents analyste et administratif, garde-fous, réflexe « laisser tourner en confiance », labo pas à pas, revue finale et plan des 30 jours.
+summary: Le support complet de la J6 : objectifs et courbe, routines, rapport du lundi, agents analyste et administratif, garde-fous, réflexe « laisser tourner en confiance », labo pas à pas appliqué au projet de chacun, démonstration de chaque projet et feuille de route des 30 jours.
 ---
 
 ## Fiche de la journée
 
-À la fin de la J6, votre entreprise se pilote : des objectifs chiffrés avec leur courbe, des routines qui alertent et relancent, un rapport chaque lundi, un agent analyste qui lit vos données sans pouvoir les modifier, un agent administratif qui tient vos pièces et vos échéances, et des garde-fous écrits. Vos agents tournent seuls, dans un budget que vous fixez. Vous repartez avec la carte complète de vos agents, de leurs interrupteurs et de leur budget, et votre plan des 30 jours.
+À la fin de la J6, votre projet se pilote : des objectifs chiffrés avec leur courbe, des routines qui alertent et relancent, un rapport chaque lundi, un agent analyste qui lit vos données sans pouvoir les modifier, un agent administratif qui tient vos pièces et vos échéances, et des garde-fous écrits. Vos agents tournent seuls, dans un budget que vous fixez. La journée se termine par la démonstration de chaque projet : 5 minutes pour dire ce que vous avez bâti, ce qui marche et ce qui reste, même si tout n'est pas mûr. Vous repartez avec la carte de vos agents (ceux dont votre projet a besoin), de leurs interrupteurs et de leur budget, et votre feuille de route des 30 jours.
 
 | | |
 | --- | --- |
 | Public | Dirigeants, indépendants, porteurs de projet. Aucune compétence en programmation. |
-| Durée | 5 heures de travail : cours, démonstration, réflexe du jour, labo, revue finale |
-| Prérequis | Les agents des J4 et J5 ; vos 1 à 3 objectifs chiffrés, vos échéances administratives et vos décisions de la semaine (travail « avant la J6 ») |
-| Résultat | Objectifs et courbe cible, 3 routines avec plafond, le rapport du lundi écrit par l'agent analyste, votre page Garde-fous avec l'arrêt général, votre carte d'agents avec leurs interrupteurs et leur budget, et votre plan des 30 jours (où l'agent administratif et le branchement MCP de l'analyste sont datés) |
+| Durée | 5 heures de travail : cours, démonstration, réflexe du jour, labo, démonstration de chaque projet |
+| Prérequis | Les agents des J4 et J5 ; votre fiche projet (fiche 0), en particulier « Mes trois chiffres » et « Ce que je montrerai en J6 » ; vos 1 à 3 objectifs chiffrés, vos échéances administratives et vos décisions de la semaine (travail « avant la J6 »). Pas encore d'activité : les données de test du kit de départ suffisent |
+| Résultat | La démonstration de votre projet devant le groupe (ce que j'ai bâti, ce qui marche, ce qui reste) ; objectifs et courbe cible, 3 routines choisies pour votre projet, avec plafond, le rapport du lundi sur vos trois chiffres, écrit par l'agent analyste, votre page Garde-fous avec l'arrêt général, votre carte d'agents avec leurs interrupteurs et leur budget, et votre feuille de route des 30 jours (où l'agent administratif et le branchement MCP de l'analyste sont datés) |
 | Après la formation | Vous passez du mode test au mode réel, agent par agent ; vous construisez l'agent administratif, branchez l'analyste en MCP et construisez les agents restants avec le gabarit |
 
 **Objectifs.** À la fin de la J6, vous savez :
@@ -26,7 +26,8 @@ summary: Le support complet de la J6 : objectifs et courbe, routines, rapport du
 3. faire écrire par un agent analyste un rapport chiffré sans chiffre inventé, et savoir comment l'interroger en lecture seule par MCP (branchement fait pendant les 30 jours de suivi) ;
 4. savoir ce que l'on confie à un agent administratif (pièces, échéances, demandes sur les données personnelles) et ce qui reste à vous (agent construit pendant les 30 jours de suivi) ;
 5. faire tourner un agent seul (tâche planifiée, travail en arrière-plan avec notification) dans un budget que vous fixez ;
-6. écrire les garde-fous de votre entreprise autonome et votre propre rôle de dirigeant d'agents.
+6. écrire les garde-fous de votre projet et votre propre rôle de dirigeant d'agents ;
+7. montrer votre projet en 5 minutes (ce que vous avez bâti, ce qui marche, ce qui reste) et en tirer votre feuille de route des 30 jours.
 
 **Déroulé** (heures de Montréal ; Afrique de l'Ouest : + 5 h en hiver, + 4 h en été)
 
@@ -37,8 +38,8 @@ summary: Le support complet de la J6 : objectifs et courbe, routines, rapport du
 | 11 h 10 | Cours | Les garde-fous, la carte complète, et ensuite |
 | 11 h 35 | Démonstration | Le pilotage de Kofi Traiteur (exemple fictif) |
 | 12 h 30 | Pause | 1 heure |
-| 13 h 30 | Labo | Réflexe routines et coûts (30 min), puis votre pilotage autonome en quatre étapes |
-| 15 h 15 | Revue finale | Chacun présente son entreprise autonome en 3 minutes |
+| 13 h 30 | Labo | « Selon votre projet » (3 min), réflexe routines et coûts (30 min), puis le pilotage de votre projet en quatre étapes |
+| 15 h 15 | Démonstrations | Chacun montre son projet en 5 minutes, puis la feuille de route des 30 jours |
 
 ## Cours 1 : piloter par objectifs
 
@@ -53,7 +54,7 @@ Une entreprise autonome n'est pas une entreprise sans pilote : c'est une entrepr
 
 ### 1. Des objectifs chiffrés
 
-Un à trois objectifs, chacun avec un nombre, une unité et une date : « 20 commandes par mois d'ici fin février », « 8 contrats entreprise ce trimestre ». Un objectif sans date ne se pilote pas ; dix objectifs non plus.
+Un à trois objectifs, chacun avec un nombre, une unité et une date, tirés de vos « trois chiffres » de la fiche projet : « 20 commandes par mois d'ici fin février » pour une boutique, « 8 contrats entreprise ce trimestre » pour Kofi, « 40 inscrits à l'événement de mars » pour une association, « chaque demande traitée en 48 heures d'ici fin janvier » pour un outil interne. Un projet qui démarre peut viser son lancement (premières inscriptions, premières demandes). Un objectif sans date ne se pilote pas ; dix objectifs non plus.
 
 ### 2. La courbe cible
 
@@ -69,13 +70,16 @@ Une routine est une règle « si… alors… » que l'application vérifie seule
 | Proposer | Dépose une action dans votre file | Par défaut |
 | Agir | Agit seule, dans ses limites | Après des semaines sans correction, pour une action vérifiable |
 
-Exemples :
+Exemples (chacun choisit ceux qui servent son projet) :
 
-- **Retard sur l'objectif** : si le réel est sous la courbe deux semaines de suite, alors l'analyste propose un plan de rattrapage.
-- **Devis qui dorment** : si plus de 3 devis attendent depuis 7 jours, alors relance groupée proposée.
-- **Santé** : si un paiement échoue ou si un agent est en erreur, alors alerte dans l'e-mail du matin.
+- **Retard sur l'objectif** (tous les projets) : si le réel est sous la courbe deux semaines de suite, alors l'analyste propose un plan de rattrapage.
+- **Devis qui dorment** (service sur devis) : si plus de 3 devis attendent depuis 7 jours, alors relance groupée proposée.
+- **Stock bas** (boutique) : si un produit passe sous son seuil, alors alerte dans l'e-mail du matin.
+- **Inscription non confirmée** (association, école, communauté) : si une inscription attend depuis 5 jours, alors rappel proposé.
+- **Demande en attente** (outil interne) : si une demande attend depuis 48 heures, alors alerte.
+- **Santé** (tous les projets) : si un paiement échoue ou si un agent est en erreur, alors alerte dans l'e-mail du matin.
 
-Chaque routine respecte un **plafond de pression** : jamais plus de 2 messages par client et par semaine, toutes routines confondues.
+Chaque routine respecte un **plafond de pression** : jamais plus de 2 messages par personne (client ou membre) et par semaine, toutes routines confondues.
 
 ### 4. Le rapport du lundi
 
@@ -89,9 +93,9 @@ Ces deux agents complètent la carte de l'entreprise autonome (la carte des proc
 
 Il travaille de deux façons.
 
-**1. L'analyse de la semaine.** Chaque lundi, le code calcule les chiffres de la semaine (objectifs, courbe, demandes, devis, encaissements, coûts d'API, résultats des publications). L'analyste les lit et rédige : ce qui s'est passé, pourquoi c'est probable, et trois pistes, chacune avec le chiffre qui la justifie. Vous gardez ou écartez chaque piste ; une piste gardée devient une action dans votre file.
+**1. L'analyse de la semaine.** Chaque lundi, le code calcule les chiffres de la semaine (objectifs, courbe, vos trois chiffres de la fiche projet, coûts d'API, résultats des publications ; chez Kofi : demandes, devis, encaissements). L'analyste les lit et rédige : ce qui s'est passé, pourquoi c'est probable, et trois pistes, chacune avec le chiffre qui la justifie. Vous gardez ou écartez chaque piste ; une piste gardée devient une action dans votre file.
 
-**2. Vos questions, quand vous voulez.** Votre application expose ses données en **MCP, en lecture seule** (la prise standard vue en J1). Vous la branchez comme connecteur dans votre assistant IA, puis vous demandez en français : « quels clients n'ont rien commandé depuis 60 jours ? », « quelle publication a amené le plus de demandes ce mois-ci ? ».
+**2. Vos questions, quand vous voulez.** Votre application expose ses données en **MCP, en lecture seule** (la prise standard vue en J1). Vous la branchez comme connecteur dans votre assistant IA, puis vous demandez en français : « quels clients n'ont rien commandé depuis 60 jours ? », « quels membres ne sont venus à aucun événement depuis trois mois ? », « quelle publication a amené le plus de demandes ce mois-ci ? ».
 
 | Règle | Pourquoi |
 | --- | --- |
@@ -102,7 +106,7 @@ Il travaille de deux façons.
 
 ### L'agent administratif
 
-Il tient trois registres que tout dirigeant néglige un jour.
+Il tient trois registres que tout dirigeant néglige un jour. Ils valent pour tous les projets, à des degrés divers : une association ou un outil interne a aussi des échéances (assurances, abonnements, nom de domaine) et des données personnelles (listes de membres, demandes).
 
 | Registre | Ce que fait l'agent | Ce qui reste à vous |
 | --- | --- | --- |
@@ -124,42 +128,44 @@ Les garde-fous ne sont pas un agent, mais sans eux rien n'est autonome. Vous les
 2. **Validation humaine** : tout ce qui engage (prix hors grille, remboursement, dépense, suppression, première prise de parole) attend votre clic.
 3. **Journal** : chaque action d'agent est tracée.
 4. **Interrupteurs** : un par agent, et un **arrêt général** qui suspend tous les agents d'un clic.
-5. **Plafonds** : dépense mensuelle d'API, messages par client et par semaine, montant au-delà duquel tout passe par vous.
+5. **Plafonds** : dépense mensuelle d'API, messages par personne (client ou membre) et par semaine, montant au-delà duquel tout passe par vous.
 6. **Tests** : chaque règle qui touche l'argent, le consentement ou un chiffre a son test, qui bloque la mise en ligne s'il est rouge.
 7. **Accès minimum** : l'analyste en lecture seule, les connecteurs en lecture quand c'est possible, les secrets dans Vercel (jamais dans le code ni dans une conversation).
 8. **Revue hebdomadaire** : 30 minutes le lundi, avec le rapport ; et une fois par mois, la relecture des règles et du journal.
 
-### La carte complète de vos agents
+### La carte de référence de vos agents
+
+Les huit rôles forment une carte de référence : chacun y choisit ceux dont son projet a besoin, dans l'ordre qui lui sert. Personne n'est obligé de remplir les huit cases.
 
 | Rôle | Agent | Construit en | Mode au départ |
 | --- | --- | --- | --- |
-| Commercial | Vente | J4 | Brouillons |
-| Finance opérationnelle | Encaissement | J4 | Automatique sur paiement confirmé |
+| Commercial | Action clé (devis, réservation, inscription ou commande) | J4 | Brouillons |
+| Finance opérationnelle | Encaissement, si le projet vend (sinon, confirmation de l'action clé) | J4 | Automatique sur paiement confirmé |
 | Marketing et acquisition | Communication | J5 | Brouillons |
 | Service client | Support | J5 | Réponses sourcées, escalade |
 | Opérations (selon l'activité) | Opérations | J5 ou après | Brouillons pour les achats |
 | Stratégie | Veille | J5 ou après | Information seule |
 | Direction et pilotage | Analyste | J6 | Lecture seule |
-| Administration | Administratif | J6 | Rangement et rappels |
+| Administration | Administratif | Suivi, semaines 2 et 3 (présenté en J6) | Rangement et rappels |
 
-Celui des agents opérations et veille que vous n'avez pas construit en J5 se construit après, avec le gabarit de la J5. Vous disposez alors des huit rôles.
+Celui des agents opérations et veille que vous n'avez pas construit en J5 se construit après, avec le gabarit de la J5, s'il sert votre projet. Une case utile mais encore vide va dans votre feuille de route des 30 jours.
 
 ### Et ensuite : vos 30 premiers jours
 
 | Semaine | Ce que vous faites |
 | --- | --- |
-| 1 | Relire toutes les règles à tête reposée ; passer les paiements en mode réel après un paiement test de petit montant |
-| 2 | Ouvrir l'assistant du site aux vrais clients ; lire chaque conversation le soir |
+| 1 | Relire toutes les règles à tête reposée ; passer en réel après un test (si le projet vend : un paiement test de petit montant avant les vrais paiements) ; remplacer les données du kit de départ par les vraies dès qu'elles existent |
+| 2 | Ouvrir l'assistant à votre vrai public (clients ou membres) ; lire chaque conversation le soir |
 | 3 | Construire l'agent manquant (opérations ou veille) avec le gabarit |
 | 4 | Premier bilan mensuel : passer en automatique une action qui n'a plus été corrigée, une seule |
 
-Rien ne passe en automatique d'un coup. Les 30 jours de suivi après la formation servent à vérifier ces réflexes sur votre projet réel.
+Rien ne passe en automatique d'un coup. Ce tableau est une trame : votre feuille de route part de « ce qui reste » dans votre démonstration. Les 30 jours de suivi après la formation servent à faire mûrir votre projet et à vérifier ces réflexes.
 
 Votre rôle, désormais : dirigeant d'agents. La stratégie, l'offre et les prix, les relations clés, les décisions qui engagent, et l'ajustement des règles chaque semaine.
 
 ## Démonstration : le pilotage de Kofi Traiteur
 
-Kofi Traiteur est l'exemple fictif qui accompagne toutes les présentations. En 55 minutes, le formateur fixe l'objectif de Kofi (8 contrats entreprise ce trimestre), montre qu'il est en retard sur sa courbe, puis laisse la boucle de pilotage faire son travail jusqu'à la décision de Kofi.
+Kofi Traiteur est l'exemple fictif qui accompagne toutes les présentations : un service sur devis, un exemple parmi d'autres. Les projets des participants ne lui ressemblent pas forcément ; la sous-section « Selon votre projet » ci-dessous montre les mêmes gestes pour quatre profils. En 55 minutes, le formateur fixe l'objectif de Kofi (8 contrats entreprise ce trimestre), montre qu'il est en retard sur sa courbe, puis laisse la boucle de pilotage faire son travail jusqu'à la décision de Kofi.
 
 | Minutes | Ce qui est montré | Phrase à retenir |
 | --- | --- | --- |
@@ -176,9 +182,22 @@ Plan B : branche « j6-pilotage » du dépôt « kofi-traiteur-demo », qui cont
 
 Les segments 30 – 40 (MCP) et 40 – 50 (agent administratif) sont montrés en démonstration mais ne sont pas des étapes du labo : les participants les construisent pendant les 30 jours de suivi (voir « Après la formation »).
 
+**Sur le projet d'un volontaire.** Pendant le cours 1, demandez qui veut que l'on fasse une partie de la démonstration sur son projet, et retenez un volontaire dont l'objectif est écrit dans le fil (un nombre, une unité, une date). Dans les segments 0 – 10 et 10 – 20, sans allonger la démonstration : après l'objectif de Kofi, saisissez l'objectif du volontaire dans l'application de démonstration et montrez sa courbe, puis écrivez avec lui une routine pour son projet, en mode observer. Uniquement des données fictives ou de test, aucune donnée réelle de ses clients ou membres, aucune clé à l'écran. Si personne ne se porte volontaire, restez sur Kofi.
+
+### Selon votre projet
+
+Au retour de la pause, à 13 h 30, une diapositive montre la même étape pour quatre profils de projet (3 minutes, prises sur la marge du labo). On fait dire à deux participants, de profils différents si possible, ce que donne l'étape pour leur projet : leur objectif et leur première routine.
+
+| Profil | Objectif et première routine |
+| --- | --- |
+| Service sur devis | Objectif : 8 contrats ce trimestre. Routine : devis sans réponse depuis 7 jours → relance proposée. |
+| Boutique, produits | Objectif : 20 commandes par mois. Routine : stock bas ou paiement échoué → alerte du matin. |
+| Association, communauté | Objectif : 40 inscrits à l'événement. Routine : inscription non confirmée → rappel proposé. |
+| Outil interne ou sans activité | Objectif : demandes traitées en 48 h. Données du kit de départ, routine en observer. |
+
 ## Bien travailler avec Claude : laisser tourner en confiance
 
-Le fil rouge du jour ouvre le labo, de 13 h 30 à 14 h 00 (30 minutes, prises sur la pratique guidée, pas sur la démonstration). Il correspond aux diapositives 16 à 18 de la présentation. Pour un non-développeur, laisser un agent travailler seul la nuit ou le lundi matin est le moment qui inquiète : on ne peut pas tout surveiller. Le réflexe consiste à ne jamais laisser tourner un agent sans heure, sans plafond, sans validation et sans interrupteur.
+Le fil rouge du jour ouvre le labo, juste après « Selon votre projet », de 13 h 33 à 14 h 03 (30 minutes, prises sur la pratique guidée, pas sur la démonstration). Il correspond aux diapositives 17 à 19 de la présentation. Pour un non-développeur, laisser un agent travailler seul la nuit ou le lundi matin est le moment qui inquiète : on ne peut pas tout surveiller. Le réflexe consiste à ne jamais laisser tourner un agent sans heure, sans plafond, sans validation et sans interrupteur.
 
 ### Quatre points
 
@@ -207,7 +226,7 @@ Chaque routine a : une heure, un plafond, une validation, un interrupteur. Le mo
 
 ### L'exercice
 
-Chaque participant adapte la demande à l'une de ses routines (le rapport du lundi, une relance, une alerte), avec son propre montant de plafond, la soumet à Claude Code en demandant d'abord un plan, et vérifie que les quatre éléments y sont.
+Chaque participant adapte la demande à l'une des routines de son projet (le rapport du lundi, une relance, un rappel, une alerte), avec son propre montant de plafond, la soumet à Claude Code en demandant d'abord un plan, et vérifie que les quatre éléments y sont.
 
 - [ ] Ma demande donne une heure, un plafond avec alerte, une validation et un interrupteur
 - [ ] Claude Code a proposé un plan avant d'agir, et chaque exécution est notée au journal
@@ -216,18 +235,26 @@ Chaque participant adapte la demande à l'une de ses routines (le rapport du lun
 
 1. **Intercalaire et quatre points (10 min)** : présenter les quatre gestes ; montrer à l'écran où se lit la consommation et où se fixe un plafond ; nommer les fonctions avancées sans les démontrer.
 2. **La fiche (5 min)** : lire la demande ligne par ligne : l'heure et la tâche, le coût, la confiance, la trace.
-3. **L'exercice (15 min)** : chacun écrit sa demande ; en lire deux à voix haute ; corriger celles qui oublient le plafond ou l'interrupteur. Si le temps manque, la demande écrite est appliquée pendant l'étape 3 du labo. À 14 h 00, on passe aux étapes du labo, sans déborder.
+3. **L'exercice (15 min)** : chacun écrit sa demande ; en lire deux à voix haute ; corriger celles qui oublient le plafond ou l'interrupteur. Si le temps manque, la demande écrite est appliquée pendant l'étape 3 du labo. Vers 14 h 03, on passe aux étapes du labo, sans déborder.
 
 La fiche réflexe du jour est la fiche 7, « Une routine qui tourne seule » : l'heure, le travail, le plafond, la validation et l'interrupteur, avec l'exemple fictif de l'Atelier Adjoa et un modèle à copier. Lien formateur : [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien participants : /ia/fiches.
 
-## Labo : votre pilotage autonome
+## Labo : le pilotage de votre projet
 
-Après le réflexe du jour, de 14 h 00 à 15 h 15, sur votre application de la J5 : quatre étapes, 70 minutes (objectifs, routines, rapport du lundi, garde-fous). Chaque étape passe par une demande de fusion, des tests verts et le lien Preview. Le branchement de vos données en MCP et l'agent administratif, vus en cours et en démonstration, ne sont plus des étapes du labo : ce sont des travaux des 30 jours de suivi, avec leurs textes à copier dans « Après la formation ».
+Après le réflexe du jour, de 14 h 03 environ à 15 h 15, sur votre application de la J5 : quatre étapes, 70 minutes (objectifs, routines, rapport du lundi, garde-fous). Chaque étape passe par une demande de fusion, des tests verts et le lien Preview.
+
+La compétence est la même pour tous ; la construction dépend de votre projet. Gardez votre fiche projet ouverte et remplissez les crochets des textes à copier avec ce qu'elle dit :
+
+- **vos objectifs** : 1 à 3, tirés de « Mes trois chiffres » (contrats, commandes, inscrits, demandes traitées…) ;
+- **vos trois routines** : à choisir dans la liste du cours 1 selon votre profil (devis qui dorment, stock bas, inscription non confirmée, demande en attente), plus « retard sur l'objectif » et « santé », qui valent pour tous ;
+- **vos trois chiffres** : ceux que le rapport du lundi suit chaque semaine.
+
+**Pas encore d'activité ?** Travaillez sur les données de test générées avec le kit de départ (fiche 0 des [fiches réflexes](/admin/bibliotheque/fiches-reflexes-batisseur-ia) ; lien participants : /ia/fiches). Les courbes, les routines et le rapport se vérifient aussi bien sur des données de test ; gardez la mention « Exemple » visible et remplacez-les par les vraies dès qu'elles arrivent. Le branchement de vos données en MCP et l'agent administratif, vus en cours et en démonstration, ne sont plus des étapes du labo : ce sont des travaux des 30 jours de suivi, avec leurs textes à copier dans « Après la formation ».
 
 ### Étape 1 · Objectifs et courbe cible (20 min)
 
 ```
-Ajoute une table « objectifs » : nom, chiffre visé, unité, date de début, date de fin, et la façon de compter le réel depuis la base. Ajoute une page /admin/pilotage : pour chaque objectif, le réel, la courbe cible semaine par semaine, et l'état (en avance, dans les temps, en retard), lisible sur téléphone. Mes objectifs : [vos 1 à 3 objectifs]. Tous les calculs dans le code, avec des tests.
+Ajoute une table « objectifs » : nom, chiffre visé, unité, date de début, date de fin, et la façon de compter le réel depuis la base. Ajoute une page /admin/pilotage : pour chaque objectif, le réel, la courbe cible semaine par semaine, et l'état (en avance, dans les temps, en retard), lisible sur téléphone. Mon projet : [mon projet, en une phrase]. Mes objectifs : [mes 1 à 3 objectifs, avec un nombre, une unité et une date]. Tous les calculs dans le code, avec des tests.
 ```
 
 - [ ] Le réel et l'écart à la courbe sont justes sur les données de test, calculés à la main
@@ -235,17 +262,19 @@ Ajoute une table « objectifs » : nom, chiffre visé, unité, date de début, d
 ### Étape 2 · Trois routines (20 min)
 
 ```
-Ajoute un moteur de routines lancé chaque matin par Vercel Cron. Chaque routine a une condition, une action, un mode (observer, proposer, agir) et apparaît dans /admin avec son dernier passage. Plafond : jamais plus de 2 messages par client et par semaine, toutes routines confondues.
+Ajoute un moteur de routines lancé chaque matin par Vercel Cron. Chaque routine a une condition, une action, un mode (observer, proposer, agir) et apparaît dans /admin avec son dernier passage. Plafond : jamais plus de 2 messages par personne et par semaine, toutes routines confondues.
 
-Crée en mode observer : [1] retard sur un objectif deux semaines de suite → demander un plan à l'analyste ; [2] plus de 3 devis sans réponse depuis 7 jours → proposer une relance groupée ; [3] paiement échoué ou agent en erreur → alerte dans l'e-mail du matin.
+Crée en mode observer : [1] retard sur un objectif deux semaines de suite → demander un plan à l'analyste ; [2] [ma routine propre à mon projet : condition → action] ; [3] [paiement échoué ou agent en erreur, ou une autre alerte utile à mon projet] → alerte dans l'e-mail du matin.
 ```
+
+Pour la routine [2], selon votre projet : plus de 3 devis sans réponse depuis 7 jours → relance groupée proposée (service sur devis) ; produit sous son seuil de stock → alerte (boutique) ; inscription non confirmée depuis 5 jours → rappel proposé (association, école, communauté) ; demande en attente depuis 48 heures → alerte (outil interne).
 
 - [ ] Le bouton « Lancer maintenant » écrit dans le journal ce que chaque routine aurait fait
 
 ### Étape 3 · Le rapport du lundi et l'analyste (20 min)
 
 ```
-Chaque lundi, calcule par le code les chiffres de la semaine : objectifs et courbe, demandes, devis, encaissements, coûts d'API, demandes par publication. Donne-les à l'agent analyste, qui rédige ce qui s'est passé et trois pistes, chacune avec le chiffre qui la justifie, sans inventer de chiffre. Envoie le tout dans un e-mail d'une page. Dans /admin, chaque piste a deux boutons : garder (elle devient une action) ou écarter.
+Chaque lundi, calcule par le code les chiffres de la semaine : objectifs et courbe, [mes trois chiffres], coûts d'API, demandes par publication. Donne-les à l'agent analyste, qui rédige ce qui s'est passé et trois pistes, chacune avec le chiffre qui la justifie, sans inventer de chiffre. Envoie le tout dans un e-mail d'une page. Dans /admin, chaque piste a deux boutons : garder (elle devient une action) ou écarter.
 ```
 
 - [ ] Le bouton « Rapport maintenant » m'envoie un rapport dont chaque chiffre est juste
@@ -253,14 +282,18 @@ Chaque lundi, calcule par le code les chiffres de la semaine : objectifs et cour
 ### Étape 4 · La page Garde-fous (10 min)
 
 ```
-Ajoute une page /admin/garde-fous : la liste de mes agents et routines avec leur mode et leur interrupteur, un bouton d'arrêt général qui suspend tous les agents, mes plafonds (dépense d'API, messages par client, montant au-delà duquel tout passe par moi) et la date de ma dernière revue.
+Ajoute une page /admin/garde-fous : la liste de mes agents et routines avec leur mode et leur interrupteur, un bouton d'arrêt général qui suspend tous les agents, mes plafonds (dépense d'API, messages par personne, montant au-delà duquel tout passe par moi) et la date de ma dernière revue.
 ```
 
 - [ ] L'arrêt général suspend tout, et le journal le note
 
-## La revue finale de 15 h 15
+## La démonstration de chaque projet, à 15 h 15
 
-Chacun présente son entreprise autonome en 3 minutes, sur téléphone : sa carte d'agents, son objectif et sa courbe, une piste de l'analyste, sa page Garde-fous. Le groupe discute une piste du rapport de chaque participant : la garder ou l'écarter ?
+Chacun montre son projet en 5 minutes, sur téléphone ou en partage d'écran, en trois temps : **ce que j'ai bâti, ce qui marche, ce qui reste**. On montre du vrai : sa première page, son tableau de bord, son objectif et sa courbe, une routine, sa page Garde-fous. Ce qui n'est pas mûr à 100 % se dit simplement : c'est « ce qui reste », et cela devient la feuille de route des 30 jours. Puis le groupe pose une question.
+
+La revue vérifie des critères communs à tous les projets, pas la ressemblance avec Kofi : ça marche sur mon projet, c'est testé, il y a une règle et un interrupteur, les chiffres se recalculent à la main. Les projets qui tournent sur les données du kit de départ se montrent comme les autres, en disant que les données sont des données de test.
+
+5 minutes par projet, question comprise, chronomètre visible. Au-delà de 8 participants, partagez le groupe en deux salles, un animateur par salle, pour garder les horaires. Les dernières minutes servent à la feuille de route des 30 jours : chacun la dépose dans le fil, en partant de « ce qui reste ».
 
 - [ ] Mes objectifs ont leur courbe, et je sais si je suis en avance ou en retard
 - [ ] Trois routines tournent en mode observer, avec un plafond de pression
@@ -268,10 +301,11 @@ Chacun présente son entreprise autonome en 3 minutes, sur téléphone : sa cart
 - [ ] Mon plafond d'API est fixé, avec une alerte à 80 %
 - [ ] L'agent administratif et le branchement MCP de l'analyste sont datés dans mon plan des 30 jours
 - [ ] Ma page Garde-fous existe, avec l'arrêt général
-- [ ] Ma carte d'agents est à jour, et mon plan des 30 jours est écrit
+- [ ] Ma carte d'agents (ceux dont mon projet a besoin) est à jour, et mon plan des 30 jours est écrit
 - [ ] Réflexe du jour : chaque routine a son heure, son plafond et son interrupteur
+- [ ] J'ai montré mon projet : ce que j'ai bâti, ce qui marche, ce qui reste ; « ce qui reste » est dans ma feuille de route
 
-Le formateur clôt la formation en rappelant le rôle de dirigeant d'agents et le plan des 30 jours.
+Une case manquante devient la première tâche de la semaine 1. Le formateur clôt la formation en rappelant le rôle de dirigeant d'agents et la feuille de route des 30 jours.
 
 ## Dépannage
 
@@ -297,7 +331,7 @@ Bloqué plus de 10 minutes : levez la main.
 | Courbe cible | Où vous devriez en être chaque semaine pour atteindre l'objectif |
 | Routine | Une règle « si… alors… » vérifiée seule, à heure fixe |
 | Mode | Observer, proposer ou agir : ce qu'une routine a le droit de faire |
-| Plafond de pression | Le nombre maximal de messages par client et par semaine |
+| Plafond de pression | Le nombre maximal de messages par personne (client ou membre) et par semaine |
 | Rapport du lundi | Une page : objectifs, ce qui a marché, trois pistes |
 | Lecture seule | Un accès qui permet de lire sans rien modifier |
 | Registre des données | La liste de ce que vous collectez, pourquoi et combien de temps |
@@ -324,8 +358,9 @@ Bloqué plus de 10 minutes : levez la main.
 
 ## Après la formation
 
-- [ ] Semaine 1 : relire toutes les règles ; passer les paiements en mode réel après un paiement test de petit montant
-- [ ] Semaine 2 : ouvrir l'assistant du site aux vrais clients ; lire les conversations chaque soir
+- [ ] Semaine 1 : relire toutes les règles ; passer en réel après un test (si votre projet vend : les paiements, après un paiement test de petit montant) ; remplacer les données du kit de départ par les vraies dès qu'elles existent
+- [ ] Semaine 1 : commencer par « ce qui reste » de votre démonstration et par les cases manquantes de la revue
+- [ ] Semaine 2 : ouvrir l'assistant à votre vrai public (clients ou membres) ; lire les conversations chaque soir
 - [ ] Semaines 2 et 3 : construire l'agent administratif (texte à copier ci-dessous), avec vos échéances notées en cours
 - [ ] Semaine 3 : construire l'agent manquant (opérations ou veille) avec le gabarit de la J5
 - [ ] Semaine 4 : brancher vos données en MCP, en lecture seule (texte à copier ci-dessous), et poser vos questions du bilan à l'analyste
@@ -361,14 +396,14 @@ Les règles (mentions d'une facture, délais, durées de conservation) se valide
 Vu en cours 2 et en démonstration, c'est la seconde façon de travailler de l'analyste : vos questions, quand vous voulez. Comptez une séance d'environ 20 minutes ; si le connecteur résiste, partez de l'exemple de serveur MCP en lecture seule de la branche « j6-pilotage » du dépôt « kofi-traiteur-demo ».
 
 ```
-Expose mes données en MCP sur /api/mcp, en lecture seule : des outils pour lire les clients, demandes, devis, commandes, paiements et objectifs, avec des filtres simples.
+Expose mes données en MCP sur /api/mcp, en lecture seule : des outils pour lire [les entités de mon projet, par exemple clients, demandes, commandes, paiements, ou membres, inscriptions, événements] et mes objectifs, avec des filtres simples.
 
-Aucun outil n'écrit, n'envoie ni ne supprime. Accès protégé par ma connexion (OAuth), chaque appel journalisé, noms des clients masqués par défaut.
+Aucun outil n'écrit, n'envoie ni ne supprime. Accès protégé par ma connexion (OAuth), chaque appel journalisé, noms des personnes masqués par défaut.
 
 Écris un test qui vérifie qu'aucun outil n'écrit.
 ```
 
-Puis ajoutez l'adresse comme connecteur personnalisé dans votre assistant IA, posez une question en français (par exemple « quels clients ont commandé une fois et plus jamais ? » ou l'une des questions notées en cours), vérifiez la réponse à la main et retrouvez l'appel au journal. Aucune clé ni aucun jeton ne se colle dans la conversation pour faire marcher la connexion.
+Puis ajoutez l'adresse comme connecteur personnalisé dans votre assistant IA, posez une question en français (par exemple « quels clients ont commandé une fois et plus jamais ? », « quels membres ne sont venus à aucun événement depuis trois mois ? » ou l'une des questions notées en cours), vérifiez la réponse à la main et retrouvez l'appel au journal. Aucune clé ni aucun jeton ne se colle dans la conversation pour faire marcher la connexion.
 
 - [ ] Le test « aucun outil n'écrit » existe et passe
 - [ ] Une question en français reçoit une réponse juste, et l'appel est dans le journal
