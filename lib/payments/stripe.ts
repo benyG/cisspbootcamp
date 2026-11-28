@@ -78,6 +78,9 @@ export function parseWebhook(rawBody: string, signature: string | null): Stripe.
  * layer needs. Pure: given an event, decide whether it is a payment we should
  * honour and for which reference.
  */
+/** Our prefixes: CB- (seat, and its balance …-S), CS- (consulting), CE- (enterprise deposit), e.g. CB-7K3M-9QXZ. */
+export const OUR_REFERENCE = /^C[BSE]-[A-Z0-9][A-Z0-9-]{2,30}$/;
+
 export type PaymentConfirmation = {
   reference: string;
   stripeSessionId: string;
@@ -94,7 +97,9 @@ export function confirmationFromEvent(event: Stripe.Event): PaymentConfirmation 
   if (session.payment_status !== "paid") return null;
 
   const reference = session.metadata?.reference ?? session.client_reference_id;
-  if (!reference) return null;
+  // The Stripe account is shared with other apps (ExamBoot, EOCON…): their sessions reach this
+  // webhook too. Only our own references (seat, balance, consulting, enterprise deposit) count.
+  if (!reference || !OUR_REFERENCE.test(reference)) return null;
 
   return {
     reference,

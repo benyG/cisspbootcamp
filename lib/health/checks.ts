@@ -87,11 +87,13 @@ export const CHECKS: Check[] = [
     role: "Inscriptions, soldes, consultations",
     run: async () => {
       if (!set("STRIPE_SECRET_KEY")) return { status: "fail", detail: "STRIPE_SECRET_KEY manquante : le paiement par carte est fermé.", fix: ["dashboard.stripe.com › Développeurs › Clés API : copiez la clé secrète (sk_live_…).", vercelEnv(["STRIPE_SECRET_KEY"])] };
-      const res = await timed("https://api.stripe.com/v1/balance", { headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` } });
+      // What the site needs is Checkout: a restricted key (rk_…) limited to payments cannot read the balance, and that is fine.
+      const res = await timed("https://api.stripe.com/v1/checkout/sessions?limit=1", { headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` } });
       if (res.status === 401) return { status: "fail", detail: "Stripe refuse la clé secrète.", fix: ["dashboard.stripe.com › Développeurs › Clés API : régénérez ou recopiez la clé secrète.", vercelEnv(["STRIPE_SECRET_KEY"])] };
+      if (res.status === 403) return { status: "fail", detail: "La clé est acceptée mais n’a pas le droit de créer un paiement (Checkout).", fix: ["dashboard.stripe.com › Développeurs › Clés API : sur la clé restreinte, donnez l’écriture à « Checkout Sessions », ou utilisez la clé secrète (sk_live_…).", vercelEnv(["STRIPE_SECRET_KEY"])] };
       if (!res.ok) return { status: "warn", detail: `Stripe a répondu ${res.status}.` };
       const live = process.env.STRIPE_SECRET_KEY!.startsWith("sk_live_") || process.env.STRIPE_SECRET_KEY!.startsWith("rk_live_");
-      if (!set("STRIPE_WEBHOOK_SECRET")) return { status: "fail", detail: "Clé acceptée, mais STRIPE_WEBHOOK_SECRET manquant : un paiement ne serait jamais confirmé.", fix: [`dashboard.stripe.com › Développeurs › Webhooks › Ajouter un endpoint : ${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/webhooks/stripe, événement checkout.session.completed.`, "Copiez le « Signing secret » (whsec_…).", vercelEnv(["STRIPE_WEBHOOK_SECRET"])] };
+      if (!set("STRIPE_WEBHOOK_SECRET")) return { status: "fail", detail: "Clé acceptée, mais STRIPE_WEBHOOK_SECRET manquant : un paiement ne serait jamais confirmé.", fix: [`dashboard.stripe.com › Développeurs › Webhooks › Ajouter un endpoint : ${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/webhooks/stripe (l’adresse exacte du site, sans redirection : Stripe ne suit pas les redirections), événement checkout.session.completed.`, "Copiez le « Signing secret » (whsec_…).", vercelEnv(["STRIPE_WEBHOOK_SECRET"])] };
       return live ? { status: "ok", detail: "Clé live acceptée, webhook configuré." } : { status: "warn", detail: "Clé de TEST : aucun vrai paiement n’est encaissé.", fix: ["Quand vous êtes prêt à encaisser : remplacez par la clé live (sk_live_…) et le secret du webhook live.", vercelEnv(["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"])] };
     },
   },
