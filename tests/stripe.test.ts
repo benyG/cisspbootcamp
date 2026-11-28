@@ -92,6 +92,21 @@ describe("confirmationFromEvent", () => {
     expect(confirmationFromEvent(event)?.reference).toBe("CB-AAAA-BBBB");
   });
 
+  it("ignore les paiements des autres applications du compte Stripe partagé", () => {
+    const base = completed() as unknown as { data: { object: Record<string, unknown> } };
+    for (const foreign of ["825", "plink-1", "1364", "CB-AAAA", "XX-AAAA-BBBB"]) {
+      const event = structuredClone(base);
+      event.data.object.metadata = { registrationId: foreign };
+      event.data.object.client_reference_id = foreign;
+      expect(confirmationFromEvent(event as unknown as Stripe.Event)).toBeNull();
+    }
+    for (const ours of ["CB-AAAA-BBBB", "CB-AAAA-BBBB-S", "CS-7K3M-9QXZ", "CE-7K3M-9QXZ"]) {
+      const event = structuredClone(base);
+      event.data.object.metadata = { reference: ours };
+      expect(confirmationFromEvent(event as unknown as Stripe.Event)?.reference).toBe(ours);
+    }
+  });
+
   it("refuse un paiement sans référence", () => {
     const event = completed({ metadata: {}, client_reference_id: null }) as unknown as Stripe.Event;
     expect(confirmationFromEvent(event)).toBeNull();
