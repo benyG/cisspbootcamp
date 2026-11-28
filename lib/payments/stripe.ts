@@ -78,8 +78,8 @@ export function parseWebhook(rawBody: string, signature: string | null): Stripe.
  * layer needs. Pure: given an event, decide whether it is a payment we should
  * honour and for which reference.
  */
-/** CB-7K3M-9QXZ (seat), CB-…-S (its balance), CS-… (consulting), CE-… (enterprise deposit). */
-export const OUR_REFERENCE = /^C[BSE]-[A-Z0-9]{4}-[A-Z0-9]{4}(-S)?$/;
+/** Our prefixes: CB- (seat, and its balance …-S), CS- (consulting), CE- (enterprise deposit), e.g. CB-7K3M-9QXZ. */
+export const OUR_REFERENCE = /^C[BSE]-[A-Z0-9][A-Z0-9-]{2,30}$/;
 
 export type PaymentConfirmation = {
   reference: string;
